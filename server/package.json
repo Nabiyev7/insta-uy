@@ -1,0 +1,1 @@
+{"name":"@shahar/server","version":"0.1.0","private":true,"type":"module","dependencies":{"socket.io":"^4.8.4","zod":"^4.6.7"}}

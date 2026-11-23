@@ -1,0 +1,129 @@
+import type { Plot, PlotType } from './types.ts';
+
+/** Uy darajalari: bo'yiga emas, hashamatga o'sadi (PLAN.md §1). */
+export const TIERS = [
+  { id: 1, key: 'kichik', uz: 'Kichik uy', ru: 'Маленький дом' },
+  { id: 2, key: 'hovli', uz: 'Hovli', ru: 'Двор' },
+  { id: 3, key: 'katta', uz: 'Katta hovli', ru: 'Большой двор' },
+  { id: 4, key: 'villa', uz: 'Villa', ru: 'Вилла' },
+  { id: 5, key: 'qasr', uz: 'Qasr', ru: 'Дворец' },
+] as const;
+export type TierId = (typeof TIERS)[number]['id'];
+
+export const MIN_TIER: Readonly<Record<PlotType, TierId>> = { hovli: 1, kvartira: 1, villa: 4, qasr: 5 };
+/** Bepul olinadigan turlar. */
+export const FREE_TYPES: readonly PlotType[] = ['hovli', 'kvartira'];
+export const isFreeType = (t: PlotType): boolean => FREE_TYPES.includes(t);
+export const canUpgrade = (t: PlotType): boolean => t !== 'kvartira';
+
+/** Boshlang'ich narxlar (so'm). Amaldagi qiymatlar bazadagi `settings`da — admin o'zgartiradi. */
+export const DEFAULT_PRICES = {
+  base: { hovli: 30_000, kvartira: 20_000, villa: 150_000, qasr: 400_000 } satisfies Record<PlotType, number>,
+  tierUp: { 2: 25_000, 3: 50_000, 4: 120_000, 5: 300_000 } as Readonly<Record<number, number>>,
+  expansion: 80_000,
+  streetName: 200_000,
+  label: { silver: 15_000, gold: 40_000 },
+  commerce: { dokon: 100_000, ofis: 250_000, bilbord: 150_000 },
+} as const;
+
+export const plotPrice = (p: Pick<Plot, 'type' | 'value'>, base: number = DEFAULT_PRICES.base[p.type], discountPct = 0): number =>
+  Math.round((base * (1 + p.value / 50) * (1 - discountPct / 100)) / 1000) * 1000;
+
+/** Bir xil model — rang bilan farqlanadi. */
+export const WALL_COLORS = ['#e8d9c0', '#d9b99b', '#c98f6b', '#f1ece1', '#c9d3d6', '#b7c4a8', '#e3c07a', '#d7a9a0'] as const;
+export const ROOF_COLORS = ['#8a4b38', '#6b3a34', '#4d5a63', '#3f5d4c', '#7a6652', '#5b4a68'] as const;
+
+/** Uydagi bezak joylari — har biri uchastkaning aniq nuqtasida turadi. */
+export type DecorSlot = 'fence' | 'gate' | 'path' | 'tree' | 'yard' | 'water' | 'car' | 'light' | 'pet' | 'special';
+export interface DecorItem {
+  readonly id: string;
+  readonly slot: DecorSlot;
+  readonly uz: string;
+  readonly ru: string;
+  readonly priceUzs: number;
+  readonly priceCoins: number;
+  /** null = cheksiz; aks holda noyob, sanoqli. */
+  readonly stock: number | null;
+}
+const item = (id: string, slot: DecorSlot, uz: string, ru: string, priceUzs: number, priceCoins: number, stock: number | null = null): DecorItem =>
+  ({ id, slot, uz, ru, priceUzs, priceCoins, stock });
+
+export const DECOR: readonly DecorItem[] = [
+  item('fence_wood', 'fence', "Yog'och panjara", 'Деревянный забор', 5_000, 100),
+  item('fence_brick', 'fence', "G'isht devor", 'Кирпичная стена', 12_000, 260),
+  item('fence_ornate', 'fence', 'Naqshli panjara', 'Кованый забор', 25_000, 600),
+  item('gate_wood', 'gate', "Yog'och darvoza", 'Деревянные ворота', 6_000, 120),
+  item('gate_carved', 'gate', 'Naqshli darvoza', 'Резные ворота', 20_000, 450),
+  item('gate_gold', 'gate', 'Oltin darvoza', 'Золотые ворота', 60_000, 1500),
+  item('path_stone', 'path', "Tosh yo'lak", 'Каменная дорожка', 4_000, 80),
+  item('tree_anor', 'tree', 'Anor', 'Гранат', 4_000, 80),
+  item('tree_chinor', 'tree', 'Chinor', 'Чинара', 7_000, 150),
+  item('tree_archa', 'tree', 'Archa', 'Ель', 7_000, 150),
+  item('yard_sori', 'yard', "So'ri", 'Топчан', 8_000, 180),
+  item('yard_tok', 'yard', 'Tok (ishkom)', 'Виноградник', 10_000, 220),
+  item('yard_flowers', 'yard', 'Gulzor', 'Цветник', 5_000, 100),
+  item('water_pool', 'water', 'Hovuz', 'Бассейн', 45_000, 1000),
+  item('water_fountain', 'water', 'Kichik favvora', 'Фонтанчик', 35_000, 800),
+  item('car_van', 'car', 'Oq furgon', 'Белый фургон', 15_000, 350),
+  item('car_sedan', 'car', 'Sedan', 'Седан', 25_000, 600),
+  item('car_sport', 'car', 'Sport mashina', 'Спорткар', 70_000, 1800),
+  item('light_lamps', 'light', 'Hovli chiroqlari', 'Фонари', 8_000, 180),
+  item('light_luxe', 'light', 'Hashamatli yoritish', 'Роскошная подсветка', 30_000, 700),
+  item('pet_dog', 'pet', 'Kuchuk', 'Собака', 10_000, 220),
+  item('pet_cat', 'pet', 'Mushuk', 'Кошка', 8_000, 180),
+  item('special_peacock', 'special', 'Tovus (noyob)', 'Павлин (редкий)', 150_000, 4000, 10),
+  item('special_statue', 'special', 'Humo haykali (noyob)', 'Статуя Хумо (редкая)', 200_000, 5000, 10),
+  item('special_yurt', 'special', "Navro'z o'tovi (mavsumiy)", 'Юрта Навруза (сезон)', 60_000, 1500, 100),
+];
+export const decorById = (id: string): DecorItem | undefined => DECOR.find((d) => d.id === id);
+
+/** Pro-paket: ikki bezak bir joyni egallamaydi (tree/yard'dan tashqari). */
+const MULTI_SLOTS: readonly DecorSlot[] = ['tree', 'yard', 'light', 'special'];
+export const normalizeDecor = (ids: readonly string[]): string[] => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of [...ids].reverse()) {
+    const d = decorById(id);
+    if (!d || out.includes(id)) continue;
+    if (!MULTI_SLOTS.includes(d.slot)) {
+      if (seen.has(d.slot)) continue;
+      seen.add(d.slot);
+    }
+    out.unshift(id);
+  }
+  return out;
+};
+
+export const BADGES = {
+  asoschi: { uz: 'Shahar asoschisi', ru: 'Основатель города', icon: '🏛️' },
+  homiy: { uz: 'Homiy', ru: 'Спонсор', icon: '💎' },
+  investor: { uz: 'Investor', ru: 'Инвестор', icon: '📈' },
+  hokim: { uz: 'Shahar hokimi', ru: 'Хоким города', icon: '👑' },
+  rais: { uz: 'Mahalla raisi', ru: 'Председатель махалли', icon: '⭐' },
+} as const;
+export type BadgeId = keyof typeof BADGES;
+export type LabelKind = 'plain' | 'silver' | 'gold';
+
+export const AVATAR_OPTIONS = {
+  skin: ['#f1c9a5', '#e0ac7e', '#c58c5c', '#8d5a3a'],
+  hair: ['#1d1512', '#3b2417', '#6b4423', '#b8863b', '#8a8a8a'],
+  top: ['#1f6f8b', '#b5452f', '#3f7d4e', '#5a3e85', '#222831', '#e0b84f', '#f0f0f0'],
+  pants: ['#26303c', '#4a3b2f', '#6b7280', '#1c1c1c'],
+  hat: ['none', 'doppi', 'kepka'],
+  outfit: ['oddiy', 'chopon'],
+} as const;
+export interface AvatarLook {
+  readonly skin: string; readonly hair: string; readonly top: string; readonly pants: string;
+  readonly hat: string; readonly outfit: string;
+}
+export const DEFAULT_AVATAR: AvatarLook = { skin: '#e0ac7e', hair: '#1d1512', top: '#1f6f8b', pants: '#26303c', hat: 'doppi', outfit: 'oddiy' };
+
+export const sanitizeAvatar = (raw: unknown): AvatarLook => {
+  const src = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+  const choose = (key: keyof AvatarLook): string => {
+    const options: readonly string[] = AVATAR_OPTIONS[key];
+    const v = src[key];
+    return typeof v === 'string' && options.includes(v) ? v : DEFAULT_AVATAR[key];
+  };
+  return { skin: choose('skin'), hair: choose('hair'), top: choose('top'), pants: choose('pants'), hat: choose('hat'), outfit: choose('outfit') };
+};

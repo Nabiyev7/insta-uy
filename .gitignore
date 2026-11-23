@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.dev-data/
+coverage/
+video/out/
+*.blend1
+*.tsbuildinfo
+.wrangler/

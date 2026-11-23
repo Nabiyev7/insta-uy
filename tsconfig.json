@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "lib": ["ES2024", "ESNext.Collection", "DOM", "DOM.Iterable"], "module": "ESNext",
+    "moduleResolution": "Bundler", "strict": true, "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true, "noUnusedParameters": true, "jsx": "react-jsx",
+    "allowImportingTsExtensions": true, "noEmit": true, "resolveJsonModule": true,
+    "erasableSyntaxOnly": true, "isolatedModules": true, "skipLibCheck": true,
+    "types": ["node", "vite/client"]
+  },
+  "include": ["packages/*/src", "packages/*/scripts", "packages/*/test", "apps/*/src", "apps/*/test", "server", "video/src", "video/test", "supabase/test"],
+  "exclude": ["**/node_modules", "**/dist"]
+}
