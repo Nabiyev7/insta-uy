@@ -2,7 +2,7 @@
 import math
 import random
 
-from kit_core import (ASPHALT, BRICK, CARVED, CONCRETE, GLASS, GRASS, LEAF, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model)
+from kit_core import (BRICK, CARVED, CONCRETE, FACADE, GRASS, LEAF, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model)
 
 GOLD = '#d9a93f'
 IRON = '#2b2b2e'
@@ -194,12 +194,6 @@ def fountain(name, r, tiers):
     return m
 
 
-def wheel(m, x, y):
-    for s in (-1, 1):
-        m.poly_fan([(x + 0.33 * math.cos(a * math.pi / 4 * s), y + 0.02 * s, 0.33 + 0.33 * math.sin(a * math.pi / 4 * s)) for a in range(8)][::-1 if s > 0 else 1], PLAIN, '#1c1c1e', 0.0)
-    m.cbox(x, y, 0.06, 0.5, 0.2, 0.52, PLAIN, '#1c1c1e')
-
-
 def car(name, length, width, body_h, cab, color, roof_color=None):
     """Uzunasi -Y ga qaragan umumiy mashina (brendsiz)."""
     m = Model(name)
@@ -215,7 +209,7 @@ def car(name, length, width, body_h, cab, color, roof_color=None):
     m.poly(b, PLAIN, roof_color or color)
     for x in (-hw + 0.02, hw - 0.02):
         for y in (-hl * 0.62, hl * 0.62):
-            m.cyl_x(x, y) if hasattr(m, 'cyl_x') else m.box(x - 0.1, y - 0.3, 0.02, x + 0.1, y + 0.3, 0.6, PLAIN, '#1c1c1e')
+            m.box(x - 0.1, y - 0.3, 0.02, x + 0.1, y + 0.3, 0.6, PLAIN, '#1c1c1e')
     for x in (-hw + 0.3, hw - 0.3):
         m.panel([(x - 0.18, -hl - 0.02, 0.55), (x + 0.18, -hl - 0.02, 0.55), (x + 0.18, -hl - 0.02, 0.75), (x - 0.18, -hl - 0.02, 0.75)], PLAIN, '#fff4d0')
         m.panel([(x + 0.18, hl + 0.02, 0.55), (x - 0.18, hl + 0.02, 0.55), (x - 0.18, hl + 0.02, 0.75), (x + 0.18, hl + 0.02, 0.75)], PLAIN, '#c0202a')
@@ -375,7 +369,7 @@ def bozor_stall():
 def maktab():
     m = Model('maktab')
     m.box(-20, -7, 0, 20, 7, 0.8, BRICK)
-    m.box(-20, -7, 0.8, 20, 7, 7.2, 12, WHITE, M_WALL, top_layer=CONCRETE)
+    m.box(-20, -7, 0.8, 20, 7, 7.2, FACADE, WHITE, M_WALL, top_layer=CONCRETE)
     m.box(-20.4, -7.4, 7.2, 20.4, 7.4, 7.8, CONCRETE, '#e6dcc8', bottom=True)
     m.box(-4, -10, 4.2, 4, -7, 4.6, CONCRETE, '#e6dcc8', bottom=True)
     for x in (-3.5, -1.2, 1.2, 3.5):
@@ -422,6 +416,34 @@ def foundation():
     return m
 
 
+def stadium():
+    m = Model('stadium')
+    n = 24
+    for i in range(n):
+        a, b = 2 * math.pi * i / n, 2 * math.pi * (i + 1) / n
+        def at(t, r, z):
+            return (math.cos(t) * r * 1.35, math.sin(t) * r, z)
+        m.poly([at(a, 34, 0.5), at(b, 34, 0.5), at(b, 50, 12), at(a, 50, 12)], PLAIN, '#2f7f8c' if i % 2 else '#e9e3d6')
+        m.poly([at(b, 51, 0), at(a, 51, 0), at(a, 51, 13), at(b, 51, 13)][::-1], FACADE, '#e6dcc8')
+        m.poly([at(a, 44, 16), at(b, 44, 16), at(b, 53, 14), at(a, 53, 14)], CONCRETE, '#d8cbb5')
+        m.poly([at(b, 44, 15.8), at(a, 44, 15.8), at(a, 53, 13.8), at(b, 53, 13.8)], CONCRETE, '#b7ad9c')
+    m.poly([(-36, -24, 0.12), (36, -24, 0.12), (36, 24, 0.12), (-36, 24, 0.12)], GRASS, '#b9e08a')
+    return m
+
+
+def bridge():
+    """Ko'l ustidan piyodalar ko'prigi (Y bo'ylab 216 m)."""
+    m = Model('bridge')
+    m.box(-3.6, -108, 0.02, 3.6, 108, 0.1, STONE, '#e6dcc8')
+    for s in (-1, 1):
+        m.box(s * 3.6 - 0.15, -108, 0.1, s * 3.6 + 0.15, 108, 1.0, NAQSH)
+        for i in range(13):
+            y = -108 + i * 18
+            m.cyl(s * 3.6, y, 0, 3.4, 0.14, 0.1, 6, PLAIN, IRON, cap=False)
+            m.cyl(s * 3.6, y, 3.4, 3.9, 0.22, 0.3, 6, PLAIN, '#ffe9b0', M_GLOW)
+    return m
+
+
 def forsale():
     m = Model('forsale')
     m.cbox(0, 0, 0, 0.12, 0.12, 1.9, WOOD, '#7a5a38')
@@ -454,5 +476,5 @@ def all_props():
         car('car_sport', 4.4, 1.85, 0.72, (-0.7, 1.3, 1.18), '#c22a2a', '#151515'),
         lamp('street_lamp', 4.6), light_lamps(), light_luxe(), animal('pet_dog', '#b5854f'), animal('pet_cat', '#d09a5a', 0.6, True),
         peacock(), statue('special_statue'), hero_statue(), yurt(), bench(), billboard(), choyxona(), bozor_stall(), maktab(), crane(), barrier(),
-        foundation(), forsale(), pigeon(),
+        foundation(), forsale(), pigeon(), stadium(), bridge(),
     ]

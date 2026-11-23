@@ -1,5 +1,5 @@
 """Farg'ona vodiysi ruhidagi uylar. Old tomoni -Y (glTF: +Z). Barchasi <= 13.5 x 12.5 m — eng kichik uchastkaga sig'adi."""
-from kit_core import (BRICK, CARVED, CONCRETE, FACADE, GLASS, GRASS, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model)
+from kit_core import (BRICK, CARVED, CONCRETE, FACADE, GLASS, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model)
 
 TRIM = '#f3ead8'
 
@@ -171,7 +171,7 @@ def house5():
     return m
 
 
-def lod(src, name, x0, y0, x1, y1, h, roof_h, roof=True):
+def lod(name, x0, y0, x1, y1, h, roof_h, roof=True):
     """Uzoqdagi sodda shakl."""
     m = Model(name)
     m.box(x0, y0, 0, x1, y1, h, PLASTER, '#e9e2d4', M_WALL, top=not roof, top_layer=CONCRETE)
@@ -245,10 +245,10 @@ def shop():
 
 
 def all_houses():
-    grass_free = [house1(), house2(), house3(), house4(), house5()]
+    near = [house1(), house2(), house3(), house4(), house5()]
     lods = [
-        lod(None, 'house1_lod', -4, -2.6, 4, 3.4, 3, 1.9), lod(None, 'house2_lod', -5.5, -3, 5.5, 4.5, 3.3, 2.2),
-        lod(None, 'house3_lod', -6.4, -4, 6.4, 5, 3.6, 2.6), lod(None, 'house4_lod', -6.5, -4, 6.5, 5.4, 5.4, 2.2),
-        lod(None, 'house5_lod', -6.2, -4.5, 6.2, 5.6, 7, 2.6),
+        lod('house1_lod', -4, -2.6, 4, 3.4, 3, 1.9), lod('house2_lod', -5.5, -3, 5.5, 4.5, 3.3, 2.2),
+        lod('house3_lod', -6.4, -4, 6.4, 5, 3.6, 2.6), lod('house4_lod', -6.5, -4, 6.5, 5.4, 5.4, 2.2),
+        lod('house5_lod', -6.2, -4.5, 6.2, 5.6, 7, 2.6),
     ]
-    return grass_free + lods + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop()]
+    return near + lods + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop()]
