@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { DECOR, LAKE, TIERS, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
+import { DECOR, LAKE, MIN_TIER, TIERS, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
 import { buildingItem, commerceItem, houseItem, plotItems, staticItems, toWorld } from '../apps/web/src/logic/placement.ts';
 import { Ground } from '../apps/web/src/world/ground.ts';
 import { findBlender } from './find-blender.mjs';
@@ -16,19 +16,10 @@ const ALL_OPEN = { openDistricts: new Set(plan.districts.map((d) => d.id)) };
 const TEX = 256;
 const TEX_LAYERS = 16;
 
-/** Har daraja uchun namunaviy bezak to'plami. */
-const SETS = {
-  1: [],
-  2: ['fence_wood', 'gate_wood', 'path_stone', 'tree_anor', 'yard_sori'],
-  3: ['fence_brick', 'gate_carved', 'path_stone', 'tree_chinor', 'yard_tok', 'car_van', 'pet_dog'],
-  4: ['fence_brick', 'gate_carved', 'path_stone', 'tree_archa', 'water_pool', 'car_sedan', 'light_lamps', 'yard_flowers'],
-  5: ['fence_ornate', 'gate_gold', 'path_stone', 'tree_chinor', 'tree_archa', 'water_fountain', 'car_sport', 'light_luxe', 'special_peacock', 'special_statue'],
-};
-const state = (plot, tier, wall, roof, decor = SETS[tier]) => ({ plot, nick: null, tier, wall, roof, decor, label: 'plain', badge: null, status: 'owned', expanded: false });
-const hovliTier = (h) => (h < 0.5 ? 1 : h < 0.8 ? 2 : h < 0.95 ? 3 : 4);
+const state = (plot, tier, wall, roof, decor = []) => ({ plot, nick: null, tier, wall, roof, decor, label: 'plain', badge: null, status: 'owned', expanded: false });
 const demoState = (p) => {
   const h = (k) => hash01(`show${k}${p.id}`);
-  const tier = { qasr: 5, villa: 4 }[p.type] ?? hovliTier(h('t'));
+  const tier = { qasr: h('t') < 0.6 ? 9 : 10, villa: h('t') < 0.6 ? 7 : 8 }[p.type] ?? 1 + Math.floor(h('t') ** 1.5 * 7);
   return state(p.id, tier, Math.floor(h('w') * 8), Math.floor(h('r') * 6));
 };
 const pack = (i) => [i.model, ...[i.x, i.y, i.z, i.yaw, i.sx, i.sy, i.sz].map((v) => Number(v.toFixed(3))), i.wall, i.roof];
@@ -62,34 +53,33 @@ const region = (name, x, z, radius, camera, isLake = false) => {
   };
 };
 
-const SAMPLE = { 1: [16, 24, 'hovli'], 2: [16, 24, 'hovli'], 3: [16, 24, 'hovli'], 4: [20, 28, 'villa'], 5: [30, 42, 'qasr'] };
-const BIG = [['apt5', '6. 5 qavatli'], ['apt9', '7. 9 qavatli'], ['office', '8. Ofis minora'], ['office_low', '9. Ofis past'], ['shop', "10. Do'kon"], ['maktab', '11. Maktab'], ['choyxona', '12. Choyxona']];
+/** Uchastka o'lchami level bo'yicha: oddiy hovli, villa, qasr. */
+const sampleOf = (tier) => (tier >= MIN_TIER.qasr ? [30, 42, 'qasr'] : tier >= MIN_TIER.villa ? [20, 28, 'villa'] : [16, 24, 'hovli']);
+const BIG = [['apt5', 'K1. 5 qavatli'], ['apt9', 'K2. 9 qavatli'], ['office', 'K3. Ofis minora'], ['office_low', 'K4. Ofis past'], ['shop', "K5. Do'kon"], ['maktab', 'K6. Maktab'], ['choyxona', 'K7. Choyxona']];
 const plain = (model, x, z) => ({ model, x, y: 0, z, yaw: 0, sx: 1, sy: 1, sz: 1, wall: '#e8d9c0', roof: '#8a4b38' });
 
-const housesScene = () => {
+const PER_ROW = 6;
+const levelsScene = () => {
   const items = [];
   const labels = [];
   let x = 0;
-  for (const t of TIERS) {
-    const [w, d, type] = SAMPLE[t.id];
-    x += w / 2 + 5;
-    const p = { id: `S${t.id}`, x, z: -d / 2, w, d, rot: 0, type };
-    items.push(...plotItems(p, state(p.id, t.id, t.id - 1, t.id - 1), true));
-    labels.push([`${t.id}. ${t.uz}`, x, 0.1, 4, 0, 2]);
-    ['old', 'orqa'].forEach((side, i) => {
-      const z = -78 - i * 40;
-      const bare = houseItem({ ...p, z }, state(p.id, t.id, (t.id + 3 + i) % 8, (t.id + 2 + i) % 6, []), false);
-      items.push({ ...bare, yaw: i * Math.PI, z });
-      labels.push([`${t.id}-uy (${side})`, x, 0.1, z + 9, 0, 1.6]);
-    });
+  TIERS.forEach((t, i) => {
+    const isBack = i >= PER_ROW;
+    if (i === PER_ROW) x = -4;
+    const [w, d, type] = sampleOf(t.id);
+    const z = isBack ? -50 : 0;
+    x += w / 2 + 3;
+    const p = { id: `S${t.id}`, x, z: z - d / 2, w, d, rot: 0, type };
+    items.push(...plotItems(p, state(p.id, t.id, [3, 0, 1, 6, 0, 3, 4, 3, 0, 3][i], [0, 4, 1, 3, 0, 2, 2, 3, 0, 0][i]), true));
+    labels.push([`LEVEL ${t.id}`, x, 0.1, z + 4.2, 0, 2.6], [t.uz, x, 0.1, z + 7, 0, 1.5]);
     x += w / 2;
-  }
-  BIG.forEach(([model, label], i) => {
-    const bx = -80 + i * 48;
-    items.push(plain(model, bx, -190));
-    labels.push([label, bx, 0.1, -171, 0, 4]);
   });
-  return { name: '1 Uylar', items: items.map(pack), labels, floor: [70, -60, 300], camera: [[66, 66, 104], [68, 0, -38]] };
+  return { name: '1 Levellar', items: items.map(pack), labels, floor: [60, -40, 300], camera: [[58, 64, 78], [58, 0, -22]] };
+};
+const buildingsScene = () => {
+  const items = BIG.map(([model], i) => plain(model, i * 48, 0));
+  const labels = BIG.map(([, label], i) => [label, i * 48, 0.1, 18, 0, 4]);
+  return { name: '3 Binolar', items: items.map(pack), labels, floor: [144, 0, 300], camera: [[144, 90, 230], [144, 10, 0]] };
 };
 
 const EXTRA = [
@@ -113,16 +103,17 @@ const decorScene = () => {
   return { name: '2 Bezaklar', items: items.map(pack), labels, floor: [40, -80, 330], camera: [[42, 48, 96], [42, 0, 10]] };
 };
 
+const LEVEL_RANGE = { mahalla: 'Level 1 dan', kol: 'Level 7 dan', tepalik: 'Level 1 dan / qasr 9 dan', kopqavatli: 'kvartiralar' };
 const mapScene = () => ({
-  name: '6 Butun xarita', ground: groundOf(0, 0, 999), isLake: true, clip: [0, 0, 1100], lift: 0.4, camera: [[0, 1750, 1500], [0, 0, 130]],
+  name: '7 Butun xarita', ground: groundOf(0, 0, 999), isLake: true, clip: [0, 0, 1100], lift: 0.4, camera: [[0, 2700, 1500], [0, 0, 150]],
   items: [
     ...plan.plots.filter((p) => p.type !== 'kvartira').map((p) => houseItem(p, demoState(p), true)),
     ...plan.buildings.map((b) => buildingItem(b, true)), ...plan.commerce.filter((c) => c.type !== 'bilbord').map(commerceItem),
     ...statics.filter((i) => ['tree_chinor', 'tree_terak'].includes(i.model)).map((i) => ({ ...i, model: `${i.model}_lod` })),
   ].map(pack),
   labels: [
-    ...plan.districts.map(({ id, nameUz, rect: [a, b, c, d] }) => [`${id}. ${nameUz}`, (a + c) / 2, 60, (b + d) / 2, 0, 46]),
-    ['MAYDON', 0, 50, 0, 0, 40],
+    ...plan.districts.flatMap(({ id, zone, nameUz, rect: [a, b, c, d] }) => [[`${id}. ${nameUz}`, (a + c) / 2, 60, (b + d) / 2, 0, 46], [LEVEL_RANGE[zone], (a + c) / 2, 60, (b + d) / 2 + 60, 0, 34]]),
+    ['MAYDON', 0, 50, 0, 0, 40], ['Park va stadion joyi', -750, 60, -750, 0, 40], ['Biznes', -250, 60, 750, 0, 46],
   ],
 });
 
@@ -130,10 +121,10 @@ const dir = mkdtempSync(path.join(tmpdir(), 'shahar-show-'));
 const strip = await sharp(path.join(root, 'apps/web/public/assets/tex.webp')).png().toBuffer();
 for (let i = 0; i < TEX_LAYERS; i++) await sharp(strip).extract({ left: 0, top: i * TEX, width: TEX, height: TEX }).toFile(path.join(dir, `t${i}.png`));
 const scenes = [
-  housesScene(), decorScene(),
-  region('3 Markaz', 0, 0, 230, [[-150, 120, 250], [-10, 0, 10]]),
-  region("4 Ko'l bo'yi", 330, 630, 150, [[200, 70, 480], [370, 0, 680]], true),
-  region('5 Tepalik', 770, -770, 160, [[640, 130, -540], [770, 18, -770]]),
+  levelsScene(), decorScene(), buildingsScene(),
+  region('4 Markaz', 0, 0, 230, [[-150, 120, 250], [-10, 0, 10]]),
+  region("5 Ko'l bo'yi", 330, 630, 150, [[200, 70, 480], [370, 0, 680]], true),
+  region('6 Tepalik', 770, -770, 160, [[640, 130, -540], [770, 18, -770]]),
   mapScene(),
 ];
 writeFileSync(path.join(dir, 'show.json'), JSON.stringify({ lake: LAKE, scenes }));
@@ -146,4 +137,6 @@ const log = execFileSync(findBlender(), ['-b', '--factory-startup', '-P', path.j
 process.stdout.write(`${log.split('\n').filter((l) => /^SHOW|Error|Traceback|File "/.test(l)).join('\n')}\n`);
 if (shouldRender) process.stdout.write(`Rasmlar: ${dir}\n`);
 else rmSync(dir, { recursive: true });
-if (process.argv.includes('--open')) spawn(findBlender(), [out], { detached: true, stdio: 'ignore' }).unref();
+const open = process.argv.find((a) => a.startsWith('--open'));
+// --open yoki --open="7 Butun xarita"
+if (open) spawn(findBlender(), [out, ...(open.includes('=') ? ['-S', open.split('=')[1]] : [])], { detached: true, stdio: 'ignore' }).unref();

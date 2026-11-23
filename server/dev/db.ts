@@ -4,6 +4,8 @@ import { PGlite } from '@electric-sql/pglite';
 
 const MIGRATIONS = new URL('../../supabase/migrations/', import.meta.url);
 
+const LEGACY_LAST = '0008_providers.sql';
+
 const SUPABASE_STUB = `
   create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
   grant usage on schema public to anon, authenticated, service_role;
@@ -19,9 +21,16 @@ export const openDb = async (dataDir?: string): Promise<PGlite> => {
   const db = new PGlite(dataDir);
   await db.waitReady;
   const { rows } = await db.query<{ n: number }>("select count(*)::int as n from pg_namespace where nspname = 'auth'");
-  if (rows[0]?.n) return db;
-  await db.exec(SUPABASE_STUB);
+  const isNew = !rows[0]?.n;
+  if (isNew) await db.exec(SUPABASE_STUB);
+  await db.exec('create table if not exists auth.dev_migrations (name text primary key)');
+  const done = new Set((await db.query<{ name: string }>('select name from auth.dev_migrations')).rows.map((r) => r.name));
+  // Hisob yuritilmasdan oldin yaratilgan baza: 0008 gacha hammasi qo'llangan.
+  const isLegacy = !isNew && done.size === 0;
   for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort()) {
+    if (done.has(file)) continue;
+    await db.query('insert into auth.dev_migrations (name) values ($1)', [file]);
+    if (isLegacy && file <= LEGACY_LAST) continue;
     try {
       await db.exec(readFileSync(new URL(file, MIGRATIONS), 'utf8'));
     } catch (error: unknown) {

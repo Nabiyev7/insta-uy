@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { parseInstagram } from '../../../../packages/shared/src/index.ts';
-import { AVATAR_OPTIONS, DECOR, ROOF_COLORS, TIERS, WALL_COLORS, normalizeDecor, parseBio, sanitizeAvatar, type AvatarLook, type TierId } from '../../../../packages/shared/src/index.ts';
+import { AVATAR_OPTIONS, DECOR, MAX_TIER, ROOF_COLORS, TIERS, WALL_COLORS, normalizeDecor, parseBio, sanitizeAvatar, type AvatarLook, type TierId } from '../../../../packages/shared/src/index.ts';
 import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareImage, storyImage } from '../app/actions.ts';
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { hasKey, money, useT } from '../app/i18n.ts';
@@ -78,9 +78,9 @@ function Upgrades({ plot }: PlotProps): React.JSX.Element {
   const name = (id: number): string => TIERS.find((x) => x.id === id)?.[lang] ?? '';
   const next = (plot.tier + 1) as TierId;
   return (
-    <Section title={`${t('tier')}: ${name(plot.tier)}`}>
-      {plot.tier < 5 && coins && plot.tier < coins.maxTier && setting('coins_enabled', true) && <button type="button" className="btn" disabled={isBusy} onClick={() => run(async () => { await rpc('my_tier_coins', { p_plot: plot.plot }); await refresh(); }, t('saved'))}>⬆ {name(next)} · 💰 {coins.tierBase * plot.tier}</button>}
-      {plot.tier < 5 && isPaid && prices && <button type="button" className="btn clay" disabled={isBusy} onClick={() => run(() => createOrder('tier', { plot: plot.plot, tier: next }))}>⬆ {name(next)} · {money(prices.tierUp[next] ?? 0)} {t('som')}</button>}
+    <Section title={`${t('tier')} ${plot.tier}/${MAX_TIER}: ${name(plot.tier)}`}>
+      {plot.tier < MAX_TIER && coins && plot.tier < coins.maxTier && setting('coins_enabled', true) && <button type="button" className="btn" disabled={isBusy} onClick={() => run(async () => { await rpc('my_tier_coins', { p_plot: plot.plot }); await refresh(); }, t('saved'))}>⬆ {next}. {name(next)} · 💰 {coins.tierBase * plot.tier}</button>}
+      {plot.tier < MAX_TIER && isPaid && prices && <button type="button" className="btn clay" disabled={isBusy} onClick={() => run(() => createOrder('tier', { plot: plot.plot, tier: next }))}>⬆ {next}. {name(next)} · {money(prices.tierUp[next] ?? 0)} {t('som')}</button>}
       {isPaid && prices && plot.label !== 'gold' && <div className="row">{(['silver', 'gold'] as const).filter((l) => l !== plot.label).map((l) => <button type="button" key={l} className="btn small soft" disabled={isBusy} onClick={() => run(() => createOrder('label', { plot: plot.plot, label: l }))}>{t('label')}: {t(l)} · {money(prices.label[l] ?? 0)}</button>)}</div>}
       {isPaid && prices && plot.expansion && !plot.has_expansion && <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(() => createOrder('expansion', { plot: plot.plot }))}>{t('expand')} · {money(prices.expansion)}</button>}
       {!isPaid && <p className="muted">{t('paidSoon')}</p>}

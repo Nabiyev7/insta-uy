@@ -104,7 +104,7 @@ export function PlotPanel({ id }: IdProps): React.JSX.Element | null {
         <p className="nick">@{data.instagram}</p>
         <div className="row">
           {data.badges.filter((b): b is BadgeId => b in BADGES).map((b) => <span className="tag gold" key={b}>{BADGES[b].icon} {BADGES[b][lang]}</span>)}
-          {tier && plot.type !== 'kvartira' && <span className="tag">{tier[lang]}</span>}
+          {tier && plot.type !== 'kvartira' && <span className="tag">★ {tier.id} · {tier[lang]}</span>}
         </div>
         {data.bio && <p className="quote">{data.bio}</p>}
         <a className="btn" href={instagramUrl(data.instagram)} target="_blank" rel="noopener noreferrer">{t('visitIg')}</a>

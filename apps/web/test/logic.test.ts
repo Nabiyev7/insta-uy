@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
-import { DECOR, decodePlan, footprint, inLake, type EncodedPlan } from '../../../packages/shared/src/index.ts';
+import { DECOR, MAX_TIER, MIN_TIER, TIERS, decodePlan, yardDecor, footprint, inLake, type EncodedPlan } from '../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../src/logic/atmosphere.ts';
 import { frameAt } from '../src/logic/cameraPath.ts';
 import { cameraDistance, lerpAngle, movePlayer, pickNearest, rayBox } from '../src/logic/motion.ts';
@@ -17,7 +17,7 @@ const plotOf = (type: string): (typeof plan.plots)[number] => plan.plots.find((p
 describe('joylashtirish', () => {
   test.each(['hovli', 'villa', 'qasr'])('%s: har darajadagi uy o‘z uchastkasidan chiqmaydi', (type) => {
     for (const p of plan.plots.filter((q) => q.type === type).slice(0, 40)) {
-      for (const tier of [1, 2, 3, 4, 5]) {
+      for (const { id: tier } of TIERS) {
         const s = houseSolid(p, state({ tier }))!;
         const f = footprint(p);
         expect(Math.abs(s.x - f.x) + s.hx).toBeLessThanOrEqual(f.hx + 0.01);
@@ -38,9 +38,10 @@ describe('joylashtirish', () => {
     }
   });
   test('bezak panjara/darvoza oddiysini almashtiradi', () => {
-    const models = plotItems(plotOf('hovli'), state({ decor: ['fence_brick', 'gate_gold', 'yoq'] }), true).map((i) => i.model);
-    expect(models).toEqual(['house2', 'fence_brick', 'gate_gold']);
-    expect(plotItems(plotOf('hovli'), state(), true).map((i) => i.model)).toEqual(['house2', 'fence_basic', 'gate_basic']);
+    const models = plotItems(plotOf('hovli'), state({ tier: 1, decor: ['fence_brick', 'gate_gold', 'yoq'] }), true).map((i) => i.model);
+    expect(models).toEqual(['house1', 'fence_brick', 'gate_gold']);
+    expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_wood', 'gate_wood', 'path_stone', 'tree_anor']);
+    expect(plotItems(plotOf('hovli'), state({ tier: 1 }), true).map((i) => i.model)).toEqual(['house1', 'fence_basic', 'gate_basic']);
   });
   test('bo‘sh, yopiq va kvartira', () => {
     expect(plotItems(plotOf('hovli'), undefined, true)[0]!.model).toBe('forsale');
@@ -53,8 +54,27 @@ describe('joylashtirish', () => {
   test('hashamat tunda yonadi, bo‘yiga o‘smaydi', () => {
     const p = plotOf('hovli');
     expect(houseItem(p, state({ tier: 1 }), false).glow).toBe(0);
-    expect(houseItem(p, state({ tier: 5, decor: ['light_luxe'] }), false).glow).toBe(1);
-    expect(houseItem(p, state({ tier: 5 }), true)).toMatchObject({ model: 'house5_lod', sy: 1 });
+    expect(houseItem(p, state({ tier: MAX_TIER, decor: ['light_luxe'] }), false).glow).toBe(1);
+    expect(houseItem(p, state({ tier: MAX_TIER }), true)).toMatchObject({ model: 'house5_lod', sy: 1 });
+    expect(houseItem(p, state({ tier: 1 }), true).model).toBe('house1_lod');
+  });
+  test('10 level: har biri oldingisidan kuchli', () => {
+    const p = plotOf('hovli');
+    expect(TIERS.map((t) => t.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(MIN_TIER).toEqual({ hovli: 1, kvartira: 1, villa: 7, qasr: 9 });
+    expect(new Set(TIERS.map((t) => houseItem(p, state({ tier: t.id }), false).model)).size).toBe(MAX_TIER);
+    for (const { id } of TIERS.slice(1)) {
+      const glow = (tier: number): number => houseItem(p, state({ tier }), false).glow;
+      expect(glow(id)).toBeGreaterThanOrEqual(glow(id - 1));
+      expect(yardDecor(id, []).length).toBeGreaterThanOrEqual(yardDecor(id - 1, []).length);
+    }
+    expect(plotItems(p, state({ tier: 10 }), true).map((i) => i.model)).toEqual(expect.arrayContaining(['house10', 'fence_ornate', 'gate_gold']));
+  });
+  test('egasi olgan bezak level bezagidan ustun', () => {
+    expect(yardDecor(10, ['fence_wood', 'light_luxe'])).toEqual(expect.arrayContaining(['fence_wood', 'gate_gold']));
+    expect(yardDecor(10, ['fence_wood'])).not.toContain('fence_ornate');
+    expect(yardDecor(10, ['light_luxe']).filter((d) => d === 'light_luxe')).toHaveLength(1);
+    expect(yardDecor(99, ['tree_anor'])).toEqual(['tree_anor']);
   });
   test('burish: fasad +z dan rot bo‘yicha', () => {
     expect(toWorld({ x: 0, z: 0, rot: 0 }, 0, 5)[1]).toBeCloseTo(5);

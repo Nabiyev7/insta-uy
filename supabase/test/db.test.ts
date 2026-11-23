@@ -145,6 +145,7 @@ describe('uy bezash va sovg‘a', () => {
     await as(uid, 'my_buy_decor_coins', { p_id: 'gate_carved' });
     await expect(as(uid, 'my_set_decor', { p_plot: plot, p_decor: ['gate_wood', 'gate_carved'] })).rejects.toThrow('slot_taken');
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_statue' })).rejects.toThrow('not_enough_coins');
+    expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(100);
     expect(await as(uid, 'my_tier_coins', { p_plot: plot }).catch((e: Error) => e.message)).toBe('not_enough_coins');
   });
 
@@ -212,7 +213,9 @@ describe('buyurtma va to‘lov', () => {
       const o = (await as(uid, 'my_order', { p_kind: kind, p_payload: payload })) as { id: string };
       return as(a, 'admin_order', { p_id: o.id, p_action: 'paid' });
     };
-    expect(await as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 3 } })).toBe(75000);
+    expect(await as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 3 } })).toBe(40000);
+    await expect(as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 11 } })).rejects.toThrow('bad_format');
+    expect(await as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 10 } })).toBe(890000);
     expect(await pay('tier', { plot, tier: 3 })).toBe('paid');
     await expect(as(uid, 'my_order', { p_kind: 'tier', p_payload: { plot, tier: 2 } })).rejects.toThrow('bad_format');
     expect(await pay('label', { plot, label: 'gold' })).toBe('paid');

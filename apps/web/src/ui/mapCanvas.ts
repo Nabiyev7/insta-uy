@@ -8,7 +8,7 @@ const SPAN = (CITY_HALF + 50) * 2;
 export const toMap = (v: number): number => ((v + SPAN / 2) / SPAN) * MAP_SIZE;
 export const fromMap = (v: number): number => (v / MAP_SIZE) * SPAN - SPAN / 2;
 
-const TIER_COLORS = ['#a9763f', '#a9763f', '#b5632f', '#b5452f', '#8f3fa0', '#d39b1f'];
+const TIER_COLORS = ['#a9763f', '#a9763f', '#ad6d38', '#b5632f', '#b5562f', '#b5452f', '#a2394a', '#8f3fa0', '#7a35b0', '#d39b1f', '#f0b90b'];
 let cache: { key: unknown; canvas: HTMLCanvasElement } | null = null;
 
 const paint = (): HTMLCanvasElement => {

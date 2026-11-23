@@ -59,7 +59,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 ### v2 — +4–6 hafta
 - Pullik uylar va uchastkalar (joy qiymati: markaz, ko'l bo'yi, tepalik qimmat)
 - To'lov tizimi (§8)
-- Uy darajalari: kichik uy → hovli → katta hovli → villa → qasr
+- Uy levellari (10 ta, har biri oldingisidan kuchli): 1 kichik uy → 2 ayvonli uy → 3 hovli → 4 naqshli hovli → 5 katta hovli → 6 boy hovli → 7 villa → 8 hashamatli villa → 9 qasr → 10 shoh saroyi. Level bilan panjara, darvoza, bog' va tungi yoritish ham kuchayadi; villa uchastkasi 7 dan, qasr 9 dan boshlanadi; tangaga 5 gacha
 - Bezaklar: bog', daraxt, hovuz, so'ri, darvoza, panjara, yo'lak, mashina/garaj, tungi yoritish, uy hayvoni
 - Nik yorlig'i: oddiy / kumush / oltin; nishonlar ("Shahar asoschisi", "Homiy", "Investor")
 - Qo'shni bo'sh uchastkani olib hovlini kengaytirish (faqat oldindan belgilangan joylarda)
@@ -241,6 +241,7 @@ obunachilar-shahri/
 - [x] v1 kodi (lokal sinovdan o'tgan)
 - [x] v2 kodi (lokal sinovdan o'tgan; to'lov sukut bo'yicha o'chiq)
 - [x] v3 kodi (lokal sinovdan o'tgan; saylov sukut bo'yicha o'chiq)
+- [x] 10 level tizimi (2026-11-23): modellar `blender/scripts/kit_levels.py`, baza `0009_levels.sql`, ko'rish `npm run showcase`
 - [ ] Internetga chiqarish (Supabase, Cloudflare, Telegram bot akkauntlari kerak)
 - [ ] Haqiqiy xizmatlar bilan sinash: Telegram bot, Payme/Click sandbox, bank xabari, ElevenLabs, Meta API, Turnstile, Sentry
 - [ ] Beta 20–50 kishi (§13), qoidalar matnini huquqshunos ko'rishi (§10), §14 qarorlari

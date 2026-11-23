@@ -1,16 +1,22 @@
 import type { Plot, PlotType } from './types.ts';
 
-/** Uy darajalari: bo'yiga emas, hashamatga o'sadi (PLAN.md §1). */
+/** Uy levellari: bo'yiga emas, hashamatga o'sadi (PLAN.md §1). Har level oldingisidan kuchli. */
 export const TIERS = [
   { id: 1, key: 'kichik', uz: 'Kichik uy', ru: 'Маленький дом' },
-  { id: 2, key: 'hovli', uz: 'Hovli', ru: 'Двор' },
-  { id: 3, key: 'katta', uz: 'Katta hovli', ru: 'Большой двор' },
-  { id: 4, key: 'villa', uz: 'Villa', ru: 'Вилла' },
-  { id: 5, key: 'qasr', uz: 'Qasr', ru: 'Дворец' },
+  { id: 2, key: 'ayvonli', uz: 'Ayvonli uy', ru: 'Дом с айваном' },
+  { id: 3, key: 'hovli', uz: 'Hovli', ru: 'Двор' },
+  { id: 4, key: 'naqshli', uz: 'Naqshli hovli', ru: 'Расписной двор' },
+  { id: 5, key: 'katta', uz: 'Katta hovli', ru: 'Большой двор' },
+  { id: 6, key: 'boy', uz: 'Boy hovli', ru: 'Богатый двор' },
+  { id: 7, key: 'villa', uz: 'Villa', ru: 'Вилла' },
+  { id: 8, key: 'lux_villa', uz: 'Hashamatli villa', ru: 'Роскошная вилла' },
+  { id: 9, key: 'qasr', uz: 'Qasr', ru: 'Дворец' },
+  { id: 10, key: 'saroy', uz: 'Shoh saroyi', ru: 'Царский дворец' },
 ] as const;
 export type TierId = (typeof TIERS)[number]['id'];
+export const MAX_TIER = TIERS.length;
 
-export const MIN_TIER: Readonly<Record<PlotType, TierId>> = { hovli: 1, kvartira: 1, villa: 4, qasr: 5 };
+export const MIN_TIER: Readonly<Record<PlotType, TierId>> = { hovli: 1, kvartira: 1, villa: 7, qasr: 9 };
 /** Bepul olinadigan turlar. */
 export const FREE_TYPES: readonly PlotType[] = ['hovli', 'kvartira'];
 export const isFreeType = (t: PlotType): boolean => FREE_TYPES.includes(t);
@@ -19,7 +25,7 @@ export const canUpgrade = (t: PlotType): boolean => t !== 'kvartira';
 /** Boshlang'ich narxlar (so'm). Amaldagi qiymatlar bazadagi `settings`da — admin o'zgartiradi. */
 export const DEFAULT_PRICES = {
   base: { hovli: 30_000, kvartira: 20_000, villa: 150_000, qasr: 400_000 } satisfies Record<PlotType, number>,
-  tierUp: { 2: 25_000, 3: 50_000, 4: 120_000, 5: 300_000 } as Readonly<Record<number, number>>,
+  tierUp: { 2: 15_000, 3: 25_000, 4: 30_000, 5: 40_000, 6: 60_000, 7: 90_000, 8: 130_000, 9: 200_000, 10: 300_000 } as Readonly<Record<number, number>>,
   expansion: 80_000,
   streetName: 200_000,
   label: { silver: 15_000, gold: 40_000 },
@@ -93,6 +99,24 @@ export const normalizeDecor = (ids: readonly string[]): string[] => {
   }
   return out;
 };
+
+/** Level bilan birga keladigan hovli: indeks = level. Egasi o'zi olgan bezak shu joydagisini almashtiradi. */
+const GARDEN = ['path_stone', 'tree_anor'] as const;
+const RICH_GARDEN = [...GARDEN, 'yard_flowers', 'yard_sori', 'light_lamps', 'tree_chinor'] as const;
+const LEVEL_YARD: readonly (readonly string[])[] = [
+  [],
+  [],
+  [...GARDEN],
+  ['fence_wood', 'gate_wood', ...GARDEN],
+  ['fence_wood', 'gate_wood', ...GARDEN, 'yard_flowers', 'yard_sori'],
+  ['fence_brick', 'gate_carved', ...GARDEN, 'yard_flowers', 'yard_sori'],
+  ['fence_brick', 'gate_carved', ...RICH_GARDEN],
+  ['fence_brick', 'gate_carved', ...RICH_GARDEN, 'tree_archa'],
+  ['fence_brick', 'gate_carved', ...RICH_GARDEN, 'tree_archa', 'light_luxe'],
+  ['fence_ornate', 'gate_gold', ...RICH_GARDEN, 'tree_archa', 'light_luxe'],
+  ['fence_ornate', 'gate_gold', ...RICH_GARDEN, 'tree_archa', 'light_luxe', 'water_fountain'],
+];
+export const yardDecor = (tier: number, decor: readonly string[]): string[] => normalizeDecor([...(LEVEL_YARD[tier] ?? []), ...decor]);
 
 export const BADGES = {
   asoschi: { uz: 'Shahar asoschisi', ru: 'Основатель города', icon: '🏛️' },

@@ -1,10 +1,10 @@
 /** Lokal sinov uchun soxta aholi. Niklar aniq "demo_" bilan boshlanadi. */
 import type { PGlite } from '@electric-sql/pglite';
-import { DECOR, decodePlan, hash01, type EncodedPlan } from '../../packages/shared/src/index.ts';
+import { DECOR, MAX_TIER, decodePlan, hash01, type EncodedPlan } from '../../packages/shared/src/index.ts';
 import { readFileSync } from 'node:fs';
 
 const pickDecor = (id: string, tier: number): string[] => {
-  const wanted = DECOR.filter((d) => d.stock === null && hash01(`${id}:${d.id}`) < 0.06 + tier * 0.11);
+  const wanted = DECOR.filter((d) => d.stock === null && hash01(`${id}:${d.id}`) < 0.06 + tier * 0.055);
   const bySlot = new Map(wanted.map((d) => [['tree', 'yard', 'light'].includes(d.slot) ? d.id : d.slot, d.id]));
   return [...bySlot.values()];
 };
@@ -18,8 +18,8 @@ export const seedDemo = async (db: PGlite, share = 0.55): Promise<number> => {
   let n = 0;
   for (const p of plan.plots.filter((q) => q.districtId <= 2 && hash01(`own:${q.id}`) < share)) {
     const h = hash01(p.id);
-    const tier = h > 0.95 ? 5 : h > 0.86 ? 4 : h > 0.62 ? 3 : h > 0.3 ? 2 : 1;
-    const label = tier === 5 ? 'gold' : tier === 4 ? 'silver' : 'plain';
+    const tier = 1 + Math.floor(h ** 1.7 * MAX_TIER);
+    const label = tier >= 9 ? 'gold' : tier >= 7 ? 'silver' : 'plain';
     await db.query("insert into plot_state (plot_id, status, owner, instagram, bio, tier, wall, roof, decor, label) values ($1, 'owned', $2, $3, 'Demo aholi', $4, $5, $6, $7, $8)",
       [p.id, uid, `demo_${p.id.slice(1)}`, tier, Math.floor(hash01(`w${p.id}`) * 8), Math.floor(hash01(`r${p.id}`) * 6), pickDecor(p.id, tier), label]);
     n++;

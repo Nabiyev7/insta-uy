@@ -26,8 +26,8 @@ def ayvon(m, x0, x1, y0, y1, h, cols):
     m.box(x0, y0 + 0.12, h, x1, y0 + 0.45, h + 0.3, CARVED, WHITE, bottom=True)
 
 
-def house1():
-    m = Model('house1')
+def house1(name):
+    m = Model(name)
     walls(m, -4, -2.6, 4, 3.4, 3.0)
     ayvon(m, -4, 0.6, -4.4, -2.6, 2.7, 3)
     m.door(-2.4, -2.6)
@@ -42,8 +42,8 @@ def house1():
     return m
 
 
-def house2():
-    m = Model('house2')
+def house2(name):
+    m = Model(name)
     walls(m, -5.5, -1.5, 5.5, 4.5, 3.2)
     walls(m, 1.8, -5, 5.5, -1.5, 3.2)
     ayvon(m, -5.5, 1.8, -3.6, -1.5, 2.9, 4)
@@ -64,8 +64,8 @@ def house2():
     return m
 
 
-def house3():
-    m = Model('house3')
+def house3(name):
+    m = Model(name)
     walls(m, -6.4, -1.4, 6.4, 5, 3.5)
     for s in (-1, 1):
         x0, x1 = sorted((s * 6.4, s * 2.9))
@@ -91,8 +91,8 @@ def house3():
     return m
 
 
-def house4():
-    m = Model('house4')
+def house4(name):
+    m = Model(name)
     walls(m, -6.5, -3, 3, 5.4, 3.4, STONE)
     walls(m, 3, -5, 6.5, 5.4, 3.4, STONE)
     m.box(-4.5, -2, 3.4, 5, 5, 6.4, PLASTER, WHITE, M_WALL, top=False)
@@ -124,8 +124,8 @@ def house4():
     return m
 
 
-def house5():
-    m = Model('house5')
+def house5(name):
+    m = Model(name)
     gold = '#d9a93f'
     m.box(-6.9, -6, 0, 6.9, 6, 0.6, STONE, '#e6dcc8')
     m.box(-6.2, -3.6, 0.6, 6.2, 5.6, 6.6, PLASTER, WHITE, M_WALL, top=False)
@@ -244,11 +244,11 @@ def shop():
     return m
 
 
-def all_houses():
-    near = [house1(), house2(), house3(), house4(), house5()]
+def all_buildings():
+    """Uzoq ko'rinishlar (har ikki levelga bitta) va ko'p qavatli binolar."""
     lods = [
         lod('house1_lod', -4, -2.6, 4, 3.4, 3, 1.9), lod('house2_lod', -5.5, -3, 5.5, 4.5, 3.3, 2.2),
         lod('house3_lod', -6.4, -4, 6.4, 5, 3.6, 2.6), lod('house4_lod', -6.5, -4, 6.5, 5.4, 5.4, 2.2),
         lod('house5_lod', -6.2, -4.5, 6.2, 5.6, 7, 2.6),
     ]
-    return near + lods + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop()]
+    return lods + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop()]

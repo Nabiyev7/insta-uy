@@ -225,5 +225,5 @@ const pushStatic = (out: Item[], it: Item, d: number, near: number, far: number,
 const labelOf = (p: Plot, s: HouseState): LabelInfo => {
   const [x, z] = toWorld(p, 0, p.d / 2 - 1);
   const size = p.type === 'qasr' ? 1.5 : p.type === 'villa' ? 1.2 : 1;
-  return { key: p.id, text: `@${s.nick}`, kind: s.label, badge: s.badge, x, y: padHeight(p) + 4.7 * size, z, size };
+  return { key: p.id, text: `@${s.nick} · ${s.tier}★`, kind: s.label, badge: s.badge, x, y: padHeight(p) + 4.7 * size, z, size };
 };

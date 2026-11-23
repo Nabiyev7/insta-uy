@@ -1,6 +1,6 @@
 /** Qaysi model qayerda turadi. Faqat hisob — Three.js yo'q. */
 import {
-  DECOR, HILL, PLAZA_HALF, inPlaza, WALL_COLORS, ROOF_COLORS, decorById, hash01, inLake, padHeight, terrainHeight,
+  DECOR, HILL, PLAZA_HALF, inPlaza, yardDecor, WALL_COLORS, ROOF_COLORS, decorById, hash01, inLake, padHeight, terrainHeight,
   type Building, type Commerce, type DecorSlot, type Expansion, type MasterPlan, type Plot, type Rot,
 } from '../../../../packages/shared/src/index.ts';
 
@@ -75,12 +75,16 @@ const decorItem = (p: Plot, id: string, y: number): Item | null => {
   return item(id, x, z, { ...base, sx: grow, sy: grow, sz: grow * (id === 'path_stone' ? fz : 1) });
 };
 
-const houseGlow = (s: HouseState): number => (s.tier >= 5 ? 0.8 : s.tier === 4 ? 0.45 : 0) + (s.decor.includes('light_luxe') ? 0.35 : 0);
+/** Tungi yoritish: indeks = level. */
+const LEVEL_GLOW = [0, 0, 0, 0.05, 0.1, 0.18, 0.28, 0.4, 0.55, 0.7, 0.85] as const;
+const houseGlow = (s: HouseState): number => (LEVEL_GLOW[s.tier] ?? 0) + (s.decor.includes('light_luxe') ? 0.3 : 0);
+/** Uzoqdan ikki qo'shni level bir xil sodda shaklda. */
+const lodOf = (tier: number): string => `house${Math.ceil(tier / 2)}_lod`;
 
 export const houseItem = (p: Plot, s: HouseState, isFar: boolean): Item => {
   const { scale, back } = HOUSE[p.type];
   const [x, z] = toWorld(p, 0, -back);
-  return item(`house${s.tier}${isFar ? '_lod' : ''}`, x, z, {
+  return item(isFar ? lodOf(s.tier) : `house${s.tier}`, x, z, {
     y: padHeight(p), yaw: yawOf(p.rot), sx: scale, sy: 1 + (scale - 1) * 0.6, sz: scale,
     wall: WALL_COLORS[s.wall] ?? WALL_COLORS[0], roof: ROOF_COLORS[s.roof] ?? ROOF_COLORS[0], glow: Math.min(1, houseGlow(s)), seed: hash01(p.id),
   });
@@ -97,13 +101,14 @@ export const plotItems = (p: Plot, s: HouseState | undefined, isOpen: boolean): 
     return [item('forsale', x, z, { y, yaw })];
   }
   const fx = p.w / 16;
-  const has = (slot: DecorSlot): boolean => s.decor.some((id) => decorById(id)?.slot === slot);
+  const decor = yardDecor(s.tier, s.decor);
+  const has = (slot: DecorSlot): boolean => decor.some((id) => decorById(id)?.slot === slot);
   const [gx, gz] = toWorld(p, 0, p.d / 2 - 0.35);
   return [
     houseItem(p, s, false),
     ...(has('fence') ? [] : [item('fence_basic', p.x, p.z, { y, yaw, sx: fx, sz: p.d / 24, wall: WALL_COLORS[s.wall] ?? WHITE })]),
     ...(has('gate') ? [] : [item('gate_basic', gx, gz, { y, yaw, sx: fx })]),
-    ...s.decor.map((id) => decorItem(p, id, y)).filter((i): i is Item => i !== null),
+    ...decor.map((id) => decorItem(p, id, y)).filter((i): i is Item => i !== null),
   ];
 };
 
@@ -221,7 +226,7 @@ export const holidayItems = (h: 'yangi_yil' | 'navroz' | 'mustaqillik' | null): 
 
 /** Avatar kirolmaydigan to'rtburchaklar. */
 export interface Solid { readonly x: number; readonly z: number; readonly hx: number; readonly hz: number; readonly h: number }
-const HALF: Readonly<Record<number, readonly [number, number]>> = { 1: [4, 3.3], 2: [5.5, 4.8], 3: [6.4, 5.4], 4: [6.5, 5.2], 5: [6.8, 5.9] };
+const HALF: Readonly<Record<number, readonly [number, number]>> = { 1: [4, 3.3], 2: [4.9, 3.9], 3: [5.5, 4.8], 4: [5.6, 5.2], 5: [6.4, 5.4], 6: [6.5, 5.6], 7: [6.5, 5.2], 8: [6.9, 5.4], 9: [6.8, 5.9], 10: [7.2, 6.2] };
 export const houseSolid = (p: Plot, s: HouseState): Solid | null => {
   if (p.type === 'kvartira') return null;
   const { scale, back } = HOUSE[p.type];
