@@ -7,7 +7,7 @@ import { daylightAt, leafTint, snowAmount } from '../src/logic/atmosphere.ts';
 import { frameAt } from '../src/logic/cameraPath.ts';
 import { CITY_LIMIT, cameraDistance, lerpAngle, movePlayer, pickNearest, rayBox } from '../src/logic/motion.ts';
 import {
-  PLAZA_SOLIDS, buildingItem, buildingSolid, closedDistrictItems, commerceItem, commerceSolid, expansionItems, holidayItems, houseItem, houseSolid, plotItems, projectItems, staticItems, toWorld,
+  PLAZA_SOLIDS, buildingItem, buildingSolid, closedDistrictItems, commerceItem, commerceSolid, expansionItems, holidayItems, houseItem, houseSolid, pickHeight, plotItems, projectItems, staticItems, toWorld,
   type HouseState,
 } from '../src/logic/placement.ts';
 import { initialQuality, startGovernor, stepGovernor, type GovernorState } from '../src/logic/quality.ts';
@@ -115,6 +115,11 @@ describe('joylashtirish', () => {
       const tris = (n.listPrimitives()[0]?.getIndices()?.getCount() ?? 0) / 3;
       expect(tris, n.getName()).toBeLessThanOrEqual(/house(9|10)$/.test(n.getName()) ? PALACE_LIMIT : SIZE_LIMIT);
     }
+  });
+  test('baland uyning tomini bosganda ham tanlanadi', () => {
+    expect(pickHeight(plotOf('hovli'), undefined)).toBeLessThan(2);
+    expect(pickHeight(plotOf('hovli'), state({ tier: 10 }))).toBeGreaterThanOrEqual(13);
+    expect(pickHeight(plotOf('qasr'), state({ tier: 9 }))).toBeGreaterThan(pickHeight(plotOf('hovli'), state({ tier: 9 })));
   });
   test('burish: fasad +z dan rot bo‘yicha', () => {
     expect(toWorld({ x: 0, z: 0, rot: 0 }, 0, 5)[1]).toBeCloseTo(5);

@@ -243,6 +243,10 @@ export const houseSolid = (p: Plot, s: HouseState): Solid | null => {
   const [hx, hz] = p.rot % 2 === 0 ? [a * scale, b * scale] : [b * scale, a * scale];
   return { x, z, hx, hz, h: 5 };
 };
+/** Bosish qutisining balandligi: indeks = level (bo'sh uchastka — belgi bo'yi). */
+const TIER_HEIGHT = [1.2, 5.5, 5.5, 6, 6, 6.5, 7.5, 8.5, 9, 12, 13] as const;
+const PALACE_GROW = 1.54;
+export const pickHeight = (p: Plot, s: HouseState | undefined): number => (TIER_HEIGHT[s?.tier ?? 0] ?? 6) * (p.type === 'qasr' && s ? PALACE_GROW : 1);
 export const buildingSolid = (b: Building): Solid => ({ x: b.x, z: b.z, hx: 22.2, hz: 8.2, h: b.floors * 3 + 2 });
 export const commerceSolid = (c: Commerce): Solid | null => {
   if (c.type === 'bilbord') return null;

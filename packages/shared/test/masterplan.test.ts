@@ -89,6 +89,13 @@ describe('qulflangan bosh reja', () => {
     for (let x = 750; x < CITY_HALF + 100; x += 2) expect(Math.abs(terrainHeight(x, HILL.z) - terrainHeight(x + 2, HILL.z))).toBeLessThan(1);
   });
 
+  test('bilbordlar hech bir uchastkaga kirmaydi', () => {
+    const boards = plan.commerce.filter((c) => c.type === 'bilbord').map(footprint);
+    const hits = plan.plots.filter((p) => p.unit <= 1).filter((p) => { const f = footprint(p); return boards.some((b) => Math.abs(b.x - f.x) < b.hx + f.hx && Math.abs(b.z - f.z) < b.hz + f.hz); });
+    expect(boards).toHaveLength(40);
+    expect(hits.map((p) => p.id)).toEqual([]);
+  });
+
   test('v2: kattalashgan uchastkalar (±10%), shahar ~3×3 km', () => {
     expect(plan.version).toBe(2);
     expect(CITY_HALF).toBeGreaterThanOrEqual(1450);

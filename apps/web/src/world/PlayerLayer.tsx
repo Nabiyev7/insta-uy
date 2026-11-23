@@ -5,7 +5,7 @@ import {
   SpatialIndex, districtAt, footprint, hash01, inLake, padHeight, sanitizeAvatar, AVATAR_OPTIONS, type AvatarLook, type MasterPlan, type Plot,
 } from '../../../../packages/shared/src/index.ts';
 import { cameraDistance, lerpAngle, movePlayer, pickNearest, type PickBox, type Ray } from '../logic/motion.ts';
-import { PLAZA_SOLIDS, buildingSolid, commerceSolid, houseSolid, type Solid } from '../logic/placement.ts';
+import { PLAZA_SOLIDS, buildingSolid, commerceSolid, houseSolid, pickHeight, type Solid } from '../logic/placement.ts';
 import { QUALITY, startGovernor, stepGovernor } from '../logic/quality.ts';
 import { camera as cam, director, input, player, remotes, snapshotters } from '../app/runtime.ts';
 import { getApp, openPanel, setApp, useApp } from '../app/store.ts';
@@ -107,7 +107,7 @@ export function PlayerLayer({ plan }: PlayerLayerProps): null {
       else if (id?.startsWith('#')) openPanel({ kind: 'building', id: Number(id.slice(1)) });
     };
     const pickBoxes = (): PickBox[] => [
-      ...nearPlots(110).map((p): PickBox => { const y = padHeight(p); return { id: p.id, ...footprint(p), y0: y - 1, y1: y + (houses.has(p.id) ? (p.type === 'qasr' ? 14 : 6) : 1.2) }; }),
+      ...nearPlots(110).map((p): PickBox => { const y = padHeight(p); return { id: p.id, ...footprint(p), y0: y - 1, y1: y + pickHeight(p, houses.get(p.id)) }; }),
       ...plan.buildings.map((b): PickBox => ({ id: `#${b.id}`, x: b.x, z: b.z, hx: 22, hz: 8, y0: 0, y1: b.floors * 3 + 1 })),
       ...index.commerce.query(player.x, player.z, 160).map((c): PickBox => (c.type === 'bilbord'
         ? { id: c.id, x: c.x, z: c.z, hx: c.rot % 2 ? 0.6 : 4, hz: c.rot % 2 ? 4 : 0.6, y0: 4, y1: 7.5 }

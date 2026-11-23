@@ -47,6 +47,8 @@ const PLOTS_PER_DISTRICT = 400;
 /** Qasr to'ri tuman ID'siga qo'shiladigan siljish — ko'cha kalitlari to'qnashmasin. */
 const HIGH_GRID_OFFSET = 100;
 
+/** Bilbord ustuni yashil yo'lakda turadi, paneli (±4 m) hovliga kirmaydi. */
+const BILLBOARD_SIDE = 9.9;
 type Green = MasterPlan['greens'][number];
 const COURTYARD = { away: 45, w: 80, d: 44 } as const;
 const VALUE_REACH = 2100;
@@ -168,7 +170,7 @@ const billboards = (): CommerceDraft[] =>
     const onX = i % 2 === 0;
     const k = Math.floor(i / 2);
     const along = (k % 2 === 0 ? 1 : -1) * (150 + Math.floor(k / 2) * 80);
-    return { type: 'bilbord', x: onX ? along : 12.4, z: onX ? 12.4 : along, w: 8, d: 2, rot: onX ? 3 : 0 };
+    return { type: 'bilbord', x: onX ? along : BILLBOARD_SIDE, z: onX ? BILLBOARD_SIDE : along, w: 8, d: 2, rot: onX ? 3 : 0 };
   });
 
 const planCommerce = (): { commerce: Commerce[]; roads: readonly Road[]; rest: readonly Spot[] } => {

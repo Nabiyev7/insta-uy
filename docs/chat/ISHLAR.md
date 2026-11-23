@@ -6,7 +6,7 @@
 ## Ro'yxat
 
 - [x] **0. Tayyorgarlik** — `docs/chat/agentlar/tekshiruvchi.md` ni `.claude/agents/tekshiruvchi.md` ga ko'chir, commit qil.
-- [ ] **1. Uylar va yangi bosh reja** — `docs/chat/UYLAR-PROMT.md`
+- [x] **1. Uylar va yangi bosh reja** — `docs/chat/UYLAR-PROMT.md`
 - [ ] **2. Markaz** — `docs/chat/MARKAZ-PROMT.md`
 - [ ] **3. Harakat va ekran** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 1-bosqich
 - [ ] **4. Bezaklar tizimi** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 2-bosqich
