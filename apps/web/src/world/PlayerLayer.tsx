@@ -130,7 +130,7 @@ export function PlayerLayer({ plan }: PlayerLayerProps): null {
       copy.getContext('2d')?.drawImage(gl.domElement, 0, 0);
       return copy;
     };
-    if (import.meta.env.DEV) Object.assign(window, { __gl: () => ({ calls: gl.info.render.calls, triangles: gl.info.render.triangles }) });
+    if (import.meta.env.DEV) Object.assign(window, { __scene: scene, __gl: () => ({ calls: gl.info.render.calls, triangles: gl.info.render.triangles }) });
     return () => { snapshotters.capture = null; };
   }, [gl, scene, camera, size]);
 

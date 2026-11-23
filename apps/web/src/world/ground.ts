@@ -1,9 +1,9 @@
-/** Yer, yo'l, ariq, maydon — 250 m bo'laklar (chunk streaming). */
+/** Yer, yo'l, ariq, maydon — 375 m bo'laklar (chunk streaming). */
 import { BufferAttribute, BufferGeometry, Color, Group, Mesh, type MeshLambertMaterial } from 'three';
-import { HILL, LAKE, PLAZA_HALF, inLake, padHeight, rotatedSize, terrainHeight, type MasterPlan, type Plot, type Road } from '../../../../packages/shared/src/index.ts';
+import { AVENUE_LINES, HILL, HILL_EDGE, LAKE, PLAZA_HALF, inLake, padHeight, rotatedSize, terrainHeight, type MasterPlan, type Plot, type Road } from '../../../../packages/shared/src/index.ts';
 import { createKitMaterial } from './kit.ts';
 
-export const CHUNK = 250;
+export const CHUNK = 375;
 const L = { plain: 0, asphalt: 5, grass: 6, stone: 15, naqsh: 10, soil: 14 } as const;
 const TILE: Readonly<Record<number, number>> = { 0: 4, 5: 5, 6: 6, 10: 4, 14: 7, 15: 3 };
 const HILL_REACH = 3.2 * HILL.sigma;
@@ -34,7 +34,7 @@ class GeoBuilder {
 
   /** Yer relyefiga yotadigan to'rtburchak; tepalikda mayda bo'linadi. */
   rect(x0: number, z0: number, x1: number, z1: number, layer: number, color: Color): void {
-    const isHilly = x1 > HILL.x - HILL_REACH && z0 < HILL.z + HILL_REACH && x1 > 514 && z0 < -514;
+    const isHilly = x1 > HILL.x - HILL_REACH && z0 < HILL.z + HILL_REACH && x1 > HILL_EDGE && z0 < -HILL_EDGE;
     const nx = isHilly ? Math.max(1, Math.ceil((x1 - x0) / 7)) : 1;
     const nz = isHilly ? Math.max(1, Math.ceil((z1 - z0) / 7)) : 1;
     for (let i = 0; i < nx; i++) {
@@ -136,7 +136,7 @@ const addDashes = (out: Layers, r: Road, chunk: Rect): void => {
   const len = isX ? r.w : r.d;
   const start = (isX ? r.x : r.z) - len / 2;
   for (let u = start + 6; u < start + len; u += 12) {
-    if ([-1000, -500, 0, 500, 1000].some((l) => Math.abs(u - l) < 18)) continue;
+    if (AVENUE_LINES.some((l) => Math.abs(u - l) < 18)) continue;
     for (const v of [-5, 5]) {
       const part = clip(isX ? [u, r.z + v - 0.12, u + 4, r.z + v + 0.12] : [r.x + v - 0.12, u, r.x + v + 0.12, u + 4], chunk);
       if (part) out.top.rect(...part, L.plain, C.line);

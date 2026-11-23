@@ -4,6 +4,8 @@ export interface Quality {
   readonly level: QualityLevel;
   readonly dpr: number;
   readonly near: number;
+  /** Hovlidagi mayda bezaklar ko'rinadigan masofa. */
+  readonly detail: number;
   readonly mid: number;
   readonly fog: number;
   readonly labels: number;
@@ -12,9 +14,9 @@ export interface Quality {
   readonly particles: number;
 }
 export const QUALITY: Readonly<Record<QualityLevel, Quality>> = {
-  low: { level: 'low', dpr: 0.85, near: 46, mid: 150, fog: 190, labels: 8, hasShadows: false, npcs: 6, particles: 0 },
-  mid: { level: 'mid', dpr: 1.25, near: 80, mid: 260, fog: 330, labels: 16, hasShadows: false, npcs: 14, particles: 500 },
-  high: { level: 'high', dpr: 2, near: 130, mid: 480, fog: 640, labels: 26, hasShadows: true, npcs: 24, particles: 1400 },
+  low: { level: 'low', dpr: 0.85, near: 46, detail: 32, mid: 150, fog: 190, labels: 8, hasShadows: false, npcs: 6, particles: 0 },
+  mid: { level: 'mid', dpr: 1.25, near: 80, detail: 60, mid: 260, fog: 330, labels: 16, hasShadows: false, npcs: 14, particles: 500 },
+  high: { level: 'high', dpr: 2, near: 130, detail: 110, mid: 480, fog: 640, labels: 26, hasShadows: true, npcs: 24, particles: 1400 },
 };
 const ORDER: readonly QualityLevel[] = ['low', 'mid', 'high'];
 

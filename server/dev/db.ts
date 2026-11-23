@@ -29,10 +29,10 @@ export const openDb = async (dataDir?: string): Promise<PGlite> => {
   const isLegacy = !isNew && done.size === 0;
   for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort()) {
     if (done.has(file)) continue;
-    await db.query('insert into auth.dev_migrations (name) values ($1)', [file]);
-    if (isLegacy && file <= LEGACY_LAST) continue;
+    const isApplied = isLegacy && file <= LEGACY_LAST;
     try {
-      await db.exec(readFileSync(new URL(file, MIGRATIONS), 'utf8'));
+      if (!isApplied) await db.exec(readFileSync(new URL(file, MIGRATIONS), 'utf8'));
+      await db.query('insert into auth.dev_migrations (name) values ($1)', [file]);
     } catch (error: unknown) {
       throw new Error(`Migratsiya ${file}: ${error instanceof Error ? error.message : String(error)}`);
     }

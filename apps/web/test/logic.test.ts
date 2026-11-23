@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { NodeIO } from '@gltf-transform/core';
 import { describe, expect, test } from 'vitest';
-import { DECOR, MAX_TIER, MIN_TIER, TIERS, decodePlan, yardDecor, footprint, inLake, type EncodedPlan } from '../../../packages/shared/src/index.ts';
+import { DECOR, FENCE_RANK, GATE_RANK, LAKE, LEVEL_FENCE, LEVEL_GATE, MAX_TIER, MIN_TIER, TIERS, decodePlan, yardDecor, footprint, inLake, type EncodedPlan } from '../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../src/logic/atmosphere.ts';
 import { frameAt } from '../src/logic/cameraPath.ts';
-import { cameraDistance, lerpAngle, movePlayer, pickNearest, rayBox } from '../src/logic/motion.ts';
+import { CITY_LIMIT, cameraDistance, lerpAngle, movePlayer, pickNearest, rayBox } from '../src/logic/motion.ts';
 import {
   PLAZA_SOLIDS, buildingItem, buildingSolid, closedDistrictItems, commerceItem, commerceSolid, expansionItems, holidayItems, houseItem, houseSolid, plotItems, projectItems, staticItems, toWorld,
   type HouseState,
@@ -39,9 +41,9 @@ describe('joylashtirish', () => {
   });
   test('bezak panjara/darvoza oddiysini almashtiradi', () => {
     const models = plotItems(plotOf('hovli'), state({ tier: 1, decor: ['fence_brick', 'gate_gold', 'yoq'] }), true).map((i) => i.model);
-    expect(models).toEqual(['house1', 'fence_brick', 'gate_gold']);
-    expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_wood', 'gate_wood', 'path_stone', 'tree_anor']);
-    expect(plotItems(plotOf('hovli'), state({ tier: 1 }), true).map((i) => i.model)).toEqual(['house1', 'fence_basic', 'gate_basic']);
+    expect(models).toEqual(['house1', 'fence_brick', 'gate_gold', 'path_stone', 'tree_anor']);
+    expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_basic', 'gate_wood', 'path_stone', 'tree_anor', 'yard_flowers']);
+    expect(plotItems(plotOf('hovli'), state({ tier: 1 }), true).map((i) => i.model)).toEqual(['house1', 'fence_low', 'gate_basic', 'path_stone', 'tree_anor']);
   });
   test('bo‘sh, yopiq va kvartira', () => {
     expect(plotItems(plotOf('hovli'), undefined, true)[0]!.model).toBe('forsale');
@@ -55,8 +57,10 @@ describe('joylashtirish', () => {
     const p = plotOf('hovli');
     expect(houseItem(p, state({ tier: 1 }), false).glow).toBe(0);
     expect(houseItem(p, state({ tier: MAX_TIER, decor: ['light_luxe'] }), false).glow).toBe(1);
-    expect(houseItem(p, state({ tier: MAX_TIER }), true)).toMatchObject({ model: 'house5_lod', sy: 1 });
+    expect(houseItem(p, state({ tier: MAX_TIER }), true)).toMatchObject({ model: 'house10_lod', sy: 1 });
     expect(houseItem(p, state({ tier: 1 }), true).model).toBe('house1_lod');
+    expect(houseItem(p, state({ tier: 2 }), true).model).toBe('house2_lod');
+    expect(houseItem(p, state({ tier: 2 }), true, true).model).toBe('house1_lod');
   });
   test('10 level: har biri oldingisidan kuchli', () => {
     const p = plotOf('hovli');
@@ -71,10 +75,46 @@ describe('joylashtirish', () => {
     expect(plotItems(p, state({ tier: 10 }), true).map((i) => i.model)).toEqual(expect.arrayContaining(['house10', 'fence_ornate', 'gate_gold']));
   });
   test('egasi olgan bezak level bezagidan ustun', () => {
-    expect(yardDecor(10, ['fence_wood', 'light_luxe'])).toEqual(expect.arrayContaining(['fence_wood', 'gate_gold']));
-    expect(yardDecor(10, ['fence_wood'])).not.toContain('fence_ornate');
+    const models = plotItems(plotOf('hovli'), state({ tier: 10, decor: ['fence_wood'] }), true).map((i) => i.model);
+    expect(models).toEqual(expect.arrayContaining(['fence_wood', 'gate_gold']));
+    expect(models).not.toContain('fence_ornate');
     expect(yardDecor(10, ['light_luxe']).filter((d) => d === 'light_luxe')).toHaveLength(1);
     expect(yardDecor(99, ['tree_anor'])).toEqual(['tree_anor']);
+  });
+  test('panjara va darvoza har levelda oldingisidan past emas, oltin faqat 9 dan', () => {
+    for (const { id } of TIERS.slice(1)) {
+      expect(FENCE_RANK.indexOf(LEVEL_FENCE[id]!)).toBeGreaterThanOrEqual(FENCE_RANK.indexOf(LEVEL_FENCE[id - 1]!));
+      expect(GATE_RANK.indexOf(LEVEL_GATE[id]!)).toBeGreaterThanOrEqual(GATE_RANK.indexOf(LEVEL_GATE[id - 1]!));
+    }
+    expect(LEVEL_GATE.indexOf('gate_gold')).toBe(9);
+    expect(yardDecor(1, [])).toEqual(['path_stone', 'tree_anor']);
+  });
+  test('har level modeli (haqiqiy o‘lchami bilan) uchastkadan chiqmaydi, oldida ≥10 m hovli, uy izi ≤45%', async () => {
+    const doc = await new NodeIO().read(fileURLToPath(new URL('../../../assets/city-kit.glb', import.meta.url)));
+    const boxes = new Map(doc.getRoot().listNodes().flatMap((n) => {
+      const pos = n.getMesh()?.listPrimitives()[0]?.getAttribute('POSITION');
+      return pos ? [[n.getName(), { min: pos.getMin([]), max: pos.getMax([]) }] as const] : [];
+    }));
+    const SIZE_LIMIT = 2500;
+    const PALACE_LIMIT = 3500;
+    for (const [type, from] of [['hovli', 1], ['villa', 7], ['qasr', 9]] as const) {
+      const p = plan.plots.find((q) => q.type === type && q.rot === 0)!;
+      for (const { id: tier } of TIERS.filter((t) => t.id >= from)) {
+        const i = houseItem(p, state({ tier }), false);
+        const b = boxes.get(`house${tier}`)!;
+        const [x0, x1] = [i.x + b.min[0]! * i.sx - p.x, i.x + b.max[0]! * i.sx - p.x];
+        const [z0, z1] = [i.z + b.min[2]! * i.sz - p.z, i.z + b.max[2]! * i.sz - p.z];
+        expect(Math.max(-x0, x1), `${type} ${tier}`).toBeLessThan(p.w / 2 - 0.5);
+        expect(-z0, `${type} ${tier}`).toBeLessThan(p.d / 2 - 0.5);
+        expect(p.d / 2 - z1, `${type} ${tier}`).toBeGreaterThanOrEqual(10);
+        expect((x1 - x0) * (z1 - z0), `${type} ${tier}`).toBeLessThanOrEqual(p.w * p.d * 0.45);
+        expect(boxes.has(`house${tier}_lod`)).toBe(true);
+      }
+    }
+    for (const n of doc.getRoot().listMeshes().filter((m) => /^house\d+$/.test(m.getName()))) {
+      const tris = (n.listPrimitives()[0]?.getIndices()?.getCount() ?? 0) / 3;
+      expect(tris, n.getName()).toBeLessThanOrEqual(/house(9|10)$/.test(n.getName()) ? PALACE_LIMIT : SIZE_LIMIT);
+    }
   });
   test('burish: fasad +z dan rot bo‘yicha', () => {
     expect(toWorld({ x: 0, z: 0, rot: 0 }, 0, 5)[1]).toBeCloseTo(5);
@@ -112,10 +152,10 @@ describe('harakat', () => {
     expect(movePlayer({ x: 10, z: -3 }, 0, 1, [wall]).z).toBeCloseTo(-2.45);
   });
   test('ko‘lga kirmaydi, ko‘prikdan o‘tadi, shahar chegarasi', () => {
-    const p = movePlayer({ x: 300, z: 750 }, 0, 0, []);
+    const p = movePlayer({ x: LAKE.x - LAKE.rx + 20, z: LAKE.z }, 0, 0, []);
     expect(inLake(p.x, p.z, 0.9)).toBe(false);
-    expect(movePlayer({ x: 500, z: 750 }, 0, 0, [], true)).toEqual({ x: 500, z: 750 });
-    expect(movePlayer({ x: 1059, z: 0 }, 500, 0, []).x).toBe(1060);
+    expect(movePlayer({ x: LAKE.x, z: LAKE.z }, 0, 0, [], true)).toEqual({ x: LAKE.x, z: LAKE.z });
+    expect(movePlayer({ x: CITY_LIMIT - 1, z: 0 }, 500, 0, []).x).toBe(CITY_LIMIT);
   });
   test('kamera devor orqasida qolmaydi', () => {
     expect(cameraDistance({ x: 5, z: 0 }, 1, 0, 6, 2, [wall])).toBeLessThan(3);
@@ -172,7 +212,8 @@ describe('kun/tun va sifat', () => {
 });
 
 describe('video kamerasi', () => {
-  const plots = plan.plots.slice(0, 3);
+  const first = plan.plots[0]!;
+  const plots = plan.plots.filter((p) => p.streetId === first.streetId && Math.abs(p.x - first.x) < 90 && Math.abs(p.z - first.z) < 20).slice(0, 3);
   test('uzluksiz, uyga qaraydi, yozuv uchishdan keyin chiqadi', () => {
     for (let t = 0; t < 12; t += 1 / 30) {
       const [a, b] = [frameAt(plots, t, 12).pose, frameAt(plots, t + 1 / 30, 12).pose];

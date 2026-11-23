@@ -4,7 +4,7 @@ import { CanvasTexture, Color, DirectionalLight, Fog, HemisphereLight, Mesh, Mes
 import { SpatialIndex, dayFraction, holidayOf, padHeight, seasonOf, weatherOf, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
 import {
-  buildingItem, closedDistrictItems, commerceItem, expansionItems, holidayItems, houseItem, plotItems, projectItems, staticItems, toWorld, yawOf, type HouseState, type Item,
+  PLOT_SHELL, buildingItem, closedDistrictItems, commerceItem, expansionItems, holidayItems, houseItem, plotItems, projectItems, staticItems, toWorld, yawOf, type HouseState, type Item,
 } from '../logic/placement.ts';
 import { QUALITY } from '../logic/quality.ts';
 import { PUBLIC_FILES } from '../app/api.ts';
@@ -147,6 +147,8 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     const dirZ = Math.cos(yaw);
     const boost = director.pose ? 1.5 : 1;
     const near = q.near * boost;
+    const detail = q.detail * boost;
+    const isSimple = q.level === 'low' && !director.pose;
     const mid = q.mid * boost;
     const fogFar = q.fog * boost;
     // Orqadagi uzoq narsalar chizilmaydi (keng burchak bilan).
@@ -163,9 +165,9 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
           list = plotItems(p, s, open.has(p.districtId));
           plotCache.current.set(p.id, list);
         }
-        items.push(...list);
+        items.push(...(d < detail ? list : list.slice(0, PLOT_SHELL)));
         if (s?.nick && d < LABEL_RANGE * boost) labels.push({ d, info: labelOf(p, s) });
-      } else if (s) items.push(houseItem(p, s, true));
+      } else if (s) items.push(houseItem(p, s, true, isSimple));
     }
     for (const it of index.statics.query(fx, fz, mid)) pushStatic(items, it, Math.hypot(it.x - fx, it.z - fz), near, mid, isBehind);
     for (const it of extras.query(fx, fz, fogFar)) pushStatic(items, it, Math.hypot(it.x - fx, it.z - fz), near * 1.6, fogFar, isBehind);

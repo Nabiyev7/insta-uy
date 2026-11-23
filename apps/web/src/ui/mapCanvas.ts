@@ -1,5 +1,5 @@
 /** Mini-xarita: shahar bir marta chiziladi, keyin faqat kesib ko'rsatiladi. */
-import { CITY_HALF, HILL, LAKE, PLAZA_HALF, rotatedSize } from '../../../../packages/shared/src/index.ts';
+import { CITY_HALF, HILL, HILL_EDGE, LAKE, PLAZA_HALF, rotatedSize } from '../../../../packages/shared/src/index.ts';
 import { camera, player, remotes } from '../app/runtime.ts';
 import { getApp } from '../app/store.ts';
 
@@ -27,11 +27,11 @@ const paint = (): HTMLCanvasElement => {
     g.fillStyle = open.has(d.id) ? '#dfe6bd' : '#d3c3a3';
     g.fillRect(toMap(d.rect[0]), toMap(d.rect[1]), (d.rect[2] - d.rect[0]) * k, (d.rect[3] - d.rect[1]) * k);
   }
-  const hill = g.createRadialGradient(toMap(HILL.x), toMap(HILL.z), 4, toMap(HILL.x), toMap(HILL.z), 230 * k);
+  const hill = g.createRadialGradient(toMap(HILL.x), toMap(HILL.z), 4, toMap(HILL.x), toMap(HILL.z), HILL.sigma * 1.65 * k);
   hill.addColorStop(0, 'rgba(120,100,60,0.55)');
   hill.addColorStop(1, 'rgba(120,100,60,0)');
   g.fillStyle = hill;
-  g.fillRect(toMap(514), toMap(-1000), 486 * k, 486 * k);
+  g.fillRect(toMap(HILL_EDGE), toMap(-CITY_HALF), (CITY_HALF - HILL_EDGE) * k, (CITY_HALF - HILL_EDGE) * k);
   g.fillStyle = '#efe4cf';
   rect(0, 0, PLAZA_HALF * 2, PLAZA_HALF * 2);
   g.fillStyle = '#7f8488';

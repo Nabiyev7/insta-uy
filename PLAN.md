@@ -16,7 +16,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 
 ## 2. Asosiy qoidalar (buzilmasin!)
 
-1. **Bosh reja (master plan) qulflangan.** Butun shahar 5 000 uchastkaga boshidan chiziladi. Uchastka ID, koordinata, ko'cha, tuman — o'zgarmas (DB'da immutable).
+1. **Bosh reja (master plan) qulflangan.** Butun shahar 5 000 uchastkaga boshidan chiziladi. Uchastka ID, koordinata, ko'cha, tuman — o'zgarmas (DB'da immutable). *(2026-11-24 da, hali hech kim uy olmagan paytda, egasining ruxsati bilan bosh reja bir marta qayta chizildi — v2. Bu bir martalik ruxsat edi.)*
 2. Yangilanishlarda faqat **ko'rinish** o'zgaradi (model, bezak), **joy hech qachon** o'zgarmaydi.
 3. Tumanlar **markazdan tashqariga** ochiladi → birinchi kelganlar doim markazga yaqin qoladi.
 4. Majburiy ko'chirish faqat favqulodda: rozilik + teng/yaxshiroq joy + bonus.
@@ -26,7 +26,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 
 ## 3. Shahar (bosh reja)
 
-- Hajm: ~2×2 km, **5 000 uchastka**:
+- Hajm: ~3×3 km, **5 000 uchastka** (hovli 25×34 m, villa 32×44 m, qasr 42×60 m):
   - 3 500 oddiy hovli uy, 1 000 ko'p qavatli kvartira, 400 villa, 100 qasr/maxsus
   - + 100–200 do'kon, ofis, bilbord
 - 10–12 tuman (har biri 400–500 uchastka). Start: 1–2 tuman (300–500 uy).
@@ -233,7 +233,7 @@ obunachilar-shahri/
 
 ## Holat
 
-> Oxirgi yangilanish: 2026-11-23. Ishga tushirish va internetga chiqarish: README.md.
+> Oxirgi yangilanish: 2026-11-24. Ishga tushirish va internetga chiqarish: README.md.
 
 - [x] Reja tuzildi (2026-11-23)
 - [x] Mahalla prototipi — kompyuterda tayyor; **haqiqiy Redmi A telefonda hali sinalmagan**
@@ -241,6 +241,7 @@ obunachilar-shahri/
 - [x] v1 kodi (lokal sinovdan o'tgan)
 - [x] v2 kodi (lokal sinovdan o'tgan; to'lov sukut bo'yicha o'chiq)
 - [x] v3 kodi (lokal sinovdan o'tgan; saylov sukut bo'yicha o'chiq)
+- [x] Bosh reja v2 (2026-11-24): katta hovlilar, shahar 3×3 km, uylar o'z uchastkasida 1–10 level; `0010_masterplan_v2.sql`
 - [x] 10 level tizimi (2026-11-23): modellar `blender/scripts/kit_levels.py`, baza `0009_levels.sql`, ko'rish `npm run showcase`
 - [ ] Internetga chiqarish (Supabase, Cloudflare, Telegram bot akkauntlari kerak)
 - [ ] Haqiqiy xizmatlar bilan sinash: Telegram bot, Payme/Click sandbox, bank xabari, ElevenLabs, Meta API, Turnstile, Sentry
@@ -248,7 +249,7 @@ obunachilar-shahri/
 
 Rejadan farqlar (sababi bilan):
 - Video: Remotion o'rniga Playwright + ffmpeg (§7 ikkalasiga ruxsat bergan).
-- KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~0,9 MB, Pages'ning o'zi yetadi.
+- KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~1 MB, Pages'ning o'zi yetadi.
 - Ko'p o'yinchi: Socket.io. Musiqa va tabiat ovozi sintez qilinadi (litsenziya masalasi yo'q).
 - Ko'cha/panjara kabi protsedural qismlar koddan, modellar Blender skriptidan (`npm run models`); Blender MCP kerak bo'lmadi.
 - `TURNSTILE_SECRET` ishlab chiqarishda majburiy (soxta akkauntlarga qarshi).

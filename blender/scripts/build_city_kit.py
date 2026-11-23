@@ -11,14 +11,23 @@ from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
 from kit_props import all_props  # noqa: E402
 
-MAX_SIZE = {'x': 7.7, 'front': 8.0, 'back': 6.7}
+# Hovli 25x34 m, uy markazi orqaga 7.5 m surilgan: 1–6 level o'z o'lchamida, 7–10 esa 1.2 baravar turadi.
+LOW_SIZE = {'x': 10.5, 'front': 11.0, 'back': 8.5}
+HIGH_SIZE = {'x': 7.7, 'front': 8.0, 'back': 6.7}
+LOW_LEVELS = 6
+MAX_TRIS = {'level': 2500, 'palace': 3500}
+PALACE_FROM = 9
 
 
-def check_level(model):
-    """Har level eng kichik uchastkaga sig'ishi shart (PLAN.md §2.5)."""
+def check_level(model, level):
+    """Har level hovli uchastkasiga sig'ishi va uchburchak chegarasidan oshmasligi shart (PLAN.md §2.5, §12)."""
+    size = LOW_SIZE if level <= LOW_LEVELS else HIGH_SIZE
     pts = [p for poly in model.polys for p in poly[0]]
-    if max(abs(p.x) for p in pts) > MAX_SIZE['x'] or min(p.y for p in pts) < -MAX_SIZE['front'] or max(p.y for p in pts) > MAX_SIZE['back']:
+    if max(abs(p.x) for p in pts) > size['x'] or min(p.y for p in pts) < -size['front'] or max(p.y for p in pts) > size['back']:
         raise ValueError(f'{model.name}: uchastkaga sig\'maydi')
+    tris = sum(len(poly[0]) - 2 for poly in model.polys)
+    if tris > MAX_TRIS['palace' if level >= PALACE_FROM else 'level']:
+        raise ValueError(f'{model.name}: {tris} uchburchak — ko\'p')
 
 
 
@@ -27,8 +36,8 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     total = 0
     levels = all_levels()
-    for model in levels:
-        check_level(model)
+    for level, model in enumerate(levels, 1):
+        check_level(model, level)
     for model in levels + all_buildings() + all_props():
         obj = model.build()
         tris = sum(len(p.vertices) - 2 for p in obj.data.polygons)

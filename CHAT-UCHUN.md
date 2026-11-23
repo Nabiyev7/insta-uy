@@ -17,7 +17,7 @@ Ilova qilingan rasmlar (`docs/chat/` ichida):
 Instagram obunachilari uchun veb-saytdagi 3D o'zbek shahri. Odam avatar bilan ko'chada yuradi, uylarni bosib egasining nikini ko'radi.
 
 - Oddiy hovlilar **bepul** tarqatiladi. Keyin qimmat joylar, levellar, bezaklar, do'kon, ofis va bilbordlar **sotiladi**.
-- Shahar 2×2 km, 12 tuman, 5 000 uchastka: 3 500 hovli, 1 000 kvartira, 400 villa, 100 qasr. Qo'shimcha 170 tijorat joyi: 100 do'kon, 30 ofis, 40 bilbord.
+- Shahar 3×3 km, 12 tuman, 5 000 uchastka: 3 500 hovli, 1 000 kvartira, 400 villa, 100 qasr. Qo'shimcha 170 tijorat joyi: 100 do'kon, 30 ofis, 40 bilbord.
 - Uylar 10 level: kichik uydan shoh saroyigacha.
 - Kun/tun, fasl, ob-havo, yuradigan odamlar va mashinalar, chat, tanga, hokim saylovi, gazeta bor.
 - Uslub: **real teksturali low-poly, Farg'ona vodiysi ruhi** — g'isht, suvoq, naqsh, o'yma yog'och, ayvon, chinor, ariq.
@@ -62,7 +62,7 @@ Yana 26 chinor, 14 archa, 16 chiroq, 12 o'rindiq, 28 gulzor bor. Ularni bemalol 
 
 **Bo'sh joy shakli — xoch (+):** burchaklar ofislarda band. `|x| < 60` yo'lagi (120 m) shimoldan janubgacha, `|z| < 60` yo'lagi g'arbdan sharqqacha ochiq.
 
-**Atrofi:** maydon chetidan 3 m narida hovlilar boshlanadi (16 × 24 m). ±250 m kvadrat ichida 336 ta hovli bor.
+**Atrofi:** maydon chetidan 3 m narida hovlilar boshlanadi (25 × 34 m). ±250 m kvadrat ichida 156 ta hovli bor.
 
 ## 5. Buzilmaydigan qoidalar
 
@@ -83,11 +83,11 @@ Promt yozishdan oldin shularni **birma-bir** so'ra. Har biriga variant va tavsiy
 |---|---|---|
 | A1 | Faqat 250 × 250 m ichida, zich va chiroyli | ochilmaydi |
 | A2 | Markaz 250 × 250 m, katta narsalar boshqa bo'sh joyga | ochilmaydi |
-| A3 | Markaz 500 × 500 m ga kengayadi, 336 hovli boshqa joyga ko'chadi | **ochiladi** |
+| A3 | Markaz 500 × 500 m ga kengayadi, 156 hovli boshqa joyga ko'chadi | **ochiladi** |
 
-Bo'sh joylar: shimoli-g'arbiy burchak (x −986…−514, z −986…−514, 472 × 472 m, bog' va stadion uchun ajratilgan), biznes tumanining pasti (x −486…−14, z 750…986, taxminan), 9- va 12-tumanlardagi binolar orasi.
+Bo'sh joylar: shimoli-g'arbiy burchak (x −1486…−764, z −1486…−764, 722 × 722 m, bog' va stadion uchun ajratilgan), biznes tumanining pasti (x −736…−14, z 1050…1486, taxminan), 9- va 12-tumanlardagi binolar orasi.
 
-**B. Stadion.** Hozirgi modeli **143 × 106 m**, balandligi 16 m. U maydonning yarmidan ko'p eniga cho'ziladi va favvora o'rnini oladi. Variantlar: kichikroq stadion (taxminan 80 × 60 m) maydon ichida; katta stadion shimoli-g'arbiy burchakda; A3 bo'lsa markazda. Eslatma: stadion hozir **umumiy loyiha**, odamlar tanga yig'ib qurishi kerak (−750, −850). Markazga ko'chsa, shu ham o'zgaradimi?
+**B. Stadion.** Hozirgi modeli **143 × 106 m**, balandligi 16 m. U maydonning yarmidan ko'p eniga cho'ziladi va favvora o'rnini oladi. Variantlar: kichikroq stadion (taxminan 80 × 60 m) maydon ichida; katta stadion shimoli-g'arbiy burchakda; A3 bo'lsa markazda. Eslatma: stadion hozir **umumiy loyiha**, odamlar tanga yig'ib qurishi kerak (−1125, −1275). Markazga ko'chsa, shu ham o'zgaradimi?
 
 **C. Novostroyka.** Yangi sotiladigan kvartira 5 000 talik ro'yxatga kirmaydi. Variantlar: biznesga ijaraga beriladigan bino; faqat ko'rinish uchun (kran, qurilish); mavjud 1 000 kvartiraning bir qismini markazga ko'chirish (qulf ochiladi).
 
@@ -101,7 +101,7 @@ Bo'sh joylar: shimoli-g'arbiy burchak (x −986…−514, z −986…−514, 472
 
 ## 7. Texnik chegaralar
 
-Hozir (kompyuterda, levellardan oldin o'lchangan) past sifatda 44 draw call va 23 ming uchburchak. Modellar fayli 954 KB. Markaz uchun tavsiya:
+Hozir (kompyuterda, 2026-11-24) past sifatda o'rtacha 45 draw call va 12 ming uchburchak. Modellar fayli 983 KB. Markaz uchun tavsiya:
 
 | Nima | Chegara |
 |---|---|

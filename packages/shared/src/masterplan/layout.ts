@@ -21,6 +21,8 @@ export interface GridSpec {
   readonly plotD: number;
   readonly crossStreets: number;
   readonly transpose: boolean;
+  /** Ortiqcha joy: 'even' — har kvartal orqasiga teng; 'outer' — eng chekka kvartal orqasiga (qatorlar markazga taqaladi). */
+  readonly slack: 'even' | 'outer';
   readonly blocked: (x: number, z: number, w: number, d: number) => boolean;
   readonly roadBlocked: (x: number, z: number) => boolean;
 }
@@ -67,7 +69,13 @@ export const layoutGrid = (spec: GridSpec): GridResult => {
   const blockD = spec.plotD * 2;
   const blocks = Math.floor((lenV + STREET) / (blockD + STREET));
   const usedV = blocks * blockD + (blocks - 1) * STREET;
-  const startV = v0 + (lenV - usedV) / 2;
+  const outermost = v0 >= 0 ? blocks - 1 : 0;
+  const rearGap = (b: number): number => {
+    if (spec.slack === 'even') return (lenV - usedV) / blocks;
+    return b === outermost ? lenV - usedV : 0;
+  };
+  const blockStart = (b: number): number =>
+    v0 + Array.from({ length: b }, (_, i) => blockD + rearGap(i) + STREET).reduce((s, n) => s + n, 0);
   const segments = spec.crossStreets + 1;
   const segLen = (lenU - spec.crossStreets * STREET) / segments;
   const perSeg = Math.floor(segLen / spec.plotW);
@@ -82,7 +90,7 @@ export const layoutGrid = (spec: GridSpec): GridResult => {
   };
 
   const rowSpots = (b: number, side: number): Spot[] => {
-    const v = startV + b * (blockD + STREET) + spec.plotD * (side + 0.5);
+    const v = blockStart(b) + spec.plotD * (side + 0.5) + side * rearGap(b);
     const rot: Rot = side === 0 ? (t ? 3 : 2) : (t ? 1 : 0);
     const out: Spot[] = [];
     for (let s = 0; s < segments; s++) {
@@ -102,7 +110,7 @@ export const layoutGrid = (spec: GridSpec): GridResult => {
   for (let b = 0; b < blocks; b++) {
     spots.push(...rowSpots(b, 0), ...rowSpots(b, 1));
     if (b === 0) continue;
-    const v = startV + b * (blockD + STREET) - STREET / 2;
+    const v = blockStart(b) - STREET / 2;
     roads.push(...clipRoad(t ? 'z' : 'x', u0, u1, v, STREET, 'kocha', spec.roadBlocked));
   }
   for (let s = 1; s < segments; s++) {

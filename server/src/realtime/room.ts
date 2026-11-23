@@ -1,4 +1,5 @@
 /** Ko'p o'yinchi holati: tarmoqsiz, sinab bo'ladigan mantiq. */
+import { CITY_HALF } from '../../../packages/shared/src/masterplan/geometry.ts';
 import { hasBannedWord } from '../../../packages/shared/src/wordfilter.ts';
 import { sanitizeAvatar, type AvatarLook } from '../../../packages/shared/src/catalog.ts';
 
@@ -19,7 +20,7 @@ export type Snapshot = readonly [id: string, x: number, z: number, yaw: number, 
 export interface ChatMessage { readonly id: string; readonly nick: string; readonly text: string; readonly at: number }
 export type ChatResult = { readonly ok: true; readonly message: ChatMessage; readonly to: readonly string[] } | { readonly ok: false; readonly code: string };
 
-const BOUND = 1200;
+const BOUND = CITY_HALF + 200;
 const VIEW_RADIUS = 140;
 const MAX_VISIBLE = 30;
 const CHAT_GAP_MS = 2500;

@@ -1,8 +1,8 @@
-import { LAKE, inLake } from '../../../../packages/shared/src/index.ts';
+import { CITY_HALF, LAKE, inLake } from '../../../../packages/shared/src/index.ts';
 import type { Solid } from './placement.ts';
 
 export const PLAYER_RADIUS = 0.45;
-export const CITY_LIMIT = 1060;
+export const CITY_LIMIT = CITY_HALF + 60;
 
 export interface Point { readonly x: number; readonly z: number }
 

@@ -15,7 +15,7 @@ const MODELS: readonly (readonly [string, string])[] = [
 ];
 const SIZE = 900;
 const MIN_SPAN = 60;
-const MAX_SPAN = 2300;
+const MAX_SPAN = 3300;
 
 const solidsOf = (plan: MasterPlan): Solid[] => [
   ...plan.plots.filter((p) => p.unit <= 1).map(footprint), ...plan.expansions.map(footprint), ...plan.commerce.map(footprint), ...plan.roads.map((r) => ({ x: r.x, z: r.z, hx: r.w / 2, hz: r.d / 2 })),

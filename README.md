@@ -23,7 +23,7 @@ Lokal muhitda haqiqiy Postgres (PGlite) ishlaydi va aynan `supabase/migrations/`
 | `npm run e2e` | Haqiqiy Chrome'da to'liq ssenariy (o'z portlari va bazasi bilan) |
 | `npm run typecheck` · `npm run build` | Turlar · ishlab chiqarish yig'ilishi |
 | `npm run masterplan` | Bosh reja qulfini (xesh) tekshirish |
-| `npm run seed` | Bosh reja → `0007_masterplan.sql` |
+| `npm run seed` | Bosh reja → `0010_masterplan_v2.sql` |
 | `npm run models` · `npm run textures` | Blender modellari · teksturalar (Poly Haven CC0) |
 | `npm run showcase` | Uylar, bezaklar va xaritani Blender'da ko'rish (`blender/shahar.blend`) |
 | `npm run video` | Admin paneldagi video navbatini render qilish |

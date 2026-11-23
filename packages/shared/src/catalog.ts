@@ -102,19 +102,21 @@ export const normalizeDecor = (ids: readonly string[]): string[] => {
 
 /** Level bilan birga keladigan hovli: indeks = level. Egasi o'zi olgan bezak shu joydagisini almashtiradi. */
 const GARDEN = ['path_stone', 'tree_anor'] as const;
-const RICH_GARDEN = [...GARDEN, 'yard_flowers', 'yard_sori', 'light_lamps', 'tree_chinor'] as const;
+const FLOWER_GARDEN = [...GARDEN, 'yard_flowers', 'yard_sori'] as const;
+const RICH_GARDEN = [...FLOWER_GARDEN, 'light_lamps', 'tree_chinor'] as const;
+const LUXE_GARDEN = [...RICH_GARDEN, 'tree_archa', 'light_luxe'] as const;
 const LEVEL_YARD: readonly (readonly string[])[] = [
-  [],
-  [],
-  [...GARDEN],
-  ['fence_wood', 'gate_wood', ...GARDEN],
-  ['fence_wood', 'gate_wood', ...GARDEN, 'yard_flowers', 'yard_sori'],
-  ['fence_brick', 'gate_carved', ...GARDEN, 'yard_flowers', 'yard_sori'],
-  ['fence_brick', 'gate_carved', ...RICH_GARDEN],
-  ['fence_brick', 'gate_carved', ...RICH_GARDEN, 'tree_archa'],
-  ['fence_brick', 'gate_carved', ...RICH_GARDEN, 'tree_archa', 'light_luxe'],
-  ['fence_ornate', 'gate_gold', ...RICH_GARDEN, 'tree_archa', 'light_luxe'],
-  ['fence_ornate', 'gate_gold', ...RICH_GARDEN, 'tree_archa', 'light_luxe', 'water_fountain'],
+  [], GARDEN, GARDEN, [...GARDEN, 'yard_flowers'], FLOWER_GARDEN, FLOWER_GARDEN, RICH_GARDEN, [...RICH_GARDEN, 'tree_archa'],
+  LUXE_GARDEN, LUXE_GARDEN, [...LUXE_GARDEN, 'water_fountain'],
+];
+/** Levelning o'z panjara va darvozasi (indeks = level): har biri oldingisidan yomon emas. Oltin darvoza faqat 9 dan. */
+export const FENCE_RANK = ['fence_low', 'fence_basic', 'fence_brick', 'fence_ornate'] as const;
+export const GATE_RANK = ['gate_basic', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_naqsh', 'gate_gold'] as const;
+export const LEVEL_FENCE: readonly (typeof FENCE_RANK)[number][] = [
+  'fence_low', 'fence_low', 'fence_basic', 'fence_basic', 'fence_brick', 'fence_brick', 'fence_brick', 'fence_ornate', 'fence_ornate', 'fence_ornate', 'fence_ornate',
+];
+export const LEVEL_GATE: readonly (typeof GATE_RANK)[number][] = [
+  'gate_basic', 'gate_basic', 'gate_wood', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_carved', 'gate_naqsh', 'gate_naqsh', 'gate_gold', 'gate_gold',
 ];
 export const yardDecor = (tier: number, decor: readonly string[]): string[] => normalizeDecor([...(LEVEL_YARD[tier] ?? []), ...decor]);
 

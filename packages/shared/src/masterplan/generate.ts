@@ -1,5 +1,5 @@
 import type { Building, Commerce, District, Expansion, MasterPlan, Plot, PlotType, Road, Street, Zone } from '../types.ts';
-import { AVENUE, CELL, CITY_HALF, HILL, LAKE, PLAZA_HALF, STREET, inLake, inPlaza, rotatedSize } from './geometry.ts';
+import { AVENUE, AVENUE_LINES, CELL, CITY_HALF, HILL, LAKE, PLAZA_HALF, STREET, inLake, inPlaza, rotatedSize } from './geometry.ts';
 import { clipRoad, layoutGrid, type GridResult, type Spot } from './layout.ts';
 
 const M = AVENUE / 2;
@@ -36,12 +36,21 @@ const SPECS: readonly DistrictSpec[] = [
 ];
 const BUSINESS_RECT: Rect = cellRect(-1, 1);
 
-const HOVLI = { w: 16, d: 24 } as const;
-const VILLA = { w: 20, d: 28 } as const;
-const QASR = { w: 30, d: 42 } as const;
+const HOVLI = { w: 25, d: 34 } as const;
+const VILLA = { w: 32, d: 44 } as const;
+const QASR = { w: 42, d: 60 } as const;
+/** Do'kon 18×24, lekin qo'shnilar orasi kengroq. */
+const SHOP = { w: 18, d: 24, pitchW: 24, pitchD: 34 } as const;
+/** Hovlilar maydon chetidan shuncha metr narida boshlanadi. */
+const PLAZA_GAP = 3;
 const PLOTS_PER_DISTRICT = 400;
 /** Qasr to'ri tuman ID'siga qo'shiladigan siljish — ko'cha kalitlari to'qnashmasin. */
 const HIGH_GRID_OFFSET = 100;
+
+type Green = MasterPlan['greens'][number];
+const COURTYARD = { away: 45, w: 80, d: 44 } as const;
+const VALUE_REACH = 2100;
+const HILL_REACH = 525;
 
 const never = (): boolean => false;
 const dist = (x: number, z: number, cx = 0, cz = 0): number => Math.hypot(x - cx, z - cz);
@@ -51,9 +60,9 @@ const districtRect = (s: DistrictSpec): Rect => cellRect(s.cell[0], s.cell[1], s
 
 /** Joy qiymati 0..100: markaz, ko'l bo'yi, tepalik qimmatroq. */
 const plotValue = (type: PlotType, x: number, z: number): number => {
-  const centre = Math.max(0, 1 - dist(x, z) / 1400);
+  const centre = Math.max(0, 1 - dist(x, z) / VALUE_REACH);
   const lake = type === 'villa' ? Math.max(0, 1 - (lakeDistance(x, z) - 1) / 0.8) : 0;
-  const hill = type === 'qasr' ? Math.max(0, 1 - dist(x, z, HILL.x, HILL.z) / 350) : 0;
+  const hill = type === 'qasr' ? Math.max(0, 1 - dist(x, z, HILL.x, HILL.z) / HILL_REACH) : 0;
   return Math.round(Math.min(100, centre * 60 + Math.max(lake, hill) * 70));
 };
 
@@ -71,8 +80,8 @@ const draftsOf = (spots: readonly Spot[], type: PlotType, districtId: number): D
 
 const planMahalla = (s: DistrictSpec): HousePlan => {
   const grid = layoutGrid({
-    district: s.id, rect: districtRect(s), plotW: HOVLI.w, plotD: HOVLI.d, crossStreets: 1, transpose: s.transpose ?? false,
-    blocked: (x, z, w, d) => inPlaza(x, z, Math.max(w, d) / 2), roadBlocked: (x, z) => inPlaza(x, z),
+    district: s.id, rect: districtRect(s), plotW: HOVLI.w, plotD: HOVLI.d, crossStreets: 1, transpose: s.transpose ?? false, slack: 'outer',
+    blocked: (x, z, w, d) => Math.abs(x) - w / 2 < PLAZA_HALF + PLAZA_GAP && Math.abs(z) - d / 2 < PLAZA_HALF + PLAZA_GAP, roadBlocked: (x, z) => inPlaza(x, z),
   });
   const { used, rest } = pick(grid.spots, PLOTS_PER_DISTRICT, (p) => dist(p.x, p.z), `tuman ${s.id}`);
   return { roads: grid.roads, drafts: draftsOf(used, 'hovli', s.id), rest };
@@ -80,7 +89,7 @@ const planMahalla = (s: DistrictSpec): HousePlan => {
 
 const planLake = (s: DistrictSpec): HousePlan => {
   const grid = layoutGrid({
-    district: s.id, rect: districtRect(s), plotW: VILLA.w, plotD: VILLA.d, crossStreets: 3, transpose: false,
+    district: s.id, rect: districtRect(s), plotW: VILLA.w, plotD: VILLA.d, crossStreets: 3, transpose: false, slack: 'even',
     blocked: (x, z, w, d) => inLake(x, z, Math.hypot(w, d) / 2 + 4), roadBlocked: (x, z) => inLake(x, z, 9),
   });
   // Oldidagi ko'cha ko'l tufayli uzilgan joylar uchastka bo'la olmaydi.
@@ -94,7 +103,7 @@ const planLake = (s: DistrictSpec): HousePlan => {
 };
 
 const planHill = (s: DistrictSpec): HousePlan => {
-  const base = { crossStreets: 1, transpose: false, blocked: never, roadBlocked: never };
+  const base = { crossStreets: 1, transpose: false, slack: 'even' as const, blocked: never, roadBlocked: never };
   const low: GridResult = layoutGrid({ ...base, district: s.id, rect: cellRect(0, -2), plotW: HOVLI.w, plotD: HOVLI.d });
   const high: GridResult = layoutGrid({ ...base, district: s.id + HIGH_GRID_OFFSET, rect: cellRect(1, -2), plotW: QASR.w, plotD: QASR.d });
   const a = pick(low.spots, 300, (p) => dist(p.x, p.z), 'tepalik hovli');
@@ -139,7 +148,7 @@ const plazaOffices = (): CommerceDraft[] => {
 };
 
 /** Ofis eni 36 m — bir qatordagi ikki qo'shni joy birlashadi. */
-const businessOffices = (spots: readonly Spot[], count: number): CommerceDraft[] => {
+const businessOffices = (spots: readonly Spot[], count: number): { offices: CommerceDraft[]; rest: Spot[] } => {
   const byRow = new Map(spots.map((s) => [`${s.row}:${s.index}`, s]));
   const taken = new Set<Spot>();
   const out: CommerceDraft[] = [];
@@ -150,7 +159,7 @@ const businessOffices = (spots: readonly Spot[], count: number): CommerceDraft[]
     taken.add(s).add(next);
     out.push({ type: 'ofis', x: round1((s.x + next.x) / 2), z: round1(s.z), w: 36, d: 24, rot: s.rot });
   }
-  return out;
+  return { offices: out, rest: spots.filter((s) => !taken.has(s)) };
 };
 
 /** Bilbordlar ikki markaziy prospekt chetida, chorrahalardan tashqarida. */
@@ -162,20 +171,21 @@ const billboards = (): CommerceDraft[] =>
     return { type: 'bilbord', x: onX ? along : 12.4, z: onX ? 12.4 : along, w: 8, d: 2, rot: onX ? 3 : 0 };
   });
 
-const planCommerce = (): { commerce: Commerce[]; roads: readonly Road[] } => {
+const planCommerce = (): { commerce: Commerce[]; roads: readonly Road[]; rest: readonly Spot[] } => {
   const grid = layoutGrid({
-    district: 90, rect: BUSINESS_RECT, plotW: 18, plotD: 24, crossStreets: 1, transpose: false, blocked: never, roadBlocked: never,
+    district: 90, rect: BUSINESS_RECT, plotW: SHOP.pitchW, plotD: SHOP.pitchD, crossStreets: 1, transpose: false, slack: 'even', blocked: never, roadBlocked: never,
   });
   const { used, rest } = pick(grid.spots, 100, (p) => dist(p.x, p.z), "do'kon");
-  const shops = used.map((s): CommerceDraft => ({ type: 'dokon', x: round1(s.x), z: round1(s.z), w: s.w, d: s.d, rot: s.rot }));
-  const all = [...shops, ...plazaOffices(), ...businessOffices(rest, 18), ...billboards()];
-  return { commerce: all.map((c, i): Commerce => ({ id: `B${String(i + 1).padStart(3, '0')}`, ...c })), roads: grid.roads };
+  const shops = used.map((s): CommerceDraft => ({ type: 'dokon', x: round1(s.x), z: round1(s.z), w: SHOP.w, d: SHOP.d, rot: s.rot }));
+  const business = businessOffices(rest, 18);
+  const all = [...shops, ...plazaOffices(), ...business.offices, ...billboards()];
+  return { commerce: all.map((c, i): Commerce => ({ id: `B${String(i + 1).padStart(3, '0')}`, ...c })), roads: grid.roads, rest: business.rest };
 };
 
 /** Tumanlararo prospektlar; ko'l tumani ichidan o'tmaydi. */
 const avenueRoads = (): Road[] => {
-  const blocked = (x: number, z: number): boolean => inPlaza(x, z) || (x === CELL && z > CELL + M && z < CITY_HALF - M);
-  return [-CITY_HALF, -CELL, 0, CELL, CITY_HALF].flatMap((l) => [
+  const blocked = (x: number, z: number): boolean => inPlaza(x, z) || (x === CELL && z > CELL + M - 2 && z < CITY_HALF - M);
+  return AVENUE_LINES.flatMap((l) => [
     ...clipRoad('x', -CITY_HALF - M, CITY_HALF + M, l, AVENUE, 'prospekt', blocked),
     ...clipRoad('z', -CITY_HALF - M, CITY_HALF + M, l, AVENUE, 'prospekt', blocked),
   ]);
@@ -274,6 +284,13 @@ const buildPlots = (drafts: readonly Draft[], buildings: readonly Building[], by
   return { plots, idOf };
 };
 
+const greenOf = (s: Spot): Green => {
+  const [w, d] = rotatedSize(s.w, s.d, s.rot);
+  return [round1(s.x), round1(s.z), w, d];
+};
+/** Ko'p qavatli uy hovlisi — fasad oldidagi bog'cha. */
+const courtyardOf = (b: Building): Green => [b.x, round1(b.z + (b.rot === 0 ? COURTYARD.away : -COURTYARD.away)), COURTYARD.w, COURTYARD.d];
+
 export const generateMasterPlan = (): MasterPlan => {
   const drafts: Draft[] = [];
   const rest = new Map<number, readonly Spot[]>();
@@ -298,14 +315,11 @@ export const generateMasterPlan = (): MasterPlan => {
   const business = planCommerce();
 
   return {
-    version: 1,
+    version: 2,
     districts: SPECS.map((s): District => ({ id: s.id, zone: s.zone, nameUz: s.nameUz, nameRu: s.nameRu, rect: districtRect(s) })),
     streets, plots, buildings, expansions,
     commerce: business.commerce,
     roads: [...roads, ...business.roads].map((r): Road => ({ ...r, x: round1(r.x), z: round1(r.z), w: round1(r.w), d: round1(r.d) })),
-    greens: left.map((s) => {
-      const [w, d] = rotatedSize(s.w, s.d, s.rot);
-      return [round1(s.x), round1(s.z), w, d] as const;
-    }),
+    greens: [...[...left, ...business.rest].map(greenOf), ...buildings.map(courtyardOf)],
   };
 };

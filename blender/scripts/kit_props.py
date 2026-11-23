@@ -2,13 +2,13 @@
 import math
 import random
 
-from kit_core import (BRICK, CARVED, CONCRETE, FACADE, GRASS, LEAF, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model)
+from kit_core import (BRICK, CARVED, COARSE, CONCRETE, FACADE, GRASS, LEAF, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model)
 
 GOLD = '#d9a93f'
 IRON = '#2b2b2e'
 BARK = '#6b5238'
 GATE = 4.0  # darvoza eni
-W, D = 16.0, 24.0  # panjara shu o'lchamda; boshqa uchastkalarga masshtablanadi
+W, D = 25.0, 34.0  # panjara shu o'lchamda; boshqa uchastkalarga masshtablanadi
 
 
 def perimeter(m, draw, gap=GATE, inset=0.35, step=4.0):
@@ -27,43 +27,58 @@ def slab(m, x0, y0, x1, y1, z0, z1, t, layer, color=WHITE, mask=0.0):
     m.box(a, b, z0, c, d, z1, layer, color, mask)
 
 
+def fence_low():
+    """Past yog'och panjara (1-level)."""
+    m = Model('fence_low', COARSE)
+    def draw(x0, y0, x1, y1):
+        m.cbox(x0, y0, 0, 0.16, 0.16, 1.0, WOOD, '#8a6238')
+        for z in (0.25, 0.65):
+            slab(m, x0, y0, x1, y1, z, z + 0.16, 0.03, WOOD, '#a3764a')
+    perimeter(m, draw, step=5.8)
+    return m
+
+
 def fence_basic():
-    m = Model('fence_basic')
-    perimeter(m, lambda *r: slab(m, *r, 0, 1.1, 0.1, PLASTER, '#e6dccb', M_WALL), step=12)
+    """Suvoq devor, tepasi tosh (2–3 level)."""
+    m = Model('fence_basic', COARSE)
+    def draw(x0, y0, x1, y1):
+        slab(m, x0, y0, x1, y1, 0, 1.4, 0.1, PLASTER, '#e6dccb', M_WALL)
+        slab(m, x0, y0, x1, y1, 1.4, 1.5, 0.16, STONE, '#d8cbb5')
+    perimeter(m, draw, step=17)
     return m
 
 
 def fence_wood():
-    m = Model('fence_wood')
+    m = Model('fence_wood', COARSE)
     def draw(x0, y0, x1, y1):
         m.cbox(x0, y0, 0, 0.18, 0.18, 1.5, WOOD, '#8a6238')
         slab(m, x0, y0, x1, y1, 0.15, 1.3, 0.04, WOOD, '#a3764a')
-    perimeter(m, draw, step=3)
+    perimeter(m, draw, step=4.4)
     return m
 
 
 def fence_brick():
-    m = Model('fence_brick')
+    m = Model('fence_brick', COARSE)
     def draw(x0, y0, x1, y1):
         slab(m, x0, y0, x1, y1, 0, 1.6, 0.14, BRICK)
         slab(m, x0, y0, x1, y1, 1.6, 1.72, 0.22, STONE, '#d8cbb5')
         m.cbox(x0, y0, 0, 0.5, 0.5, 2.0, BRICK)
-    perimeter(m, draw, step=6)
+    perimeter(m, draw, step=8.5)
     return m
 
 
 def fence_ornate():
-    m = Model('fence_ornate')
+    m = Model('fence_ornate', COARSE)
     def draw(x0, y0, x1, y1):
         slab(m, x0, y0, x1, y1, 0, 0.6, 0.16, STONE, '#e6dcc8')
         slab(m, x0, y0, x1, y1, 0.75, 0.82, 0.03, PLAIN, IRON)
         slab(m, x0, y0, x1, y1, 1.75, 1.82, 0.03, PLAIN, GOLD)
         for i in range(1, 6):
             t = i / 6
-            m.cbox(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 0.6, 0.05, 0.05, 1.4, PLAIN, IRON)
+            m.cbox(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 0.6, 0.05, 0.05, 1.4, PLAIN, IRON, top=False)
         m.cbox(x0, y0, 0, 0.5, 0.5, 2.0, STONE, '#e6dcc8')
-        m.blob(x0, y0, 2.2, 0.22, GOLD, 1, 1, PLAIN, 1)
-    perimeter(m, draw, step=4)
+        m.cyl(x0, y0, 2.0, 2.5, 0.2, 0, 5, PLAIN, IRON)
+    perimeter(m, draw, step=5.8)
     return m
 
 
@@ -316,7 +331,7 @@ def yurt():
 
 def path_stone():
     m = Model('path_stone')
-    m.box(-0.9, -5, 0, 0.9, 5, 0.06, STONE, '#e6dcc8')
+    m.box(-0.9, -8.8, 0, 0.9, 8.8, 0.06, STONE, '#e6dcc8')
     return m
 
 
@@ -465,9 +480,11 @@ def pigeon():
 
 def all_props():
     return [
-        fence_basic(), fence_wood(), fence_brick(), fence_ornate(),
+        fence_low(), fence_basic(), fence_wood(), fence_brick(), fence_ornate(),
         gate('gate_basic', PLASTER, '#e6dccb', PLAIN, '#4a6b7a', 1.9),
         gate('gate_wood', WOOD, '#7a4f2a', WOOD, '#a3764a', 2.1),
+        gate('gate_wood_carved', WOOD, '#7a4f2a', CARVED, '#e0b98a', 2.3),
+        gate('gate_naqsh', STONE, '#efe4cf', CARVED, WHITE, 2.6, '#2f6f72'),
         gate('gate_carved', BRICK, WHITE, CARVED, WHITE, 2.4, '#8a4b38'),
         gate('gate_gold', STONE, '#f0e6d2', CARVED, '#ffd27a', 2.8, GOLD),
         path_stone(), tree_anor(), tree_chinor(), tree_chinor('tree_chinor_lod', True), tree_terak(), tree_terak('tree_terak_lod', True), tree_archa(),

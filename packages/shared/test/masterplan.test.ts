@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import { decodePlan, encodePlan, type EncodedPlan } from '../src/masterplan/codec.ts';
 import { generateMasterPlan } from '../src/masterplan/generate.ts';
-import { inLake, inPlaza, terrainHeight } from '../src/masterplan/geometry.ts';
+import { AVENUE_LINES, CITY_HALF, HILL, PLAZA_HALF, inLake, inPlaza, terrainHeight } from '../src/masterplan/geometry.ts';
 import { SpatialIndex, footprint, frontOf, boxContains } from '../src/city.ts';
 
 const raw = readFileSync(new URL('../data/masterplan.json', import.meta.url), 'utf8');
@@ -84,8 +84,42 @@ describe('qulflangan bosh reja', () => {
 
   test('tepalik balandligi silliq va faqat NE burchakda', () => {
     expect(terrainHeight(0, 0)).toBe(0);
-    expect(terrainHeight(770, -770)).toBeGreaterThan(20);
-    for (let x = 520; x < 1100; x += 2) expect(Math.abs(terrainHeight(x, -770) - terrainHeight(x + 2, -770))).toBeLessThan(1);
+    expect(terrainHeight(HILL.x, HILL.z)).toBeGreaterThan(25);
+    expect(terrainHeight(-HILL.x, HILL.z)).toBe(0);
+    for (let x = 750; x < CITY_HALF + 100; x += 2) expect(Math.abs(terrainHeight(x, HILL.z) - terrainHeight(x + 2, HILL.z))).toBeLessThan(1);
+  });
+
+  test('v2: kattalashgan uchastkalar (±10%), shahar ~3×3 km', () => {
+    expect(plan.version).toBe(2);
+    expect(CITY_HALF).toBeGreaterThanOrEqual(1450);
+    expect(CITY_HALF).toBeLessThanOrEqual(1600);
+    const target = { hovli: [24, 34], villa: [30, 42], qasr: [40, 56] } as const;
+    for (const p of plan.plots) {
+      if (p.type === 'kvartira') continue;
+      const [w, d] = target[p.type];
+      expect(Math.abs(p.w / w - 1)).toBeLessThanOrEqual(0.1);
+      expect(Math.abs(p.d / d - 1)).toBeLessThanOrEqual(0.1);
+    }
+    const area = (t: string): number => { const p = plan.plots.find((q) => q.type === t)!; return p.w * p.d; };
+    expect(area('villa')).toBeGreaterThan(area('hovli') * 1.4);
+    expect(area('qasr')).toBeGreaterThan(area('villa') * 1.4);
+  });
+
+  test('B101–B112 va markaziy maydon joyi o‘zgarmagan', () => {
+    const at = Object.fromEntries(plan.commerce.map((c) => [c.id, [c.type, c.x, c.z, c.w, c.d, c.rot]]));
+    const n = [[-108, -108], [-108, -74], [-74, -108], [108, -108], [108, -74], [74, -108], [108, 108], [108, 74], [74, 108], [-108, 108], [-108, 74], [-74, 108]] as const;
+    n.forEach(([x, z], i) => expect(at[`B${101 + i}`], `B${101 + i}`).toEqual(['ofis', x, z, 28, 28, z < 0 ? 0 : 2]));
+    expect(PLAZA_HALF).toBe(125);
+    expect(AVENUE_LINES).toContain(0);
+    expect(plan.commerce).toHaveLength(170);
+  });
+
+  test('hovlilar maydon chetidan ~3 m narida boshlanadi, markazga yaqin joy yetarli', () => {
+    const gap = (p: (typeof plan.plots)[number]): number => { const f = footprint(p); return Math.max(Math.abs(p.x) - f.hx, Math.abs(p.z) - f.hz) - PLAZA_HALF; };
+    const gaps = plan.plots.filter((p) => p.type === 'hovli').map(gap);
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(2);
+    expect(Math.min(...gaps)).toBeLessThanOrEqual(6);
+    expect(plan.plots.filter((p) => p.type === 'hovli' && p.districtId <= 4 && Math.hypot(p.x, p.z) < 350).length).toBeGreaterThanOrEqual(100);
   });
 
   test('kengaytirish joyi bitta uchastkaga bittadan', () => {

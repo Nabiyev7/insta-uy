@@ -13,6 +13,7 @@ M_NONE, M_WALL, M_ROOF, M_GLOW = 0.0, 0.25, 0.5, 0.75
 TILE = {PLASTER: 3.0, BRICK: 2.0, ROOF: 2.2, WOOD: 1.6, ASPHALT: 4.0, GRASS: 5.0, CONCRETE: 3.0, LEAF: 2.2,
         NAQSH: 1.2, CARVED: 1.0, FACADE: 3.6, GLASS: 4.0, SOIL: 4.0, STONE: 2.5, PLAIN: 1.0, WINDOW: 1.0}
 MAX_FACE = 3.0
+COARSE = 99.0  # panjara va uzoq ko'rinishlar bo'linmaydi
 AO_RAYS = 28
 AO_DISTANCE = 3.5
 
@@ -33,8 +34,9 @@ WHITE = '#ffffff'
 class Model:
     """Bitta model = bitta primitiv (bitta draw call)."""
 
-    def __init__(self, name):
+    def __init__(self, name, max_face=MAX_FACE):
         self.name = name
+        self.max_face = max_face  # katta yuzalar AO uchun shu o'lchamda bo'linadi
         self.polys = []  # (points, uvs, layer, mask, color)
 
     def poly(self, pts, layer=PLAIN, color=WHITE, mask=M_NONE, fit=False):
@@ -45,8 +47,8 @@ class Model:
         self._emit(pts, self._box_uv(pts, layer), layer, color, mask)
 
     def _grid(self, p, layer, color, mask, fit):
-        nu = max(1, math.ceil((p[1] - p[0]).length / MAX_FACE - 0.2))
-        nv = max(1, math.ceil((p[3] - p[0]).length / MAX_FACE - 0.2))
+        nu = max(1, math.ceil((p[1] - p[0]).length / self.max_face - 0.2))
+        nv = max(1, math.ceil((p[3] - p[0]).length / self.max_face - 0.2))
         def at(u, v):
             return p[0].lerp(p[1], u).lerp(p[3].lerp(p[2], u), v)
         for i in range(nu):
@@ -164,6 +166,10 @@ class Model:
         self.cbox(cx, cy, z0, r * 3.2, r * 3.2, 0.25, STONE, '#cbbfa9')
         self.cyl(cx, cy, z0 + 0.25, z1 - 0.25, r * 1.15, r * 0.8, 6, layer, color, cap=False)
         self.cbox(cx, cy, z1 - 0.28, r * 3.4, r * 3.4, 0.28, CARVED, WHITE)
+
+    def stretch(self, fx, fy):
+        """Hozirgacha chizilgan qismni eniga va chuqurligiga kengaytiradi (bo'yi o'zgarmaydi)."""
+        self.polys = [([Vector((p.x * fx, p.y * fy, p.z)) for p in pts], *rest) for pts, *rest in self.polys]
 
     # ---- mesh ----
     def _ao(self, ground):

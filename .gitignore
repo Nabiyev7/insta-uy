@@ -4,7 +4,7 @@ dist/
 .env.*
 !.env.example
 *.log
-.dev-data/
+.dev-data*/
 coverage/
 video/out/
 *.blend1

@@ -1,5 +1,5 @@
-"""Farg'ona vodiysi ruhidagi uylar. Old tomoni -Y (glTF: +Z). Barchasi <= 13.5 x 12.5 m — eng kichik uchastkaga sig'adi."""
-from kit_core import (BRICK, CARVED, CONCRETE, FACADE, GLASS, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model)
+"""Farg'ona vodiysi ruhidagi uylar. Old tomoni -Y (glTF: +Z). Bu asosiy shakllar; levellar kit_levels*.py da."""
+from kit_core import (BRICK, CARVED, COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model)
 
 TRIM = '#f3ead8'
 
@@ -171,15 +171,45 @@ def house5(name):
     return m
 
 
-def lod(name, x0, y0, x1, y1, h, roof_h, roof=True):
-    """Uzoqdagi sodda shakl."""
-    m = Model(name)
-    m.box(x0, y0, 0, x1, y1, h, PLASTER, '#e9e2d4', M_WALL, top=not roof, top_layer=CONCRETE)
-    if roof:
+def lod(name, body, h, roof_h, gable=False, wing=None, dome=0.0, gold=False):
+    """Uzoqdagi sodda shakl. body/wing = (x0, y0, x1, y1)."""
+    m = Model(name, COARSE)
+    x0, y0, x1, y1 = body
+    flat = dome > 0
+    m.box(x0, y0, 0, x1, y1, h, PLASTER, '#e9e2d4', M_WALL, top=flat, top_layer=CONCRETE)
+    if gable:
+        m.gable(x0, y0, x1, y1, h, roof_h, 0.4)
+    elif not flat:
         m.hip(x0, y0, x1, y1, h, roof_h, 0.4)
-    m.window('f', y0, x0 + 1, x1 - 1, 1, h - 0.8)
-    m.window('b', y1, x0 + 1, x1 - 1, 1, h - 0.8)
+    if wing:
+        a, b, c, d = wing
+        wh = min(h, 3.4)
+        m.box(a, b, 0, c, d, wh, PLASTER, '#e9e2d4', M_WALL, top=False)
+        m.hip(a, b, c, d, wh, roof_h * 0.75, 0.4)
+    if flat:
+        m.dome(0, 1, h, dome, 8, 2)
+        for s in (-1, 1):
+            m.cyl(s * (x1 - 0.6), y0, 0, h + 1, 0.9, 0.9, 5, PLASTER, TRIM)
+            m.cyl(s * (x1 - 0.6), y0, h + 1, h + 2.2, 0.9, 0, 5, PLAIN if gold else NAQSH, '#d9a93f' if gold else WHITE)
+    m.window('f', y0, x0 + 1, x1 - 1, 1, min(h, 3.4) - 0.8)
+    m.window('b', y1, x0 + 1, x1 - 1, 1, min(h, 3.4) - 0.8)
     return m
+
+
+def house_lods():
+    """Har levelga bitta uzoq ko'rinish: shakli tepadan ham farqlanadi."""
+    return [
+        lod('house1_lod', (-4.8, -3.1, 4.8, 4.1), 3, 1.9, gable=True),
+        lod('house2_lod', (-4.8, -3.1, 4.8, 4.1), 3, 1.9, gable=True, wing=(1.1, -6.4, 4.8, -2.0)),
+        lod('house3_lod', (-6.6, -1.8, 6.6, 5.4), 3.2, 2.2, wing=(2.2, -6.0, 6.6, -0.6)),
+        lod('house4_lod', (-6.6, -1.8, 6.6, 5.4), 3.2, 2.4, wing=(-6.7, -6.3, -3.1, -3.0)),
+        lod('house5_lod', (-7.7, -4.2, 7.7, 6.0), 3.5, 2.6),
+        lod('house6_lod', (-7.7, -4.2, 7.7, 6.0), 3.5, 2.8, wing=(-3.0, -6.1, 3.0, -3.5)),
+        lod('house7_lod', (-4.5, -2, 5, 5), 6.4, 2.0, wing=(-6.5, -5, 6.5, -1)),
+        lod('house8_lod', (-5.5, -3, 5.5, 5.2), 6.4, 2.2, wing=(-6.6, -5.2, 6.5, -2)),
+        lod('house9_lod', (-6.2, -4.5, 6.2, 5.6), 7, 0, dome=2.5),
+        lod('house10_lod', (-6.4, -5.2, 6.4, 5.6), 7, 0, dome=2.7, gold=True),
+    ]
 
 
 def apartment(floors):
@@ -199,7 +229,7 @@ def apartment(floors):
 
 
 def apartment_lod(floors):
-    m = Model(f'apt{floors}_lod')
+    m = Model(f'apt{floors}_lod', COARSE)
     m.box(-22, -8, 0, 22, 8, floors * 3 + 1.4, FACADE, WHITE, M_WALL, top_layer=CONCRETE)
     return m
 
@@ -245,10 +275,5 @@ def shop():
 
 
 def all_buildings():
-    """Uzoq ko'rinishlar (har ikki levelga bitta) va ko'p qavatli binolar."""
-    lods = [
-        lod('house1_lod', -4, -2.6, 4, 3.4, 3, 1.9), lod('house2_lod', -5.5, -3, 5.5, 4.5, 3.3, 2.2),
-        lod('house3_lod', -6.4, -4, 6.4, 5, 3.6, 2.6), lod('house4_lod', -6.5, -4, 6.5, 5.4, 5.4, 2.2),
-        lod('house5_lod', -6.2, -4.5, 6.2, 5.6, 7, 2.6),
-    ]
-    return lods + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop()]
+    """Uzoq ko'rinishlar va ko'p qavatli binolar."""
+    return house_lods() + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop()]

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { BufferAttribute, BufferGeometry, Points, PointsMaterial } from 'three';
-import { PLAZA_HALF, hash01, weatherOf } from '../../../../packages/shared/src/index.ts';
+import { CELL, CITY_HALF, PLAZA_HALF, hash01, weatherOf } from '../../../../packages/shared/src/index.ts';
 import type { Item } from '../logic/placement.ts';
 import { QUALITY } from '../logic/quality.ts';
 import { director, player } from '../app/runtime.ts';
@@ -11,8 +11,9 @@ import type { Kit } from './kit.ts';
 import { Pools } from './pools.ts';
 
 const BASE = { y: 0, sx: 1, sy: 1, sz: 1, wall: '#ffffff', roof: '#ffffff', glow: 0, seed: 0.5 } as const;
-const LINES = [-500, 0, 500] as const;
-const SPAN = 1000;
+const LINES = [-CELL, 0, CELL] as const;
+const SPAN = CITY_HALF;
+const CARS = 54;
 
 /** Mashinalar prospektlar bo'ylab deterministik yuradi — serversiz hamma joyda bir xil. */
 const carAt = (i: number, t: number): Item | null => {
@@ -76,7 +77,7 @@ export function LifeLayer({ kit }: LifeLayerProps): null {
     // Kuchsiz qurilmada 20 marta/soniya yetarli.
     if (acc.current > (q.level === 'low' ? 0.05 : 0)) {
       acc.current = 0;
-      const cars = Array.from({ length: 36 }, (_, i) => carAt(i, real)).filter((c): c is Item => c !== null && Math.hypot(c.x - fx, c.z - fz) < q.mid);
+      const cars = Array.from({ length: CARS }, (_, i) => carAt(i, real)).filter((c): c is Item => c !== null && Math.hypot(c.x - fx, c.z - fz) < q.mid);
       const isPlaza = Math.hypot(fx, fz) < 120;
       pools.set(isPlaza ? [...cars, ...critters(t)] : cars);
     }
