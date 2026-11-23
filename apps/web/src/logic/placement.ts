@@ -1,8 +1,10 @@
 /** Qaysi model qayerda turadi. Faqat hisob — Three.js yo'q. */
 import {
-  AVENUE_LINES, DECOR, HILL, LAKE, PLAZA_HALF, inPlaza, LEVEL_FENCE, LEVEL_GATE, yardDecor, WALL_COLORS, ROOF_COLORS, decorById, hash01, inLake, padHeight, terrainHeight,
-  type Building, type Commerce, type DecorSlot, type Expansion, type MasterPlan, type Plot, type Rot,
+  AVENUE_LINES, DECOR, HILL, LAKE, PLAZA_HALF, inPlaza, LEVEL_FENCE, LEVEL_GATE, TOWERS, TOWER_BASE, TOWER_HALF, yardDecor, WALL_COLORS, ROOF_COLORS, decorById, hash01, inLake, padHeight,
+  type Building, type Commerce, type DecorSlot, type Expansion, type MasterPlan, type Plot,
 } from '../../../../packages/shared/src/index.ts';
+import { WHITE, item, toWorld, yawOf, type Item, type Solid } from './item.ts';
+import { plazaItems } from './plaza.ts';
 
 export interface HouseState {
   readonly plot: string;
@@ -16,33 +18,6 @@ export interface HouseState {
   readonly status: 'pending' | 'owned';
   readonly expanded: boolean;
 }
-export interface Item {
-  readonly model: string;
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-  readonly yaw: number;
-  readonly sx: number;
-  readonly sy: number;
-  readonly sz: number;
-  readonly wall: string;
-  readonly roof: string;
-  /** 0..1 — tungi hashamatli yoritish. */
-  readonly glow: number;
-  readonly seed: number;
-}
-const WHITE = '#ffffff';
-
-const item = (model: string, x: number, z: number, over: Partial<Item> = {}): Item => ({
-  model, x, y: terrainHeight(x, z), z, yaw: 0, sx: 1, sy: 1, sz: 1, wall: WHITE, roof: WHITE, glow: 0, seed: hash01(`${model}${x.toFixed(1)}${z.toFixed(1)}`), ...over,
-});
-
-export const yawOf = (rot: Rot): number => (rot * Math.PI) / 2;
-export const toWorld = (p: { readonly x: number; readonly z: number; readonly rot: Rot }, lx: number, lz: number): readonly [number, number] => {
-  const a = yawOf(p.rot);
-  return [p.x + lx * Math.cos(a) + lz * Math.sin(a), p.z - lx * Math.sin(a) + lz * Math.cos(a)];
-};
-
 const HOUSE: Readonly<Record<Plot['type'], { readonly scale: number; readonly back: number }>> = {
   hovli: { scale: 1.2, back: 7.5 }, kvartira: { scale: 1, back: 0 }, villa: { scale: 1.3, back: 11 }, qasr: { scale: 1.9, back: 14 },
 };
@@ -132,7 +107,9 @@ export const commerceItem = (c: Commerce): Item => {
   if (c.type === 'bilbord') return item('billboard', c.x, c.z, { yaw });
   if (c.type === 'dokon') return item('shop', c.x, c.z, { yaw, wall: WALL_COLORS[Math.floor(h * 8)] ?? WHITE, roof: ROOF_COLORS[Math.floor(h * 6)] ?? WHITE });
   if (c.w > 30) return item('office_low', c.x, c.z, { yaw });
-  return item('office', c.x, c.z, { yaw, sy: 0.75 + h * 0.75, seed: h });
+  const tower = TOWERS[c.id];
+  if (!tower) return item('office', c.x, c.z, { yaw, seed: h });
+  return item(tower.look, c.x, c.z, { yaw, sy: tower.height / TOWER_BASE[tower.look], wall: tower.tint, seed: h });
 };
 
 /** Bog'chalarda bitta daraxtga to'g'ri keladigan maydon, m². */
@@ -176,20 +153,6 @@ export const staticItems = (plan: MasterPlan): Item[] => {
   return [...out, ...plazaItems()];
 };
 
-const plazaItems = (): Item[] => {
-  const ring = (n: number, r: number, model: string, scale = 1): Item[] => Array.from({ length: n }, (_, i) => {
-    const a = (i / n) * Math.PI * 2 + 0.2;
-    return item(model, Math.cos(a) * r, Math.sin(a) * r, { yaw: -a + Math.PI / 2, sx: scale, sy: scale, sz: scale });
-  });
-  const stalls = Array.from({ length: 12 }, (_, i) => item('bozor_stall', 24 + (i % 4) * 9, 46 + Math.floor(i / 4) * 8, { yaw: i % 2 ? Math.PI : 0 }));
-  return [
-    item('plaza_fountain', 0, 0), item('hero_statue', 0, -55), item('choyxona', -40, 62, { yaw: Math.PI / 2 }), item('maktab', 40, -82),
-    ...ring(12, 20, 'bench'), ...ring(16, 26, 'street_lamp'), ...ring(14, 34, 'tree_archa').filter((i) => Math.abs(i.x) > 12), ...ring(10, 17, 'yard_flowers'), ...ring(26, 86, 'tree_chinor').filter((i) => Math.abs(i.x) > 16 && Math.abs(i.z) > 16 && !(i.x > 14 && i.x < 66 && i.z < -68)), ...ring(18, 58, 'yard_flowers', 1.6), ...stalls,
-    ...[[-22, 60], [-52, 40], [-58, 78], [-24, 84], [20, -60], [60, -64]].map(([x = 0, z = 0]) => item('tree_chinor', x, z)),
-    ...[[-30, -70], [-45, -70], [-30, -82], [-45, -82]].map(([x = 0, z = 0], i) => item(['car_van', 'car_sedan', 'car_van', 'car_sedan'][i] ?? 'car_van', x, z)),
-  ];
-};
-
 /** Yopiq tuman: to'siq va kranlar (PLAN §3). */
 export const closedDistrictItems = (rect: readonly [number, number, number, number], id: number): Item[] => {
   const [x0, z0, x1, z1] = rect;
@@ -225,15 +188,6 @@ export const projectItems = (projects: readonly ProjectInfo[]): Item[] => projec
   return done > 0 ? [item('crane', site[0], site[1]), item('foundation', site[0] + 12, site[1], { sx: 2, sz: 2 })] : [];
 });
 
-export const holidayItems = (h: 'yangi_yil' | 'navroz' | 'mustaqillik' | null): Item[] => {
-  if (h === 'yangi_yil') return [item('tree_archa', 0, 46, { sx: 3.2, sy: 3.4, sz: 3.2, glow: 1 }), ...[-12, -6, 6, 12].map((x) => item('light_lamps', x, 46))];
-  if (h === 'navroz') return [-24, -8, 8, 24].map((x) => item('special_yurt', x, 46, { sx: 1.6, sy: 1.6, sz: 1.6 }));
-  if (h === 'mustaqillik') return [-20, -10, 10, 20].map((x) => item('light_luxe', x, 46));
-  return [];
-};
-
-/** Avatar kirolmaydigan to'rtburchaklar. */
-export interface Solid { readonly x: number; readonly z: number; readonly hx: number; readonly hz: number; readonly h: number }
 const HALF: Readonly<Record<number, readonly [number, number]>> = { 1: [5, 4.2], 2: [5.9, 4.9], 3: [6.7, 5.8], 4: [6.8, 6.2], 5: [7.8, 6.6], 6: [7.9, 6.9], 7: [6.5, 5.2], 8: [6.9, 5.4], 9: [6.8, 5.9], 10: [7.2, 6.2] };
 export const houseSolid = (p: Plot, s: HouseState): Solid | null => {
   if (p.type === 'kvartira') return null;
@@ -250,11 +204,9 @@ export const pickHeight = (p: Plot, s: HouseState | undefined): number => (TIER_
 export const buildingSolid = (b: Building): Solid => ({ x: b.x, z: b.z, hx: 22.2, hz: 8.2, h: b.floors * 3 + 2 });
 export const commerceSolid = (c: Commerce): Solid | null => {
   if (c.type === 'bilbord') return null;
-  const [a, b, h] = c.type === 'dokon' ? [7.6, 6.1, 5] : c.w > 30 ? [15, 8, 14] : [12, 12, 38];
+  const tower = TOWERS[c.id];
+  const [a, b, h] = tower ? [...TOWER_HALF[tower.look], tower.height] as const : c.type === 'dokon' ? [7.6, 6.1, 5] : c.w > 30 ? [15, 8, 14] : [12, 12, 38];
   return { x: c.x, z: c.z, hx: c.rot % 2 ? b : a, hz: c.rot % 2 ? a : b, h };
 };
-export const PLAZA_SOLIDS: readonly Solid[] = [
-  { x: 0, z: 0, hx: 10, hz: 10, h: 3 }, { x: 0, z: -55, hx: 2.6, hz: 2.6, h: 8 }, { x: 40, z: -82, hx: 20, hz: 7, h: 8 }, { x: -44, z: 62, hx: 2, hz: 8, h: 4 },
-];
 export const CITY_HILL = HILL;
 export const ALL_DECOR = DECOR;

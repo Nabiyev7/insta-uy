@@ -2,13 +2,15 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PerspectiveCamera, Vector3 } from 'three';
 import {
-  SpatialIndex, districtAt, footprint, hash01, inLake, padHeight, sanitizeAvatar, AVATAR_OPTIONS, type AvatarLook, type MasterPlan, type Plot,
+  CIVIC, SpatialIndex, civicById, districtAt, footprint, hash01, inLake, padHeight, sanitizeAvatar, AVATAR_OPTIONS, type AvatarLook, type MasterPlan, type Plot,
 } from '../../../../packages/shared/src/index.ts';
 import { cameraDistance, lerpAngle, movePlayer, pickNearest, type PickBox, type Ray } from '../logic/motion.ts';
-import { PLAZA_SOLIDS, buildingSolid, commerceSolid, houseSolid, pickHeight, type Solid } from '../logic/placement.ts';
+import { buildingSolid, commerceSolid, houseSolid, pickHeight } from '../logic/placement.ts';
+import type { Solid } from '../logic/item.ts';
+import { PLAZA_SOLIDS, civicRects } from '../logic/plaza.ts';
 import { QUALITY, startGovernor, stepGovernor } from '../logic/quality.ts';
 import { camera as cam, director, input, player, remotes, snapshotters } from '../app/runtime.ts';
-import { getApp, openPanel, setApp, useApp } from '../app/store.ts';
+import { getApp, openPanel, setApp, toast, useApp } from '../app/store.ts';
 import { Avatars, type Body } from './avatars.ts';
 import { groundHeight } from './ground.ts';
 import { Labels } from './labels.ts';
@@ -102,12 +104,17 @@ export function PlayerLayer({ plan }: PlayerLayerProps): null {
       const dir = new Vector3(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
       const ray: Ray = { ox: camera.position.x, oy: camera.position.y, oz: camera.position.z, dx: dir.x, dy: dir.y, dz: dir.z };
       const id = pickNearest(ray, pickBoxes());
-      if (id?.startsWith('P')) openPanel({ kind: 'plot', id });
+      const civic = civicById(id ?? '');
+      if (civic) {
+        toast(getApp().lang === 'uz' ? civic.uz : civic.ru);
+        openPanel({ kind: civic.panel });
+      } else if (id?.startsWith('P')) openPanel({ kind: 'plot', id });
       else if (id?.startsWith('B')) openPanel({ kind: 'commerce', id });
       else if (id?.startsWith('#')) openPanel({ kind: 'building', id: Number(id.slice(1)) });
     };
     const pickBoxes = (): PickBox[] => [
       ...nearPlots(110).map((p): PickBox => { const y = padHeight(p); return { id: p.id, ...footprint(p), y0: y - 1, y1: y + pickHeight(p, houses.get(p.id)) }; }),
+      ...CIVIC.map((c, i): PickBox => ({ id: c.id, ...civicRects[i]!, y0: 0, y1: c.height * 0.7 })),
       ...plan.buildings.map((b): PickBox => ({ id: `#${b.id}`, x: b.x, z: b.z, hx: 22, hz: 8, y0: 0, y1: b.floors * 3 + 1 })),
       ...index.commerce.query(player.x, player.z, 160).map((c): PickBox => (c.type === 'bilbord'
         ? { id: c.id, x: c.x, z: c.z, hx: c.rot % 2 ? 0.6 : 4, hz: c.rot % 2 ? 4 : 0.6, y0: 4, y1: 7.5 }

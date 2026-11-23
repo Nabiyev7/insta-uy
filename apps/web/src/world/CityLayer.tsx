@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { CanvasTexture, Color, DirectionalLight, Fog, HemisphereLight, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader } from 'three';
-import { SpatialIndex, dayFraction, holidayOf, padHeight, seasonOf, weatherOf, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
+import { CIVIC, SpatialIndex, dayFraction, holidayOf, padHeight, seasonOf, weatherOf, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
 import {
-  PLOT_SHELL, buildingItem, closedDistrictItems, commerceItem, expansionItems, holidayItems, houseItem, plotItems, projectItems, staticItems, toWorld, yawOf, type HouseState, type Item,
+  PLOT_SHELL, buildingItem, closedDistrictItems, commerceItem, expansionItems, houseItem, plotItems, projectItems, staticItems, type HouseState,
 } from '../logic/placement.ts';
+import { toWorld, yawOf, type Item } from '../logic/item.ts';
+import { HERO_SPOT, holidayItems } from '../logic/plaza.ts';
 import { QUALITY } from '../logic/quality.ts';
 import { PUBLIC_FILES } from '../app/api.ts';
 import { camera as cam, director, player } from '../app/runtime.ts';
@@ -17,6 +19,9 @@ import { Pools } from './pools.ts';
 import { Lake, Sky } from './sky.ts';
 
 const BIG = new Set(['crane', 'office', 'office_low', 'choyxona', 'maktab', 'stadium', 'bridge', 'hero_statue', 'plaza_fountain', 'billboard']);
+/** Davlat binolari: yaqinda to'liq, uzoqda sodda shakl, tuman chegarasigacha ko'rinadi. */
+const CIVIC_LODS: Readonly<Record<string, string>> = Object.fromEntries(CIVIC.map((c) => [c.id, `${c.id}_lod`]));
+const CIVIC_NEAR = 2.2;
 const LODS: Readonly<Record<string, string>> = { tree_chinor: 'tree_chinor_lod', tree_terak: 'tree_terak_lod', tree_archa: 'tree_archa' };
 const LABEL_RANGE = 46;
 const WHITE_COLOR = new Color('#ffffff');
@@ -179,7 +184,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.pools.set(items);
     labels.sort((a, b) => a.d - b.d);
     const hero = boot?.hero;
-    const heroLabel: LabelInfo[] = hero && Math.hypot(fx, fz + 55) < 70 ? [{ key: 'hero', text: `🏆 ${hero.nick}`, kind: 'gold', badge: null, x: 0, y: 9.4, z: -55 }] : [];
+    const heroLabel: LabelInfo[] = hero && Math.hypot(fx - HERO_SPOT.x, fz - HERO_SPOT.z) < 70 ? [{ key: 'hero', text: `🏆 ${hero.nick}`, kind: 'gold', badge: null, x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
     world.labels.set([...heroLabel, ...labels.slice(0, q.labels).map((l) => l.info)]);
   };
 
@@ -218,7 +223,12 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
 }
 
 const pushStatic = (out: Item[], it: Item, d: number, near: number, far: number, isBehind: (x: number, z: number, d: number) => boolean): void => {
-  if (isBehind(it.x, it.z, d)) return;
+  const civic = CIVIC_LODS[it.model];
+  if (isBehind(it.x, it.z, civic ? d - 25 : d)) return;
+  if (civic) {
+    out.push(d < near * CIVIC_NEAR ? it : { ...it, model: civic });
+    return;
+  }
   if (d < near || BIG.has(it.model)) out.push(it);
   else if (LODS[it.model] && d < far * 0.75) out.push({ ...it, model: LODS[it.model] ?? it.model });
   else if (it.model === 'barrier' || (it.model === 'street_lamp' && d < near * 1.8)) out.push(it);

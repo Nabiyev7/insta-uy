@@ -1,5 +1,5 @@
 import { Color, DynamicDrawUsage, Euler, Group, InstancedBufferAttribute, InstancedMesh, Matrix4, Quaternion, Vector3 } from 'three';
-import type { Item } from '../logic/placement.ts';
+import type { Item } from '../logic/item.ts';
 import type { Kit } from './kit.ts';
 
 const colorCache = new Map<string, Color>();

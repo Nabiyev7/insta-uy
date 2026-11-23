@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { BufferAttribute, BufferGeometry, Points, PointsMaterial } from 'three';
 import { CELL, CITY_HALF, PLAZA_HALF, hash01, weatherOf } from '../../../../packages/shared/src/index.ts';
-import type { Item } from '../logic/placement.ts';
+import type { Item } from '../logic/item.ts';
 import { QUALITY } from '../logic/quality.ts';
 import { director, player } from '../app/runtime.ts';
 import { useApp } from '../app/store.ts';
@@ -38,7 +38,7 @@ const critters = (t: number): Item[] => {
   });
   const cats = Array.from({ length: 4 }, (_, i): Item => {
     const a = t * 0.06 * (i % 2 ? 1 : -1) + i * 1.6;
-    const r = 40 + i * 6;
+    const r = 28 + i * 4;
     return { ...BASE, model: 'pet_cat', x: Math.cos(a) * r, z: Math.sin(a) * r, yaw: -a + (i % 2 ? Math.PI : 0) };
   });
   return [...pigeons, ...cats];

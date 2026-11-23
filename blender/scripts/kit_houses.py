@@ -236,9 +236,9 @@ def apartment_lod(floors):
 
 def office():
     """28x28 minora; balandligi instance masshtabi bilan (1 = 36 m)."""
-    m = Model('office')
+    m = Model('office', 12.0)
     m.box(-12, -12, 0, 12, 12, 4, STONE, '#d9cfbd')
-    m.box(-10.5, -10.5, 4, 10.5, 10.5, 34, GLASS, WHITE, top=False)
+    m.box(-10.5, -10.5, 4, 10.5, 10.5, 34, GLASS, WHITE, M_WALL, top=False)
     m.box(-11, -11, 33.4, 11, 11, 35, CONCRETE, '#cfc5b3', bottom=True)
     for x in (-10.7, 10.7):
         for y in (-10.7, 10.7):

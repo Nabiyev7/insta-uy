@@ -9,7 +9,8 @@ from mathutils.bvhtree import BVHTree
 # Tekstura qatlamlari (build-textures.mjs bilan bir xil tartib)
 PLAIN, PLASTER, BRICK, ROOF, WOOD, ASPHALT, GRASS, CONCRETE, LEAF, WINDOW, NAQSH, CARVED, FACADE, GLASS, SOIL, STONE = range(16)
 # Niqoblar: instance rangi qaysi qismga tegishli
-M_NONE, M_WALL, M_ROOF, M_GLOW = 0.0, 0.25, 0.5, 0.75
+# M_SOFT — tunda o'z rangida yumshoq yonadi (gumbaz)
+M_NONE, M_WALL, M_ROOF, M_GLOW, M_SOFT = 0.0, 0.25, 0.5, 0.75, 1.0
 TILE = {PLASTER: 3.0, BRICK: 2.0, ROOF: 2.2, WOOD: 1.6, ASPHALT: 4.0, GRASS: 5.0, CONCRETE: 3.0, LEAF: 2.2,
         NAQSH: 1.2, CARVED: 1.0, FACADE: 3.6, GLASS: 4.0, SOIL: 4.0, STONE: 2.5, PLAIN: 1.0, WINDOW: 1.0}
 MAX_FACE = 3.0

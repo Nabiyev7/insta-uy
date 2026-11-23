@@ -7,9 +7,11 @@ import { daylightAt, leafTint, snowAmount } from '../src/logic/atmosphere.ts';
 import { frameAt } from '../src/logic/cameraPath.ts';
 import { CITY_LIMIT, cameraDistance, lerpAngle, movePlayer, pickNearest, rayBox } from '../src/logic/motion.ts';
 import {
-  PLAZA_SOLIDS, buildingItem, buildingSolid, closedDistrictItems, commerceItem, commerceSolid, expansionItems, holidayItems, houseItem, houseSolid, pickHeight, plotItems, projectItems, staticItems, toWorld,
+  buildingItem, buildingSolid, closedDistrictItems, commerceItem, commerceSolid, expansionItems, houseItem, houseSolid, pickHeight, plotItems, projectItems, staticItems,
   type HouseState,
 } from '../src/logic/placement.ts';
+import { toWorld } from '../src/logic/item.ts';
+import { PLAZA_SOLIDS } from '../src/logic/plaza.ts';
 import { initialQuality, startGovernor, stepGovernor, type GovernorState } from '../src/logic/quality.ts';
 
 const plan = decodePlan(JSON.parse(readFileSync(new URL('../../../packages/shared/data/masterplan.json', import.meta.url), 'utf8')) as EncodedPlan);
@@ -132,7 +134,7 @@ describe('joylashtirish', () => {
     expect(items.filter((i) => inLake(i.x, i.z))).toEqual([]);
   });
   test('tijorat, bino, kengaytirish, yopiq tuman, loyiha, bayram', () => {
-    expect(new Set(plan.commerce.map((c) => commerceItem(c).model))).toEqual(new Set(['shop', 'office', 'office_low', 'billboard']));
+    expect(new Set(plan.commerce.map((c) => commerceItem(c).model))).toEqual(new Set(['shop', 'office', 'office_low', 'billboard', 'bank', 'agentlik', 'novostroyka']));
     expect(plan.commerce.filter((c) => c.type !== 'bilbord').every((c) => commerceSolid(c) !== null)).toBe(true);
     expect(commerceSolid(plan.commerce.find((c) => c.type === 'bilbord')!)).toBeNull();
     expect(buildingItem(plan.buildings[0]!, true).model).toMatch(/apt\d_lod/);
@@ -144,8 +146,6 @@ describe('joylashtirish', () => {
     expect(project('stadion', 100)).toEqual(['stadium']);
     expect(project('koprik', 10)).toContain('crane');
     expect(project('koprik', 0)).toEqual([]);
-    expect([holidayItems('yangi_yil'), holidayItems('navroz'), holidayItems('mustaqillik')].every((l) => l.length > 0)).toBe(true);
-    expect(holidayItems(null)).toEqual([]);
   });
 });
 

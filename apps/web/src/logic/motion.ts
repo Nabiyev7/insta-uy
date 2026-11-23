@@ -1,5 +1,5 @@
 import { CITY_HALF, LAKE, inLake } from '../../../../packages/shared/src/index.ts';
-import type { Solid } from './placement.ts';
+import type { Solid } from './item.ts';
 
 export const PLAYER_RADIUS = 0.45;
 export const CITY_LIMIT = CITY_HALF + 60;

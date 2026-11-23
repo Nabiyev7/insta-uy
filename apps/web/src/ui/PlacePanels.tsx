@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { BADGES, TIERS, instagramUrl, isFreeType, parseBio, parseInstagram, type BadgeId, type Commerce } from '../../../../packages/shared/src/index.ts';
+import { BADGES, TIERS, TOWERS, TOWER_NAMES, instagramUrl, isFreeType, parseBio, parseInstagram, type BadgeId, type Commerce } from '../../../../packages/shared/src/index.ts';
 import { addressOf, goToPlot } from '../app/actions.ts';
 import { rpc, type PlotInfo } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
@@ -149,7 +149,10 @@ export function CommercePanel({ id }: IdProps): React.JSX.Element {
   const t = useT();
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
+  const lang = useApp((s) => s.lang);
+  const tower = TOWERS[id];
   const { data } = useLoad(() => rpc<CommerceInfo>('api_commerce', { p_id: id }), id);
+  if (tower) return <Sheet title={TOWER_NAMES[tower.look][lang]}><p className="muted">{t('towerNote')}</p></Sheet>;
   return (
     <Sheet title={data ? t(`t_${data.type}`) : t('business')}>
       {data?.title && <p className="nick">{data.title}</p>}

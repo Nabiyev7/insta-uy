@@ -51,7 +51,8 @@ if (uNight > 0.01) {
   if (kLayer == 9.0) kLit = kDark * step(vFx.y, 0.78) * 0.75;
   else if (kLayer == 12.0) kLit = kDark * step(kitHash(floor(vTuv * vec2(2.0, 1.0)) + kSeed), 0.42) * 0.6;
   else if (kLayer == 13.0) kLit = kDark * step(kitHash(floor(vTuv * vec2(4.0, 1.0)) + kSeed), 0.22) * 0.5;
-  else if (kMask > 0.65 && kLayer == 0.0) kLit = 1.6;
+  else if (kMask > 0.65 && kMask < 0.9 && kLayer == 0.0) kLit = 1.6;
+  if (kMask > 0.9) totalEmissiveRadiance += diffuseColor.rgb * 0.55 * uNight; // yumshoq yorug'lik (gumbazlar)
   totalEmissiveRadiance += kWarm * kLit * uNight;
   totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.78, 0.45) * vFx.x * uNight * (1.15 - smoothstep(0.0, 9.0, vH));
 }`;

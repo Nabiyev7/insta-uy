@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { PLAZA_HALF, decodePlan, rotatedSize } from '../packages/shared/src/index.ts';
+import { CIVIC, PLAZA_HALF, TOWERS, TOWER_NAMES, decodePlan, rotatedSize } from '../packages/shared/src/index.ts';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const plan = decodePlan(JSON.parse(readFileSync(path.join(root, 'packages/shared/data/masterplan.json'), 'utf8')));
@@ -27,7 +27,8 @@ const grid = ticks.map((v) => {
 }).join('');
 
 const plaza = [
-  ['Favvora', 0, 0, 22, 22], ['Haykal', 0, -55, 5, 5], ['Choyxona', -40, 62, 14, 18], ['Maktab', 40, -82, 40, 18], ['Bozor', 37, 54, 34, 22], ['Parking', -38, -76, 20, 18],
+  ['Favvora', 0, 0, 22, 22], ['Haykal', -24, -24, 5, 5], ['Choyxona', 36, 108, 18, 14], ['Maktab', 36, -107, 30, 16], ['Bozor', 37, 54, 34, 22], ['Parking', -36, -107, 20, 18],
+  ...CIVIC.map((c) => [c.uz, c.x, c.z, c.w, c.d]),
 ].map(([label, x, z, w, d]) => rect(x, z, w, d, '#e58f3f') + text(x, z - d / 2 - 5, label, 17)).join('');
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}"><rect width="100%" height="100%" fill="#cfe0b4"/>
@@ -35,7 +36,7 @@ ${plan.roads.filter((r) => isNear({ x: Math.max(Math.abs(r.x) - r.w / 2, 0), z: 
 ${plan.plots.filter(isNear).map((p) => { const [w, d] = rotatedSize(p.w, p.d, p.rot); return rect(p.x, p.z, w - 1, d - 1, COLORS[p.type]); }).join('')}
 ${rect(0, 0, PLAZA_HALF * 2, PLAZA_HALF * 2, '#f3ead6', 'stroke="#a00" stroke-width="4"')}
 ${plaza}
-${plan.commerce.filter(isNear).map((c) => { const [w, d] = rotatedSize(c.w, c.d, c.rot); return rect(c.x, c.z, w, d, COLORS[c.type]) + (c.type === 'ofis' ? text(c.x, c.z, c.id, 18, '#fff') : ''); }).join('')}
+${plan.commerce.filter(isNear).map((c) => { const [w, d] = rotatedSize(c.w, c.d, c.rot); return rect(c.x, c.z, w, d, COLORS[c.type]) + (c.type === 'ofis' ? text(c.x, c.z - 4, c.id, 18, '#fff') + (TOWERS[c.id] ? text(c.x, c.z + 4, TOWER_NAMES[TOWERS[c.id].look].uz.replace('Shahar ', ''), 11, '#fff') : '') : ''); }).join('')}
 ${grid}
 ${text(0, -115, 'SHIMOL (-z)', 22, '#a00')}${text(0, 115, 'JANUB (+z)', 22, '#a00')}${text(-98, -10, "G'ARB (-x)", 20, '#a00')}${text(98, -10, 'SHARQ (+x)', 20, '#a00')}
 </svg>`;

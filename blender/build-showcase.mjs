@@ -6,7 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { CITY_HALF, DECOR, HILL, LAKE, MIN_TIER, TIERS, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
-import { buildingItem, commerceItem, houseItem, plotItems, staticItems, toWorld } from '../apps/web/src/logic/placement.ts';
+import { buildingItem, commerceItem, houseItem, plotItems, staticItems } from '../apps/web/src/logic/placement.ts';
+import { toWorld } from '../apps/web/src/logic/item.ts';
 import { Ground } from '../apps/web/src/world/ground.ts';
 import { findBlender } from './find-blender.mjs';
 
@@ -55,7 +56,8 @@ const region = (name, x, z, radius, camera, isLake = false) => {
 
 /** Uchastka o'lchami level bo'yicha: oddiy hovli, villa, qasr. */
 const sampleOf = (tier) => (tier >= MIN_TIER.qasr ? [42, 60, 'qasr'] : tier >= MIN_TIER.villa ? [32, 44, 'villa'] : [25, 34, 'hovli']);
-const BIG = [['apt5', 'K1. 5 qavatli'], ['apt9', 'K2. 9 qavatli'], ['office', 'K3. Ofis minora'], ['office_low', 'K4. Ofis past'], ['shop', "K5. Do'kon"], ['maktab', 'K6. Maktab'], ['choyxona', 'K7. Choyxona']];
+const BIG = [['apt5', 'K1. 5 qavatli'], ['apt9', 'K2. 9 qavatli'], ['office', 'K3. Ofis minora'], ['office_low', 'K4. Ofis past'], ['shop', "K5. Do'kon"], ['maktab', 'K6. Maktab'], ['choyxona', 'K7. Choyxona'],
+  ['prezident', 'K8. Prezident saroyi'], ['hokimiyat', 'K9. Shahar hokimiyati'], ['sud', 'K10. Shahar sudi'], ['bank', 'K11. Shahar banki'], ['agentlik', 'K12. Agentlik'], ['novostroyka', 'K13. Yangi turar-joy']];
 const plain = (model, x, z) => ({ model, x, y: 0, z, yaw: 0, sx: 1, sy: 1, sz: 1, wall: '#e8d9c0', roof: '#8a4b38' });
 
 const PER_ROW = 6;
@@ -77,9 +79,10 @@ const levelsScene = () => {
   return { name: '1 Levellar', items: items.map(pack), labels, floor: [84, -56, 400], camera: [[88, 98, 116], [88, 0, -34]] };
 };
 const buildingsScene = () => {
-  const items = BIG.map(([model], i) => plain(model, i * 48, 0));
-  const labels = BIG.map(([, label], i) => [label, i * 48, 0.1, 18, 0, 4]);
-  return { name: '3 Binolar', items: items.map(pack), labels, floor: [144, 0, 300], camera: [[144, 90, 230], [144, 10, 0]] };
+  const at = (i) => [(i % 7) * 60, i < 7 ? 0 : -90];
+  const items = BIG.map(([model], i) => plain(model, ...at(i)));
+  const labels = BIG.map(([, label], i) => [label, at(i)[0], 0.1, at(i)[1] + 26, 0, 5]);
+  return { name: '3 Binolar', items: items.map(pack), labels, floor: [180, -40, 420], camera: [[180, 190, 340], [180, 10, -60]] };
 };
 
 const EXTRA = [
@@ -122,7 +125,7 @@ const strip = await sharp(path.join(root, 'apps/web/public/assets/tex.webp')).pn
 for (let i = 0; i < TEX_LAYERS; i++) await sharp(strip).extract({ left: 0, top: i * TEX, width: TEX, height: TEX }).toFile(path.join(dir, `t${i}.png`));
 const scenes = [
   levelsScene(), decorScene(), buildingsScene(),
-  region('4 Markaz', 0, 0, 230, [[-150, 120, 250], [-10, 0, 10]]),
+  region('4 Markaz', 0, 0, 230, [[-120, 130, 250], [0, 0, -5]]),
   region("5 Ko'l bo'yi", LAKE.x - LAKE.rx * 0.6, LAKE.z - LAKE.rz - 40, 190, [[310, 90, 720], [530, 0, 980]], true),
   region('6 Tepalik', HILL.x, HILL.z, 220, [[970, 180, -830], [HILL.x, 20, HILL.z]]),
   mapScene(),
