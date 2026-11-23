@@ -126,6 +126,7 @@ export function PlayerLayer({ plan }: PlayerLayerProps): null {
       copy.getContext('2d')?.drawImage(gl.domElement, 0, 0);
       return copy;
     };
+    if (import.meta.env.DEV) Object.assign(window, { __gl: () => ({ calls: gl.info.render.calls, triangles: gl.info.render.triangles }) });
     return () => { snapshotters.capture = null; };
   }, [gl, scene, camera, size]);
 
@@ -191,7 +192,7 @@ export function PlayerLayer({ plan }: PlayerLayerProps): null {
     if (t.hud < 0.5) return;
     t.hud = 0;
     const nearest = nearPlots(45).sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z))[0];
-    const next = { district: districtAt(plan, player.x, player.z), street: nearest?.streetId ?? 0, fps: Math.round(t.fpsFrames / t.fpsTime) };
+    const next = { district: districtAt(plan, player.x, player.z) || (nearest?.districtId ?? 0), street: nearest?.streetId ?? 0, fps: Math.round(t.fpsFrames / t.fpsTime) };
     t.fpsFrames = t.fpsTime = 0;
     const s = getApp();
     if (s.district !== next.district || s.street !== next.street || s.fps !== next.fps) setApp(next);

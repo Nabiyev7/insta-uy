@@ -15,9 +15,9 @@ const lerpPose = (a: Pose, b: Pose, t: number): Pose => ({
 const orbit = (p: Plot, t: number): Pose => {
   const yaw = (p.rot * Math.PI) / 2 + lerp(-0.6, 0.7, t);
   const size = Math.max(p.w, p.d);
-  const r = size * lerp(1.15, 0.95, t);
+  const r = size * lerp(1.75, 1.4, t);
   const y = padHeight(p);
-  return { x: p.x + Math.sin(yaw) * r, y: y + size * lerp(0.42, 0.3, t), z: p.z + Math.cos(yaw) * r, tx: p.x, ty: y + (p.type === 'kvartira' ? 10 : 3), tz: p.z };
+  return { x: p.x + Math.sin(yaw) * r, y: y + size * lerp(0.62, 0.42, t), z: p.z + Math.cos(yaw) * r, tx: p.x, ty: y + (p.type === 'kvartira' ? 10 : 3), tz: p.z };
 };
 const aerial = (p: Plot): Pose => ({ x: p.x * 0.6, y: 150, z: p.z * 0.6 + 90, tx: p.x, ty: 0, tz: p.z });
 

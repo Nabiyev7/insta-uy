@@ -21,7 +21,12 @@
     "masterplan": "node packages/shared/scripts/build-masterplan.ts",
     "seed": "node packages/shared/scripts/build-seed.ts",
     "models": "node blender/build-models.mjs",
-    "e2e": "node e2e/run.mjs"
+    "e2e": "node e2e/run.mjs",
+    "video": "node video/src/main.ts",
+    "carousel": "node video/src/carousel.ts",
+    "og": "node scripts/build-og.mjs",
+    "icons": "node scripts/build-icons.mjs",
+    "textures": "node blender/build-textures.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.6.0",
