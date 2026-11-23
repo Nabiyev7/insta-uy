@@ -1,0 +1,12 @@
+name = "obunachilar-shahri-api"
+main = "src/worker.ts"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["*/10 * * * *", "10 22 * * *"]
+
+# Maxfiylar: `wrangler secret put <NOM>` — ro'yxat server/.env.example da.
+[vars]
+SITE_URL = "https://obunachilar-shahri.pages.dev"
+ALLOWED_ORIGINS = "https://obunachilar-shahri.pages.dev,https://obunachilar-admin.pages.dev"
