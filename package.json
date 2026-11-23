@@ -26,6 +26,7 @@
     "video": "node video/src/main.ts",
     "carousel": "node video/src/carousel.ts",
     "og": "node scripts/build-og.mjs",
+    "chat-images": "node scripts/build-chat-images.mjs",
     "icons": "node scripts/build-icons.mjs",
     "textures": "node blender/build-textures.mjs"
   },
