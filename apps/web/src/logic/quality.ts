@@ -8,15 +8,19 @@ export interface Quality {
   readonly detail: number;
   readonly mid: number;
   readonly fog: number;
+  /** Shahar rejimi: eng yuqori balandlik, ko'rinish radiusi va daraxtlar masofasi. */
+  readonly cityMax: number;
+  readonly cityView: number;
+  readonly cityTree: number;
   readonly labels: number;
   readonly hasShadows: boolean;
   readonly npcs: number;
   readonly particles: number;
 }
 export const QUALITY: Readonly<Record<QualityLevel, Quality>> = {
-  low: { level: 'low', dpr: 0.85, near: 46, detail: 32, mid: 150, fog: 190, labels: 8, hasShadows: false, npcs: 6, particles: 0 },
-  mid: { level: 'mid', dpr: 1.25, near: 80, detail: 60, mid: 260, fog: 330, labels: 16, hasShadows: false, npcs: 14, particles: 500 },
-  high: { level: 'high', dpr: 2, near: 130, detail: 110, mid: 480, fog: 640, labels: 26, hasShadows: true, npcs: 24, particles: 1400 },
+  low: { level: 'low', dpr: 0.85, near: 46, detail: 32, mid: 150, fog: 190, cityMax: 190, cityView: 480, cityTree: 190, labels: 8, hasShadows: false, npcs: 6, particles: 0 },
+  mid: { level: 'mid', dpr: 1.25, near: 80, detail: 60, mid: 260, fog: 330, cityMax: 240, cityView: 600, cityTree: 340, labels: 16, hasShadows: false, npcs: 14, particles: 500 },
+  high: { level: 'high', dpr: 2, near: 130, detail: 110, mid: 480, fog: 640, cityMax: 300, cityView: 800, cityTree: 560, labels: 26, hasShadows: true, npcs: 24, particles: 1400 },
 };
 const ORDER: readonly QualityLevel[] = ['low', 'mid', 'high'];
 

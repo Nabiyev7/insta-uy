@@ -7,11 +7,11 @@ export const CITY_LIMIT = CITY_HALF + 60;
 export interface Point { readonly x: number; readonly z: number }
 
 /** To'siqdan sirpanib chiqaradi: eng qisqa o'q bo'ylab. */
-const pushOut = (p: Point, s: Solid): Point => {
+const pushOut = (p: Point, s: Solid, radius: number): Point => {
   const dx = p.x - s.x;
   const dz = p.z - s.z;
-  const ox = s.hx + PLAYER_RADIUS - Math.abs(dx);
-  const oz = s.hz + PLAYER_RADIUS - Math.abs(dz);
+  const ox = s.hx + radius - Math.abs(dx);
+  const oz = s.hz + radius - Math.abs(dz);
   if (ox <= 0 || oz <= 0) return p;
   return ox < oz ? { x: p.x + (dx < 0 ? -ox : ox), z: p.z } : { x: p.x, z: p.z + (dz < 0 ? -oz : oz) };
 };
@@ -23,9 +23,9 @@ const keepOffLake = (p: Point, hasBridge: boolean): Point => {
   return { x: LAKE.x + Math.cos(a) * (LAKE.rx + 1.05), z: LAKE.z + Math.sin(a) * (LAKE.rz + 1.05) };
 };
 
-export const movePlayer = (from: Point, dx: number, dz: number, solids: readonly Solid[], hasBridge = false): Point => {
+export const movePlayer = (from: Point, dx: number, dz: number, solids: readonly Solid[], hasBridge = false, radius = PLAYER_RADIUS): Point => {
   const target = { x: from.x + dx, z: from.z + dz };
-  const pushed = solids.reduce(pushOut, target);
+  const pushed = solids.reduce<Point>((p, s) => pushOut(p, s, radius), target);
   const dry = keepOffLake(pushed, hasBridge);
   const clamp = (v: number): number => Math.max(-CITY_LIMIT, Math.min(CITY_LIMIT, v));
   return { x: clamp(dry.x), z: clamp(dry.z) };

@@ -3,13 +3,13 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { errorText, useT } from '../app/i18n.ts';
 import { getApp, openPanel, toast } from '../app/store.ts';
 
-interface SheetProps { readonly title: string; readonly children: ReactNode; readonly onBack?: () => void }
-export function Sheet({ title, children, onBack }: SheetProps): React.JSX.Element {
+interface SheetProps { readonly title: string; readonly children: ReactNode; readonly onBack?: () => void; /** 'half' — pastki yarim ekran. */ readonly variant?: 'half' }
+export function Sheet({ title, children, onBack, variant }: SheetProps): React.JSX.Element {
   const t = useT();
   const ref = useRef<HTMLElement>(null);
   useEffect(() => { ref.current?.focus(); }, []);
   return (
-    <aside className="sheet" role="dialog" aria-label={title} tabIndex={-1} ref={ref}>
+    <aside className={`sheet ${variant ?? ''}`} role="dialog" aria-label={title} tabIndex={-1} ref={ref}>
       <header>
         {onBack && <button type="button" className="x" onClick={onBack} aria-label={t('back')}>←</button>}
         <h2>{title}</h2>

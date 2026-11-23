@@ -3,7 +3,9 @@ import { BufferAttribute, BufferGeometry, Color, Group, Mesh, type MeshLambertMa
 import { AVENUE_LINES, HILL, HILL_EDGE, LAKE, PLAZA_HALF, inLake, padHeight, rotatedSize, terrainHeight, type MasterPlan, type Plot, type Road } from '../../../../packages/shared/src/index.ts';
 import { createKitMaterial } from './kit.ts';
 
-export const CHUNK = 375;
+const CHUNK = 375;
+/** Baland kameradan ko'riladigan yer: kattaroq bo'laklar, mayda chiziqlarsiz (draw call kam). */
+export const FAR_CHUNK = 750;
 const L = { plain: 0, asphalt: 5, grass: 6, stone: 15, naqsh: 10, soil: 14 } as const;
 const TILE: Readonly<Record<number, number>> = { 0: 4, 5: 5, 6: 6, 10: 4, 14: 7, 15: 3 };
 const HILL_REACH = 3.2 * HILL.sigma;
@@ -144,10 +146,11 @@ const addDashes = (out: Layers, r: Road, chunk: Rect): void => {
   }
 };
 
+export interface GroundOptions { readonly chunk?: number; readonly hasTop?: boolean }
 export interface GroundState { readonly openDistricts: ReadonlySet<number> }
 
-const buildChunk = (plan: MasterPlan, cx: number, cz: number, state: GroundState): Layers => {
-  const rect: Rect = [cx * CHUNK, cz * CHUNK, (cx + 1) * CHUNK, (cz + 1) * CHUNK];
+const buildChunk = (plan: MasterPlan, cx: number, cz: number, state: GroundState, size: number, hasTop: boolean): Layers => {
+  const rect: Rect = [cx * size, cz * size, (cx + 1) * size, (cz + 1) * size];
   const out: Layers = { base: new GeoBuilder(), low: new GeoBuilder(), walk: new GeoBuilder(), high: new GeoBuilder(), top: new GeoBuilder() };
   out.base.rect(...rect, L.grass, C.grass);
   for (const d of plan.districts) {
@@ -163,7 +166,7 @@ const buildChunk = (plan: MasterPlan, cx: number, cz: number, state: GroundState
   }
   addPlaza(out, rect);
   for (const r of plan.roads) addRoad(out, r, rect);
-  for (const r of plan.roads) addDashes(out, r, rect);
+  if (hasTop) for (const r of plan.roads) addDashes(out, r, rect);
   addLake(out, rect);
   return out;
 };
@@ -175,8 +178,13 @@ export class Ground {
   private readonly plan: MasterPlan;
   private state: GroundState;
 
-  constructor(plan: MasterPlan, state: GroundState) {
+  private readonly size: number;
+  private readonly hasTop: boolean;
+
+  constructor(plan: MasterPlan, state: GroundState, { chunk = CHUNK, hasTop = true }: GroundOptions = {}) {
     this.plan = plan;
+    this.size = chunk;
+    this.hasTop = hasTop;
     this.state = state;
     const [base, low, walk, high, top] = LAYER_NAMES.map((_, i) => createKitMaterial({ offset: -i }));
     this.materials = { base: base!, low: low!, walk: walk!, high: high!, top: top! };
@@ -199,9 +207,10 @@ export class Ground {
   /** Bir chaqiruvda ko'pi bilan `budget` bo'lak quriladi — kadr qotmasin. */
   update(x: number, z: number, radius: number, receiveShadow: boolean, budget = 2): boolean {
     const wanted = new Map<string, readonly [number, number, number]>();
-    for (let cx = Math.floor((x - radius) / CHUNK); cx <= Math.floor((x + radius) / CHUNK); cx++) {
-      for (let cz = Math.floor((z - radius) / CHUNK); cz <= Math.floor((z + radius) / CHUNK); cz++) {
-        wanted.set(`${cx},${cz}`, [cx, cz, Math.hypot((cx + 0.5) * CHUNK - x, (cz + 0.5) * CHUNK - z)]);
+    const s = this.size;
+    for (let cx = Math.floor((x - radius) / s); cx <= Math.floor((x + radius) / s); cx++) {
+      for (let cz = Math.floor((z - radius) / s); cz <= Math.floor((z + radius) / s); cz++) {
+        wanted.set(`${cx},${cz}`, [cx, cz, Math.hypot((cx + 0.5) * s - x, (cz + 0.5) * s - z)]);
       }
     }
     for (const [key, g] of this.chunks) {
@@ -210,7 +219,7 @@ export class Ground {
     }
     const missing = [...wanted].filter(([k]) => !this.chunks.has(k)).sort((a, b) => a[1][2] - b[1][2]);
     for (const [key, [cx, cz]] of missing.slice(0, budget)) {
-      const layers = buildChunk(this.plan, cx, cz, this.state);
+      const layers = buildChunk(this.plan, cx, cz, this.state, this.size, this.hasTop);
       const g = new Group();
       for (const name of LAYER_NAMES) {
         if (layers[name].isEmpty) continue;

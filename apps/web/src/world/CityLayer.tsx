@@ -1,106 +1,69 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { CanvasTexture, Color, DirectionalLight, Fog, HemisphereLight, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader } from 'three';
-import { CIVIC, SpatialIndex, dayFraction, holidayOf, padHeight, seasonOf, weatherOf, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
+import { Color, DirectionalLight, Fog, HemisphereLight } from 'three';
+import { SpatialIndex, dayFraction, holidayOf, seasonOf, weatherOf, type MasterPlan } from '../../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
-import {
-  PLOT_SHELL, buildingItem, closedDistrictItems, commerceItem, expansionItems, houseItem, plotItems, projectItems, staticItems, type HouseState,
-} from '../logic/placement.ts';
-import { toWorld, yawOf, type Item } from '../logic/item.ts';
+import type { Item } from '../logic/item.ts';
+import { closedDistrictItems, commerceItem, expansionItems, projectItems } from '../logic/placement.ts';
 import { HERO_SPOT, holidayItems } from '../logic/plaza.ts';
 import { QUALITY } from '../logic/quality.ts';
-import { PUBLIC_FILES } from '../app/api.ts';
-import { camera as cam, director, player } from '../app/runtime.ts';
+import { HIGH_ALTITUDE, cityView, groundView, type View } from '../logic/view.ts';
+import { worldIndex } from '../logic/worldIndex.ts';
+import { camera as cam, city, director, here, session } from '../app/runtime.ts';
 import { setting, useApp } from '../app/store.ts';
-import { Ground } from './ground.ts';
+import { Ads } from './Ads.tsx';
+import { collect, type CollectSource } from './collect.ts';
+import { FAR_CHUNK, Ground } from './ground.ts';
 import { kitUniforms, type Kit } from './kit.ts';
 import { Labels, type LabelInfo } from './labels.ts';
 import { Pools } from './pools.ts';
 import { Lake, Sky } from './sky.ts';
 
-const BIG = new Set(['crane', 'office', 'office_low', 'choyxona', 'maktab', 'stadium', 'bridge', 'hero_statue', 'plaza_fountain', 'billboard']);
-/** Davlat binolari: yaqinda to'liq, uzoqda sodda shakl, tuman chegarasigacha ko'rinadi. */
-const CIVIC_LODS: Readonly<Record<string, string>> = Object.fromEntries(CIVIC.map((c) => [c.id, `${c.id}_lod`]));
-const CIVIC_NEAR = 2.2;
-const LODS: Readonly<Record<string, string>> = { tree_chinor: 'tree_chinor_lod', tree_terak: 'tree_terak_lod', tree_archa: 'tree_archa' };
-const LABEL_RANGE = 46;
 const WHITE_COLOR = new Color('#ffffff');
+const VIDEO_BOOST = 1.5;
+const VIDEO_CHUNKS = 60;
+const HERO_RANGE = 70;
+const NOWHERE = 1e9;
+const STEP = { ground: { move: 6, turn: 0.25 }, city: { move: 6, turn: 0.12, perHeight: 0.09, height: 0.12 } } as const;
 
-/** Ko'rish markazi: odatda o'yinchi, videoda — kamera. */
-const focus = (): { x: number; z: number; yaw: number } => {
+interface Last { readonly x: number; readonly z: number; readonly yaw: number; readonly height: number; readonly mode: string }
+const FRESH: Last = { x: NOWHERE, z: NOWHERE, yaw: 0, height: 0, mode: '' };
+const angleBetween = (a: number, b: number): number => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+
+/** Hozirgi ko'rinish holati: nimaga qarab qayta yig'ish kerakligi shundan bilinadi. */
+const snapshot = (): Last => {
   const p = director.pose;
-  if (!p) return { x: player.x, z: player.z, yaw: cam.yaw + Math.PI };
-  return { x: p.x + (p.tx - p.x) * 0.5, z: p.z + (p.tz - p.z) * 0.5, yaw: Math.atan2(p.tx - p.x, p.tz - p.z) };
+  if (p) return { x: p.x + (p.tx - p.x) * 0.5, z: p.z + (p.tz - p.z) * 0.5, yaw: Math.atan2(p.tx - p.x, p.tz - p.z), height: 0, mode: 'video' };
+  if (session.mode === 'city') return { x: city.view.x, z: city.view.z, yaw: city.view.yaw, height: city.view.height, mode: 'city' };
+  const at = here();
+  return { x: at.x, z: at.z, yaw: cam.yaw + Math.PI, height: 0, mode: session.mode };
 };
-
-const useIndexes = (plan: MasterPlan): { plots: SpatialIndex<Plot>; statics: SpatialIndex<Item> } =>
-  useMemo(() => ({ plots: new SpatialIndex(plan.plots.filter((p) => p.type !== 'kvartira')), statics: new SpatialIndex(staticItems(plan)) }), [plan]);
-
-const Ads = (): null => {
-  const { scene } = useThree();
-  const plan = useApp((s) => s.plan);
-  const ads = useApp((s) => s.boot?.commerce);
-  useEffect(() => {
-    if (!plan || !ads) return undefined;
-    const meshes = ads.flatMap((ad) => {
-      const c = plan.commerce.find((q) => q.id === ad.id);
-      if (!c) return [];
-      const size = c.type === 'bilbord' ? { w: 7.8, h: 3, y: 5.8, z: 0.02 } : c.type === 'dokon' ? { w: 9.6, h: 1.15, y: 4.2, z: 5.27 } : { w: 8, h: 1.6, y: 5.4, z: c.w > 30 ? 8.1 : 12.1 };
-      const material = new MeshBasicMaterial({ map: ad.image && c.type === 'bilbord' ? new TextureLoader().load(PUBLIC_FILES + ad.image, (t) => { t.colorSpace = SRGBColorSpace; }) : signTexture(ad.title) });
-      const mesh = new Mesh(new PlaneGeometry(size.w, size.h), material);
-      const [x, z] = toWorld(c, 0, size.z);
-      mesh.position.set(x, size.y, z);
-      mesh.rotation.y = yawOf(c.rot);
-      return [mesh];
-    });
-    if (meshes.length === 0) return undefined;
-    scene.add(...meshes);
-    return () => {
-      for (const m of meshes) {
-        scene.remove(m);
-        m.geometry.dispose();
-        m.material.map?.dispose();
-        m.material.dispose();
-      }
-    };
-  }, [plan, ads, scene]);
-  return null;
-};
-const signTexture = (text: string): CanvasTexture => {
-  const c = document.createElement('canvas');
-  c.width = 512;
-  c.height = 96;
-  const g = c.getContext('2d');
-  if (g) {
-    g.fillStyle = '#14545f';
-    g.fillRect(0, 0, 512, 96);
-    g.fillStyle = '#fdf3d9';
-    g.font = '700 52px system-ui, sans-serif';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText(text, 256, 50, 480);
-  }
-  const t = new CanvasTexture(c);
-  t.colorSpace = SRGBColorSpace;
-  return t;
+const isStale = (a: Last, b: Last): boolean => {
+  const moved = Math.hypot(a.x - b.x, a.z - b.z);
+  const turned = angleBetween(a.yaw, b.yaw);
+  if (a.mode !== b.mode) return true;
+  if (b.mode !== 'city') return moved > STEP.ground.move || turned > STEP.ground.turn;
+  return moved > Math.max(STEP.city.move, b.height * STEP.city.perHeight) || turned > STEP.city.turn || Math.abs(a.height - b.height) > b.height * STEP.city.height;
 };
 
 interface CityLayerProps { readonly kit: Kit; readonly plan: MasterPlan }
 
 export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
-  const { scene, gl } = useThree();
+  const { scene, gl, size } = useThree();
   const level = useApp((s) => s.quality);
   const houses = useApp((s) => s.houses);
   const boot = useApp((s) => s.boot);
   const q = QUALITY[level];
-  const index = useIndexes(plan);
+  const index = useMemo(() => worldIndex(plan), [plan]);
 
-  const world = useMemo(() => ({ pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), sky: new Sky(), lake: new Lake(), labels: new Labels() }), [kit, plan]);
+  const world = useMemo(() => ({
+    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(),
+  }), [kit, plan]);
   const sun = useMemo(() => new DirectionalLight('#fff', 2), []);
   const hemi = useMemo(() => new HemisphereLight('#fff', '#8a7a60', 1), []);
   const fog = useMemo(() => new Fog('#cde', 40, 400), []);
-  const last = useRef({ x: 1e9, z: 1e9, yaw: 0, at: 0 });
-  const plotCache = useRef(new Map<string, readonly Item[]>());
+  const last = useRef<Last>(FRESH);
+  const caches = useRef({ full: new Map<string, readonly Item[]>(), simple: new Map<string, Item>() });
 
   const open = useMemo(() => new Set(boot?.districts.filter((d) => d.open).map((d) => d.id) ?? [1]), [boot]);
   /** Dinamik (bazadan) narsalar: yopiq tumanlar, loyihalar, admin xaritasi, kengaytirish, bayram. */
@@ -113,18 +76,22 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const commerce = useMemo(() => new SpatialIndex(plan.commerce.map(commerceItem)), [plan]);
 
   useEffect(() => {
-    plotCache.current.clear();
-    last.current.x = 1e9;
+    caches.current.full.clear();
+    caches.current.simple.clear();
+    last.current = FRESH;
     world.ground.setState({ openDistricts: open });
+    world.farGround.setState({ openDistricts: open });
   }, [houses, open, extras, world, level]);
 
   useEffect(() => {
     scene.fog = fog;
-    scene.add(world.pools.group, world.ground.group, world.sky.group, world.lake.mesh, world.labels.group, sun, sun.target, hemi);
+    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, sun, sun.target, hemi];
+    scene.add(...parts);
     return () => {
-      scene.remove(world.pools.group, world.ground.group, world.sky.group, world.lake.mesh, world.labels.group, sun, sun.target, hemi);
+      scene.remove(...parts);
       world.pools.dispose();
       world.ground.dispose();
+      world.farGround.dispose();
       world.labels.dispose();
       world.lake.mesh.geometry.dispose();
       world.lake.mesh.material.dispose();
@@ -146,96 +113,62 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     kit.material.needsUpdate = true;
   }, [q, gl, sun, world, kit]);
 
-  const collect = (fx: number, fz: number, yaw: number): void => {
-    const items: Item[] = [];
-    const dirX = Math.sin(yaw);
-    const dirZ = Math.cos(yaw);
-    const boost = director.pose ? 1.5 : 1;
-    const near = q.near * boost;
-    const detail = q.detail * boost;
-    const isSimple = q.level === 'low' && !director.pose;
-    const mid = q.mid * boost;
-    const fogFar = q.fog * boost;
-    // Orqadagi uzoq narsalar chizilmaydi (keng burchak bilan).
-    const isBehind = (x: number, z: number, d: number): boolean => !director.pose && d > 34 && (x - fx) * dirX + (z - fz) * dirZ < d * -0.1;
-    const labels: { d: number; info: LabelInfo }[] = [];
-
-    for (const p of index.plots.query(fx, fz, mid)) {
-      const d = Math.hypot(p.x - fx, p.z - fz);
-      if (isBehind(p.x, p.z, d)) continue;
-      const s = houses.get(p.id);
-      if (d < near) {
-        let list = plotCache.current.get(p.id);
-        if (!list) {
-          list = plotItems(p, s, open.has(p.districtId));
-          plotCache.current.set(p.id, list);
-        }
-        items.push(...(d < detail ? list : list.slice(0, PLOT_SHELL)));
-        if (s?.nick && d < LABEL_RANGE * boost) labels.push({ d, info: labelOf(p, s) });
-      } else if (s) items.push(houseItem(p, s, true, isSimple));
+  const currentView = (s: Last): View => {
+    if (s.mode === 'city') {
+      const vfov = size.height > size.width ? 70 : 58;
+      return cityView(city.view, q, Math.atan(Math.tan((vfov * Math.PI) / 360) * (size.width / Math.max(1, size.height))));
     }
-    for (const it of index.statics.query(fx, fz, mid)) pushStatic(items, it, Math.hypot(it.x - fx, it.z - fz), near, mid, isBehind);
-    for (const it of extras.query(fx, fz, fogFar)) pushStatic(items, it, Math.hypot(it.x - fx, it.z - fz), near * 1.6, fogFar, isBehind);
-    for (const it of commerce.query(fx, fz, fogFar)) if (!isBehind(it.x, it.z, Math.hypot(it.x - fx, it.z - fz))) items.push(it);
-    for (const b of plan.buildings) {
-      const d = Math.hypot(b.x - fx, b.z - fz);
-      if (d < fogFar && !isBehind(b.x, b.z, d - 25)) items.push(buildingItem(b, d > near * 2));
-    }
-    world.pools.set(items);
-    labels.sort((a, b) => a.d - b.d);
-    const hero = boot?.hero;
-    const heroLabel: LabelInfo[] = hero && Math.hypot(fx - HERO_SPOT.x, fz - HERO_SPOT.z) < 70 ? [{ key: 'hero', text: `🏆 ${hero.nick}`, kind: 'gold', badge: null, x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
-    world.labels.set([...heroLabel, ...labels.slice(0, q.labels).map((l) => l.info)]);
+    return groundView({ x: s.x, z: s.z, yaw: s.yaw, quality: q, boost: director.pose ? VIDEO_BOOST : 1, isVideo: director.pose !== null });
   };
 
-  useFrame(({ clock }) => {
+  const refresh = (v: View): void => {
+    const src: CollectSource = { plots: index.plots, statics: index.statics, extras, commerce, plan, houses, open, ...caches.current };
+    const { items, labels } = collect(v, src, q.labels);
+    world.pools.set(items);
+    const hero = boot?.hero;
+    const heroLabel: LabelInfo[] = hero && Math.hypot(v.x - HERO_SPOT.x, v.z - HERO_SPOT.z) < HERO_RANGE ? [{ key: 'hero', text: `🏆 ${hero.nick}`, kind: 'gold', badge: null, x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
+    world.labels.set([...heroLabel, ...labels]);
+  };
+
+  const updateGround = (v: View, isHigh: boolean): void => {
+    world.ground.group.visible = !isHigh;
+    world.farGround.group.visible = isHigh;
+    const ground = isHigh ? world.farGround : world.ground;
+    ground.update(v.x, v.z, Math.min(v.radius, v.fogFar), q.hasShadows && !isHigh, director.pose ? VIDEO_CHUNKS : isHigh ? 1 : 2);
+  };
+
+  const updateLight = (x: number, z: number, isHigh: boolean, seconds: number): void => {
     const now = Date.now();
-    const f = focus();
     const weather = weatherOf(now);
     const season = seasonOf(now);
     const light = daylightAt(director.dayFraction ?? dayFraction(now, setting('day_minutes', 24)), weather);
-    world.sky.update(light, f.x, f.z);
-    world.lake.update(clock.elapsedTime);
+    world.sky.update(light, x, z);
+    world.lake.update(seconds);
     kitUniforms.uNight.value = light.night;
     kitUniforms.uSnow.value = snowAmount(season, weather);
     kitUniforms.uLeaf.value.set(...leafTint(season));
+    sun.castShadow = q.hasShadows && !isHigh;
     sun.color.setRGB(light.sunColor[0], light.sunColor[1], light.sunColor[2], 'srgb');
     sun.intensity = light.sunIntensity;
-    sun.position.set(f.x + light.sun[0] * 120, light.sun[1] * 120, f.z + light.sun[2] * 120);
-    sun.target.position.set(f.x, 0, f.z);
+    sun.position.set(x + light.sun[0] * 120, light.sun[1] * 120, z + light.sun[2] * 120);
+    sun.target.position.set(x, 0, z);
     hemi.intensity = light.ambient * 1.5;
     hemi.color.copy(world.sky.fogColor).lerp(WHITE_COLOR, 0.45);
-    const boost = director.pose ? 1.5 : 1;
     fog.color.copy(world.sky.fogColor);
-    fog.near = q.fog * 0.25 * boost;
-    fog.far = q.fog * boost;
-    world.ground.update(f.x, f.z, q.fog * boost, q.hasShadows, director.pose ? 60 : 1);
+  };
 
-    const l = last.current;
-    const turned = Math.abs(Math.atan2(Math.sin(f.yaw - l.yaw), Math.cos(f.yaw - l.yaw)));
-    if (Math.hypot(f.x - l.x, f.z - l.z) > 6 || turned > 0.25) {
-      last.current = { x: f.x, z: f.z, yaw: f.yaw, at: now };
-      collect(f.x, f.z, f.yaw);
-    }
+  useFrame(({ clock }) => {
+    const s = snapshot();
+    const isHigh = s.mode === 'city' && s.height > HIGH_ALTITUDE;
+    const v = currentView(s);
+    updateLight(s.x, s.z, isHigh, clock.elapsedTime);
+    fog.near = v.fogNear;
+    fog.far = v.fogFar;
+    updateGround(v, isHigh);
+    if (!isStale(last.current, s)) return;
+    last.current = s;
+    refresh(v);
   }, -1);
 
   return <Ads />;
 }
-
-const pushStatic = (out: Item[], it: Item, d: number, near: number, far: number, isBehind: (x: number, z: number, d: number) => boolean): void => {
-  const civic = CIVIC_LODS[it.model];
-  if (isBehind(it.x, it.z, civic ? d - 25 : d)) return;
-  if (civic) {
-    out.push(d < near * CIVIC_NEAR ? it : { ...it, model: civic });
-    return;
-  }
-  if (d < near || BIG.has(it.model)) out.push(it);
-  else if (LODS[it.model] && d < far * 0.75) out.push({ ...it, model: LODS[it.model] ?? it.model });
-  else if (it.model === 'barrier' || (it.model === 'street_lamp' && d < near * 1.8)) out.push(it);
-};
-
-const labelOf = (p: Plot, s: HouseState): LabelInfo => {
-  const [x, z] = toWorld(p, 0, p.d / 2 - 1);
-  const size = p.type === 'qasr' ? 1.5 : p.type === 'villa' ? 1.2 : 1;
-  return { key: p.id, text: `@${s.nick} · ${s.tier}★`, kind: s.label, badge: s.badge, x, y: padHeight(p) + 4.7 * size, z, size };
-};

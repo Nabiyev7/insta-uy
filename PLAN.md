@@ -39,7 +39,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 
 ### v1 (MVP) — 6–8 hafta
 - 3D shahar (1–2 tuman ochiq, qolgani qurilish maydoni)
-- Avatar bilan yurish: telefonda joystick + barmoq bilan qarash; PC'da WASD + sichqoncha; 3-shaxs kamera
+- Uch rejim: **Shahar** (erkin kamera, boshlang'ich), **Piyoda** (avatar, 3-shaxs kamera), **Mashina**
 - Uyni bosish → egasi niki, Instagram linki, qisqa yozuv
 - Qidiruv: nik → o'sha uyga teleport
 - Mini-xarita
@@ -243,6 +243,7 @@ obunachilar-shahri/
 - [x] v3 kodi (lokal sinovdan o'tgan; saylov sukut bo'yicha o'chiq)
 - [x] Bosh reja v2 (2026-11-24): katta hovlilar, shahar 3×3 km, uylar o'z uchastkasida 1–10 level; `0010_masterplan_v2.sql`
 - [x] Markaz, 1-bosqich (2026-11-24): prezident saroyi, hokimiyat, sud, 12 burchak minorasi (sotilmaydi); `packages/shared/src/center.ts`, `apps/web/src/logic/plaza.ts`, `0012_center.sql`
+- [x] Harakat va ekran (2026-11-24): Shahar / Piyoda / Mashina rejimlari, pastki panel, uch bo'limli chat (`0013_chat.sql`); `npm run screens`
 - [x] 10 level tizimi (2026-11-23): modellar `blender/scripts/kit_levels.py`, baza `0009_levels.sql`, ko'rish `npm run showcase`
 - [ ] Internetga chiqarish (Supabase, Cloudflare, Telegram bot akkauntlari kerak)
 - [ ] Haqiqiy xizmatlar bilan sinash: Telegram bot, Payme/Click sandbox, bank xabari, ElevenLabs, Meta API, Turnstile, Sentry

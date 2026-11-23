@@ -3,7 +3,7 @@ import { BADGES, TIERS, TOWERS, TOWER_NAMES, instagramUrl, isFreeType, parseBio,
 import { addressOf, goToPlot } from '../app/actions.ts';
 import { rpc, type PlotInfo } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
-import { teleport } from '../app/runtime.ts';
+import { goToPoint } from '../app/modes.ts';
 import { getApp, openPanel, refreshHouses, refreshProfile, setting, toast, useApp } from '../app/store.ts';
 import { createOrder } from './OrderPanels.tsx';
 import { drawBigMap, fromMap, MAP_SIZE } from './mapCanvas.ts';
@@ -209,7 +209,7 @@ export function StreetPanel({ id }: { readonly id: number }): React.JSX.Element 
 }
 
 interface Found { readonly plot: string; readonly instagram: string; readonly address: string }
-export function SearchPanel(): React.JSX.Element {
+function SearchBox(): React.JSX.Element {
   const t = useT();
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -219,13 +219,13 @@ export function SearchPanel(): React.JSX.Element {
   }, [q]);
   const { data } = useLoad(() => (debounced.length < 2 ? Promise.resolve([]) : rpc<readonly Found[]>('api_search', { p_q: debounced })), debounced);
   return (
-    <Sheet title={t('search')}>
-      <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('searchHint')} aria-label={t('searchHint')} autoFocus autoCapitalize="none" maxLength={40} />
+    <div className="search">
+      <input className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('searchHint')} aria-label={t('search')} autoCapitalize="none" maxLength={40} />
       <ul className="list">
         {data?.map((f) => <li key={f.plot}><button type="button" className="plain" onClick={() => goToPlot(f.plot)}><b>@{f.instagram}</b><br /><span className="muted">{f.address}</span></button><span aria-hidden="true">→</span></li>)}
       </ul>
       {debounced.length >= 2 && data?.length === 0 && <p className="muted">{t('nothing')}</p>}
-    </Sheet>
+    </div>
   );
 }
 
@@ -240,14 +240,15 @@ export function MapPanel(): React.JSX.Element {
   }, []);
   const go = (e: React.MouseEvent<HTMLCanvasElement>): void => {
     const r = e.currentTarget.getBoundingClientRect();
-    teleport(fromMap(((e.clientX - r.left) / r.width) * MAP_SIZE), fromMap(((e.clientY - r.top) / r.height) * MAP_SIZE), Math.PI);
+    goToPoint(fromMap(((e.clientX - r.left) / r.width) * MAP_SIZE), fromMap(((e.clientY - r.top) / r.height) * MAP_SIZE));
     if (matchMedia('(max-width: 640px)').matches) openPanel(null);
   };
   return (
     <Sheet title={t('map')}>
+      <SearchBox />
       <canvas ref={ref} className="bigmap" width={MAP_SIZE} height={MAP_SIZE} onClick={go} aria-label={t('map')} />
       <div className="row">
-        <button type="button" className="btn small soft" onClick={() => teleport(0, 40, Math.PI)}>⛲ {t('plaza')}</button>
+        <button type="button" className="btn small soft" onClick={() => goToPoint(0, 40)}>⛲ {t('plaza')}</button>
         {getApp().profile?.plots.map((p) => <button type="button" key={p.plot} className="btn small" onClick={() => goToPlot(p.plot)}>🏠 {t('me')}</button>)}
       </div>
     </Sheet>

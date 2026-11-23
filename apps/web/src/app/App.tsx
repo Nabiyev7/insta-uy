@@ -9,7 +9,9 @@ import { AuthPanel } from '../ui/AuthPanel.tsx';
 import { HelpPanel, MenuPanel, PrivacyPanel, RulesPanel, SettingsPanel } from '../ui/InfoPanels.tsx';
 import { AvatarPanel, MePanel } from '../ui/MePanel.tsx';
 import { AdsPanel, OrdersPanel } from '../ui/OrderPanels.tsx';
-import { BuildingPanel, CommercePanel, MapPanel, PlotPanel, SearchPanel, StreetPanel } from '../ui/PlacePanels.tsx';
+import { ChatPanel } from '../ui/ChatPanel.tsx';
+import { CarsPanel, ShopPanel } from '../ui/ShopPanel.tsx';
+import { BuildingPanel, CommercePanel, MapPanel, PlotPanel, StreetPanel } from '../ui/PlacePanels.tsx';
 import { CityPanel, CoinsPanel, GazettePanel, RankPanel } from '../ui/SocialPanels.tsx';
 
 function PanelView({ panel }: { readonly panel: Panel }): React.JSX.Element {
@@ -21,7 +23,9 @@ function PanelView({ panel }: { readonly panel: Panel }): React.JSX.Element {
     case 'auth': return <AuthPanel />;
     case 'me': return <MePanel />;
     case 'avatar': return <AvatarPanel />;
-    case 'search': return <SearchPanel />;
+    case 'chat': return <ChatPanel />;
+    case 'shop': return <ShopPanel />;
+    case 'cars': return <CarsPanel />;
     case 'map': return <MapPanel />;
     case 'rank': return <RankPanel />;
     case 'coins': return <CoinsPanel />;

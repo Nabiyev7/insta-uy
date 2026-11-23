@@ -20,3 +20,9 @@ mid (CPU ÷6): {"fps":298,"p95ms":7.5,"info":{"calls":86,"triangles":42194}}
 high (CPU ÷6): {"fps":187,"p95ms":11.3,"info":{"calls":183,"triangles":185854}}
 
 12 joyda o'rtacha: low 45 call / 11 ming; mid 72 / 33 ming. Maydon o'rtasida (o'rta sifat): 62 call / 31 ming.
+
+## 3-qadamdan keyin (perf.mjs endi uch rejimni o'lchaydi)
+low piyoda: 358 FPS, 50 call, 15 ming; low shahar eng baland: 385 FPS, 27 call, 12–61 ming; low mashina: 299 FPS, 68 call, 23 ming
+mid piyoda: 281 FPS, 81 call, 39 ming; mid shahar: 157 FPS, 47 call, 21 ming; mid mashina: 111 FPS, 83 call, 40 ming
+high piyoda: 176 FPS, 172 call, 150 ming; high shahar: 135 FPS, 53 call, 27 ming; high mashina: 76 FPS, 155 call, 145 ming
+(CPU 6 baravar sekinlashtirilgan; mo'ljal 30+ FPS. Haqiqiy Redmi A da sinalmagan.)

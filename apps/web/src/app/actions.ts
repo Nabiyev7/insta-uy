@@ -1,14 +1,14 @@
 /** Umumiy foydalanuvchi amallari: borish, ulashish, stories rasmi. */
-import { frontOf, plotAddress, type Plot } from '../../../../packages/shared/src/index.ts';
+import { plotAddress, type Plot } from '../../../../packages/shared/src/index.ts';
 import { padHeight } from '../../../../packages/shared/src/city.ts';
-import { director, player, snapshotters, teleport } from './runtime.ts';
+import { goToHouse } from './modes.ts';
+import { director, here, snapshotters } from './runtime.ts';
 import { getApp, openPanel } from './store.ts';
 
-export const goToPlot = (id: string): void => {
+export const goToPlot = (id: string, isInstant = false): void => {
   const p = getApp().plotById.get(id);
   if (!p) return;
-  const f = frontOf(p, p.type === 'kvartira' ? 14 : 4);
-  teleport(f.x, f.z, f.yaw + Math.PI);
+  goToHouse(p, isInstant);
   openPanel({ kind: 'plot', id });
 };
 
@@ -20,10 +20,11 @@ export const addressOf = (p: Plot): string => {
 /** Eng yaqin bo'sh bepul uy. */
 export const nearestFree = (): string | null => {
   const s = getApp();
+  const at = here();
   const open = new Set(s.boot?.districts.filter((d) => d.open).map((d) => d.id));
   const free = s.plan?.plots.filter((p) => open.has(p.districtId) && (p.type === 'hovli' || p.type === 'kvartira') && !s.houses.has(p.id)) ?? [];
   return free.reduce<{ id: string; d: number } | null>((best, p) => {
-    const d = Math.hypot(p.x - player.x, p.z - player.z);
+    const d = Math.hypot(p.x - at.x, p.z - at.z);
     return best && best.d <= d ? best : { id: p.id, d };
   }, null)?.id ?? null;
 };

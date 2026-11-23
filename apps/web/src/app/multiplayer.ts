@@ -2,8 +2,10 @@ import type { Socket } from 'socket.io-client';
 import { sanitizeAvatar } from '../../../../packages/shared/src/index.ts';
 import { REALTIME_URL, supabase } from './api.ts';
 import { errorText } from './i18n.ts';
-import { player, remotes } from './runtime.ts';
-import { getApp, setApp, setting, toast, type ChatLine } from './store.ts';
+import { ANIM_AWAY } from '../logic/drive.ts';
+import { city, here, player, remotes, session } from './runtime.ts';
+import { getApp, setApp, setting, toast, useApp, type ChatLine } from './store.ts';
+import { addMessages, dropMessage } from './chat.ts';
 
 let socket: Socket | null = null;
 let timer: ReturnType<typeof setInterval> | undefined;
@@ -46,7 +48,9 @@ export const connectMultiplayer = async (): Promise<void> => {
     }
   });
   socket.on('snap', onSnapshot);
-  socket.on('chat', (m: ChatLine) => setApp((s) => ({ chat: [...s.chat.slice(-30), m] })));
+  socket.on('chat', (m: ChatLine) => addMessages([m], true));
+  socket.on('chat_history', (list: readonly ChatLine[]) => addMessages(list, false));
+  socket.on('chat_deleted', dropMessage);
   socket.on('chat_error', (code: string) => toast(errorText(new Error(code), getApp().lang), true));
   socket.on('disconnect', () => {
     remotes.clear();
@@ -54,13 +58,35 @@ export const connectMultiplayer = async (): Promise<void> => {
     setApp({ online: 0 });
   });
   timer = setInterval(() => {
-    if (socket?.connected) socket.volatile.emit('move', [player.x, player.z, Math.atan2(Math.sin(player.yaw), Math.cos(player.yaw)), player.anim, getApp().district]);
+    if (!socket?.connected) return;
+    const at = here();
+    const yaw = session.mode === 'city' ? city.view.yaw : player.yaw;
+    socket.volatile.emit('move', [at.x, at.z, Math.atan2(Math.sin(yaw), Math.cos(yaw)), session.mode === 'city' ? ANIM_AWAY : player.anim, getApp().district]);
   }, 125);
 };
+/** Nik yoki uylar o'zgarsa server (nik, mahalla chati huquqi) yangilansin. */
+const identityOf = (): string => { const p = getApp().profile; return p ? `${p.instagram}|${p.plots.filter((x) => x.status === 'owned').map((x) => x.plot).join()}` : ''; };
+let identity = '';
+useApp.subscribe(() => {
+  const next = identityOf();
+  if (next === identity) return;
+  const isFirst = identity === '';
+  identity = next;
+  if (!isFirst && next) socket?.emit('refresh');
+});
+
 export const disconnectMultiplayer = (): void => {
   clearInterval(timer);
   socket?.disconnect();
   socket = null;
   remotes.clear();
 };
-export const sendChat = (text: string): void => { socket?.emit('chat', text); };
+export const sendChat = (channel: number, text: string): void => { socket?.emit('chat', { channel, text }); };
+export interface OnlinePerson { readonly nick: string; readonly district: number; readonly x: number; readonly z: number }
+/** Hozir saytdagilar. Server javob bermasa bo'sh ro'yxat. */
+export const loadOnline = (): Promise<readonly OnlinePerson[]> => new Promise((resolve) => {
+  if (!socket?.connected) { resolve([]); return; }
+  socket.timeout(4000).emit('online', (error: Error | null, list: readonly OnlinePerson[]) => resolve(error ? [] : list));
+});
+/** Moderator: xabarni o'chirish yoki muallifni bloklash. */
+export const moderateMessage = (id: string, isBan: boolean): void => { socket?.emit(isBan ? 'chat_ban' : 'chat_delete', id); };

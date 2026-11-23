@@ -27,7 +27,7 @@ const applyLink = (): void => {
       // maxfiy rejim: taklif kodi shu seansda saqlanmaydi
     }
   }
-  goToPlot(params.get('uy') ?? '');
+  goToPlot(params.get('uy') ?? '', true);
 };
 
 /** Sinov rejimi: admin qoralama xaritani ko'radi (?xarita=ID). */

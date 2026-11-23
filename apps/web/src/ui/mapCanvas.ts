@@ -1,6 +1,6 @@
-/** Mini-xarita: shahar bir marta chiziladi, keyin faqat kesib ko'rsatiladi. */
+/** Katta xarita: shahar bir marta chiziladi, ustiga nomlar va o'yinchilar qo'yiladi. */
 import { CITY_HALF, HILL, HILL_EDGE, LAKE, PLAZA_HALF, rotatedSize } from '../../../../packages/shared/src/index.ts';
-import { camera, player, remotes } from '../app/runtime.ts';
+import { here, remotes } from '../app/runtime.ts';
 import { getApp } from '../app/store.ts';
 
 export const MAP_SIZE = 1100;
@@ -77,32 +77,6 @@ const arrow = (g: CanvasRenderingContext2D, x: number, y: number, angle: number,
   g.restore();
 };
 
-const RADIUS = 130;
-
-export const drawMinimap = (canvas: HTMLCanvasElement): void => {
-  const g = canvas.getContext('2d');
-  if (!g) return;
-  const src = paint();
-  const n = canvas.width;
-  const k = MAP_SIZE / SPAN;
-  const zoom = n / (RADIUS * 2 * k);
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.fillStyle = '#b9cf9c';
-  g.fillRect(0, 0, n, n);
-  g.translate(n / 2, n / 2);
-  g.rotate(camera.yaw);
-  g.scale(zoom, zoom);
-  g.drawImage(src, -toMap(player.x), -toMap(player.z));
-  g.fillStyle = '#1f4fd0';
-  for (const r of remotes.values()) {
-    g.beginPath();
-    g.arc(toMap(r.x) - toMap(player.x), toMap(r.z) - toMap(player.z), 1.6, 0, Math.PI * 2);
-    g.fill();
-  }
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  arrow(g, n / 2, n / 2, Math.PI - player.yaw + camera.yaw, 15);
-};
-
 export const drawBigMap = (canvas: HTMLCanvasElement): void => {
   const g = canvas.getContext('2d');
   if (!g) return;
@@ -126,5 +100,12 @@ export const drawBigMap = (canvas: HTMLCanvasElement): void => {
     const plot = s.plotById.get(p.plot);
     if (plot) g.fillText('🏠', toMap(plot.x), toMap(plot.z));
   }
-  arrow(g, toMap(player.x), toMap(player.z), Math.PI - player.yaw, 22);
+  g.fillStyle = '#1f4fd0';
+  for (const r of remotes.values()) {
+    g.beginPath();
+    g.arc(toMap(r.x), toMap(r.z), 5, 0, Math.PI * 2);
+    g.fill();
+  }
+  const at = here();
+  arrow(g, toMap(at.x), toMap(at.z), Math.PI - at.yaw, 22);
 };

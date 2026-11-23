@@ -1,16 +1,13 @@
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
-import { streetLabel } from '../../../../packages/shared/src/index.ts';
+/** Ekran: yuqori qator, rejim tugmalari, pastki panel. Elementlar faqat chetda, o'rta ochiq (telefon birinchi). */
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { PLAZA_HALF, streetLabel } from '../../../../packages/shared/src/index.ts';
 import { shareImage } from '../app/actions.ts';
-import { useT } from '../app/i18n.ts';
-import { sendChat } from '../app/multiplayer.ts';
-import { input, player, snapshotters } from '../app/runtime.ts';
-import { openPanel, setApp, useApp } from '../app/store.ts';
-import { drawMinimap } from './mapCanvas.ts';
+import { useT, type Key } from '../app/i18n.ts';
+import { setMode } from '../app/modes.ts';
+import { here, input, player, snapshotters, type Mode } from '../app/runtime.ts';
+import { openPanel, setApp, useApp, type Panel } from '../app/store.ts';
+import { ICONS, Icon } from './icons.tsx';
 import { useAction } from './kit.tsx';
-
-function Icon({ d }: { readonly d: string }): React.JSX.Element {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
-}
 
 function Joystick(): React.JSX.Element {
   const knob = useRef<HTMLElement>(null);
@@ -37,53 +34,36 @@ function Joystick(): React.JSX.Element {
   );
 }
 
-function Minimap(): React.JSX.Element {
-  const t = useT();
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const id = setInterval(() => { if (ref.current) drawMinimap(ref.current); }, 120);
-    return () => clearInterval(id);
-  }, []);
-  return <button type="button" className="minimap" aria-label={t('map')} onClick={() => openPanel({ kind: 'map' })}><canvas ref={ref} width={248} height={248} /></button>;
-}
-
-function Chat(): React.JSX.Element | null {
-  const t = useT();
-  const chat = useApp((s) => s.chat);
-  const profile = useApp((s) => s.profile);
-  const online = useApp((s) => s.online);
-  const [isOpen, setOpen] = useState(false);
-  const [text, setText] = useState('');
-  const submit = (e: FormEvent): void => {
-    e.preventDefault();
-    if (text.trim()) sendChat(text);
-    setText('');
-  };
-  if (online === 0) return null;
-  return (
-    <div className="chatbox">
-      {chat.slice(isOpen ? -8 : -3).map((c) => <p key={c.id}><b>{c.nick}</b>{c.text}</p>)}
-      {isOpen && profile && <form onSubmit={submit}><input value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder={t('chatHint')} aria-label={t('chat')} autoFocus /><button type="submit" className="btn small">➤</button></form>}
-      <div><button type="button" className="btn small soft" onClick={() => setOpen(!isOpen)}>💬 {online} {t('online')}</button></div>
-    </div>
-  );
-}
-
 const EMOTES = [['👋', 3, 'wave'], ['💃', 4, 'dance'], ['🧘', 5, 'sit']] as const;
+const SIT = 5;
+const SIT_MS = 60_000;
+const EMOTE_MS = 5000;
 
-function Actions(): React.JSX.Element {
+function WalkActions(): React.JSX.Element {
   const t = useT();
   const [isOpen, setOpen] = useState(false);
   const play = (anim: number): void => {
     player.emote = anim;
-    player.emoteUntil = performance.now() + (anim === 5 ? 60_000 : 5000);
+    player.emoteUntil = performance.now() + (anim === SIT ? SIT_MS : EMOTE_MS);
     setOpen(false);
   };
   return (
     <div className="actions">
       {isOpen && <div className="emotes" role="group" aria-label={t('emotes')}>{EMOTES.map(([icon, anim, key]) => <button type="button" key={key} aria-label={t(key)} title={t(key)} onClick={() => play(anim)}>{icon}</button>)}</div>}
       <button type="button" className="chip" aria-label={t('emotes')} aria-expanded={isOpen} onClick={() => setOpen(!isOpen)}>🙂</button>
-      <button type="button" className="chip" aria-label={t('photo')} onClick={() => setApp({ isPhoto: true, panel: null })}><Icon d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" /></button>
+      <button type="button" className="chip" aria-label={t('photo')} onClick={() => setApp({ isPhoto: true, panel: null })}><Icon d={ICONS.photo} /></button>
+    </div>
+  );
+}
+
+function DriveActions(): React.JSX.Element {
+  const t = useT();
+  const brake = (isOn: boolean) => (): void => { input.isBraking = isOn; };
+  useEffect(() => () => { input.isBraking = false; }, []);
+  return (
+    <div className="actions">
+      <button type="button" className="chip" aria-label={t('cars')} onClick={() => openPanel({ kind: 'cars' })}><Icon d={ICONS.drive} /></button>
+      <button type="button" className="brake" aria-label={t('brake')} onPointerDown={brake(true)} onPointerUp={brake(false)} onPointerCancel={brake(false)} onPointerLeave={brake(false)} onContextMenu={(e) => e.preventDefault()}>{t('brake')}</button>
     </div>
   );
 }
@@ -99,32 +79,73 @@ function PhotoBar(): React.JSX.Element {
   );
 }
 
-export function Hud(): React.JSX.Element {
+function TopRow(): React.JSX.Element {
   const t = useT();
-  const { district, street, lang, boot, profile, isPhoto } = useApp();
-  if (isPhoto) return <PhotoBar />;
+  const { district, street, lang, boot, profile } = useApp();
   const d = boot?.districts.find((x) => x.id === district);
-  const isPlaza = Math.hypot(player.x, player.z) < 125;
+  const at = here();
+  const isPlaza = Math.abs(at.x) < PLAZA_HALF && Math.abs(at.z) < PLAZA_HALF;
   const place = isPlaza ? t('plaza') : d ? (lang === 'uz' ? d.name_uz : d.name_ru) : t('outskirts');
-  const notes = (profile?.notes.length ?? 0) + (profile?.transfers.length ?? 0);
+  const hasBonus = profile !== null && !profile.daily_done;
   return (
-    <div className="hud">
+    <header className="topbar">
       <button type="button" className="plate" onClick={() => street && openPanel({ kind: 'street', id: street })}>
         <b>{place}</b>
         <small>{street && !isPlaza ? streetLabel(street, boot?.streets[String(street)], lang) : t('cityName')}</small>
       </button>
-      {Boolean(boot?.settings.maintenance) && <p className="banner">{t('maintenance')}</p>}
-      <nav className="topbar" aria-label={t('menu')}>
-        <button type="button" className="chip" aria-label={t('search')} onClick={() => openPanel({ kind: 'search' })}><Icon d="M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4" /></button>
-        <button type="button" className="chip main" onClick={() => openPanel({ kind: profile ? 'me' : 'auth' })} aria-label={profile ? t('me') : t('login')}>
-          <Icon d="M3 11l9-8 9 8M6 9.5V20h12V9.5M10 20v-6h4v6" /><span>{profile ? t('me') : t('login')}</span>{notes > 0 && <i className="dot">{notes}</i>}
-        </button>
-        <button type="button" className="chip" aria-label={t('menu')} onClick={() => openPanel({ kind: 'menu' })}><Icon d="M4 7h16M4 12h16M4 17h16" /></button>
-      </nav>
-      <Minimap />
-      <Joystick />
-      <Chat />
-      <Actions />
+      <button type="button" className="chip coins" aria-label={`${t('coins')}${profile ? `: ${profile.coins}` : ''}`} onClick={() => openPanel({ kind: 'coins' })}>
+        <span aria-hidden="true">💰</span>{profile && <b>{profile.coins}</b>}{hasBonus && <i className="dot small" />}
+      </button>
+      <button type="button" className="chip" aria-label={t('menu')} onClick={() => openPanel({ kind: 'menu' })}><Icon d={ICONS.menu} /></button>
+    </header>
+  );
+}
+
+const MODES: readonly (readonly [Mode, Key, keyof typeof ICONS])[] = [['city', 'modeCity', 'city'], ['walk', 'modeWalk', 'walk'], ['drive', 'modeDrive', 'drive']];
+
+function ModeBar(): React.JSX.Element {
+  const t = useT();
+  const mode = useApp((s) => s.mode);
+  return (
+    <div className="modes" role="group" aria-label={t('modes')}>
+      {MODES.map(([id, key, icon]) => <button type="button" key={id} aria-pressed={mode === id} onClick={() => { openPanel(null); setMode(id); }}><Icon d={ICONS[icon]} />{t(key)}</button>)}
+    </div>
+  );
+}
+
+function BottomBar(): React.JSX.Element {
+  const t = useT();
+  const { panel, profile, online, unread } = useApp();
+  const notes = (profile?.notes.length ?? 0) + (profile?.transfers.length ?? 0);
+  const toggle = (p: Panel) => (): void => openPanel(panel?.kind === p.kind ? null : p);
+  const item = (p: Panel, icon: keyof typeof ICONS, label: string, extra?: React.ReactNode): React.JSX.Element => (
+    <button type="button" aria-current={panel?.kind === p.kind ? 'page' : undefined} onClick={toggle(p)}><Icon d={ICONS[icon]} /><span>{label}</span>{extra}</button>
+  );
+  return (
+    <nav className="nav5" aria-label={t('menu')}>
+      {item({ kind: 'map' }, 'map', t('map'))}
+      {item({ kind: 'chat' }, 'chat', t('chatShort'), <>{online > 0 && <i className="online"><em aria-hidden="true" />{online}</i>}{unread > 0 && <i className="dot">{unread > 99 ? '99+' : unread}</i>}</>)}
+      {item({ kind: 'shop' }, 'shop', t('shop'))}
+      {item({ kind: 'rank' }, 'rank', t('rank'))}
+      {item({ kind: profile ? 'me' : 'auth' }, 'home', profile ? t('myHouse') : t('login'), notes > 0 && <i className="dot">{notes}</i>)}
+    </nav>
+  );
+}
+
+export function Hud(): React.JSX.Element {
+  const t = useT();
+  const isPhoto = useApp((s) => s.isPhoto);
+  const mode = useApp((s) => s.mode);
+  const isMaintenance = useApp((s) => Boolean(s.boot?.settings.maintenance));
+  if (isPhoto) return <PhotoBar />;
+  return (
+    <div className={`hud mode-${mode}`}>
+      <TopRow />
+      {isMaintenance && <p className="banner">{t('maintenance')}</p>}
+      {mode !== 'city' && <Joystick />}
+      {mode === 'walk' && <WalkActions />}
+      {mode === 'drive' && <DriveActions />}
+      <div className="dock"><ModeBar /><BottomBar /></div>
       {location.search.includes('fps') && <FpsMeter />}
     </div>
   );
@@ -133,5 +154,5 @@ export function Hud(): React.JSX.Element {
 function FpsMeter(): React.JSX.Element {
   const fps = useApp((s) => s.fps);
   const quality = useApp((s) => s.quality);
-  return <output style={{ position: 'absolute', left: 12, top: 84, color: '#fff', font: '700 14px monospace' }}>{fps} fps · {quality}</output>;
+  return <output className="fps">{fps} fps · {quality}</output>;
 }

@@ -2,15 +2,18 @@
 import type { Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import type { Backend } from '../types.ts';
-import { Room } from './room.ts';
+import { Room, type Who } from './room.ts';
 
 const TICK_MS = 125;
 const MAX_PLAYERS = 1500;
 /** Mobil operator NAT'i ortida ko'p odam bo'lishi mumkin, shuning uchun keng. */
 const MAX_PER_IP = 80;
 
-interface Identity { readonly userId: string | null; readonly nick: string | null; readonly look: unknown }
-const GUEST: Identity = { userId: null, nick: null, look: null };
+const GUEST: Who = { userId: null, nick: null, look: null };
+const CONFIG_MS = 30_000;
+const REFRESH_GAP_MS = 2000;
+
+interface PlayerRow { readonly instagram: string | null; readonly login: string; readonly is_banned: boolean; readonly avatar: unknown; readonly homes?: readonly number[]; readonly is_moderator?: boolean; readonly can_write?: boolean }
 
 /** Oxirgi qiymat — eng yaqin proksi qo'shgani; boshidagilarni mijoz soxtalashtirishi mumkin. */
 const ipOf = (socket: Socket): string => {
@@ -19,13 +22,13 @@ const ipOf = (socket: Socket): string => {
 };
 const isLocalSocket = (socket: Socket): boolean => !socket.handshake.headers['x-forwarded-for'] && /^(::1|::ffff:127\.|127\.)/.test(socket.handshake.address);
 
-const identify = async (db: Backend, token: unknown): Promise<Identity | null> => {
+const identify = async (db: Backend, token: unknown): Promise<Who | null> => {
   if (typeof token !== 'string' || token === '') return GUEST;
   const user = await db.userByJwt(token);
   if (!user) return GUEST;
-  const p = await db.rpc<{ instagram: string | null; login: string; is_banned: boolean; avatar: unknown } | null>('svc_user', { p_id: user.id });
+  const p = await db.rpc<PlayerRow | null>('svc_player', { p_id: user.id });
   if (!p || p.is_banned) return null;
-  return { userId: user.id, nick: p.instagram ?? `${p.login.slice(0, 2)}***`, look: p.avatar };
+  return { userId: user.id, nick: p.instagram ?? `${p.login.slice(0, 2)}***`, look: p.avatar, homes: p.homes ?? [], isModerator: p.is_moderator ?? false, canWrite: p.can_write ?? true };
 };
 
 export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly string[], onError: (e: unknown) => void): (() => void) => {
@@ -51,18 +54,45 @@ export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly 
   });
 
   io.on('connection', (socket: Socket) => {
-    const who = socket.data.who as Identity;
+    const who = socket.data.who as Who;
     if (who.userId) for (const old of room.sessionsOf(who.userId)) io.sockets.sockets.get(old)?.disconnect(true);
     const ip = ipOf(socket);
     perIp.set(ip, (perIp.get(ip) ?? 0) + 1);
     room.join(socket.id, who);
     known.set(socket.id, new Set());
     socket.on('move', (data: unknown) => room.move(socket.id, data, Date.now()));
-    socket.on('chat', (text: unknown) => {
-      const r = room.chat(socket.id, text, Date.now());
-      if (!r.ok) { socket.emit('chat_error', r.code); return; }
-      for (const id of r.to) io.to(id).emit('chat', r.message);
+    socket.emit('chat_history', room.chatLog.messages());
+    socket.on('chat', (data: unknown) => {
+      const r = room.chat(socket.id, data, Date.now());
+      if (r.ok) io.emit('chat', r.message);
+      else socket.emit('chat_error', r.code);
     });
+    let refreshedAt = 0;
+    socket.on('refresh', () => {
+      if (Date.now() - refreshedAt < REFRESH_GAP_MS) return;
+      refreshedAt = Date.now();
+      identify(db, socket.handshake.auth.token).then((next) => {
+        if (!next) { socket.disconnect(true); return; }
+        room.update(socket.id, next);
+        for (const set of known.values()) set.delete(socket.id); // boshqalarga yangi nik qayta yuboriladi
+      }, onError);
+    });
+    socket.on('online', (reply: unknown) => { if (typeof reply === 'function') reply(room.online()); });
+    const moderate = (messageId: unknown, isBan: boolean): void => {
+      const removed = room.removeMessage(socket.id, messageId);
+      if (!removed) { socket.emit('chat_error', 'forbidden'); return; }
+      io.emit('chat_deleted', removed.id);
+      if (!isBan || !who.userId) return;
+      db.rpc('svc_chat_ban', { p_moderator: who.userId, p_user: removed.userId }).then(
+        () => { for (const id of room.sessionsOf(removed.userId)) io.sockets.sockets.get(id)?.disconnect(true); },
+        (error: unknown) => {
+          onError(error);
+          socket.emit('chat_error', 'forbidden');
+        },
+      );
+    };
+    socket.on('chat_delete', (id: unknown) => moderate(id, false));
+    socket.on('chat_ban', (id: unknown) => moderate(id, true));
     socket.on('disconnect', () => {
       room.leave(socket.id);
       const left = (perIp.get(ip) ?? 1) - 1;
@@ -72,6 +102,12 @@ export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly 
       for (const set of known.values()) set.delete(socket.id);
     });
   });
+
+  const loadConfig = (): void => {
+    db.rpc<{ slow?: number } | null>('svc_chat_config').then((c) => { room.chatLog.slowSeconds = Math.max(0, Number(c?.slow) || 0); }, onError);
+  };
+  loadConfig();
+  const configTimer = setInterval(loadConfig, CONFIG_MS);
 
   const timer = setInterval(() => {
     for (const [id, seen] of known) {
@@ -87,6 +123,7 @@ export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly 
 
   return () => {
     clearInterval(timer);
+    clearInterval(configTimer);
     void io.close();
   };
 };

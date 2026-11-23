@@ -5,7 +5,8 @@ import { BufferAttribute, BufferGeometry, Points, PointsMaterial } from 'three';
 import { CELL, CITY_HALF, PLAZA_HALF, hash01, weatherOf } from '../../../../packages/shared/src/index.ts';
 import type { Item } from '../logic/item.ts';
 import { QUALITY } from '../logic/quality.ts';
-import { director, player } from '../app/runtime.ts';
+import { PEOPLE_HEIGHT } from '../logic/view.ts';
+import { city, director, here, player, session } from '../app/runtime.ts';
 import { useApp } from '../app/store.ts';
 import type { Kit } from './kit.ts';
 import { Pools } from './pools.ts';
@@ -72,8 +73,11 @@ export function LifeLayer({ kit }: LifeLayerProps): null {
     const t = clock.elapsedTime;
     const real = Date.now() / 1000;
     acc.current += dt;
-    const fx = director.pose?.tx ?? player.x;
-    const fz = director.pose?.tz ?? player.z;
+    const at = here();
+    const fx = director.pose?.tx ?? at.x;
+    const fz = director.pose?.tz ?? at.z;
+    const isHigh = !director.pose && session.mode === 'city' && city.view.height > PEOPLE_HEIGHT;
+    pools.group.visible = !isHigh;
     // Kuchsiz qurilmada 20 marta/soniya yetarli.
     if (acc.current > (q.level === 'low' ? 0.05 : 0)) {
       acc.current = 0;
@@ -83,10 +87,10 @@ export function LifeLayer({ kit }: LifeLayerProps): null {
     }
     const w = weatherOf(Date.now());
     const isSnow = w === 'qor';
-    precip.visible = q.particles > 0 && (isSnow || w === 'yomgir') && !director.pose;
+    precip.visible = q.particles > 0 && (isSnow || w === 'yomgir') && !director.pose && !isHigh;
     if (!precip.visible) return;
     precip.geometry.setDrawRange(0, q.particles);
-    precip.position.set(player.x, 0, player.z);
+    precip.position.set(fx, 0, fz);
     (precip.material as PointsMaterial).size = isSnow ? 0.16 : 0.07;
     const pos = precip.geometry.getAttribute('position') as BufferAttribute;
     const fall = dt * (isSnow ? 2.2 : 17);

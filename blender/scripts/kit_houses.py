@@ -274,6 +274,16 @@ def shop():
     return m
 
 
+def far_boxes():
+    """Tepadan ko'rilganda do'kon va past ofislar uchun eng sodda shakl."""
+    s = Model('shop_lod', COARSE)
+    s.box(-7.5, -5, 0, 7.5, 7, 4.7, PLASTER, '#e9e2d4', M_WALL, top_layer=CONCRETE)
+    s.box(-5, -5.25, 3.6, 5, -5.02, 4.8, PLASTER, WHITE, M_ROOF)
+    o = Model('office_low_lod', COARSE)
+    o.box(-15, -8, 0, 15, 8, 13.7, GLASS, WHITE, M_GLOW, top_layer=CONCRETE)
+    return [s, o]
+
+
 def all_buildings():
     """Uzoq ko'rinishlar va ko'p qavatli binolar."""
-    return house_lods() + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop()]
+    return house_lods() + [apartment(5), apartment(9), apartment_lod(5), apartment_lod(9), office(), office_low(), shop(), *far_boxes()]

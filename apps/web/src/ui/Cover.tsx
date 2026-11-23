@@ -30,8 +30,9 @@ export function Cover(): React.JSX.Element {
         <div className="inner">
           <div><h1>{t('introTitle')}</h1><p>{t('introLead')}</p></div>
           <ul className="tips">
-            <li><b aria-hidden="true">{isTouch ? '🕹️' : '⌨️'}</b>{t(isTouch ? 'introMoveTouch' : 'introMoveKeys')}</li>
-            <li><b aria-hidden="true">👆</b>{t('introTap')}</li>
+            <li><b aria-hidden="true">{isTouch ? '👆' : '🖱️'}</b>{t(isTouch ? 'introMoveTouch' : 'introMoveKeys')}</li>
+            <li><b aria-hidden="true">🔎</b>{t('introTap')}</li>
+            <li><b aria-hidden="true">🚗</b>{t('introModes')}</li>
             <li><b aria-hidden="true">🏠</b>{t('introClaim')}</li>
           </ul>
           <button type="button" className="btn clay block" autoFocus onClick={() => { write('intro', '1'); setApp({ stage: 'play' }); }}>{t('enter')} →</button>

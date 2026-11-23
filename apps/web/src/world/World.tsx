@@ -22,7 +22,7 @@ export function World(): React.JSX.Element | null {
       className="world" shadows={{ type: PCFShadowMap }} dpr={Math.min(globalThis.devicePixelRatio, q.dpr)} camera={{ fov: 60, near: 0.25, far: 1700 }}
       gl={{ antialias: level !== 'low', powerPreference: 'high-performance', toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.12 }}
     >
-      <PlayerLayer plan={plan} />
+      <PlayerLayer plan={plan} kit={kit} />
       <CityLayer kit={kit} plan={plan} />
       <LifeLayer kit={kit} />
     </Canvas>

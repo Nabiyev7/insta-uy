@@ -61,13 +61,63 @@ try {
   const enter = async (page, url = SITE) => {
     await page.goto(url);
     await page.getByRole('button', { name: /Shaharga kirish/ }).click({ timeout: 60_000 });
-    await page.locator('.topbar').waitFor();
+    await page.locator('.nav5').waitFor();
   };
   const pos = (page) => page.evaluate(() => ({ x: window.__player.x, z: window.__player.z }));
+  const view = (page) => page.evaluate(() => ({ ...window.__city.view }));
+  const mode = async (page, name) => {
+    const t = Date.now();
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.locator(`.hud.mode-${{ Shahar: 'city', Piyoda: 'walk', Mashina: 'drive' }[name]}`).waitFor();
+    assert.ok(Date.now() - t < 1000, `${name} rejimiga o'tish sekin`);
+    await page.waitForTimeout(700);
+  };
   const shot = async (page, name) => { if (shots) await page.screenshot({ path: path.join(shots, `${name}.png`) }); };
 
   const desk = await open({ viewport: { width: 1280, height: 720 } });
   await step('yuklanish ekrani → yo‘riqnoma → shahar', () => enter(desk));
+  await step('shahar rejimi: sudrash, g‘ildirak, o‘ng tugma, klaviatura', async () => {
+    const a = await view(desk);
+    await desk.mouse.move(640, 360);
+    await desk.mouse.down();
+    await desk.mouse.move(760, 420, { steps: 5 });
+    await desk.mouse.up();
+    await desk.waitForTimeout(200);
+    const b = await view(desk);
+    assert.ok(b.x < a.x - 5 && b.z < a.z - 5, 'sudrash ishlamadi');
+    await desk.mouse.wheel(0, -600);
+    await desk.waitForTimeout(200);
+    const c = await view(desk);
+    assert.ok(c.height < b.height * 0.8, 'g‘ildirak ishlamadi');
+    await desk.mouse.down({ button: 'right' });
+    await desk.mouse.move(860, 420, { steps: 5 });
+    await desk.mouse.up({ button: 'right' });
+    await desk.waitForTimeout(200);
+    assert.ok(Math.abs((await view(desk)).yaw - c.yaw) > 0.2, 'burish ishlamadi');
+    const d = await view(desk);
+    await desk.keyboard.down('KeyD');
+    await desk.waitForTimeout(400);
+    await desk.keyboard.up('KeyD');
+    const e = await view(desk);
+    assert.ok(Math.hypot(e.x - d.x, e.z - d.z) > 5, 'klaviatura ishlamadi');
+  });
+  await step('mashina: yuradi, tormozda to‘xtaydi; piyoda rejimga o‘tadi', async () => {
+    await mode(desk, 'Mashina');
+    const a = await pos(desk);
+    await desk.keyboard.down('KeyW');
+    await desk.waitForTimeout(1500);
+    const speed = await desk.evaluate(() => window.__car.state.speed);
+    assert.ok(speed > 5, `mashina tezlashmadi: ${speed}`);
+    await desk.keyboard.up('KeyW');
+    await desk.keyboard.down('Space');
+    await desk.waitForTimeout(900);
+    await desk.keyboard.up('Space');
+    assert.ok(Math.abs(await desk.evaluate(() => window.__car.state.speed)) < 0.5, 'tormoz ishlamadi');
+    const b = await pos(desk);
+    assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > 4, 'mashina siljimadi');
+    await shot(desk, 'drive');
+    await mode(desk, 'Piyoda');
+  });
   await step('WASD bilan yurish', async () => {
     const a = await pos(desk);
     await desk.keyboard.down('KeyS');
@@ -85,7 +135,7 @@ try {
     await desk.keyboard.press('Escape');
   });
   await step("ro'yxatdan o'tish va bo'sh uyni bepul olish", async () => {
-    await desk.locator('.chip.main').click();
+    await desk.locator('.nav5').getByRole('button', { name: 'Kirish' }).click();
     await desk.getByRole('button', { name: "Ro'yxatdan o'tish" }).first().click();
     await desk.getByLabel('Login').fill('sinov_odam');
     await desk.getByLabel('Parol').fill('parol12345');
@@ -119,26 +169,28 @@ try {
     await p.getByText("admin huquqi yo'q").waitFor();
     await p.context().close();
   });
-  await step('nik qidirish → teleport', async () => {
+  await step('xarita: nik qidirish → kamera uchadi', async () => {
     await desk.keyboard.press('Escape');
-    await desk.getByRole('button', { name: 'Nik qidirish' }).click();
+    await mode(desk, 'Shahar');
+    await desk.locator('.nav5').getByRole('button', { name: 'Xarita' }).click();
     await desk.getByPlaceholder('Instagram niki…').fill('demo_0001');
-    const before = await pos(desk);
+    const before = await view(desk);
     await desk.getByRole('button', { name: /demo_0001/ }).click();
     await desk.locator('.nick', { hasText: '@demo_0001' }).waitFor();
-    const after = await pos(desk);
-    assert.notDeepEqual(before, after);
+    await desk.waitForTimeout(1200);
+    const after = await view(desk);
+    assert.ok(Math.hypot(before.x - after.x, before.z - after.z) > 5, 'kamera uchmadi');
+    assert.ok(after.height < 30, 'uyga yaqinlashmadi');
     await shot(desk, 'plot');
   });
   await step('mening uyim: rang saqlanadi, tanga bonusi', async () => {
     await desk.keyboard.press('Escape');
-    await desk.locator('.chip.main').click();
+    await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
     await desk.getByRole('button', { name: 'Devor rangi 5' }).click();
     await desk.getByRole('button', { name: 'Saqlash' }).click();
     await desk.getByText('Saqlandi').first().waitFor();
     await desk.keyboard.press('Escape');
-    await desk.getByRole('button', { name: 'Menyu' }).click();
-    await desk.getByRole('button', { name: 'Tangalar' }).click();
+    await desk.getByRole('button', { name: /^Tangalar/ }).click();
     await desk.getByRole('button', { name: /Kunlik bonus/ }).click();
     await desk.getByText('Bugun olingan').waitFor();
   });
@@ -147,6 +199,11 @@ try {
   await step("telefon: joystick, uyni bosish, ko'p o'yinchi, chat", async () => {
     await enter(phone, `${SITE}/?uy=P0001`);
     await phone.keyboard.press('Escape');
+    assert.equal(await phone.locator('.joystick').count(), 0, 'shahar rejimida joystick bo‘lmasin');
+    await phone.touchscreen.tap(195, 420);
+    await phone.locator('.sheet').waitFor();
+    await phone.getByRole('button', { name: 'Yopish' }).click();
+    await mode(phone, 'Piyoda');
     const box = await phone.locator('.joystick').boundingBox();
     const a = await pos(phone);
     await phone.mouse.move(box.x + 64, box.y + 64);
@@ -156,16 +213,45 @@ try {
     await phone.mouse.up();
     const b = await pos(phone);
     assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > 1, 'joystick ishlamadi');
-    await phone.touchscreen.tap(195, 330);
-    await phone.locator('.sheet').waitFor();
-    await phone.getByRole('button', { name: 'Yopish' }).click();
     await desk.keyboard.press('Escape');
+    await mode(desk, 'Piyoda');
     await waitFor(() => phone.evaluate(() => window.__remotes.size >= 1), "boshqa o'yinchi");
-    await desk.getByRole('button', { name: /onlayn/ }).click();
-    await desk.getByPlaceholder('Xabar…').fill('Salom mahalla');
+    await desk.locator('.nav5').getByRole('button', { name: /Chat/ }).click();
+    await desk.getByPlaceholder('Xabar…').fill('Salom shahar');
     await desk.keyboard.press('Enter');
-    await desk.locator('.chatbox p', { hasText: 'Salom mahalla' }).waitFor();
+    await desk.locator('.message', { hasText: 'Salom shahar' }).waitFor();
+    await phone.locator('.nav5 .dot').first().waitFor();
+    await phone.locator('.nav5').getByRole('button', { name: /Chat/ }).click();
+    await phone.locator('.message', { hasText: 'Salom shahar' }).waitFor();
+    const sheet = await phone.locator('.sheet').boundingBox();
+    assert.ok(sheet.y > 380, 'chat ekranning pastki yarmida emas');
+    await phone.getByRole('button', { name: 'Mahalla', exact: true }).click();
+    await phone.getByRole('button', { name: 'Yozish uchun kiring' }).waitFor();
+    await phone.getByRole('button', { name: /^Onlayn/ }).click();
+    await phone.getByText('sinov.nik').waitFor();
+    await phone.getByRole('button', { name: 'Yopish' }).click();
     await shot(phone, 'phone');
+  });
+  await step('eng kichik ekran: elementlar bir-biriga tegmaydi', async () => {
+    for (const viewport of [{ width: 360, height: 640 }, { width: 640, height: 360 }]) {
+      const small = await open({ viewport, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
+      await enter(small);
+      for (const name of ['Shahar', 'Piyoda', 'Mashina']) {
+        if (name !== 'Shahar') await mode(small, name);
+        const boxes = await small.evaluate(() => ['.plate', '.chip.coins', '.modes', '.nav5', '.joystick', '.actions'].flatMap((s) => {
+          const el = document.querySelector(s);
+          if (!el) return [];
+          const r = el.getBoundingClientRect();
+          return [{ s, x: r.x, y: r.y, r: r.right, b: r.bottom }];
+        }));
+        for (const a of boxes) {
+          assert.ok(a.x >= 0 && a.y >= 0 && a.r <= viewport.width && a.b <= viewport.height, `${a.s} ekrandan chiqdi (${name})`);
+          assert.ok(!(a.x < viewport.width / 2 && a.r > viewport.width / 2 && a.y < viewport.height / 2 && a.b > viewport.height / 2), `${a.s} ekran o'rtasini to'sdi`);
+          for (const b of boxes) if (a.s < b.s) assert.ok(a.r <= b.x || b.r <= a.x || a.b <= b.y || b.b <= a.y, `${a.s} va ${b.s} ustma-ust (${name} ${viewport.width}×${viewport.height})`);
+        }
+      }
+      await small.context().close();
+    }
   });
   await step('video: navbat → render → MP4', async () => {
     const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(args) }).then((r) => r.json());

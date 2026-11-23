@@ -38,6 +38,7 @@ export function CoinsPanel(): React.JSX.Element {
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
   const { data, reload } = useLoad(() => (profile ? rpc<readonly Quest[]>('my_quests') : Promise.resolve([])), profile?.id ?? '');
+  const isWalking = useApp((s) => s.mode !== 'city');
   if (!profile) return <Sheet title={t('coins')} onBack={back}><button type="button" className="btn" onClick={() => openPanel({ kind: 'auth' })}>{t('login')}</button></Sheet>;
   const dig = (): void => {
     void run(async () => {
@@ -51,7 +52,7 @@ export function CoinsPanel(): React.JSX.Element {
     <Sheet title={t('coins')} onBack={back}>
       <p className="big-coins">💰 {profile.coins}</p>
       <button type="button" className="btn clay" disabled={isBusy || profile.daily_done} onClick={() => run(async () => { const r = await rpc<{ gain: number }>('my_daily'); await refreshProfile(); toast(`+${r.gain} 💰`); })}>{profile.daily_done ? t('dailyDone') : `${t('daily')} · 🔥 ${profile.streak}`}</button>
-      <Section title={t('treasure')}><button type="button" className="btn" disabled={isBusy} onClick={dig}>🔎 {t('treasureCheck')}</button></Section>
+      <Section title={t('treasure')}><button type="button" className="btn" disabled={isBusy || !isWalking} onClick={dig}>🔎 {t('treasureCheck')}</button>{!isWalking && <p className="muted">{t('walkFirst')}</p>}</Section>
       <Section title={t('quests')}>
         <ul className="list">{data?.map((q) => (
           <li key={q.id}><span className="grow">{t(`q_${q.id}` as Key)}</span><span className="tag gold">+{q.reward}</span>

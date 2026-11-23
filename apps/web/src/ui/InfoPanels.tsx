@@ -1,3 +1,4 @@
+import type { Lang } from '../../../../packages/shared/src/index.ts';
 import { post, signOut } from '../app/api.ts';
 import { startAudio, stopAudio } from '../app/audio.ts';
 import { useT } from '../app/i18n.ts';
@@ -9,16 +10,24 @@ import { FAQ, PRIVACY, RULES, type Doc } from './legal.ts';
 const back = (): void => openPanel({ kind: 'menu' });
 type SimpleKind = Exclude<Panel['kind'], 'plot' | 'building' | 'commerce' | 'street'>;
 
+const LANGS = [['uz', "O'zbekcha"], ['ru', 'Русский']] as const;
+const pickLang = (v: Lang): void => {
+  write('lang', v);
+  document.documentElement.lang = v;
+  setApp({ lang: v });
+};
+
 export function MenuPanel(): React.JSX.Element {
   const t = useT();
-  const profile = useApp((s) => s.profile);
+  const lang = useApp((s) => s.lang);
   const items: readonly (readonly [SimpleKind, string, string])[] = [
-    [profile ? 'me' : 'auth', '🏠', t('me')], ['map', '🗺️', t('map')], ['rank', '🏆', t('rank')], ['coins', '💰', t('coins')], ['city', '🏛️', t('city')], ['gazette', '📰', t('gazette')],
-    ['avatar', '👤', t('avatar')], ['settings', '⚙️', t('settings')], ['help', '💬', t('help')], ['rules', '📜', t('rules')], ['privacy', '🔒', t('privacy')],
+    ['city', '🏛️', t('city')], ['gazette', '📰', t('gazette')], ['coins', '💰', t('coins')], ['avatar', '👤', t('avatar')], ['cars', '🚗', t('cars')],
+    ['settings', '⚙️', t('settings')], ['help', '💬', t('help')], ['rules', '📜', t('rules')], ['privacy', '🔒', t('privacy')],
   ];
   return (
     <Sheet title={t('menu')}>
       <div className="menu-grid">{items.map(([kind, icon, text]) => <button type="button" key={kind} onClick={() => openPanel({ kind } as Panel)}><i aria-hidden="true">{icon}</i>{text}</button>)}</div>
+      <Section title={t('language')}><Seg label={t('language')} value={lang} onPick={pickLang} options={LANGS} /></Section>
     </Sheet>
   );
 }
@@ -47,7 +56,7 @@ export function SettingsPanel(): React.JSX.Element {
   };
   return (
     <Sheet title={t('settings')} onBack={back}>
-      <Section title={t('language')}><Seg label={t('language')} value={lang} onPick={(v) => { write('lang', v); document.documentElement.lang = v; setApp({ lang: v }); }} options={[['uz', "O'zbekcha"], ['ru', 'Русский']]} /></Section>
+      <Section title={t('language')}><Seg label={t('language')} value={lang} onPick={pickLang} options={LANGS} /></Section>
       <Section title={t('quality')}><Seg<QualityLevel | 'auto'> label={t('quality')} value={isAutoQuality ? 'auto' : quality} onPick={setQuality} options={[['auto', t('auto')], ['low', t('low')], ['mid', t('mid')], ['high', t('high')]]} /></Section>
       <Section title={t('sound')}><Seg<'on' | 'off'> label={t('sound')} value={isSound ? 'on' : 'off'} onPick={setSound} options={[['on', t('on')], ['off', t('off')]]} /></Section>
       {profile && <Section title={profile.login}><button type="button" className="btn small clay" disabled={isBusy} onClick={remove}>{t('deleteAcc')}</button></Section>}
