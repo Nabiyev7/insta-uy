@@ -1,0 +1,71 @@
+# Obunachilar shahri
+
+Instagram obunachilari uchun ichida yurish mumkin bo'lgan 3D o'zbek shahri. Qoidalar va reja: [PLAN.md](PLAN.md).
+
+## Tez boshlash
+
+Kerak: Node 24+, Google Chrome (video va e2e uchun). Docker ham, Supabase akkaunti ham shart emas.
+
+```bash
+npm install
+npm run dev            # API 8787 · sayt http://localhost:5173 · admin http://localhost:5174
+npm run dev -- --host  # telefondan (bir xil Wi-Fi) sinash uchun
+```
+
+Lokal admin: `admin` / `admin12345`. Baza `.dev-data/` da saqlanadi (o'chirsangiz noldan boshlanadi; demo aholisiz: `NO_DEMO=1`).
+Lokal muhitda haqiqiy Postgres (PGlite) ishlaydi va aynan `supabase/migrations/` qo'llanadi.
+
+## Buyruqlar
+
+| Buyruq | Vazifa |
+|---|---|
+| `npm test` / `npm run coverage` | Birlik va integratsiya sinovlari |
+| `npm run e2e` | Haqiqiy Chrome'da to'liq ssenariy (o'z portlari va bazasi bilan) |
+| `npm run typecheck` · `npm run build` | Turlar · ishlab chiqarish yig'ilishi |
+| `npm run masterplan` | Bosh reja qulfini (xesh) tekshirish |
+| `npm run seed` | Bosh reja → `0007_masterplan.sql` |
+| `npm run models` · `npm run textures` | Blender modellari · teksturalar (Poly Haven CC0) |
+| `npm run video` | Admin paneldagi video navbatini render qilish |
+| `npm run carousel` · `npm run og` | Haftalik gazeta rasmlari · ijtimoiy tarmoq rasmi |
+| `node e2e/perf.mjs 6` · `node e2e/load.mjs 1000` | FPS o'lchovi · yuklama sinovi (dev server yoniq bo'lsin) |
+
+`npm run video` uchun `SUPABASE_SERVICE_KEY` kerak (lokalda `npm run dev` chiqargan `SERVICE=` qiymati). Ixtiyoriy: `ELEVENLABS_KEY`, `ELEVENLABS_VOICE`.
+
+## Tuzilish
+
+```
+apps/web      3D sayt: logic/ (sof hisob, testlangan) · world/ (Three.js) · ui/ (React) · app/ (holat, tarmoq)
+apps/admin    Admin panel
+packages/shared  Bosh reja (data/masterplan.json — QULFLANGAN), qoidalar, katalog, so'z filtri
+server/src    Cloudflare Worker: kirish, Telegram bot, to'lov, cron · realtime/ — ko'p o'yinchi (Node)
+server/dev    Faqat lokal: PGlite + Supabase emulyatori
+supabase      Migratsiyalar va ularning sinovlari
+video         Reels render (Playwright + ffmpeg), karusel
+blender       Model generatori (Python) va eksport
+```
+
+Asosiy qarorlar:
+
+- **Bosh reja qulfi**: `masterplan.json` xeshi testda, bazada esa trigger bilan himoyalangan.
+- **Baza**: jadvallar yopiq (RLS), faqat RPC. Nom = ruxsat: `api_*` hammaga, `my_*` kirganga, `admin_*` rolga, `svc_*` faqat serverga.
+- **3D**: bitta material + 16 qatlamli tekstura massivi + instancing; AO Blender'da vertex rangga bake qilingan.
+- **Kirish**: login Supabase Auth'da ichki email'ga aylanadi; Telegram orqali kirish — bir martalik token + botda tasdiq tugmasi.
+- **To'lov**: `PaymentProvider` interfeysi — `card` (noyob summa), `payme`, `click`. Boshlang'ich holatda **o'chiq** (`payments_enabled=false`).
+
+## Internetga chiqarish (bepul tariflar)
+
+1. **Supabase**: yangi loyiha → `npx supabase link` → `npx supabase db push`. Authentication → Sign ups: **o'chiring** (ro'yxat faqat Worker orqali).
+2. **Worker**: `cd server && npx wrangler deploy`; maxfiylar `npx wrangler secret put …` ([ro'yxat](server/.env.example)).
+3. **Telegram**: BotFather'da bot → `https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WORKER>/telegram/webhook&secret_token=<SIR>`.
+4. **Sayt/admin**: Cloudflare Pages. Build: `npm run build -w @shahar/web` → `apps/web/dist`; `npm run build -w @shahar/admin` → `apps/admin/dist`.
+   O'zgaruvchilar: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL` (Worker), `VITE_REALTIME_URL`, `VITE_SITE_URL` (admin), ixtiyoriy `VITE_SENTRY_DSN`, `VITE_PAYME_MERCHANT`, `VITE_CLICK_MERCHANT`, `VITE_CLICK_SERVICE`.
+5. **Ko'p o'yinchi**: istalgan bepul Node xost → `node server/src/realtime/main.ts`. Bo'lmasa sayt yakka rejimda ishlayveradi.
+6. **Birinchi admin**: saytda ro'yxatdan o'ting, so'ng SQL Editor'da: `update profiles set role='admin' where login='LOGIN';`
+7. Admin → Sozlamalar: `telegram_bot`, `require_approval`; keyin Tumanlar.
+
+## Ochilishdan oldin
+
+- Haqiqiy Redmi A telefonda sinash (kompyuterdagi o'lchov GPU'ni ko'rsatmaydi).
+- `server/dev` va `demo_*` niklar ishlab chiqarishga tushmaydi — tekshiring.
+- Qoidalar/maxfiylik matnini ([legal.ts](apps/web/src/ui/legal.ts)) huquqshunos ko'rsin; to'lov yoqishdan oldin soliq masalasi.
+- To'lov provayderlarini sinov muhitida (Payme/Click sandbox) tekshirish.

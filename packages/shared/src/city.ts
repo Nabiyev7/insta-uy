@@ -15,8 +15,13 @@ export const plotAddress = (p: Pick<Plot, 'streetId' | 'number' | 'unit'>, name:
   return `${street}, ${house}, ${lang === 'uz' ? `${p.unit}-xonadon` : `кв. ${p.unit}`}`;
 };
 
-/** Uchastka yer sathi: tepalikda har hovli o'z tekis maydonchasida. */
-export const padHeight = (p: { readonly x: number; readonly z: number }): number => terrainHeight(p.x, p.z);
+/** Uchastka yer sathi: tepalikda har hovli o'z tekis maydonchasida — yer undan chiqib turmaydi (eng baland nuqta). */
+export const padHeight = (p: { readonly x: number; readonly z: number; readonly w: number; readonly d: number; readonly rot: Rot }): number => {
+  if (terrainHeight(p.x, p.z) < 0.02) return 0;
+  const [w, d] = rotatedSize(p.w, p.d, p.rot);
+  const steps = [-0.5, -0.25, 0, 0.25, 0.5];
+  return Math.max(...steps.flatMap((i) => steps.map((j) => terrainHeight(p.x + i * w, p.z + j * d)))) + 0.05;
+};
 
 export interface Box { readonly x: number; readonly z: number; readonly hx: number; readonly hz: number }
 export const footprint = (p: { readonly x: number; readonly z: number; readonly w: number; readonly d: number; readonly rot: Rot }): Box => {
