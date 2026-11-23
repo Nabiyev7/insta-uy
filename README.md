@@ -25,6 +25,7 @@ Lokal muhitda haqiqiy Postgres (PGlite) ishlaydi va aynan `supabase/migrations/`
 | `npm run masterplan` | Bosh reja qulfini (xesh) tekshirish |
 | `npm run seed` | Bosh reja → `0007_masterplan.sql` |
 | `npm run models` · `npm run textures` | Blender modellari · teksturalar (Poly Haven CC0) |
+| `npm run showcase` | Uylar, bezaklar va xaritani Blender'da ko'rish (`blender/shahar.blend`) |
 | `npm run video` | Admin paneldagi video navbatini render qilish |
 | `npm run carousel` · `npm run og` | Haftalik gazeta rasmlari · ijtimoiy tarmoq rasmi |
 | `node e2e/perf.mjs 6` · `node e2e/load.mjs 1000` | FPS o'lchovi · yuklama sinovi (dev server yoniq bo'lsin) |

@@ -21,6 +21,7 @@
     "masterplan": "node packages/shared/scripts/build-masterplan.ts",
     "seed": "node packages/shared/scripts/build-seed.ts",
     "models": "node blender/build-models.mjs",
+    "showcase": "node blender/build-showcase.mjs --open",
     "e2e": "node e2e/run.mjs",
     "video": "node video/src/main.ts",
     "carousel": "node video/src/carousel.ts",

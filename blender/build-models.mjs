@@ -1,21 +1,15 @@
-/** Blender → GLB → meshopt. Blender yo'li: BLENDER env yoki standart o'rnatish joyi. */
+/** Blender → GLB → meshopt. */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { mkdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions';
 import { dedup, meshopt, prune, weld } from '@gltf-transform/functions';
 import { MeshoptEncoder } from 'meshoptimizer';
+import { findBlender } from './find-blender.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const findBlender = () => {
-  if (process.env.BLENDER) return process.env.BLENDER;
-  const base = 'C:/Program Files/Blender Foundation';
-  const dir = existsSync(base) ? readdirSync(base).sort().at(-1) : undefined;
-  return dir ? path.join(base, dir, 'blender.exe') : 'blender';
-};
-
 mkdirSync(path.join(root, 'assets'), { recursive: true });
 mkdirSync(path.join(root, 'apps/web/public/assets'), { recursive: true });
 const raw = path.join(root, 'assets/city-kit.glb');

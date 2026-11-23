@@ -11,3 +11,4 @@ video/out/
 *.tsbuildinfo
 .wrangler/
 __pycache__/
+blender/*.blend
