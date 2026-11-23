@@ -8,6 +8,7 @@ import { getApp, setApp, setting, toast, type ChatLine } from './store.ts';
 let socket: Socket | null = null;
 let timer: ReturnType<typeof setInterval> | undefined;
 let token: string | null | undefined;
+let generation = 0;
 
 interface Who { readonly id: string; readonly nick: string | null; readonly look: unknown }
 type Snap = readonly [string, number, number, number, number];
@@ -29,10 +30,13 @@ const onSnapshot = (list: readonly Snap[], online: number): void => {
 export const connectMultiplayer = async (): Promise<void> => {
   const { data } = await supabase.auth.getSession();
   const next = data.session?.access_token ?? null;
-  if (!setting('multiplayer_enabled', true) || (socket && next === token)) return;
+  if (!setting('multiplayer_enabled', true) || (generation > 0 && next === token)) return;
   token = next;
   disconnectMultiplayer();
+  generation += 1;
+  const mine = generation;
   const { io } = await import('socket.io-client');
+  if (mine !== generation) return; // yangiroq chaqiruv boshlangan
   socket = io(REALTIME_URL, { auth: { token: next }, transports: ['websocket'], reconnectionDelayMax: 30_000 });
   socket.on('who', (list: readonly Who[]) => {
     for (const w of list) {
@@ -46,6 +50,7 @@ export const connectMultiplayer = async (): Promise<void> => {
   socket.on('chat_error', (code: string) => toast(errorText(new Error(code), getApp().lang), true));
   socket.on('disconnect', () => {
     remotes.clear();
+    profiles.clear();
     setApp({ online: 0 });
   });
   timer = setInterval(() => {

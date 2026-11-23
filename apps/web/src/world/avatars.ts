@@ -103,6 +103,14 @@ export class Avatars {
     if (look.hat === 'kepka') this.put('kepka', '#3b4a57', 0, 1.64, 0);
   }
 
+  dispose(): void {
+    for (const m of Object.values(this.meshes)) {
+      m.geometry.dispose();
+      (m.material as MeshLambertMaterial).dispose();
+      m.dispose();
+    }
+  }
+
   update(bodies: readonly Body[], seconds: number): void {
     this.counts.clear();
     for (const b of bodies.slice(0, CAPACITY)) this.draw(b, seconds);

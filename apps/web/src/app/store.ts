@@ -60,7 +60,7 @@ export interface AppState {
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: read('quality') === null, isSound: read('sound') === '1', isPhoto: false, district: 0, street: 0, online: 0, chat: [], fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, district: 0, street: 0, online: 0, chat: [], fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;
@@ -83,18 +83,24 @@ export const loadPlan = async (): Promise<void> => {
 };
 export const refreshBoot = async (): Promise<Boot> => {
   const boot = await rpc<Boot>('api_boot');
-  setApp({ boot });
-  return boot;
+  // O'zgarmagan bo'lsa eski obyekt qoladi — bilbord va xarita bekorga qayta qurilmasin.
+  if (JSON.stringify(boot) !== JSON.stringify(getApp().boot)) setApp({ boot });
+  return getApp().boot ?? boot;
 };
+let lastRows = '';
 export const refreshHouses = async (): Promise<void> => {
   const rows = await rpc<readonly CityRow[]>('api_city');
+  const text = JSON.stringify(rows);
+  if (text === lastRows) return;
+  lastRows = text;
   setApp({ houses: new Map(rows.map((r) => [r[0], toHouse(r)])) });
 };
 export const refreshProfile = async (): Promise<void> => {
   try {
     setApp({ profile: await rpc<Profile>('my_profile') });
-  } catch {
-    setApp({ profile: null });
+  } catch (error: unknown) {
+    // Internet uzilishi foydalanuvchini "chiqarib" yubormasin.
+    if (error instanceof Error && /not_signed_in|banned|permission denied|JWT/.test(error.message)) setApp({ profile: null });
   }
 };
 export const setting = <T,>(key: string, fallback: T): T => (getApp().boot?.settings[key] as T | undefined) ?? fallback;

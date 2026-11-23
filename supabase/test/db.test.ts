@@ -123,7 +123,9 @@ describe('bepul uy', () => {
     const inviter = await user();
     const ref = (await sql('select ref_code from profiles where user_id = $1', [inviter]))[0]!.ref_code as string;
     const guest = await user(ref);
-    await as(guest, 'my_claim', { p_plot: await freePlot(), p_instagram: 'mehmon_1' });
+    const plot = await freePlot();
+    await as(guest, 'my_claim', { p_plot: plot, p_instagram: 'mehmon_1' });
+    await as(await admin(), 'admin_plot', { p_plot: plot, p_action: 'approve' });
     expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 50, invited: 1 });
   });
 });
@@ -183,7 +185,7 @@ describe('buyurtma va to‘lov', () => {
     expect(await svc('svc_payment', { p_provider: 'card', p_external: 'tx1', p_amount: 777 })).toMatchObject({ result: 'unmatched' });
     expect(await svc('svc_payment', { p_provider: 'card', p_external: 'tx2', p_amount: o.amount })).toMatchObject({ result: 'paid', order: o.id });
     expect(await svc('svc_payment', { p_provider: 'card', p_external: 'tx2', p_amount: o.amount })).toEqual({ result: 'duplicate' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'boy_1' });
+    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'pending', instagram: 'boy_1' });
   });
 
   test('muddati o‘tgach kelgan to‘lov: joy bo‘sh bo‘lsa beriladi, band bo‘lsa adminga', async () => {
@@ -233,14 +235,9 @@ describe('buyurtma va to‘lov', () => {
 
   test('qarovsiz 3 tadan ortiq ochiq buyurtma mumkin emas, bekor qilinsa joy bo‘shaydi', async () => {
     const u = await user();
-    const plots: string[] = [];
-    let first = '';
-    for (let i = 0; i < 3; i++) {
-      const plot = await freePlot();
-      plots.push(plot);
-      const o = (await as(u, 'my_order', { p_kind: 'plot', p_payload: { plot, instagram: `kop_${i}` } })) as { id: string };
-      first ||= o.id;
-    }
+    const plots = [await freePlot()];
+    const first = ((await as(u, 'my_order', { p_kind: 'plot', p_payload: { plot: plots[0], instagram: 'kop_1' } })) as { id: string }).id;
+    for (const id of ['tree_anor', 'tree_archa']) await as(u, 'my_order', { p_kind: 'decor', p_payload: { id } });
     await expect(as(u, 'my_order', { p_kind: 'decor', p_payload: { id: 'tree_anor' } })).rejects.toThrow('too_many_orders');
     await as(u, 'my_order_cancel', { p_id: first });
     expect(await anon('api_plot', { p_plot: plots[0] })).toMatchObject({ status: 'free' });
@@ -311,7 +308,7 @@ describe('tanga iqtisodi', () => {
 
   test('xazina: uzoqda iliq/sovuq, yaqinda topiladi, bir marta', async () => {
     const { uid } = await owner();
-    expect(await as(uid, 'my_treasure', { p_x: 5000, p_z: 5000 })).toMatchObject({ state: 'hunt', heat: 'cold' });
+    expect(await as(uid, 'my_treasure', { p_x: 1500, p_z: 1500 })).toMatchObject({ state: 'hunt', heat: 'cold' });
     const t = (await sql('select x, z from treasures where day = current_date'))[0]!;
     expect(await as(uid, 'my_treasure', { p_x: t.x, p_z: t.z })).toMatchObject({ state: 'found', coins: 100 });
     expect(await as(uid, 'my_treasure', { p_x: t.x, p_z: t.z })).toEqual({ state: 'done' });

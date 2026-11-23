@@ -62,6 +62,8 @@ export function LifeLayer({ kit }: LifeLayerProps): null {
     return () => {
       scene.remove(pools.group, precip);
       pools.dispose();
+      precip.geometry.dispose();
+      (precip.material as PointsMaterial).dispose();
     };
   }, [scene, pools, precip]);
 

@@ -110,6 +110,7 @@ const NOTES: Readonly<Record<string, readonly [string, string]>> = {
   street_rejected: ['Ko‘cha nomi rad etildi.', 'Название улицы отклонено.'],
   ad_live: ['📢 Reklamangiz chiqdi!', '📢 Ваша реклама размещена!'],
   ad_rejected: ['Reklama rad etildi. Tahrirlab qayta yuboring.', 'Реклама отклонена. Исправьте и отправьте снова.'],
+  nick_rejected: ['Instagram niki tasdiqlanmadi. Uyingiz saqlanadi — saytda nikni qayta yozing.', 'Ник не подтверждён. Дом сохранён — укажите ник заново на сайте.'],
   elected: ['👑 Saylovda g‘olib bo‘ldingiz!', '👑 Вы победили на выборах!'],
   inactive_warning: ['⏳ Uzoq vaqt kirmadingiz. 14 kun ichida kirmasangiz, bepul uyingiz bo‘shatiladi.', '⏳ Вы давно не заходили. Если не зайдёте 14 дней, бесплатный дом освободится.'],
 };

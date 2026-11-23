@@ -30,7 +30,8 @@ export default defineConfig({
         name: 'Obunachilar shahri', short_name: 'Shahar', lang: 'uz', display: 'fullscreen', orientation: 'any', background_color: '#14545f', theme_color: '#14545f',
         icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }],
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,svg,woff2,webp,glb,json}'], maximumFileSizeToCacheInBytes: 4_000_000, navigateFallbackDenylist: [/^\/(uy|rest|auth|storage|socket\.io|pay|telegram|kutish)/] },
+      // Faqat xeshli fayllar (nom-XXXXXXXX.js) qayta tekshirilmaydi; glb/webp/json har nashrda yangilanadi.
+      workbox: { dontCacheBustURLsMatching: /assets\/.+-[\w-]{8}\.(?:js|css|woff2)$/, globPatterns: ['**/*.{js,css,html,svg,woff2,webp,glb,json}'], maximumFileSizeToCacheInBytes: 4_000_000, navigateFallbackDenylist: [/^\/(uy|rest|auth|storage|socket\.io|pay|telegram|kutish)/] },
     }),
   ],
   server: { proxy: Object.fromEntries(['/rest', '/auth', '/storage', '/waitlist', '/uy', '/pay', '/telegram'].map((p) => [p, API]).concat([['/socket.io', { target: API, ws: true } as unknown as string]])) },

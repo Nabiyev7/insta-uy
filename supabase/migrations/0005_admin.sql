@@ -49,18 +49,27 @@ begin
     order by s.claimed_at desc nulls last, p.id offset greatest(p_offset, 0) limit 50) q);
 end $$;
 create function public.admin_plot(p_plot text, p_action text, p_data jsonb default '{}') returns void language plpgsql security definer set search_path = '' as $$
-declare v_uid uuid; st public.plot_state;
+declare v_uid uuid; st public.plot_state; me public.profiles := private.require('plots');
 begin
-  perform private.require('plots');
+  -- Mulkni boshqaga o'tkazish faqat adminda.
+  if p_action = 'assign' and me.role <> 'admin' then perform private.fail('forbidden'); end if;
   if not exists (select 1 from public.plots where id = p_plot) then perform private.fail('not_found'); end if;
   select * into st from public.plot_state where plot_id = p_plot for update;
   case p_action
   when 'approve' then
     update public.plot_state set status = 'owned' where plot_id = p_plot and status = 'pending';
-    perform private.notify(st.owner, 'approved', jsonb_build_object('plot', p_plot));
+    if found then
+      perform private.pay_referral(st.owner);
+      perform private.notify(st.owner, 'approved', jsonb_build_object('plot', p_plot));
+    end if;
   when 'reject' then
-    if st.status <> 'pending' then perform private.fail('bad_format'); end if;
-    perform private.release_plot(p_plot, 'rejected');
+    if st.status is distinct from 'pending' then perform private.fail('bad_format'); end if;
+    -- Pullik yoki sovg'a uy bo'shatilmaydi: faqat nik o'chadi.
+    if st.is_free then perform private.release_plot(p_plot, 'rejected');
+    else
+      update public.plot_state set status = 'owned', instagram = null where plot_id = p_plot;
+      perform private.notify(st.owner, 'nick_rejected', jsonb_build_object('plot', p_plot));
+    end if;
   when 'release' then perform private.release_plot(p_plot, 'admin');
   when 'assign' then
     select user_id into v_uid from public.profiles where login = lower(btrim(p_data ->> 'login', ' @'));
@@ -110,7 +119,7 @@ begin
 end $$;
 create function public.admin_catalog(p_id text default null, p_uzs int default null, p_coins int default null, p_stock int default null, p_active boolean default null) returns jsonb language plpgsql security definer set search_path = '' as $$
 begin
-  perform private.require('settings');
+  if (private.require('settings')).role <> 'admin' and p_id is not null then perform private.fail('forbidden'); end if;
   if p_id is not null then
     update public.decor_catalog set price_uzs = coalesce(p_uzs, price_uzs), price_coins = coalesce(p_coins, price_coins), stock = coalesce(p_stock, stock), is_active = coalesce(p_active, is_active) where id = p_id;
     perform private.audit('catalog', jsonb_build_object('id', p_id, 'uzs', p_uzs, 'coins', p_coins, 'stock', p_stock, 'active', p_active));
@@ -127,9 +136,9 @@ begin
     'payments', (select coalesce(jsonb_agg(to_jsonb(y) - 'raw'), '[]') from (select * from public.payments where status in ('unmatched','needs_review') order by id desc limit 50) y));
 end $$;
 create function public.admin_order(p_id uuid, p_action text) returns text language plpgsql security definer set search_path = '' as $$
-declare v_pay bigint; res text := 'ok'; o public.orders;
+declare v_pay bigint; res text := 'ok'; o public.orders; me public.profiles := private.require('orders');
 begin
-  perform private.require('orders');
+  if p_action = 'paid' and me.role <> 'admin' then perform private.fail('forbidden'); end if;
   select * into o from public.orders where id = p_id;
   if o.id is null then perform private.fail('not_found'); end if;
   if p_action = 'paid' then
@@ -148,7 +157,7 @@ end $$;
 create function public.admin_payment(p_id bigint, p_action text, p_order uuid default null) returns text language plpgsql security definer set search_path = '' as $$
 declare res text := 'ok';
 begin
-  perform private.require('orders');
+  if (private.require('orders')).role <> 'admin' then perform private.fail('forbidden'); end if;
   if p_action = 'link' then
     if not exists (select 1 from public.payments where id = p_id and status = 'unmatched') then perform private.fail('not_found'); end if;
     update public.payments set order_id = p_order where id = p_id;

@@ -70,7 +70,7 @@ export interface Boot {
   readonly hero: { readonly nick: string; readonly total: number } | null;
 }
 export interface MyPlot {
-  readonly plot: string; readonly status: string; readonly address: string; readonly instagram: string; readonly bio: string; readonly tier: number; readonly wall: number; readonly roof: number;
+  readonly plot: string; readonly status: string; readonly address: string; readonly instagram: string | null; readonly bio: string; readonly tier: number; readonly wall: number; readonly roof: number;
   readonly decor: readonly string[]; readonly label: string; readonly has_expansion: boolean; readonly expansion: string | null;
 }
 export interface Profile {

@@ -19,6 +19,7 @@ import { Lake, Sky } from './sky.ts';
 const BIG = new Set(['crane', 'office', 'office_low', 'choyxona', 'maktab', 'stadium', 'bridge', 'hero_statue', 'plaza_fountain', 'billboard']);
 const LODS: Readonly<Record<string, string>> = { tree_chinor: 'tree_chinor_lod', tree_terak: 'tree_terak_lod', tree_archa: 'tree_archa' };
 const LABEL_RANGE = 46;
+const WHITE_COLOR = new Color('#ffffff');
 
 /** Ko'rish markazi: odatda o'yinchi, videoda — kamera. */
 const focus = (): { x: number; z: number; yaw: number } => {
@@ -119,6 +120,9 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       scene.remove(world.pools.group, world.ground.group, world.sky.group, world.lake.mesh, world.labels.group, sun, sun.target, hemi);
       world.pools.dispose();
       world.ground.dispose();
+      world.labels.dispose();
+      world.lake.mesh.geometry.dispose();
+      world.lake.mesh.material.dispose();
     };
   }, [scene, world, sun, hemi, fog]);
 
@@ -193,7 +197,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     sun.position.set(f.x + light.sun[0] * 120, light.sun[1] * 120, f.z + light.sun[2] * 120);
     sun.target.position.set(f.x, 0, f.z);
     hemi.intensity = light.ambient * 1.5;
-    hemi.color.copy(world.sky.fogColor).lerp(new Color('#ffffff'), 0.45);
+    hemi.color.copy(world.sky.fogColor).lerp(WHITE_COLOR, 0.45);
     const boost = director.pose ? 1.5 : 1;
     fog.color.copy(world.sky.fogColor);
     fog.near = q.fog * 0.25 * boost;

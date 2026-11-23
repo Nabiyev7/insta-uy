@@ -22,7 +22,7 @@ create table public.commerce_state (
 create function private.label_price(p text) returns int language sql stable set search_path = '' as $$ select private.num('prices.label.' || p, case p when 'gold' then 40000 else 15000 end)::int $$;
 
 /* Narx HAR DOIM serverda hisoblanadi. */
-create function private.quote(me public.profiles, p_kind text, p jsonb) returns int language plpgsql stable security definer set search_path = '' as $$
+create function private.quote(me public.profiles, p_kind text, p jsonb) returns int language plpgsql security definer set search_path = '' as $$
 declare st public.plot_state; pl public.plots; c public.decor_catalog; v int; s public.streets; off numeric := 1 - private.num('discount_pct', 0) / 100;
 begin
   if p_kind = 'plot' then
@@ -30,7 +30,7 @@ begin
     if pl.id is null then perform private.fail('not_found'); end if;
     if not (select is_open from public.districts where id = pl.district_id) then perform private.fail('district_closed'); end if;
     if exists (select 1 from public.plot_state where plot_id = pl.id and (status <> 'reserved' or reserved_until > now())) then perform private.fail('not_free'); end if;
-    perform private.clean_instagram(p ->> 'instagram');
+    if private.nick_taken(me.user_id, private.clean_instagram(p ->> 'instagram')) then perform private.fail('nick_taken'); end if;
     return private.plot_price(pl.id);
   elsif p_kind = 'commerce' then
     if not exists (select 1 from public.commerce where id = p ->> 'id') then perform private.fail('not_found'); end if;
@@ -59,7 +59,7 @@ begin
     if st.has_expansion or not exists (select 1 from public.expansions where plot_id = st.plot_id) then perform private.fail('not_free'); end if;
     return (private.num('prices.expansion', 80000) * off)::int;
   elsif p_kind = 'label' then
-    if p ->> 'label' not in ('silver','gold') or st.label = 'gold' or st.label = p ->> 'label' then perform private.fail('bad_format'); end if;
+    if coalesce(p ->> 'label', '') not in ('silver','gold') or st.label = 'gold' or st.label = p ->> 'label' then perform private.fail('bad_format'); end if;
     return (private.label_price(p ->> 'label') * off)::int;
   end if;
   perform private.fail('bad_format');
@@ -73,6 +73,8 @@ begin
   if not private.flag('payments_enabled') then perform private.fail('payments_off'); end if;
   perform private.rate('order:' || me.user_id, 15, 3600);
   if (select count(*) from public.orders where user_id = me.user_id and status = 'pending' and expires_at > now()) >= 3 then perform private.fail('too_many_orders'); end if;
+  -- Uchastkani band qilib turish cheklovi: bir vaqtda bittadan.
+  if p_kind = 'plot' and exists (select 1 from public.orders where user_id = me.user_id and kind = 'plot' and status = 'pending' and expires_at > now()) then perform private.fail('too_many_orders'); end if;
   perform pg_catalog.pg_advisory_xact_lock(421001); -- noyob summa va band qilish ketma-ket
   v_amount := private.quote(me, p_kind, p_payload);
   -- Noyob summa: oxirgi 24 soatda ishlatilgan summalar takrorlanmaydi (kech kelgan to'lov adashmasin).
@@ -89,7 +91,8 @@ begin
 end $$;
 
 create function public.my_orders() returns jsonb language sql security definer set search_path = '' as $$
-  select coalesce(jsonb_agg(jsonb_build_object('id', id, 'kind', kind, 'payload', payload, 'amount', pay_amount, 'status', status, 'expires', expires_at, 'provider', provider, 'at', created_at) order by created_at desc), '[]')
+  select coalesce(jsonb_agg(jsonb_build_object('id', id, 'kind', kind, 'payload', payload, 'amount', pay_amount, 'status', status, 'expires', expires_at, 'provider', provider, 'at', created_at,
+    'card', case when status = 'pending' and provider = 'card' then nullif(private.setting('pay_card') #>> '{}', '') end) order by created_at desc), '[]')
   from (select * from public.orders where user_id = auth.uid() order by created_at desc limit 30) o
 $$;
 create function public.my_order_cancel(p_id uuid) returns void language plpgsql security definer set search_path = '' as $$
@@ -107,7 +110,7 @@ end $$;
 
 /* Buyurtma natijasini qo'llaydi. Iloji bo'lmasa xato ko'taradi. */
 create function private.fulfil(o public.orders) returns void language plpgsql security definer set search_path = '' as $$
-declare pl public.plots; st public.plot_state; v int;
+declare pl public.plots; st public.plot_state; v int; nick text;
 begin
   case o.kind
   when 'plot' then
@@ -115,8 +118,11 @@ begin
     select * into st from public.plot_state where plot_id = pl.id for update;
     if st.plot_id is not null and not (st.status = 'reserved' and (st.reserved_order = o.id or st.reserved_until < now())) then perform private.fail('not_free'); end if;
     delete from public.plot_state where plot_id = pl.id;
+    -- To'lov kelguncha nik band bo'lib qolsa, uy baribir beriladi — niksiz (egasi keyin yozadi).
+    nick := private.clean_instagram(o.payload ->> 'instagram');
+    if private.nick_taken(o.user_id, nick) then nick := null; end if;
     insert into public.plot_state (plot_id, status, owner, instagram, tier) values
-      (pl.id, 'owned', o.user_id, private.clean_instagram(o.payload ->> 'instagram'), case pl.type when 'qasr' then 5 when 'villa' then 4 else 1 end);
+      (pl.id, case when nick is null then 'owned' else private.nick_status(o.user_id, nick) end, o.user_id, nick, case pl.type when 'qasr' then 5 when 'villa' then 4 else 1 end);
     insert into public.ownership_log (plot_id, to_user, reason) values (pl.id, o.user_id, 'paid');
     perform private.give_badge(o.user_id, 'investor');
   when 'tier' then

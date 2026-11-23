@@ -71,6 +71,12 @@ export class Labels {
     return made;
   }
 
+  dispose(): void {
+    for (const { texture } of this.cache.values()) texture.dispose();
+    for (const s of this.sprites) s.material.dispose();
+    this.cache.clear();
+  }
+
   set(list: readonly LabelInfo[]): void {
     while (this.sprites.length < list.length) {
       const s = new Sprite(new SpriteMaterial({ transparent: true, depthWrite: false, fog: false }));

@@ -13,6 +13,12 @@ function LangSwitch(): React.JSX.Element {
   return <div className="lang">{(['uz', 'ru'] as const).map((v) => <button type="button" key={v} aria-pressed={v === lang} onClick={() => pick(v)}>{v.toUpperCase()}</button>)}</div>;
 }
 
+/** 3D qatlam yiqilsa yoki WebGL konteksti yo'qolsa. */
+export function Crash(): React.JSX.Element {
+  const t = useT();
+  return <div className="cover"><div className="inner"><h1>{t('cityName')}</h1><p role="alert">{t('e_unknown')}</p><button type="button" className="btn clay" onClick={() => location.reload()}>{t('retry')}</button></div></div>;
+}
+
 export function Cover(): React.JSX.Element {
   const t = useT();
   const { stage, progress, error } = useApp();

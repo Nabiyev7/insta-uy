@@ -15,7 +15,11 @@ const passwordOf = (raw: string): string => {
 };
 
 const checkTurnstile = async (ctx: Ctx, token: string | undefined): Promise<void> => {
-  if (!ctx.env.TURNSTILE_SECRET) return;
+  if (!ctx.env.TURNSTILE_SECRET) {
+    // Himoyasiz ro'yxat faqat lokalda; ishlab chiqarishda sozlanmagan bo'lsa yopiq turadi.
+    if (ctx.env.DEV === '1') return;
+    throw new HttpError(503, 'bot_check');
+  }
   const body = new URLSearchParams({ secret: ctx.env.TURNSTILE_SECRET, response: token ?? '', remoteip: ctx.ip });
   const res = await ctx.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body });
   const data = (await res.json()) as { success?: boolean };
@@ -41,7 +45,8 @@ export const register = async (req: Request, ctx: Ctx): Promise<Response> => {
   const password = passwordOf(body.password);
   await limit(ctx, 'register', 5, 3600);
   await checkTurnstile(ctx, body.captcha);
-  if (login.startsWith('deleted_') || !(await ctx.db.rpc<boolean>('svc_login_free', { p_login: login }))) throw new HttpError(409, 'login_taken');
+  // "tg<raqam>" Telegram orqali kirganlar uchun ajratilgan.
+  if (/^(deleted_|tg\d+$)/.test(login) || !(await ctx.db.rpc<boolean>('svc_login_free', { p_login: login }))) throw new HttpError(409, 'login_taken');
   await createAccount(ctx, login, password, body.ref ?? null, null);
   return json({ ok: true });
 };

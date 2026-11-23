@@ -56,9 +56,10 @@ Asosiy qarorlar:
 
 1. **Supabase**: yangi loyiha → `npx supabase link` → `npx supabase db push`. Authentication → Sign ups: **o'chiring** (ro'yxat faqat Worker orqali).
 2. **Worker**: `cd server && npx wrangler deploy`; maxfiylar `npx wrangler secret put …` ([ro'yxat](server/.env.example)).
+   `TURNSTILE_SECRET` **majburiy** (Cloudflare Turnstile, bepul): usiz ishlab chiqarishda ro'yxatdan o'tish yopiq turadi.
 3. **Telegram**: BotFather'da bot → `https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WORKER>/telegram/webhook&secret_token=<SIR>`.
 4. **Sayt/admin**: Cloudflare Pages. Build: `npm run build -w @shahar/web` → `apps/web/dist`; `npm run build -w @shahar/admin` → `apps/admin/dist`.
-   O'zgaruvchilar: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL` (Worker), `VITE_REALTIME_URL`, `VITE_SITE_URL` (admin), ixtiyoriy `VITE_SENTRY_DSN`, `VITE_PAYME_MERCHANT`, `VITE_CLICK_MERCHANT`, `VITE_CLICK_SERVICE`.
+   O'zgaruvchilar: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL` (Worker), `VITE_REALTIME_URL`, `VITE_SITE_URL` (admin), `VITE_TURNSTILE_KEY`, ixtiyoriy `VITE_SENTRY_DSN`, `VITE_PAYME_MERCHANT`, `VITE_CLICK_MERCHANT`, `VITE_CLICK_SERVICE`.
 5. **Ko'p o'yinchi**: istalgan bepul Node xost → `node server/src/realtime/main.ts`. Bo'lmasa sayt yakka rejimda ishlayveradi.
 6. **Birinchi admin**: saytda ro'yxatdan o'ting, so'ng SQL Editor'da: `update profiles set role='admin' where login='LOGIN';`
 7. Admin → Sozlamalar: `telegram_bot`, `require_approval`; keyin Tumanlar.

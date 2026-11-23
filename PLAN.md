@@ -233,8 +233,23 @@ obunachilar-shahri/
 
 ## Holat
 
+> Oxirgi yangilanish: 2026-11-23. Ishga tushirish va internetga chiqarish: README.md.
+
 - [x] Reja tuzildi (2026-11-23)
-- [ ] Mahalla prototipi
-- [ ] v1
-- [ ] v2
-- [ ] v3
+- [x] Mahalla prototipi — kompyuterda tayyor; **haqiqiy Redmi A telefonda hali sinalmagan**
+- [x] Bosh reja: 5 000 uchastka, 12 tuman — qulflangan (`packages/shared/data/masterplan.lock`)
+- [x] v1 kodi (lokal sinovdan o'tgan)
+- [x] v2 kodi (lokal sinovdan o'tgan; to'lov sukut bo'yicha o'chiq)
+- [x] v3 kodi (lokal sinovdan o'tgan; saylov sukut bo'yicha o'chiq)
+- [ ] Internetga chiqarish (Supabase, Cloudflare, Telegram bot akkauntlari kerak)
+- [ ] Haqiqiy xizmatlar bilan sinash: Telegram bot, Payme/Click sandbox, bank xabari, ElevenLabs, Meta API, Turnstile, Sentry
+- [ ] Beta 20–50 kishi (§13), qoidalar matnini huquqshunos ko'rishi (§10), §14 qarorlari
+
+Rejadan farqlar (sababi bilan):
+- Video: Remotion o'rniga Playwright + ffmpeg (§7 ikkalasiga ruxsat bergan).
+- KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~0,9 MB, Pages'ning o'zi yetadi.
+- Ko'p o'yinchi: Socket.io. Musiqa va tabiat ovozi sintez qilinadi (litsenziya masalasi yo'q).
+- Ko'cha/panjara kabi protsedural qismlar koddan, modellar Blender skriptidan (`npm run models`); Blender MCP kerak bo'lmadi.
+- `TURNSTILE_SECRET` ishlab chiqarishda majburiy (soxta akkauntlarga qarshi).
+
+Ma'lum cheklovlar: chastota chegarasi xato bilan tugagan urinishlarni sanamaydi; xazina va «3 mahalla» topshirig'ida joylashuv mijozdan olinadi (mukofotlar shuning uchun kichik); parol tiklanganda eski sessiyalar darhol yopilmaydi.

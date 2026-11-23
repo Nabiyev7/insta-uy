@@ -1,11 +1,10 @@
 /** Yuklash ketma-ketligi va fon ishlari. */
-import { frontOf } from '../../../../packages/shared/src/index.ts';
 import { loadKit } from '../world/kit.ts';
-import { onSession, rpc } from './api.ts';
+import { goToPlot } from './actions.ts';
+import { onSession, rpc, supabase } from './api.ts';
 import { startAudio } from './audio.ts';
 import { connectMultiplayer } from './multiplayer.ts';
-import { teleport } from './runtime.ts';
-import { getApp, loadPlan, openPanel, refreshBoot, refreshHouses, refreshProfile, setApp } from './store.ts';
+import { getApp, loadPlan, refreshBoot, refreshHouses, refreshProfile, setApp } from './store.ts';
 import { exposeVideoApi } from './videoMode.ts';
 
 const REFRESH_MS = 60_000;
@@ -28,11 +27,7 @@ const applyLink = (): void => {
       // maxfiy rejim: taklif kodi shu seansda saqlanmaydi
     }
   }
-  const plot = getApp().plotById.get(params.get('uy') ?? '');
-  if (!plot) return;
-  const f = frontOf(plot, 4);
-  teleport(f.x, f.z, f.yaw + Math.PI);
-  openPanel({ kind: 'plot', id: plot.id });
+  goToPlot(params.get('uy') ?? '');
 };
 
 /** Sinov rejimi: admin qoralama xaritani ko'radi (?xarita=ID). */
@@ -45,6 +40,7 @@ const applyDraftMap = async (): Promise<void> => {
 };
 
 export const start = async (): Promise<void> => {
+  document.documentElement.lang = getApp().lang;
   setApp({ stage: 'loading', progress: 0, error: '' });
   if (!hasWebgl2()) {
     setApp({ stage: 'error', error: 'webgl' });
@@ -83,6 +79,7 @@ const runBackground = async (): Promise<void> => {
   setInterval(() => { if (!document.hidden) void Promise.allSettled([refreshHouses(), refreshBoot().then(applyDraftMap)]); }, REFRESH_MS);
   setInterval(() => {
     const s = getApp();
+    if (!s.profile && !document.hidden) void supabase.auth.getSession().then(({ data }) => (data.session ? refreshProfile() : undefined)).catch(() => undefined);
     if (s.profile && !document.hidden) void rpc('my_ping', { p_district: s.district }).catch(() => undefined);
   }, PING_MS);
   if (getApp().isSound) addEventListener('pointerdown', startAudio, { once: true });

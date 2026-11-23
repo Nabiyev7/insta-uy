@@ -33,6 +33,7 @@ export const attachControls = (): (() => void) => {
   };
   const clear = (): void => {
     held.clear();
+    input.isRunning = false;
     apply();
   };
 

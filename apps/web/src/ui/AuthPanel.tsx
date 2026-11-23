@@ -2,7 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { parseLogin, parsePassword } from '../../../../packages/shared/src/index.ts';
 import { post, signIn, signInWithToken } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
-import { openPanel, toast } from '../app/store.ts';
+import { errorText, translate } from '../app/i18n.ts';
+import { getApp, openPanel, toast } from '../app/store.ts';
+import { Captcha } from './Captcha.tsx';
 import { Field, Seg, Sheet, useAction } from './kit.tsx';
 
 type Mode = 'login' | 'register' | 'reset';
@@ -24,7 +26,10 @@ function TelegramLogin(): React.JSX.Element {
   useEffect(() => {
     if (!pending) return undefined;
     let left = POLL_LIMIT;
+    let isPending = false;
     const id = setInterval(() => {
+      if (isPending) return;
+      isPending = true;
       left -= 1;
       post<{ state: string; token_hash?: string }>('/auth/telegram/poll', { token: pending.token, ref: refCode() }).then(async (r) => {
         if (r.state === 'waiting' && left > 0) return;
@@ -33,11 +38,14 @@ function TelegramLogin(): React.JSX.Element {
         if (r.state === 'ok' && r.token_hash) {
           await signInWithToken(r.token_hash);
           openPanel({ kind: 'me' });
-        } else toast(t('e_expired'), true);
-      }, () => undefined); // tarmoq uzilsa keyingi urinishda davom etadi
+        } else toast(translate('e_expired', getApp().lang), true);
+      }).catch((error: unknown) => {
+        // Tarmoq uzilsa keyingi urinishda davom etadi; boshqa xato ko'rsatiladi.
+        if (!(error instanceof Error && error.message === 'network')) toast(errorText(error, getApp().lang), true);
+      }).finally(() => { isPending = false; });
     }, POLL_MS);
     return () => clearInterval(id);
-  }, [pending, t]);
+  }, [pending]);
   if (pending) return <div className="section"><p>{t('tgWait')}</p><a className="btn" href={pending.url} target="_blank" rel="noopener noreferrer">{t('openTg')}</a></div>;
   return <button type="button" className="btn block" disabled={isBusy} onClick={() => run(async () => setPending(await post<{ token: string; url: string }>('/auth/telegram/start', {})))}>✈️ {t('viaTelegram')}</button>;
 }
@@ -75,6 +83,7 @@ export function AuthPanel(): React.JSX.Element {
   const [mode, setMode] = useState<Mode>('login');
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
+  const [captcha, setCaptcha] = useState('');
   const done = (): void => openPanel({ kind: 'me' });
   const submit = (e: FormEvent): void => {
     e.preventDefault();
@@ -84,7 +93,7 @@ export function AuthPanel(): React.JSX.Element {
         if (!l.ok) throw new Error(`login_${l.code}`);
         const p = parsePassword(password);
         if (!p.ok) throw new Error(`password_${p.code}`);
-        await post('/auth/register', { login: l.value, password, ref: refCode() });
+        await post('/auth/register', { login: l.value, password, ref: refCode(), captcha });
       }
       await signIn(login, password);
     }).then((ok) => ok && done());
@@ -97,6 +106,7 @@ export function AuthPanel(): React.JSX.Element {
         <form className="section" onSubmit={submit}>
           <Field label={t('loginField')}><input value={login} onChange={(e) => setLogin(e.target.value)} autoCapitalize="none" autoComplete="username" required maxLength={24} /></Field>
           <Field label={t('password')}><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={8} /></Field>
+          {mode === 'register' && <Captcha onToken={setCaptcha} />}
           <button type="submit" className="btn clay block" disabled={isBusy}>{t(mode === 'register' ? 'register' : 'login')}</button>
           {mode === 'login' && <button type="button" className="link" onClick={() => setMode('reset')}>{t('forgot')}</button>}
           {mode === 'register' && <button type="button" className="link" onClick={() => openPanel({ kind: 'rules' })}>{t('rulesAgree')}</button>}

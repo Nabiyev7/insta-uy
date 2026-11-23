@@ -84,7 +84,11 @@ export function PlayerLayer({ plan }: PlayerLayerProps): null {
 
   useEffect(() => {
     scene.add(avatars.group, names.group);
-    return () => { scene.remove(avatars.group, names.group); };
+    return () => {
+      scene.remove(avatars.group, names.group);
+      avatars.dispose();
+      names.dispose();
+    };
   }, [scene, avatars, names]);
 
   // Uyni bosish: sudrash emas, qisqa teginish.

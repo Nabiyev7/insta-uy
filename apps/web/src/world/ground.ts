@@ -204,7 +204,10 @@ export class Ground {
         wanted.set(`${cx},${cz}`, [cx, cz, Math.hypot((cx + 0.5) * CHUNK - x, (cz + 0.5) * CHUNK - z)]);
       }
     }
-    for (const key of [...this.chunks.keys()]) if (!wanted.has(key)) this.drop(key);
+    for (const [key, g] of this.chunks) {
+      if (!wanted.has(key)) this.drop(key);
+      else for (const m of g.children) m.receiveShadow = receiveShadow;
+    }
     const missing = [...wanted].filter(([k]) => !this.chunks.has(k)).sort((a, b) => a[1][2] - b[1][2]);
     for (const [key, [cx, cz]] of missing.slice(0, budget)) {
       const layers = buildChunk(this.plan, cx, cz, this.state);

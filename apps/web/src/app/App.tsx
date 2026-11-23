@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { useApp, type Panel } from './store.ts';
 import { attachControls } from './controls.ts';
 import { World } from '../world/World.tsx';
-import { Cover } from '../ui/Cover.tsx';
+import { Cover, Crash } from '../ui/Cover.tsx';
+import { ErrorBoundary } from '../ui/ErrorBoundary.tsx';
 import { Hud } from '../ui/Hud.tsx';
 import { AuthPanel } from '../ui/AuthPanel.tsx';
 import { HelpPanel, MenuPanel, PrivacyPanel, RulesPanel, SettingsPanel } from '../ui/InfoPanels.tsx';
@@ -47,10 +48,10 @@ export function App(): React.JSX.Element {
   useEffect(() => attachControls(), []);
   return (
     <main>
-      <World />
+      <ErrorBoundary fallback={<Crash />}><World /></ErrorBoundary>
       {stage === 'play' && <Hud />}
       {stage !== 'play' && <Cover />}
-      {panel && stage === 'play' && <PanelView panel={panel} />}
+      {panel && stage === 'play' && <ErrorBoundary key={JSON.stringify(panel)} fallback={null}><PanelView panel={panel} /></ErrorBoundary>}
       <Toasts />
     </main>
   );

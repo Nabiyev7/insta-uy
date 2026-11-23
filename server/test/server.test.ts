@@ -16,7 +16,7 @@ const keys = makeKeys('test-secret');
 const ENV: Env = {
   SUPABASE_URL: 'http://emu', SUPABASE_SERVICE_KEY: keys.service, SITE_URL: 'https://shahar.test', ALLOWED_ORIGINS: 'https://shahar.test', HASH_SECRET: 'h',
   TELEGRAM_BOT: 'shahar_bot', TELEGRAM_WEBHOOK_SECRET: 'wh', ADMIN_TELEGRAM_ID: '1', BANK_BOT: 'bankbot', BANK_SECRET: 'bs', PAYME_KEY: 'pk', CLICK_SECRET: 'cs', CLICK_SERVICE_ID: '77',
-  META_TOKEN: 'mt', META_MEDIA_IDS: '123, bad',
+  META_TOKEN: 'mt', META_MEDIA_IDS: '123, bad', DEV: '1',
 };
 let db: PGlite;
 let emu: (req: Request) => Promise<Response>;
@@ -64,6 +64,10 @@ describe('ro‘yxatdan o‘tish', () => {
     expect((await call('/auth/register', '{')).body.error).toBe('bad_json');
     expect((await call('/auth/register', { login: 5 })).body.error).toBe('bad_format');
     expect((await call('/auth/register', 'x'.repeat(20_000))).status).toBe(413);
+  });
+  test('himoyasiz ishlab chiqarishda yopiq; tg<raqam> loginlar band qilinmaydi', async () => {
+    expect((await call('/auth/register', { login: 'prod_1', password: 'parol12345' }, {}, ctx({ env: { ...ENV, DEV: '' } }))).status).toBe(503);
+    expect((await call('/auth/register', { login: 'tg123456789', password: 'parol12345' })).body.error).toBe('login_taken');
   });
   test('bir IP dan cheklov', async () => {
     const c = ctx();

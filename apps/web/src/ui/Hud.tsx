@@ -24,13 +24,14 @@ function Joystick(): React.JSX.Element {
     input.moveY = -y / len;
     if (knob.current) knob.current.style.transform = `translate(${(x / len) * half * 0.6}px, ${(y / len) * half * 0.6}px)`;
   };
+  useEffect(() => () => { input.moveX = input.moveY = 0; }, []);
   const stop = (): void => {
     input.moveX = input.moveY = 0;
     if (knob.current) knob.current.style.transform = '';
   };
   return (
     <div
-      className="joystick" aria-hidden="true" onPointerCancel={stop} onPointerUp={stop} onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) move(e); }}
+      className="joystick" aria-hidden="true" onLostPointerCapture={stop} onPointerCancel={stop} onPointerUp={stop} onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) move(e); }}
       onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
     ><i ref={knob} /></div>
   );

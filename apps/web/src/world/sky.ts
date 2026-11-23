@@ -5,6 +5,7 @@ import { LAKE, hash01 } from '../../../../packages/shared/src/index.ts';
 import type { Daylight } from '../logic/atmosphere.ts';
 
 const DOME = 1500;
+const RIDGE = { nearNight: new Color('#0b1226'), nearDay: new Color('#4c6b66'), farNight: new Color('#111a33'), farDay: new Color('#7f97ab') };
 
 /** Osmon gumbazi, quyosh/oy, yulduzlar va uzoqdagi tog'lar. */
 export class Sky {
@@ -47,8 +48,8 @@ export class Sky {
     this.uniforms.uNight.value = d.night;
     this.fogColor.copy(this.uniforms.uHorizon.value);
     const base = this.uniforms.uHorizon.value;
-    this.mountains.material.color.copy(base).lerp(new Color(d.night > 0.5 ? '#0b1226' : '#4c6b66'), 0.5);
-    this.peaks.material.color.copy(base).lerp(new Color(d.night > 0.5 ? '#111a33' : '#7f97ab'), 0.42);
+    this.mountains.material.color.copy(base).lerp(d.night > 0.5 ? RIDGE.nearNight : RIDGE.nearDay, 0.5);
+    this.peaks.material.color.copy(base).lerp(d.night > 0.5 ? RIDGE.farNight : RIDGE.farDay, 0.42);
     this.stars.material.opacity = d.night * 0.9;
     this.stars.visible = d.night > 0.05;
   }

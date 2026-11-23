@@ -4,14 +4,10 @@ import { hasKey, money, useT, type Key } from '../app/i18n.ts';
 import { openPanel, refreshHouses, useApp } from '../app/store.ts';
 import { Field, Sheet, useAction, useLoad } from './kit.tsx';
 
-interface NewOrder { readonly id: string; readonly amount: number; readonly expires: string; readonly provider: string; readonly card: string | null }
-interface Order { readonly id: string; readonly kind: string; readonly payload: Readonly<Record<string, unknown>>; readonly amount: number; readonly status: string; readonly expires: string; readonly provider: string; readonly at: string }
-
-let lastCard: string | null = null;
+interface Order { readonly id: string; readonly kind: string; readonly payload: Readonly<Record<string, unknown>>; readonly amount: number; readonly status: string; readonly expires: string; readonly provider: string; readonly card: string | null; readonly at: string }
 
 export const createOrder = async (kind: string, payload: Readonly<Record<string, unknown>>): Promise<void> => {
-  const o = await rpc<NewOrder>('my_order', { p_kind: kind, p_payload: payload });
-  lastCard = o.card;
+  await rpc('my_order', { p_kind: kind, p_payload: payload });
   openPanel({ kind: 'orders' });
   void refreshHouses();
 };
@@ -39,7 +35,7 @@ export function OrdersPanel(): React.JSX.Element {
           <div className="pay" key={o.id}>
             <span>{t('payTitle')} · {o.kind}</span>
             <strong>{money(o.amount)} {t('som')}</strong>
-            {o.provider === 'card' && <><span>{t('payExact')}</span>{lastCard && <span>{t('payCard')}: <b style={{ userSelect: 'all' }}>{lastCard}</b></span>}</>}
+            {o.provider === 'card' && <><span>{t('payExact')}</span>{o.card && <span>{t('payCard')}: <b style={{ userSelect: 'all' }}>{o.card}</b></span>}</>}
             {url && <a className="btn" href={url} target="_blank" rel="noopener noreferrer">{t('payTitle')}</a>}
             <small>{t('payUntil')}: {new Date(o.expires).toLocaleTimeString('ru-RU')}</small>
             <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(async () => { await rpc('my_order_cancel', { p_id: o.id }); reload(); await refreshHouses(); })}>{t('cancel')}</button>

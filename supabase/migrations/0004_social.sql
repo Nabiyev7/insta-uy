@@ -23,6 +23,7 @@ create table public.project_contributions (
   amount int not null check (amount > 0), at timestamptz not null default now()
 );
 create table public.quest_claims (user_id uuid not null references public.profiles on delete cascade, quest text not null, day date not null default '1970-01-01', primary key (user_id, quest, day));
+create table public.quest_telegram (telegram_id bigint primary key, at timestamptz not null default now());
 create table public.elections (
   id int generated always as identity primary key, kind text not null check (kind in ('hokim','rais')), district_id int references public.districts,
   ends_at timestamptz not null, status text not null default 'open' check (status in ('open','closed')), winner uuid references public.profiles on delete set null
@@ -124,9 +125,9 @@ create function private.quest_ok(uid uuid, q text) returns boolean language sql 
     when 'house' then exists (select 1 from public.plot_state where owner = uid and status = 'owned')
     when 'bio' then exists (select 1 from public.plot_state where owner = uid and status = 'owned' and bio <> '')
     when 'decor' then exists (select 1 from public.plot_state where owner = uid and cardinality(decor) >= 3)
-    when 'invite3' then (select count(*) from public.profiles where referred_by = uid and free_used) >= 3
+    when 'invite3' then (select count(*) from public.profiles where referred_by = uid and referral_paid) >= 3
     when 'walk' then (select count(distinct district_id) from public.daily_active where user_id = uid and day = current_date and district_id > 0) >= 3
-    when 'contribute' then exists (select 1 from public.project_contributions where user_id = uid and at >= current_date)
+    when 'contribute' then (select coalesce(sum(amount), 0) from public.project_contributions where user_id = uid and at >= current_date) >= 20
     else false end
 $$;
 create function public.my_quests() returns jsonb language sql stable security definer set search_path = '' as $$
@@ -140,6 +141,10 @@ begin
   dflt := case p_quest when 'telegram' then 50 when 'house' then 30 when 'bio' then 10 when 'decor' then 40 when 'invite3' then 150 when 'walk' then 15 when 'contribute' then 10 end;
   if dflt is null then perform private.fail('not_found'); end if;
   if not private.quest_ok(me.user_id, p_quest) then perform private.fail('quest_not_ready'); end if;
+  if p_quest = 'telegram' then
+    insert into public.quest_telegram (telegram_id) values (me.telegram_id) on conflict do nothing;
+    if not found then perform private.fail('already_claimed'); end if;
+  end if;
   insert into public.quest_claims (user_id, quest, day) values (me.user_id, p_quest, case when v_daily then current_date else date '1970-01-01' end) on conflict do nothing;
   if not found then perform private.fail('already_claimed'); end if;
   return private.coins(me.user_id, private.num('coins.quest.' || p_quest, dflt)::int, 'quest:' || p_quest);
@@ -181,14 +186,15 @@ end $$;
 create function public.my_treasure(p_x numeric, p_z numeric) returns jsonb language plpgsql security definer set search_path = '' as $$
 declare me public.profiles := private.coins_on(); t public.treasures; dist numeric; bal int;
 begin
+  if p_x is null or p_z is null or abs(p_x) > 2000 or abs(p_z) > 2000 then perform private.fail('bad_format'); end if;
   perform private.rate('treasure:' || me.user_id, 8, 60);
-  perform private.rate('treasure:' || me.user_id, 200, 86400);
+  perform private.rate('treasure:' || me.user_id, 60, 86400);
   t := private.treasure_today();
   select * into t from public.treasures where day = t.day for update;
   if exists (select 1 from public.treasure_claims where day = t.day and user_id = me.user_id) then return jsonb_build_object('state', 'done'); end if;
   if (select count(*) from public.treasure_claims where day = t.day) >= t.slots then return jsonb_build_object('state', 'empty'); end if;
   dist := sqrt((t.x - p_x) ^ 2 + (t.z - p_z) ^ 2);
-  if dist > 6 then return jsonb_build_object('state', 'hunt', 'district', t.district_id, 'heat', case when dist < 25 then 'hot' when dist < 80 then 'warm' else 'cold' end); end if;
+  if dist is null or dist > 6 then return jsonb_build_object('state', 'hunt', 'district', t.district_id, 'heat', case when dist < 25 then 'hot' when dist < 80 then 'warm' else 'cold' end); end if;
   insert into public.treasure_claims (day, user_id) values (t.day, me.user_id);
   bal := private.coins(me.user_id, private.num('coins.treasure', 100)::int, 'treasure');
   return jsonb_build_object('state', 'found', 'coins', bal);
@@ -200,7 +206,7 @@ create function private.may_vote(uid uuid, e public.elections) returns boolean l
 $$;
 create function public.api_elections() returns jsonb language sql stable security definer set search_path = '' as $$
   select coalesce(jsonb_agg(jsonb_build_object('id', e.id, 'kind', e.kind, 'district', e.district_id, 'ends', e.ends_at, 'mine', (select candidate from public.ballots b where b.election_id = e.id and b.voter = auth.uid()),
-    'candidates', (select coalesce(jsonb_agg(jsonb_build_object('id', c.user_id, 'nick', coalesce(p.instagram, p.login), 'slogan', c.slogan, 'votes', (select count(*) from public.ballots b where b.election_id = e.id and b.candidate = c.user_id)) order by c.user_id), '[]')
+    'candidates', (select coalesce(jsonb_agg(jsonb_build_object('id', c.user_id, 'nick', private.public_nick(p), 'slogan', c.slogan, 'votes', (select count(*) from public.ballots b where b.election_id = e.id and b.candidate = c.user_id)) order by c.user_id), '[]')
       from public.candidates c join public.profiles p on p.user_id = c.user_id where c.election_id = e.id)) order by e.kind, e.district_id), '[]')
   from public.elections e where e.status = 'open'
 $$;

@@ -18,7 +18,7 @@ create function public.api_boot() returns jsonb language sql stable security def
     'objects', (select coalesce(jsonb_agg(jsonb_build_object('id', o.id, 'm', o.model, 'x', o.x, 'z', o.z, 'r', o.rot, 's', o.scale)), '[]')
         from public.map_objects o join public.map_versions v on v.id = o.version_id where v.status = 'published'),
     'projects', (select coalesce(jsonb_agg(jsonb_build_object('id', id, 'kind', kind, 'uz', title_uz, 'ru', title_ru, 'goal', goal, 'raised', raised, 'status', status) order by id), '[]') from public.projects where status <> 'draft'),
-    'hero', (select jsonb_build_object('nick', coalesce(p.instagram, p.login), 'total', t.total) from
+    'hero', (select jsonb_build_object('nick', private.public_nick(p), 'total', t.total) from
         (select user_id, sum(amount) total from public.project_contributions group by user_id order by total desc limit 1) t join public.profiles p using (user_id))
   )
 $$;
@@ -60,7 +60,7 @@ create function public.api_rankings() returns jsonb language sql stable security
     'districts', (select coalesce(jsonb_agg(q), '[]') from (
       select district_id as id, count(*)::int as active from public.daily_active where day > current_date - 7 and district_id > 0 group by 1 order by 2 desc limit 12) q),
     'inviters', (select coalesce(jsonb_agg(q), '[]') from (
-      select coalesce(r.instagram, r.login) as nick, count(*)::int as n from public.profiles p join public.profiles r on r.user_id = p.referred_by where p.free_used group by 1 order by 2 desc limit 10) q))
+      select private.public_nick(r) as nick, count(*)::int as n from public.profiles p join public.profiles r on r.user_id = p.referred_by where p.referral_paid group by r.user_id, 1 order by 2 desc limit 10) q))
 $$;
 
 -- ---------- Mening ----------
@@ -70,12 +70,12 @@ begin
   update public.profiles set last_seen = now() where user_id = p.user_id and last_seen < now() - interval '1 hour';
   return jsonb_build_object('id', p.user_id, 'login', p.login, 'instagram', p.instagram, 'role', p.role, 'perms', p.perms, 'badges', p.badges, 'avatar', p.avatar,
     'telegram', p.telegram_id is not null, 'coins', p.coins, 'ref', p.ref_code, 'free_used', p.free_used, 'streak', p.streak, 'daily_done', coalesce(p.last_daily = current_date, false),
-    'invited', (select count(*) from public.profiles where referred_by = p.user_id and free_used),
+    'invited', (select count(*) from public.profiles where referred_by = p.user_id and referral_paid),
     'plots', (select coalesce(jsonb_agg(jsonb_build_object('plot', s.plot_id, 'status', s.status, 'address', private.address(s.plot_id), 'instagram', s.instagram, 'bio', s.bio,
        'tier', s.tier, 'wall', s.wall, 'roof', s.roof, 'decor', s.decor, 'label', s.label, 'has_expansion', s.has_expansion,
        'expansion', (select id from public.expansions e where e.plot_id = s.plot_id)) order by s.claimed_at), '[]') from public.plot_state s where s.owner = p.user_id and s.status <> 'reserved'),
     'decor', (select coalesce(jsonb_object_agg(decor_id, qty), '{}') from public.owned_decor where user_id = p.user_id and qty > 0),
-    'transfers', (select coalesce(jsonb_agg(jsonb_build_object('id', t.id, 'plot', t.plot_id, 'from', coalesce(f.instagram, f.login), 'message', t.message)), '[]')
+    'transfers', (select coalesce(jsonb_agg(jsonb_build_object('id', t.id, 'plot', t.plot_id, 'from', private.public_nick(f), 'message', t.message)), '[]')
        from public.transfers t join public.profiles f on f.user_id = t.from_user where t.to_user = p.user_id and t.status = 'pending'),
     'notes', (select coalesce(jsonb_agg(jsonb_build_object('id', n.id, 'kind', n.kind, 'data', n.data, 'at', n.created_at) order by n.id desc), '[]')
        from (select * from public.notifications where user_id = p.user_id and read_at is null order by id desc limit 30) n));
@@ -88,6 +88,16 @@ $$;
 create function private.give_badge(uid uuid, b text) returns void language sql security definer set search_path = '' as $$
   update public.profiles set badges = array_append(badges, b) where user_id = uid and not b = any (badges)
 $$;
+
+/* Taklif mukofoti: faqat mehmonning uyi tasdiqlangach va umrida bir marta. */
+create function private.pay_referral(p_guest uuid) returns void language plpgsql security definer set search_path = '' as $$
+declare v_ref uuid; v_nick text; v_gain int := private.num('coins.referral', 50)::int;
+begin
+  update public.profiles set referral_paid = true where user_id = p_guest and referred_by is not null and not referral_paid returning referred_by, instagram into v_ref, v_nick;
+  if v_ref is null then return; end if;
+  perform private.coins(v_ref, v_gain, 'referral');
+  perform private.notify(v_ref, 'referral', jsonb_build_object('nick', v_nick));
+end $$;
 
 /* Bepul uy: 1 kishiga 1 ta, 1 nikka 1 ta, faqat ochiq tumanda. */
 create function public.my_claim(p_plot text, p_instagram text, p_bio text default '') returns jsonb language plpgsql security definer set search_path = '' as $$
@@ -103,12 +113,11 @@ begin
   if not (select is_open from public.districts where id = pl.district_id) then perform private.fail('district_closed'); end if;
   if coalesce(p_bio, '') ~* '(https?://|www\.|t\.me/)' then perform private.fail('bad_format'); end if;
   -- Bir nikka bitta bepul uy: parallel so'rovlar navbatga turadi.
-  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('nick:' || nick));
-  if exists (select 1 from public.plot_state where lower(instagram) = nick and status <> 'reserved') then perform private.fail('nick_taken'); end if;
+  if private.nick_taken(me.user_id, nick) or exists (select 1 from public.plot_state where lower(instagram) = nick and is_free and status <> 'reserved') then perform private.fail('nick_taken'); end if;
   select * into st from public.plot_state where plot_id = p_plot for update;
   if st.plot_id is not null and (st.status <> 'reserved' or st.reserved_until > now()) then perform private.fail('not_free'); end if;
   v_status := case when private.flag('require_approval') then 'pending' else 'owned' end;
-  delete from public.plot_state where plot_id = p_plot;
+  delete from public.plot_state where plot_id = p_plot and status = 'reserved' and reserved_until <= now();
   insert into public.plot_state (plot_id, status, owner, instagram, bio, is_free, wall, roof)
     values (p_plot, v_status, me.user_id, nick, private.clean_text(p_bio, 120, true), true, abs(pg_catalog.hashtext(p_plot)) % 8, abs(pg_catalog.hashtext(nick)) % 6)
     on conflict (plot_id) do nothing;
@@ -116,11 +125,7 @@ begin
   update public.profiles set free_used = true, instagram = coalesce(instagram, nick) where user_id = me.user_id;
   if (select count(*) from public.profiles where 'asoschi' = any (badges)) < private.num('founder_limit', 100) then perform private.give_badge(me.user_id, 'asoschi'); end if;
   insert into public.ownership_log (plot_id, to_user, reason) values (p_plot, me.user_id, 'free');
-  if me.referred_by is not null then
-    update public.profiles set coins = coins + private.num('coins.referral', 50)::int where user_id = me.referred_by;
-    insert into public.coin_ledger (user_id, delta, reason) values (me.referred_by, private.num('coins.referral', 50)::int, 'referral');
-    perform private.notify(me.referred_by, 'referral', jsonb_build_object('nick', nick));
-  end if;
+  if v_status = 'owned' then perform private.pay_referral(me.user_id); end if;
   return jsonb_build_object('status', v_status, 'address', private.address(p_plot));
 end $$;
 
@@ -170,6 +175,16 @@ begin
   insert into public.reports (reporter, target_kind, target_id, reason) values (me.user_id, p_kind, p_target, btrim(p_reason));
 end $$;
 
+create function public.my_set_nick(p_plot text, p_instagram text) returns void language plpgsql security definer set search_path = '' as $$
+declare st public.plot_state := private.own_plot(p_plot); nick text := private.clean_instagram(p_instagram);
+begin
+  perform private.rate('nick:' || st.owner, 5, 86400);
+  if private.nick_taken(st.owner, nick) then perform private.fail('nick_taken'); end if;
+  if st.is_free and exists (select 1 from public.plot_state where lower(instagram) = nick and is_free and plot_id <> p_plot) then perform private.fail('nick_taken'); end if;
+  update public.plot_state set instagram = nick, status = private.nick_status(st.owner, nick) where plot_id = p_plot;
+  update public.profiles set instagram = nick where user_id = st.owner;
+end $$;
+
 -- ---------- Sovg'a qilish ----------
 create function public.my_transfer(p_plot text, p_to text, p_message text default '') returns uuid language plpgsql security definer set search_path = '' as $$
 declare st public.plot_state := private.own_plot(p_plot); v_to uuid; v_id uuid;
@@ -190,8 +205,9 @@ begin
   if t.id is null then perform private.fail('not_found'); end if;
   if not p_accept then update public.transfers set status = 'declined' where id = p_id; return; end if;
   nick := private.clean_instagram(coalesce(p_instagram, me.instagram));
-  -- Egasi o'zgarmagan bo'lsagina; bezaklar sotib olgan odamda qoladi.
-  update public.plot_state set owner = me.user_id, instagram = nick, bio = '', decor = '{}', is_free = false, claimed_at = now() where plot_id = t.plot_id and owner = t.from_user and status = 'owned';
+  if private.nick_taken(me.user_id, nick) then perform private.fail('nick_taken'); end if;
+  -- Egasi o'zgarmagan bo'lsagina; bezaklar sotib olgan odamda qoladi. Yangi nik tasdiqqa tushadi.
+  update public.plot_state set owner = me.user_id, instagram = nick, status = private.nick_status(me.user_id, nick), bio = '', decor = '{}', is_free = false, claimed_at = now() where plot_id = t.plot_id and owner = t.from_user and status = 'owned';
   if not found then perform private.fail('not_owner'); end if;
   update public.transfers set status = 'accepted' where id = p_id;
   insert into public.ownership_log (plot_id, from_user, to_user, reason) values (t.plot_id, t.from_user, me.user_id, 'gift');

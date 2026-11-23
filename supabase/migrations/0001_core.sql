@@ -54,7 +54,7 @@ create table public.profiles (
   user_id uuid primary key, login text not null unique, instagram text, role text not null default 'user' check (role in ('user','moderator','admin')),
   perms text[] not null default '{}', badges text[] not null default '{}', avatar jsonb not null default '{}',
   telegram_id bigint unique, coins int not null default 0 check (coins >= 0), ref_code text not null unique, referred_by uuid references public.profiles,
-  free_used boolean not null default false, is_banned boolean not null default false, lang text not null default 'uz',
+  free_used boolean not null default false, referral_paid boolean not null default false, is_banned boolean not null default false, lang text not null default 'uz',
   streak int not null default 0, last_daily date, created_at timestamptz not null default now(), last_seen timestamptz not null default now()
 );
 create table public.plot_state (
@@ -183,6 +183,18 @@ begin
   if private.has_banned(v) then perform private.fail('banned_word'); end if;
   return v;
 end $$;
+/* Ochiq ko'rinadigan ism: login (kirish kaliti) hech qachon to'liq chiqmaydi. */
+create function private.public_nick(p public.profiles) returns text language sql immutable set search_path = '' as $$ select coalesce(p.instagram, left(p.login, 2) || '***') $$;
+/* Nikni navbat bilan tekshiradi: boshqa odamning uyida bo'lsa true. */
+create function private.nick_taken(uid uuid, nick text) returns boolean language plpgsql security definer set search_path = '' as $$
+begin
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('nick:' || nick));
+  return exists (select 1 from public.plot_state where lower(instagram) = nick and status <> 'reserved' and owner is distinct from uid);
+end $$;
+/* Oldin tasdiqlangan nik qayta tekshirilmaydi. */
+create function private.nick_status(uid uuid, nick text) returns text language sql stable set search_path = '' as $$
+  select case when not private.flag('require_approval') or exists (select 1 from public.plot_state where owner = uid and instagram = nick and status = 'owned') then 'owned' else 'pending' end
+$$;
 create function private.clean_street(t text) returns text language plpgsql stable set search_path = '' as $$
 declare v text := private.clean_text(t, 25, false);
 begin

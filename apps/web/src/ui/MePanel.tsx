@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { parseInstagram } from '../../../../packages/shared/src/index.ts';
 import { AVATAR_OPTIONS, DECOR, ROOF_COLORS, TIERS, WALL_COLORS, normalizeDecor, parseBio, sanitizeAvatar, type AvatarLook, type TierId } from '../../../../packages/shared/src/index.ts';
 import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareImage, storyImage } from '../app/actions.ts';
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
@@ -104,6 +105,23 @@ function Gift({ plot }: PlotProps): React.JSX.Element {
   );
 }
 
+/** Nik tasdiqlanmagan yoki band bo'lib qolgan uy: qayta yozish. */
+function NickForm({ plot }: PlotProps): React.JSX.Element {
+  const t = useT();
+  const { isBusy, run } = useAction();
+  const [nick, setNick] = useState('');
+  const submit = (e: FormEvent): void => {
+    e.preventDefault();
+    void run(async () => {
+      const ig = parseInstagram(nick);
+      if (!ig.ok) throw new Error(ig.code);
+      await rpc('my_set_nick', { p_plot: plot.plot, p_instagram: ig.value });
+      await refresh();
+    }, t('sent'));
+  };
+  return <form className="section" onSubmit={submit}><Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} placeholder="@nik" autoCapitalize="none" maxLength={80} required /></Field><button type="submit" className="btn" disabled={isBusy}>{t('save')}</button></form>;
+}
+
 function HouseSection({ plot }: PlotProps): React.JSX.Element {
   const t = useT();
   const { isBusy, run } = useAction();
@@ -112,14 +130,14 @@ function HouseSection({ plot }: PlotProps): React.JSX.Element {
     const p = getApp().plotById.get(plot.plot);
     if (!p) return;
     openPanel(null);
-    const canvas = await storyImage(p, plot.instagram);
+    const canvas = await storyImage(p, plot.instagram ?? '');
     openPanel({ kind: 'me' });
     await shareImage(canvas, `uy-${plot.instagram}`);
   });
   return (
     <>
       <div className="row between"><span className="address">{plot.address}</span><span className="tag">{t(plot.status === 'pending' ? 'pending' : 'owned')}</span></div>
-      <p className="nick">@{plot.instagram}</p>
+      {plot.instagram ? <p className="nick">@{plot.instagram}</p> : <NickForm plot={plot} />}
       <div className="row">
         <button type="button" className="btn clay grow" disabled={isBusy} onClick={story}>📱 {t('stories')}</button>
         <button type="button" className="btn soft" onClick={() => goToPlot(plot.plot)}>{t('goThere')}</button>
@@ -155,6 +173,7 @@ export function MePanel(): React.JSX.Element {
   const t = useT();
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
+  const [tgUrl, setTgUrl] = useState('');
   if (!profile) return <Sheet title={t('me')}><button type="button" className="btn" onClick={() => openPanel({ kind: 'auth' })}>{t('login')}</button></Sheet>;
   const findFree = (): void => {
     const id = nearestFree();
@@ -170,7 +189,8 @@ export function MePanel(): React.JSX.Element {
         <div className="row between"><span className="muted">{t('invited')}: <b>{profile.invited}</b></span><button type="button" className="btn small" onClick={() => run(() => copyText(inviteUrl(profile.ref)), t('copied'))}>🔗 {t('share')}</button></div>
       </Section>
       <Section title={profile.login}>
-        {profile.telegram ? <span className="tag free">✓ {t('tgLinked')}</span> : <button type="button" className="btn" disabled={isBusy} onClick={() => run(async () => { const r = await post<{ url: string }>('/auth/telegram/link', {}, true); window.open(r.url, '_blank', 'noopener'); })}>✈️ {t('linkTg')}</button>}
+        {profile.telegram ? <span className="tag free">✓ {t('tgLinked')}</span> : <button type="button" className="btn" disabled={isBusy} onClick={() => run(async () => setTgUrl((await post<{ url: string }>('/auth/telegram/link', {}, true)).url))}>✈️ {t('linkTg')}</button>}
+        {tgUrl && !profile.telegram && <a className="btn clay" href={tgUrl} target="_blank" rel="noopener noreferrer" onClick={() => setTimeout(() => void refreshProfile(), 15_000)}>{t('openTg')}</a>}
         {!profile.telegram && <p className="muted">{t('linkTgWhy')}</p>}
         <div className="row">
           <button type="button" className="btn small soft" onClick={() => openPanel({ kind: 'avatar' })}>{t('avatar')}</button>
