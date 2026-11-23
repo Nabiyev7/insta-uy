@@ -1,6 +1,6 @@
 /** Qaysi model qayerda turadi. Faqat hisob — Three.js yo'q. */
 import {
-  DECOR, HILL, PLAZA_HALF, WALL_COLORS, ROOF_COLORS, decorById, hash01, inLake, padHeight, terrainHeight,
+  DECOR, HILL, PLAZA_HALF, inPlaza, WALL_COLORS, ROOF_COLORS, decorById, hash01, inLake, padHeight, terrainHeight,
   type Building, type Commerce, type DecorSlot, type Expansion, type MasterPlan, type Plot, type Rot,
 } from '../../../../packages/shared/src/index.ts';
 
@@ -174,7 +174,7 @@ const plazaItems = (): Item[] => {
   const stalls = Array.from({ length: 12 }, (_, i) => item('bozor_stall', 24 + (i % 4) * 9, 46 + Math.floor(i / 4) * 8, { yaw: i % 2 ? Math.PI : 0 }));
   return [
     item('plaza_fountain', 0, 0), item('hero_statue', 0, -55), item('choyxona', -40, 62, { yaw: Math.PI / 2 }), item('maktab', 40, -82),
-    ...ring(12, 20, 'bench'), ...ring(16, 26, 'street_lamp'), ...ring(14, 34, 'tree_archa'), ...ring(10, 17, 'yard_flowers'), ...stalls,
+    ...ring(12, 20, 'bench'), ...ring(16, 26, 'street_lamp'), ...ring(14, 34, 'tree_archa').filter((i) => Math.abs(i.x) > 12), ...ring(10, 17, 'yard_flowers'), ...ring(26, 86, 'tree_chinor').filter((i) => Math.abs(i.x) > 16 && Math.abs(i.z) > 16 && !(i.x > 14 && i.x < 66 && i.z < -68)), ...ring(18, 58, 'yard_flowers', 1.6), ...stalls,
     ...[[-22, 60], [-52, 40], [-58, 78], [-24, 84], [20, -60], [60, -64]].map(([x = 0, z = 0]) => item('tree_chinor', x, z)),
     ...[[-30, -70], [-45, -70], [-30, -82], [-45, -82]].map(([x = 0, z = 0], i) => item(['car_van', 'car_sedan', 'car_van', 'car_sedan'][i] ?? 'car_van', x, z)),
   ];
@@ -184,8 +184,9 @@ const plazaItems = (): Item[] => {
 export const closedDistrictItems = (rect: readonly [number, number, number, number], id: number): Item[] => {
   const [x0, z0, x1, z1] = rect;
   const out: Item[] = [];
-  for (let x = x0 + 4; x < x1; x += 8) out.push(item('barrier', x, z0 - 0.5), item('barrier', x, z1 + 0.5, { yaw: Math.PI }));
-  for (let z = z0 + 4; z < z1; z += 8) out.push(item('barrier', x0 - 0.5, z, { yaw: Math.PI / 2 }), item('barrier', x1 + 0.5, z, { yaw: -Math.PI / 2 }));
+  const fence = (x: number, z: number, yaw: number): void => { if (!inPlaza(x, z, 4)) out.push(item('barrier', x, z, { yaw })); };
+  for (let x = x0 + 4; x < x1; x += 8) { fence(x, z0 - 0.5, 0); fence(x, z1 + 0.5, Math.PI); }
+  for (let z = z0 + 4; z < z1; z += 8) { fence(x0 - 0.5, z, Math.PI / 2); fence(x1 + 0.5, z, -Math.PI / 2); }
   for (let i = 0; i < 4; i++) {
     const x = x0 + (x1 - x0) * (0.2 + hash01(`cx${id}${i}`) * 0.6);
     const z = z0 + (z1 - z0) * (0.2 + hash01(`cz${id}${i}`) * 0.6);

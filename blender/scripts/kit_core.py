@@ -199,7 +199,7 @@ class Model:
                     loc, _n, _i, dist = tree.ray_cast(origin, d, AO_DISTANCE)
                     if loc is not None:
                         hit += w * (1 - dist / AO_DISTANCE) ** 0.5
-                row.append(1 - 0.62 * hit / max(total, 0.001))
+                row.append(1 - 0.5 * hit / max(total, 0.001))
             out.append(row)
         return out
 

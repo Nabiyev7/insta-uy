@@ -26,16 +26,16 @@ const glassSvg = `<rect width="256" height="256" fill="#24384a"/>${Array.from({ 
 const star = (cx, cy, r, fill) => `<g transform="translate(${cx} ${cy})" fill="${fill}"><rect x="${-r}" y="${-r}" width="${2 * r}" height="${2 * r}"/><rect x="${-r}" y="${-r}" width="${2 * r}" height="${2 * r}" transform="rotate(45)"/></g>`;
 const naqshSvg = `<rect width="256" height="256" fill="#1f7f8c"/>${[[0, 0], [256, 0], [0, 256], [256, 256], [128, 128]].map(([x, y]) => star(x, y, 60, '#e8dcc0') + star(x, y, 46, '#175f7a') + star(x, y, 24, '#d8a840')).join('')}
 ${[[128, 0], [0, 128], [256, 128], [128, 256]].map(([x, y]) => star(x, y, 30, '#e8dcc0') + star(x, y, 18, '#b5452f')).join('')}`;
-const carvedSvg = `<rect width="256" height="256" fill="#7a4a26"/><g fill="none" stroke="#4d2c14" stroke-width="8"><rect x="14" y="14" width="228" height="228"/>${[0, 1, 2, 3].map((i) => `<circle cx="${64 + (i % 2) * 128}" cy="${64 + Math.floor(i / 2) * 128}" r="38"/>`).join('')}</g>${[[64, 64], [192, 64], [64, 192], [192, 192], [128, 128]].map(([x, y]) => star(x, y, 16, '#a8703c')).join('')}`;
+const carvedSvg = `<rect width="256" height="256" fill="#9a6336"/><g fill="none" stroke="#6b4020" stroke-width="8"><rect x="14" y="14" width="228" height="228"/>${[0, 1, 2, 3].map((i) => `<circle cx="${64 + (i % 2) * 128}" cy="${64 + Math.floor(i / 2) * 128}" r="38"/>`).join('')}</g>${[[64, 64], [192, 64], [64, 192], [192, 192], [128, 128]].map(([x, y]) => star(x, y, 16, '#c98d52')).join('')}`;
 
 const LAYERS = [
   svg('<rect width="256" height="256" fill="#fff"/>'), // 0 tekis
   photo('painted_plaster_wall', { gray: true, mean: 218, contrast: 0.7 }), // 1 suvoq
-  photo('red_brick_03', { mean: 150 }), // 2 g'isht
-  photo('clay_roof_tiles_02', { gray: true, mean: 190 }), // 3 tom
+  photo('red_brick_03', { mean: 158, contrast: 0.8 }), // 2 g'isht
+  photo('clay_roof_tiles_02', { gray: true, mean: 205, contrast: 0.8 }), // 3 tom
   photo('wood_planks_grey', { gray: true, mean: 190 }), // 4 yog'och
   photo('asphalt_02', { mean: 105, gray: true, contrast: 0.7 }), // 5 asfalt
-  photo('leafy_grass', { mean: 135, contrast: 0.75 }), // 6 maysa
+  photo('leafy_grass', { mean: 150, contrast: 0.5 }), // 6 maysa
   photo('concrete_floor_worn_001', { gray: true, mean: 190, contrast: 0.6 }), // 7 beton
   photo('leafy_grass', { gray: true, mean: 190, contrast: 1.1 }), // 8 barg
   svg(windowSvg), // 9 deraza
@@ -44,7 +44,7 @@ const LAYERS = [
   svg(facadeSvg), // 12 ko'p qavatli fasad
   svg(glassSvg), // 13 shisha fasad
   photo('brown_mud_leaves_01', { mean: 120, contrast: 0.7 }), // 14 tuproq
-  photo('cobblestone_floor_04', { gray: true, mean: 175 }), // 15 tosh plitka
+  photo('cobblestone_floor_04', { gray: true, mean: 200, contrast: 0.5 }), // 15 tosh plitka
 ];
 
 const download = async (id) => {

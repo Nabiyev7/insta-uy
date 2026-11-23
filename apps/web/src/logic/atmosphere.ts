@@ -22,9 +22,9 @@ const smooth = (a: number, b: number, v: number): number => {
 interface Key { readonly at: number; readonly top: Rgb; readonly horizon: Rgb; readonly sun: Rgb; readonly power: number; readonly ambient: number }
 const key = (at: number, top: string, horizon: string, sun: string, power: number, ambient: number): Key => ({ at, top: hex(top), horizon: hex(horizon), sun: hex(sun), power, ambient });
 const KEYS: readonly Key[] = [
-  key(0, '#0a1230', '#1b2747', '#8fa6dd', 0.35, 0.5), key(0.2, '#0c1533', '#22304f', '#8fa6dd', 0.35, 0.5), key(0.26, '#4a6ea8', '#f2b98a', '#ffc38a', 1.2, 0.8),
+  key(0, '#0a1230', '#1b2747', '#8fa6dd', 0.8, 1.15), key(0.2, '#0c1533', '#22304f', '#8fa6dd', 0.8, 1.15), key(0.26, '#4a6ea8', '#f2b98a', '#ffc38a', 1.3, 1.1),
   key(0.34, '#5fa3dc', '#d6e6ee', '#fff0d6', 2.3, 1.15), key(0.5, '#4f9be0', '#cfe6f4', '#fff8ea', 2.6, 1.25), key(0.68, '#5fa0d8', '#e6dcc6', '#ffe6bd', 2.2, 1.1),
-  key(0.77, '#51508f', '#f08f5c', '#ff9c5e', 1.2, 0.8), key(0.84, '#131b40', '#39395e', '#8fa6dd', 0.4, 0.55), key(1, '#0a1230', '#1b2747', '#8fa6dd', 0.35, 0.5),
+  key(0.77, '#51508f', '#f08f5c', '#ff9c5e', 1.3, 1.1), key(0.84, '#131b40', '#39395e', '#8fa6dd', 0.8, 1.1), key(1, '#0a1230', '#1b2747', '#8fa6dd', 0.8, 1.15),
 ];
 
 /** Kun vaqti 0..1 (0 — yarim tun, 0.5 — tush). */
