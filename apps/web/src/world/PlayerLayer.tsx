@@ -114,7 +114,7 @@ export function PlayerLayer({ plan }: PlayerLayerProps): null {
     };
     const pickBoxes = (): PickBox[] => [
       ...nearPlots(110).map((p): PickBox => { const y = padHeight(p); return { id: p.id, ...footprint(p), y0: y - 1, y1: y + pickHeight(p, houses.get(p.id)) }; }),
-      ...CIVIC.map((c, i): PickBox => ({ id: c.id, ...civicRects[i]!, y0: 0, y1: c.height * 0.7 })),
+      ...CIVIC.map((c, i): PickBox => ({ id: c.id, ...civicRects[i]!, y0: 0, y1: Math.min(c.height, 26) })).filter((b) => Math.hypot(b.x - player.x, b.z - player.z) < 160),
       ...plan.buildings.map((b): PickBox => ({ id: `#${b.id}`, x: b.x, z: b.z, hx: 22, hz: 8, y0: 0, y1: b.floors * 3 + 1 })),
       ...index.commerce.query(player.x, player.z, 160).map((c): PickBox => (c.type === 'bilbord'
         ? { id: c.id, x: c.x, z: c.z, hx: c.rot % 2 ? 0.6 : 4, hz: c.rot % 2 ? 4 : 0.6, y0: 4, y1: 7.5 }

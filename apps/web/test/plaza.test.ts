@@ -41,7 +41,7 @@ describe('markaz', () => {
   test('hech narsa binolar ichida yoki bir-birining ustida emas', () => {
     const blocks: Rect[] = [...civicRects, ...towers.map((c) => ({ x: c.x, z: c.z, hx: 13, hz: 13 }))];
     const soft = items.filter((i) => ['tree_chinor', 'tree_archa', 'street_lamp', 'bench', 'yard_flowers'].includes(i.model));
-    expect(soft.length).toBeGreaterThan(70);
+    expect(soft.length).toBeGreaterThan(60);
     for (const i of soft) {
       expect(blocks.some((b) => Math.abs(i.x - b.x) < b.hx && Math.abs(i.z - b.z) < b.hz), `${i.model} ${i.x},${i.z}`).toBe(false);
       expect(Math.max(Math.abs(i.x), Math.abs(i.z))).toBeLessThan(PLAZA_HALF);
@@ -56,6 +56,19 @@ describe('markaz', () => {
     expect(at('maktab')).toEqual([36, -107]);
     expect(at('choyxona')).toEqual([36, 108]);
     expect(items.filter((i) => i.model.startsWith('car_')).every((i) => Math.abs(i.x + 36) <= 10 && Math.abs(i.z + 107) <= 9)).toBe(true);
+  });
+
+  test('davlat binolarining derazasi tunda yonadi, eshigi oldi ochiq', () => {
+    for (const c of CIVIC) {
+      expect(items.find((i) => i.model === c.id)!.seed).toBeLessThan(0.78);
+      const dir = c.rot === 0 ? 1 : -1;
+      const front = items.filter((i) => i.model !== c.id && Math.abs(i.x - c.x) < 12 && (i.z - c.z) * dir > 0 && (i.z - c.z) * dir < c.d / 2 + 18);
+      expect(front.map((i) => `${c.id}: ${i.model} ${i.x},${i.z}`)).toEqual([]);
+    }
+  });
+  test('choyxona: ayvoni ochiq, orqa xonasi yopiq', () => {
+    expect(movePlayer({ x: 36, z: 105 }, 0, 2, PLAZA_SOLIDS).z).toBeCloseTo(107);
+    expect(movePlayer({ x: 36, z: 116 }, 0, -3, PLAZA_SOLIDS).z).toBeGreaterThan(114);
   });
 
   test('12 minora: ko‘rinishi, nomi, balandligi', () => {
@@ -92,6 +105,8 @@ describe('markaz', () => {
     const all = [...items, ...towers.map(commerceItem)];
     expect(all.reduce((s, i) => s + tris(i.model), 0)).toBeLessThanOrEqual(40_000);
     const box = (n: string): readonly number[] => { const p = meshes.get(n)!.getAttribute('POSITION')!; const [a, b] = [p.getMin([]), p.getMax([])]; return [b[0]! - a[0]!, b[1]!, b[2]! - a[2]!]; };
+    for (const n of ['bank', 'agentlik', 'novostroyka']) expect(Math.max(box(n)[0]!, box(n)[2]!)).toBeLessThanOrEqual(28);
+    for (const n of ['bank', 'agentlik', 'novostroyka']) { const p = meshes.get(n)!.getAttribute('POSITION')!; expect(Math.max(...[...p.getMin([]), p.getMax([])[0]!, p.getMax([])[2]!].map(Math.abs))).toBeLessThanOrEqual(14); }
     for (const c of CIVIC) {
       const [w, h, d] = box(c.id);
       expect(w!).toBeLessThanOrEqual(c.w + 0.5);

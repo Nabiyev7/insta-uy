@@ -7,6 +7,10 @@ export const AISLE = 14;
 export const HERO_SPOT = { x: -24, z: -24 } as const;
 const SCHOOL = { x: 36, z: -107, sx: 0.75, sz: 0.89, hx: 15, hz: 7 } as const;
 const TEAHOUSE = { x: 36, z: 108 } as const;
+/** Choyxonaning devorli xonasi orqada, ayvoni ochiq. */
+const TEAHOUSE_ROOM = 4;
+/** Derazasi tunda doim yonadigan bino (kit.ts: seed < 0.78). */
+const LIT_SEED = 0.5;
 const PARKING = { x: -36, z: -107 } as const;
 const TOWER_PLOT_HALF = 14;
 const CORNER = 108;
@@ -20,9 +24,12 @@ export const civicRects: readonly Rect[] = CIVIC.map((c) => {
 const towerRects: readonly Rect[] = [-1, 1].flatMap((sx) => [-1, 1].flatMap((sz) =>
   [[0, 0], [CORNER_STEP, 0], [0, CORNER_STEP]].map(([a = 0, b = 0]): Rect => ({ x: sx * (CORNER - a), z: sz * (CORNER - b), hx: TOWER_PLOT_HALF, hz: TOWER_PLOT_HALF }))));
 const PARKING_RECT: Rect = { ...PARKING, hx: 10, hz: 9 };
+const ENTRANCE = { half: 13, depth: 11 } as const;
+/** Davlat binolari zinasi va eshigi oldi ochiq qoladi. */
+const entranceRects: readonly Rect[] = CIVIC.map((c) => ({ x: c.x, z: c.z + (c.rot === 0 ? 1 : -1) * (c.d / 2 + ENTRANCE.depth), hx: ENTRANCE.half, hz: ENTRANCE.depth }));
 const MARKET_RECT: Rect = { x: 37, z: 54, hx: 17, hz: 11 };
 const BLOCKED: readonly Rect[] = [
-  ...civicRects, ...towerRects, PARKING_RECT, MARKET_RECT, { x: 0, z: 0, hx: 12, hz: 12 }, { ...HERO_SPOT, hx: 3, hz: 3 },
+  ...civicRects, ...entranceRects, ...towerRects, PARKING_RECT, MARKET_RECT, { x: 0, z: 0, hx: 12, hz: 12 }, { ...HERO_SPOT, hx: 3, hz: 3 },
   { x: SCHOOL.x, z: SCHOOL.z, hx: SCHOOL.hx, hz: SCHOOL.hz + 1 }, { ...TEAHOUSE, hx: 9, hz: 7 },
 ];
 
@@ -47,10 +54,12 @@ const nearestFree = (x: number, z: number, margin: number, taken: readonly Item[
   }
   return null;
 };
-const MARGIN: Readonly<Record<string, number>> = { tree_chinor: 3.2, tree_archa: 1.8, yard_flowers: 1.6, bench: 1.2, street_lamp: 0.6 };
+const MARGIN: Readonly<Record<string, number>> = { tree_chinor: 4.2, tree_archa: 2, yard_flowers: 3.2, bench: 1.2, street_lamp: 0.6 };
 const GAP = 3.2;
+const HOLIDAY_MARGIN = 4;
+const HOLIDAY_GAP = 8;
 const settle = (list: readonly Item[]): Item[] => list.reduce<Item[]>((done, it) => {
-  const spot = nearestFree(it.x, it.z, MARGIN[it.model] ?? 1, done, GAP);
+  const spot = nearestFree(it.x, it.z, MARGIN[it.model] ?? HOLIDAY_MARGIN, done, MARGIN[it.model] ? GAP : HOLIDAY_GAP);
   return spot ? [...done, { ...it, x: spot[0], z: spot[1] }] : done;
 }, []);
 
@@ -61,31 +70,33 @@ const ring = (n: number, r: number, model: string, scale = 1): Item[] => Array.f
 
 const CARS = [['car_van', -7, -6], ['car_sedan', 7, -6], ['car_van', -7, 6], ['car_sedan', 7, 6]] as const;
 
+const softItems = (): Item[] => settle([
+  ...ring(16, 28, 'street_lamp'), ...ring(12, 24, 'bench'), ...ring(14, 36, 'tree_archa'), ...ring(26, 86, 'tree_chinor'), ...ring(10, 26, 'yard_flowers'), ...ring(18, 58, 'yard_flowers', 1.6),
+]);
+
 export const plazaItems = (): Item[] => {
   const stalls = Array.from({ length: 12 }, (_, i) => item('bozor_stall', 24 + (i % 4) * 9, 46 + Math.floor(i / 4) * 8, { yaw: i % 2 ? Math.PI : 0 }));
-  const soft = settle([
-    ...ring(16, 28, 'street_lamp'), ...ring(12, 24, 'bench'), ...ring(14, 36, 'tree_archa'), ...ring(26, 86, 'tree_chinor'), ...ring(10, 26, 'yard_flowers'), ...ring(18, 58, 'yard_flowers', 1.6),
-  ]);
   return [
     item('plaza_fountain', 0, 0), item('hero_statue', HERO_SPOT.x, HERO_SPOT.z),
-    ...CIVIC.map((c) => item(c.id, c.x, c.z, { yaw: yawOf(c.rot), glow: 0.35 })),
+    ...CIVIC.map((c) => item(c.id, c.x, c.z, { yaw: yawOf(c.rot), glow: 0.35, seed: LIT_SEED })),
     item('maktab', SCHOOL.x, SCHOOL.z, { sx: SCHOOL.sx, sz: SCHOOL.sz }), item('choyxona', TEAHOUSE.x, TEAHOUSE.z, { yaw: Math.PI }),
     ...CARS.map(([model, dx, dz]) => item(model, PARKING.x + dx, PARKING.z + dz)),
-    ...stalls, ...soft,
+    ...stalls, ...softItems(),
   ];
 };
 
 /** Maydonda odam va mashina kirolmaydigan joylar. */
 export const PLAZA_SOLIDS: readonly Solid[] = [
-  { x: 0, z: 0, hx: 10, hz: 10, h: 3 }, { ...HERO_SPOT, hx: 2.6, hz: 2.6, h: 8 }, { x: SCHOOL.x, z: SCHOOL.z, hx: SCHOOL.hx, hz: SCHOOL.hz, h: 8 }, { ...TEAHOUSE, hx: 8, hz: 2.4, h: 4 },
+  { x: 0, z: 0, hx: 10, hz: 10, h: 3 }, { ...HERO_SPOT, hx: 2.6, hz: 2.6, h: 8 }, { x: SCHOOL.x, z: SCHOOL.z, hx: SCHOOL.hx, hz: SCHOOL.hz, h: 8 }, { x: TEAHOUSE.x, z: TEAHOUSE.z + TEAHOUSE_ROOM, hx: 8, hz: 2, h: 4 },
   ...CIVIC.map((c, i): Solid => ({ ...civicRects[i]!, h: c.height * 0.6 })),
 ];
 export const isTower = (id: string): boolean => id in TOWERS;
 
 const HOLIDAY_Z = 32;
 export const holidayItems = (h: 'yangi_yil' | 'navroz' | 'mustaqillik' | null): Item[] => {
-  if (h === 'yangi_yil') return [item('tree_archa', 24, 24, { sx: 3.2, sy: 3.4, sz: 3.2, glow: 1 }), ...[-34, -24, 34].map((x) => item('light_lamps', x, HOLIDAY_Z))];
-  if (h === 'navroz') return [-34, -22, 22, 34].map((x) => item('special_yurt', x, HOLIDAY_Z, { sx: 1.6, sy: 1.6, sz: 1.6 }));
-  if (h === 'mustaqillik') return [-38, -24, 24, 38].map((x) => item('light_luxe', x, HOLIDAY_Z));
+  const placed = (list: readonly Item[]): Item[] => { const soft = softItems(); return settle([...soft, ...list]).slice(soft.length); };
+  if (h === 'yangi_yil') return placed([item('tree_archa', 24, 24, { sx: 3.2, sy: 3.4, sz: 3.2, glow: 1 }), ...[-34, -24, 34].map((x) => item('light_lamps', x, HOLIDAY_Z))]);
+  if (h === 'navroz') return placed([-34, -22, 22, 34].map((x) => item('special_yurt', x, HOLIDAY_Z, { sx: 1.6, sy: 1.6, sz: 1.6 })));
+  if (h === 'mustaqillik') return placed([-38, -24, 24, 38].map((x) => item('light_luxe', x, HOLIDAY_Z)));
   return [];
 };

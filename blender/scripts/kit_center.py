@@ -4,11 +4,11 @@ Old tomoni -Y. Minoralar 1 masshtabda BASE_HEIGHT balandlikda, instance `sy` bil
 """
 import math
 
-from kit_core import (BRICK, CARVED, COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_NONE, M_SOFT, M_WALL, NAQSH, PLAIN, PLASTER, STONE, WHITE, Model)
+from kit_core import (CARVED, COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_NONE, M_SOFT, M_WALL, NAQSH, PLAIN, PLASTER, STONE, WHITE, Model)
 from kit_houses import TRIM
 
 IVORY = '#f7f1e3'
-SAND = '#e3c08c'
+SAND = '#e2c08e'  # och qumrang: qizil g'isht teksturasi to'q qilib yuborgani uchun suvoq ustida
 BLUE = '#2a8fb0'
 GOLD = '#d9a93f'
 LAMP = '#ffe2a0'
@@ -131,10 +131,10 @@ def hokimiyat() -> Model:
     m = Model('hokimiyat', FACE)
     m.box(-23, -12.6, 0, 23, 16, 1.2, STONE, '#d9cfbd')
     stairs(m, 12, -12.6, 1.2, 4)
-    m.box(-22, -8, 1.2, 22, 15, 16.4, BRICK, SAND, top=False)
+    m.box(-22, -8, 1.2, 22, 15, 16.4, PLASTER, SAND, top=False)
     m.box(-22.2, -8.2, 1.2, 22.2, 15.2, 2.4, STONE, '#cbbfa9', top=False)
     m.box(-22.8, -8.8, 16.4, 22.8, 15.8, 17.2, STONE, TRIM, bottom=True)
-    m.box(-22.3, -8.3, 17.2, 22.3, 15.3, 18.0, BRICK, SAND, top_layer=CONCRETE)
+    m.box(-22.3, -8.3, 17.2, 22.3, 15.3, 18.0, PLASTER, SAND, top_layer=CONCRETE)
     band(m, -22, -8, 22, 15, 15.2, 1.1)
     for z in (6.7, 11.4):
         m.box(-22.15, -8.15, z, 22.15, 15.15, z + 0.45, STONE, TRIM, top=True, bottom=True)
@@ -161,7 +161,7 @@ def hokimiyat() -> Model:
         for z in (6.0, 10.7):
             m.panel([(c - 1.2, -8.08, z), (c + 1.2, -8.08, z), (c + 1.2, -8.08, z + 0.6), (c - 1.2, -8.08, z + 0.6)], NAQSH)
     # soat minorasi
-    m.box(-4.2, -0.2, 18.0, 4.2, 8.2, 26.2, BRICK, SAND, top=False)
+    m.box(-4.2, -0.2, 18.0, 4.2, 8.2, 26.2, PLASTER, SAND, top=False)
     for x in (-4.2, 4.2):
         for y in (-0.2, 8.2):
             m.cbox(x, y, 18.0, 0.9, 0.9, 8.6, STONE, TRIM)
@@ -177,11 +177,11 @@ def hokimiyat() -> Model:
 def hokimiyat_lod() -> Model:
     m = Model('hokimiyat_lod', COARSE)
     m.box(-23, -12.6, 0, 23, 16, 1.2, STONE, '#d9cfbd')
-    m.box(-22, -8, 1.2, 22, 15, 18, BRICK, SAND, top_layer=CONCRETE)
+    m.box(-22, -8, 1.2, 22, 15, 18, PLASTER, SAND, top_layer=CONCRETE)
     m.box(-12, -12.4, 10.6, 12, -8, 12.5, PLASTER, TRIM, bottom=True)
     m.window('f', -8, -20, 20, 3, 14.5)
     m.window('b', 15, -20, 20, 3, 14.5)
-    m.box(-4.2, -0.2, 18, 4.2, 8.2, 26.9, BRICK, SAND)
+    m.box(-4.2, -0.2, 18, 4.2, 8.2, 26.9, PLASTER, SAND)
     m.dome(0, 4, 26.9, 3.2, 6, 2, PLAIN, BLUE, M_SOFT, 0.9)
     return m
 
@@ -239,10 +239,10 @@ def bank() -> Model:
         for axis, at in (('l', -12), ('r', 12), ('b', 12)):
             m.window(axis, at, x - 1.1, x + 1.1, 1, 6.6)
     m.window('f', -12, -3, 3, 0.2, 5)
-    m.box(-5, -15.5, 5.2, 5, -12, 5.7, CONCRETE, '#3a3f45', bottom=True)
+    m.box(-5, -13.9, 5.2, 5, -12, 5.7, CONCRETE, '#3a3f45', bottom=True)
     for x in (-4.6, 4.6):
-        m.cyl(x, -15, 0, 5.2, 0.25, 0.25, 6, PLAIN, '#c9c9cc', cap=False)
-    m.box(-5, -15.6, 5.7, 5, -15.4, 6.4, PLAIN, LAMP, M_GLOW)
+        m.cyl(x, -13.5, 0, 5.2, 0.25, 0.25, 6, PLAIN, '#c9c9cc', cap=False)
+    m.box(-5, -13.95, 5.7, 5, -13.8, 6.4, PLAIN, LAMP, M_GLOW)
     glass_box(m, 10.2, 8, 40, glass)
     for s in (-1, 1):
         for t in (-1, 1):
