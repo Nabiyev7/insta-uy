@@ -8,14 +8,14 @@
 
 ## G'oya
 Haqiqiy shahardagidek: **o'rtasi keng va ochiq maydon** (favvora, bulvarlar), muhim binolar **chetlarida** turadi. Hammasini o'rtaga tiqib qo'ymaslik kerak.
-- Maydon chetlarida, burchaklar yonida — 3 ta davlat binosi (milliy uslub).
+- Maydon chetlarida, burchaklar yonida — 3 ta davlat binosi (klassik uslub).
 - Eng chetda, 12 ta burchak minorasi — biznes ko'rinishida (zamonaviy shisha), hozircha faqat bezak.
 - O'rta (|x|, |z| < 32) va 4 prospekt davomi — bo'sh, keng, piyodalar uchun.
 
 ## Qarorlar
 - Maydon 250 × 250 m ichida (A2). **Qulf ochilmaydi**: `masterplan.json` va xeshi o'zgarmaydi, B101–B112 joyi va 28 × 28 m izi o'zgarmaydi.
 - Stadion markazga kelmaydi — parkda umumiy loyiha bo'lib qoladi (tegilmaydi).
-- Uslub aralash: davlat binolari milliy (oq-krem tosh/suvoq, ustunli ayvon, ko'k gumbaz, ko'k naqsh tasma), biznes binolari zamonaviy (shisha + beton).
+- Uslub **umumiy**, hech bir hududga bog'lanmaydi: davlat binolari klassik (oq-krem tosh, ustunlar, gumbaz — oq yoki mis rangida, frontonlar), biznes binolari zamonaviy (shisha + beton). Milliy naqsh va ko'k gumbaz ishlatilmaydi.
 - Haqiqiy gerb, bayroq, brend, bank nomi, shaxs yo'q (§5.6).
 
 ## 1. Uchta davlat binosi (yangi, sotilmaydi, `plazaItems` ichida)
@@ -27,9 +27,9 @@ Haqiqiy shahardagidek: **o'rtasi keng va ochiq maydon** (favvora, bulvarlar), mu
 | 3 | Shahar sudi | Городской суд | sud | −59 | 59 | 44 × 30 | 16 | 2 | qoidalar |
 
 Ko'rinishi:
-1. **Prezident saroyi**: 3 qavat, oq-krem suvoq, old tomonda 8 ta baland oq ustunli ayvon, o'rtada katta ko'k gumbaz (~16 m), gumbaz ostida ko'k naqsh tasma, oldida keng zinapoya. Tunda derazalar va gumbaz yonadi.
-2. **Shahar hokimiyati**: 3 qavat, och qumrang g'isht, o'rtada soat minorasi (tepasida kichik ko'k gumbaz), 6 ustunli ayvon, derazalar ustida naqsh tasma. Tunda soat va derazalar yonadi.
-3. **Shahar sudi**: 2 qavat, oq tosh, old tomon bo'ylab 10 ta ustun, tekis tom ustida naqsh friz, zinapoya.
+1. **Prezident saroyi**: 3 qavat, oq-krem suvoq, old tomonda 8 ta baland oq ustun va fronton, o'rtada katta oq/mis gumbaz (~16 m), gumbaz ostida ustunli baraban, oldida keng zinapoya. Tunda derazalar va gumbaz yonadi.
+2. **Shahar hokimiyati**: 3 qavat, och qumrang g'isht, o'rtada soat minorasi (tepasida kichik shpil yoki gumbaz), 6 ustunli kirish portiki, derazalar ustida oddiy karniz. Tunda soat va derazalar yonadi.
+3. **Shahar sudi**: 2 qavat, oq tosh, old tomon bo'ylab 10 ta ustun, tekis tom ustida fronton va karniz, zinapoya.
 
 Har biri ≤ 2 500 uchburchak, uzoqdan ko'rinadigan sodda LOD bilan.
 

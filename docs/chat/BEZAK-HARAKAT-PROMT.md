@@ -4,7 +4,7 @@
 > Ish **3 bosqichda**, har bosqichdan keyin: `npm test`, `npm run typecheck`, `node e2e/perf.mjs`, "Holat"ni yangilash va git commit.
 
 ## Umumiy qarorlar
-- **Uslub o'zgaradi:** endi faqat "Farg'ona vodiysi ruhi" emas, **umumiy** uslub. Milliy narsalar (naqsh, so'ri, tandir) qoladi, ular bilan birga zamonaviy va universal narsalar ham bo'ladi. `PLAN.md` §3 dagi uslub qatorini shunga moslab yangila.
+- **Uslub umumiy, universal** — Farg'onaga yoki bir hududga bog'lanmaydi. Bezaklarning asosiy qismi zamonaviy/universal; milliy narsalar (so'ri, tandir, tok) do'kondagi tanlovlardan faqat bir qismi. `PLAN.md` §3 dagi uslub qatorini shunga moslab yangila.
 - Odamlar **faqat uyning tashqi ko'rinishini** bezaydi, ichki bezatish yo'q.
 - **Qulf saqlanadi:** uchastka joyi va o'lchami o'zgarmaydi. Bezak hech qachon uchastka chegarasidan chiqmaydi.
 - Faqat **uylar** sotiladi. Markazdagi baland binolar hozircha faqat ko'rinish uchun.
@@ -99,8 +99,8 @@ Sayt ochilganda odamcha **yo'q**, shaharni tepadan kamera bilan tez ko'rib yuril
 ## 3-bosqich: Yangi bezaklar va sotuv funksiyalari
 
 ### 3.1 Yangi modellar (har biri ≤ 300 uchburchak, mavjud 16 tekstura, jami fayl +300 KB gacha)
-- Milliy: tandir (ustida tutun), qozon-o'choq, supa, tokzor, ariq ko'prikchasi.
-- Umumiy/zamonaviy: besedka, mangal, batut, basketbol halqasi, quyosh panellari (tomga), garaj, hamak, bolalar maydonchasi, it uyi.
+- Umumiy/zamonaviy (asosiy qism): besedka, mangal, batut, basketbol halqasi, quyosh panellari (tomga), garaj, hamak, bolalar maydonchasi, it uyi, bog' soyaboni, velosiped, pochta qutisi.
+- Milliy (ixtiyoriy, kichik qism): tandir (ustida tutun), so'ri, tokzor.
 - Daraxtlar: o'rik, olma, tut, behi.
 - Hayvonlar: qo'y, tovuqlar, ot, kaptarxona.
 - Narxlarni o'zing taklif qil (mavjud narxlar mantiqida), admin keyin o'zgartiradi.
@@ -108,7 +108,7 @@ Sayt ochilganda odamcha **yo'q**, shaharni tepadan kamera bilan tez ko'rib yuril
 ### 3.2 Sotuv funksiyalari
 - **Mavsumiy bezaklar:** `season_from/to` oralig'idan tashqarida sotilmaydi, sotib olingani qoladi. Boshlang'ich: Navro'z (sumalak qozoni), Yangi yil (chiroqlar, archa), Hayit (fonarlar).
 - **Noyob raqamlangan bezaklar:** har nusxa raqamga ega ("Tovus №3 / 10"), uy oynasida ko'rinadi.
-- **To'plamlar:** bir nechta bezak birga, chegirma bilan (`set_id`). Masalan "Hovli to'plami": so'ri + tok + tandir + anor.
+- **To'plamlar:** bir nechta bezak birga, chegirma bilan (`set_id`). Masalan "Dam olish to'plami": besedka + mangal + hamak + gulzor.
 - **Sinab ko'rish:** sotib olishdan oldin bezak o'z hovlisida vaqtincha ko'rinadi (faqat o'zida, saqlanmaydi).
 - **Sovg'a:** bezakni boshqa o'yinchiga sovg'a qilish (nik bo'yicha, bildirishnoma bilan).
 - **"Yangi" belgisi** va do'konda "Yangi tovarlar" bo'limi. Yangi tovar qo'shilganda Telegram bot orqali xabar (ixtiyoriy, o'chirsa bo'ladi).

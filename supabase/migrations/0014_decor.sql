@@ -33,7 +33,7 @@ insert into public.decor_catalog as c (id, slot, model_id, name_uz, name_ru, pri
 ('special_yurt','special','special_yurt','Navro''z o''tovi (mavsumiy)','Юрта Навруза (сезон)',60000,1500,100,array['big'],4,240),
 ('sign_nick','sign','sign_nick','Nik lavhasi','Табличка с ником',5000,100,null,array['sign'],1,250)
 on conflict (id) do update set model_id = excluded.model_id, name_uz = excluded.name_uz, name_ru = excluded.name_ru, spots = excluded.spots, min_level = excluded.min_level, sort = excluded.sort;
-alter table public.decor_catalog alter column model_id set not null, add check (cardinality(spots) > 0), add check (season_from is null or season_to is null or season_from <= season_to);
+alter table public.decor_catalog alter column model_id set not null, add check (cardinality(spots) > 0), add check ((season_from is null) = (season_to is null));
 
 /* Joy nuqtalari: koordinatasi kodda (packages/shared/src/anchors.ts), turi va leveli bu yerda tekshiriladi. */
 create table public.decor_anchors (id text primary key, kind text not null, min_level int not null, sort int not null);
@@ -65,7 +65,7 @@ insert into public.decor_anchors (id, kind, min_level, sort) values
 insert into public.settings (key, value, is_public) values ('decor_slots', '[3,4,5,6,8,10,12,14,17,20]', true);
 
 create function private.decor_slots(p_tier int) returns int language sql stable set search_path = '' as $$
-  select least(20, coalesce((private.setting('decor_slots') ->> (greatest(1, least(10, p_tier)) - 1))::int, 3))
+  select least(20, coalesce((select v::int from (select private.setting('decor_slots') ->> (greatest(1, least(10, p_tier)) - 1) as v) x where v ~ '^[0-9]{1,3}$'), 3))
 $$;
 
 -- ---------- Uydagi joylashuv ----------
@@ -76,7 +76,8 @@ alter table public.plot_state add column places jsonb not null default '{}', add
 create function private.default_places(p_decor text[]) returns jsonb language plpgsql stable set search_path = '' as $$
 declare d text; a text; res jsonb := '{}';
 begin
-  foreach d in array p_decor loop
+  -- Tanlovi kam (masalan faqat katta nuqtaga sig'adigan) bezak oldin joylashadi.
+  for d in select u.d from unnest(p_decor) with ordinality u(d, k) join public.decor_catalog c on c.id = u.d order by (select count(*) from public.decor_anchors an where an.kind = any (c.spots)), u.k loop
     select an.id into a from public.decor_anchors an join public.decor_catalog c on c.id = d where an.kind = any (c.spots) and not res ? an.id order by array_position(c.spots, an.kind), an.sort limit 1;
     if a is not null then res := res || jsonb_build_object(a, d); end if;
     a := null;
@@ -103,7 +104,7 @@ declare st public.plot_state := private.own_plot(p_plot); n int; old_n int;
 begin
   perform private.rate('decor:' || st.owner, 120, 3600);
   if (select type from public.plots where id = p_plot) = 'kvartira' then perform private.fail('no_yard'); end if;
-  if jsonb_typeof(p_places) <> 'object' or exists (select 1 from jsonb_each(p_places) where jsonb_typeof(value) <> 'string') then perform private.fail('bad_format'); end if;
+  if jsonb_typeof(p_places) is distinct from 'object' or exists (select 1 from jsonb_each(p_places) where jsonb_typeof(value) <> 'string') then perform private.fail('bad_format'); end if;
   select count(*) into n from jsonb_object_keys(p_places);
   select count(*) into old_n from jsonb_object_keys(st.places);
   -- Eskidan ko'p bezagi bor uy kamaytirishi mumkin, ko'paytirolmaydi.
@@ -112,7 +113,7 @@ begin
       where a.id is null or c.id is null) then perform private.fail('bad_format'); end if;
   -- Allaqachon turgan joyi o'zgarmagan bezaklar qayta tekshirilmaydi.
   if exists (select 1 from jsonb_each_text(p_places) e join public.decor_anchors a on a.id = e.key join public.decor_catalog c on c.id = e.value
-      where st.places ->> e.key is distinct from e.value and (a.min_level > st.tier or c.min_level > st.tier)) then perform private.fail('level_low'); end if;
+      where st.places ->> e.key is distinct from e.value and (a.min_level > st.tier or (c.min_level > st.tier and not exists (select 1 from jsonb_each_text(st.places) o where o.value = e.value)))) then perform private.fail('level_low'); end if;
   if exists (select 1 from jsonb_each_text(p_places) e join public.decor_anchors a on a.id = e.key join public.decor_catalog c on c.id = e.value
       where st.places ->> e.key is distinct from e.value and not a.kind = any (c.spots)) then perform private.fail('wrong_spot'); end if;
   if exists (select 1 from (select value as d, count(*) as k from jsonb_each_text(p_places) group by value) x

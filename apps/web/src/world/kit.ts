@@ -49,7 +49,8 @@ vec3 kTint = kIsWall ? vWall : ((kMask > 0.4 && kMask < 0.6) ? vRoof : vec3(1.0)
 diffuseColor.rgb *= kTex * kTint;
 if (kLayer == 8.0) diffuseColor.rgb *= uLeaf;
 if (kLayer == 9.0) diffuseColor.rgb *= mix(vec3(1.0), uFrames[int(floor(kMat / 16.0))], smoothstep(0.25, 0.5, dot(kTex, vec3(0.3, 0.6, 0.1))));
-if (kMask > 0.04 && kMask < 0.15) diffuseColor.rgb *= uDoors[int(floor(vFx.w + 0.5))];
+int kDoor = int(floor(vFx.w + 0.5));
+if (kMask > 0.04 && kMask < 0.15 && kDoor > 0) diffuseColor.rgb = vColor.rgb * uDoors[kDoor] * clamp(dot(kTex, vec3(0.3, 0.6, 0.1)) / 0.16, 0.45, 1.35); // o'yma naqsh soyasi qoladi, rang tiniq
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.9, 0.95), uSnow * smoothstep(0.5, 0.85, vUp));`;
 const FRAGMENT_EMISSIVE = `#include <emissivemap_fragment>
 if (uNight > 0.01) {

@@ -54,6 +54,21 @@ describe('joylash', () => {
     await sql("update plot_state set decor = '{}' where plot_id = $1", [plot]);
     expect(await placesOf(plot)).toEqual({ places: {}, decor: [] });
   });
+  test('joyi kam bezaklar oldin joylashadi: hech biri tushib qolmaydi', async () => {
+    const { plot } = await house(10);
+    await sql("update plot_state set decor = array['tree_chinor','yard_sori','yard_tok','yard_flowers','water_pool'] where plot_id = $1", [plot]);
+    expect([...((await placesOf(plot)).decor as string[])].sort()).toEqual(['tree_chinor', 'water_pool', 'yard_flowers', 'yard_sori', 'yard_tok']);
+  });
+  test('yopiq nuqtadagi eski bezakni ko‘chirish va olish mumkin', async () => {
+    const { uid, plot } = await house(1);
+    await give(uid, 'gate_gold');
+    await give(uid, 'yard_sori');
+    await sql('update plot_state set places = $2 where plot_id = $1', [plot, JSON.stringify({ m2: 'yard_sori', gate: 'gate_gold' })]);
+    await as(uid, 'my_place_decor', { p_plot: plot, p_places: { m1: 'yard_sori', gate: 'gate_gold' } });
+    await as(uid, 'my_place_decor', { p_plot: plot, p_places: { gate: 'gate_gold' } });
+    await as(uid, 'my_place_decor', { p_plot: plot, p_places: {} });
+    await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { gate: 'gate_gold' } })).rejects.toThrow('level_low');
+  });
   test('qo‘yish, ko‘chirish, olish', async () => {
     const { uid, plot } = await house(3);
     await give(uid, 'tree_anor', 2);
@@ -77,7 +92,7 @@ describe('joylash', () => {
     await expect(put({ s1: 'tree_anor', s2: 'tree_anor' })).rejects.toThrow('not_owned');
     await expect(put({ gate: 'tree_anor' })).rejects.toThrow('wrong_spot');
     await expect(put({ w1: 'tree_anor' })).rejects.toThrow('level_low');
-    for (const bad of [{ yoq: 'tree_anor' }, { s1: 'yoq' }, { s1: 5 }, ['s1'], 'x']) await expect(put(bad)).rejects.toThrow('bad_format');
+    for (const bad of [{ yoq: 'tree_anor' }, { s1: 'yoq' }, { s1: 5 }, ['s1'], 'x', null]) await expect(put(bad)).rejects.toThrow('bad_format');
     await give(uid, 'gate_gold');
     await expect(put({ gate: 'gate_gold' })).rejects.toThrow('level_low');
     for (const id of ['fence_wood', 'gate_wood', 'path_stone', 'tree_archa']) await give(uid, id);
@@ -92,6 +107,8 @@ describe('joylash', () => {
     for (const [i, v] of DEFAULT_DECOR_SLOTS.entries()) expect(await at(i + 1)).toBe(v);
     await sql("update settings set value = '[3,4,5,6,8,10,12,14,17,99]' where key = 'decor_slots'");
     expect(await at(10)).toBe(20);
+    await sql(`update settings set value = '["a", 1]' where key = 'decor_slots'`);
+    expect([await at(1), await at(2), await at(5)]).toEqual([3, 1, 3]);
     await sql("update settings set value = $1::jsonb where key = 'decor_slots'", [JSON.stringify(DEFAULT_DECOR_SLOTS)]);
   });
   test('bitta bezak ikki uyda bo‘lolmaydi', async () => {
@@ -151,7 +168,7 @@ describe('sotuv va tashqi ko‘rinish', () => {
 describe('admin', () => {
   test('mavjud modeldan yangi tovar, tahrirlash, yashirish', async () => {
     const a = await user('admin');
-    await as(a, 'admin_decor_save', { p: { id: 'tree_anor_oltin', model_id: 'tree_anor', name_uz: 'Oltin anor', name_ru: 'Золотой гранат', price_coins: 999, stock: 5, min_level: 8, tint: '#FFCC00', is_new: true, season_from: '2026-03-01', season_to: '2026-04-01' } });
+    await as(a, 'admin_decor_save', { p: { id: 'tree_anor_oltin', model_id: 'tree_anor', name_uz: 'Oltin anor', name_ru: 'Золотой гранат', price_coins: 999, stock: 5, min_level: 8, tint: '#FFCC00', is_new: true, season_from: '2026-12-20', season_to: '2026-01-10' } });
     expect((await sql("select slot, spots, price_coins, stock, min_level, tint, is_new from decor_catalog where id = 'tree_anor_oltin'"))[0]).toMatchObject({ slot: 'tree', price_coins: 999, stock: 5, min_level: 8, tint: '#ffcc00', is_new: true });
     await as(a, 'admin_decor_save', { p: { id: 'tree_anor_oltin', is_active: false, stock: null, season_from: '', season_to: '' } });
     expect((await sql("select stock, is_active, season_from, name_uz, price_coins from decor_catalog where id = 'tree_anor_oltin'"))[0]).toEqual({ stock: null, is_active: false, season_from: null, name_uz: 'Oltin anor', price_coins: 999 });

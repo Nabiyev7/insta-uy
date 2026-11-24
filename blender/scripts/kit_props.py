@@ -336,12 +336,12 @@ def path_stone():
 
 
 def sign_nick():
-    """Darvoza yonidagi nik lavhasi: yozuvi saytda qo'yiladi."""
+    """Darvoza yonidagi nik lavhasi: yozuvi saytda qo'yiladi. Eng baland devordan (1.72 m) ham ko'rinadi."""
     m = Model('sign_nick')
     for x in (-0.42, 0.42):
-        m.cbox(x, 0.05, 0, 0.08, 0.08, 1.5, WOOD, '#7a4f2a')
-    m.box(-0.62, -0.04, 0.8, 0.62, 0.04, 1.4, WOOD, '#8a6238', bottom=True)
-    m.panel([(-0.56, -0.05, 0.86), (0.56, -0.05, 0.86), (0.56, -0.05, 1.34), (-0.56, -0.05, 1.34)], PLAIN, '#f6ead0')
+        m.cbox(x, 0.05, 0, 0.09, 0.09, 2.6, WOOD, '#7a4f2a')
+    m.box(-0.62, -0.04, 1.86, 0.62, 0.04, 2.46, WOOD, '#8a6238', bottom=True)
+    m.panel([(-0.56, -0.05, 1.92), (0.56, -0.05, 1.92), (0.56, -0.05, 2.4), (-0.56, -0.05, 2.4)], PLAIN, '#f6ead0')
     return m
 
 

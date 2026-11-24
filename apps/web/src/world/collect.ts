@@ -53,7 +53,7 @@ interface PlotResult { readonly items: Item[]; readonly labels: readonly LabelIn
 
 /** Lavhali uylar: yozuv modelning old yuzasida turadi. */
 const SIGN_MODEL = 'sign_nick';
-const SIGN_FACE = { y: 1.1, out: 0.07 } as const;
+const SIGN_FACE = { y: 2.16, out: 0.07 } as const;
 const signOf = (p: Plot, s: HouseState, list: readonly Item[]): SignInfo | null => {
   const board = s.nick ? list.find((i) => i.model === SIGN_MODEL) : undefined;
   return board && s.nick ? { key: p.id, text: `@${s.nick}`, x: board.x + Math.sin(board.yaw) * SIGN_FACE.out, y: board.y + SIGN_FACE.y, z: board.z + Math.cos(board.yaw) * SIGN_FACE.out, yaw: board.yaw } : null;

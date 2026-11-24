@@ -3,13 +3,19 @@
 > Egasi bilan kelishilgan (2026-11-24). Avval `CLAUDE.md` va `PLAN.md` ni to'liq o'qi.
 > Quyidagi qadamlarni **ketma-ket, o'zing to'xtamasdan** bajar. Har qadam tugagach shu fayldagi ro'yxatda `[ ]` ni `[x]` ga almashtir — limit tugab qolsa, keyingi sessiya shu yerdan davom etadi.
 
+## Umumiy uslub (hamma qadamlarga tegishli)
+
+Dizayn **Farg'ona yoki boshqa bir hududga bog'lanmaydi** — **umumiy, universal** shahar: zamonaviy va klassik uylar, ochiq ranglar, toza shakllar. Milliy elementlar (naqsh, ayvon, so'ri, tandir, gumbaz) **majburiy emas** — ular faqat do'kondagi ixtiyoriy bezaklarning bir qismi bo'lib qoladi.
+- 1-qadamda `PLAN.md` §3 dagi "Farg'ona vodiysi ruhi" va `CHAT-UCHUN.md` dagi shunga o'xshash qatorlar "umumiy, universal uslub" ga almashtirilsin.
+- Promtlarda milliy uslub talab qilingan joy qolgan bo'lsa — bu bo'lim ustun turadi.
+
 ## Ro'yxat
 
-- [ ] **0. Tayyorgarlik** — `docs/chat/agentlar/tekshiruvchi.md` ni `.claude/agents/tekshiruvchi.md` ga ko'chir, commit qil.
-- [ ] **1. Uylar va yangi bosh reja** — `docs/chat/UYLAR-PROMT.md`
-- [ ] **2. Markaz** — `docs/chat/MARKAZ-PROMT.md`
-- [ ] **3. Harakat va ekran** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 1-bosqich
-- [ ] **4. Bezaklar tizimi** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 2-bosqich
+- [x] **0. Tayyorgarlik** — `docs/chat/agentlar/tekshiruvchi.md` ni `.claude/agents/tekshiruvchi.md` ga ko'chir, commit qil.
+- [x] **1. Uylar va yangi bosh reja** — `docs/chat/UYLAR-PROMT.md`
+- [x] **2. Markaz** — `docs/chat/MARKAZ-PROMT.md`
+- [x] **3. Harakat va ekran** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 1-bosqich
+- [x] **4. Bezaklar tizimi** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 2-bosqich
 - [ ] **5. Yangi bezaklar va sotuv** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 3-bosqich
 - [ ] **6. Kirish, tanga, referal, zaxira** — `docs/chat/IQTISOD-PROMT.md`
 

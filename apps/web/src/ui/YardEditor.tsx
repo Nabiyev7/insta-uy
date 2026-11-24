@@ -29,7 +29,8 @@ function YardMap({ level, places, selected, onPick }: YardMapProps): React.JSX.E
       <rect className="path" x="-0.9" y="1" width="1.8" height="16" />
       {ANCHORS.map((a) => {
         const [x, z] = markOf(a);
-        const isLocked = a.minLevel > level;
+        // Yopiq nuqtada eski bezak tursa, uni olib qo'yish yoki ko'chirish mumkin.
+        const isLocked = a.minLevel > level && !places[a.id];
         const label = isLocked ? `${a[lang]}: ${a.minLevel}-${t('opensAt')}` : a[lang];
         const state = isLocked ? 'locked' : places[a.id] ? 'full' : 'free';
         return (
@@ -95,7 +96,7 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
             </label>
           )}
           {isFull && <p className="muted">{t('e_no_slots')}</p>}
-          {!isFull && choices.map((c) => <div className="row between" key={c.id}><span>{c[lang]} <span className="muted">×{freeQty(c.id)}</span></span><button type="button" className="btn small" disabled={isBusy} onClick={() => place(c.id)}>{t('place')}</button></div>)}
+          {!isFull && anchor.minLevel <= plot.tier && choices.map((c) => <div className="row between" key={c.id}><span>{c[lang]} <span className="muted">×{freeQty(c.id)}</span></span><button type="button" className="btn small" disabled={isBusy} onClick={() => place(c.id)}>{t('place')}</button></div>)}
           {!isFull && choices.length === 0 && !current && <p className="muted">{t('noFit')}</p>}
         </div>
       )}

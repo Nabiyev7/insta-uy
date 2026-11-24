@@ -41,9 +41,8 @@
 
 ## 4. Referal
 - Har bir o'yinchida shaxsiy link (mavjud taklif tizimi) va hisoblagich.
-- Mukofot **darhol berilmaydi**. U faqat taklif bilan kelgan odam: (a) Telegram ulasa, (b) bepul uy olsa, (c) kamida **3 xil kunda** kirsa beriladi. Bu soxta akkauntlarga qarshi himoya.
+- Mukofot taklif bilan kelgan odam **Telegram ulab, bepul uy olgan zahoti** beriladi. **Hech qanday vaqt sharti yo'q** (kun kutish, necha kun kirish, oylik limit — yo'q).
 - O'ziga o'zi taklif qilish mumkin emas: bir Telegram akkaunt yoki bir qurilma bo'lsa, mukofot berilmaydi.
-- Bir odam oyiga ko'pi bilan 50 ta referal mukofoti oladi (admin sozlaydi).
 - Reyting: "Eng ko'p odam taklif qilganlar". Eng ko'p taklif qilganlarga nishon ("Elchi"): 10, 50, 100 taklif uchun.
 
 ## 5. Inflyatsiyaga qarshi
@@ -61,5 +60,5 @@
 
 ## Qabul
 - 100 ta bir vaqtdagi ro'yxatdan o'tishni simulyatsiya qiluvchi sinov: aynan 100 kishi asoschi bo'ladi, hech qaysi uy ikki kishiga berilmaydi.
-- Referal sinovlari: shartlar bajarilmasa mukofot yo'q, o'ziga taklif ishlamaydi.
+- Referal sinovlari: Telegram/uy bo'lmasa mukofot yo'q, bo'lsa darhol beriladi; o'ziga taklif ishlamaydi; vaqtga bog'liq cheklov yo'q.
 - Sayt va admin panelda "pul bilan sotib olish" tugmalari ko'rinmaydi.
