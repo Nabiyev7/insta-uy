@@ -2,6 +2,7 @@
 import type { Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import type { Backend } from '../types.ts';
+import { authorKey } from './chat.ts';
 import { Room, type Who } from './room.ts';
 
 const TICK_MS = 125;
@@ -12,6 +13,7 @@ const MAX_PER_IP = 80;
 const GUEST: Who = { userId: null, nick: null, look: null };
 const CONFIG_MS = 30_000;
 const REFRESH_GAP_MS = 2000;
+const RECHECK_MS = 15_000;
 
 interface PlayerRow { readonly instagram: string | null; readonly login: string; readonly is_banned: boolean; readonly avatar: unknown; readonly homes?: readonly number[]; readonly is_moderator?: boolean; readonly can_write?: boolean }
 
@@ -62,10 +64,32 @@ export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly 
     known.set(socket.id, new Set());
     socket.on('move', (data: unknown) => room.move(socket.id, data, Date.now()));
     socket.emit('chat_history', room.chatLog.messages());
-    socket.on('chat', (data: unknown) => {
+    if (who.userId) socket.emit('me', authorKey(who.userId));
+    let checkedAt = Date.now();
+    /** Bloklangan yoki roli olingan odam ulanib turgan bo'lsa ham huquqi yo'qoladi. */
+    const recheck = async (): Promise<boolean> => {
+      if (Date.now() - checkedAt < RECHECK_MS) return true;
+      checkedAt = Date.now();
+      const next = await identify(db, socket.handshake.auth.token);
+      if (!next) { socket.disconnect(true); return false; }
+      room.update(socket.id, next);
+      return true;
+    };
+    const guarded = (fn: () => void): void => {
+      recheck().then((isOk) => { if (isOk) fn(); }, (error: unknown) => {
+        onError(error);
+        socket.emit('chat_error', 'server_error');
+      });
+    };
+    socket.on('chat', (data: unknown) => guarded(() => {
       const r = room.chat(socket.id, data, Date.now());
       if (r.ok) io.emit('chat', r.message);
       else socket.emit('chat_error', r.code);
+    }));
+    socket.on('chat_report', (messageId: unknown) => {
+      const m = room.reported(socket.id, messageId);
+      if (!m || !who.userId) return;
+      db.rpc('svc_chat_report', { p_reporter: who.userId, p_user: m.userId, p_text: m.text }).then(() => socket.emit('chat_reported'), (error: unknown) => socket.emit('chat_error', error instanceof Error ? error.message : 'server_error'));
     });
     let refreshedAt = 0;
     socket.on('refresh', () => {
@@ -91,8 +115,8 @@ export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly 
         },
       );
     };
-    socket.on('chat_delete', (id: unknown) => moderate(id, false));
-    socket.on('chat_ban', (id: unknown) => moderate(id, true));
+    socket.on('chat_delete', (id: unknown) => guarded(() => moderate(id, false)));
+    socket.on('chat_ban', (id: unknown) => guarded(() => moderate(id, true)));
     socket.on('disconnect', () => {
       room.leave(socket.id);
       const left = (perIp.get(ip) ?? 1) - 1;

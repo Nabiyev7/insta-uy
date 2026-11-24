@@ -12,7 +12,9 @@ export type Panel =
 export type Stage = 'loading' | 'intro' | 'play' | 'error';
 export interface Toast { readonly id: number; readonly text: string; readonly isError: boolean }
 /** channel: 0 — umumiy, 1..12 — mahalla. */
-export interface ChatLine { readonly id: string; readonly channel: number; readonly nick: string; readonly text: string; readonly at: number }
+export interface ChatLine { readonly id: string; readonly channel: number; readonly nick: string; readonly author: string; readonly text: string; readonly at: number }
+/** Jim qilingan odam: kalit barqaror, nik faqat ko'rsatish uchun. */
+export interface Muted { readonly author: string; readonly nick: string }
 
 export const read = (key: string): string | null => {
   try {
@@ -36,10 +38,11 @@ const detectQuality = (): QualityLevel => {
   return initialQuality({ cores: nav.hardwareConcurrency || 4, memoryGb: nav.deviceMemory ?? 8, isTouch: matchMedia('(pointer: coarse)').matches });
 };
 
-const readMuted = (): readonly string[] => {
+const isMuted = (x: unknown): x is Muted => typeof x === 'object' && x !== null && typeof (x as Muted).author === 'string' && typeof (x as Muted).nick === 'string';
+const readMuted = (): readonly Muted[] => {
   try {
     const list: unknown = JSON.parse(read('muted') || '[]');
-    return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : [];
+    return Array.isArray(list) ? list.filter(isMuted) : [];
   } catch {
     return [];
   }
@@ -67,14 +70,15 @@ export interface AppState {
   readonly online: number;
   readonly chat: readonly ChatLine[];
   readonly unread: number;
-  readonly muted: readonly string[];
+  readonly muted: readonly Muted[];
+  readonly myAuthor: string;
   readonly mode: Mode;
   readonly fps: number;
 }
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, district: 0, street: 0, online: 0, chat: [], unread: 0, muted: readMuted(), mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, district: 0, street: 0, online: 0, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;

@@ -87,7 +87,7 @@ export const plazaItems = (): Item[] => {
 
 /** Maydonda odam va mashina kirolmaydigan joylar. */
 export const PLAZA_SOLIDS: readonly Solid[] = [
-  { x: 0, z: 0, hx: 10, hz: 10, h: 3 }, { ...HERO_SPOT, hx: 2.6, hz: 2.6, h: 8 }, { x: SCHOOL.x, z: SCHOOL.z, hx: SCHOOL.hx, hz: SCHOOL.hz, h: 8 }, { x: TEAHOUSE.x, z: TEAHOUSE.z + TEAHOUSE_ROOM, hx: 8, hz: 2, h: 4 },
+  { x: 0, z: 0, hx: 11.2, hz: 11.2, h: 3 }, { ...HERO_SPOT, hx: 2.6, hz: 2.6, h: 8 }, { x: SCHOOL.x, z: SCHOOL.z, hx: SCHOOL.hx, hz: SCHOOL.hz, h: 8 }, { x: TEAHOUSE.x, z: TEAHOUSE.z + TEAHOUSE_ROOM, hx: 8, hz: 2, h: 4 },
   ...CIVIC.map((c, i): Solid => ({ ...civicRects[i]!, h: c.height * 0.6 })),
 ];
 export const isTower = (id: string): boolean => id in TOWERS;

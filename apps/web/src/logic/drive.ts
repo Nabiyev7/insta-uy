@@ -8,8 +8,8 @@ export interface CarSpec { readonly id: string; readonly model: string; readonly
 export const CARS: readonly CarSpec[] = [
   { id: 'oddiy', model: 'car_van', scale: 0.85, top: 17, accel: 7, decor: null, uz: 'Oddiy mashina', ru: 'Простая машина' },
   { id: 'furgon', model: 'car_van', scale: 1, top: 18.5, accel: 8, decor: 'car_van', uz: 'Oq furgon', ru: 'Белый фургон' },
-  { id: 'sedan', model: 'car_sedan', scale: 1, top: 20, accel: 9, decor: 'car_sedan', uz: 'Sedan', ru: 'Седан' },
-  { id: 'sport', model: 'car_sport', scale: 1, top: 24, accel: 13, decor: 'car_sport', uz: 'Sport mashina', ru: 'Спорткар' },
+  { id: 'sedan', model: 'car_sedan', scale: 1, top: 19.5, accel: 9, decor: 'car_sedan', uz: 'Sedan', ru: 'Седан' },
+  { id: 'sport', model: 'car_sport', scale: 1, top: 21, accel: 13, decor: 'car_sport', uz: 'Sport mashina', ru: 'Спорткар' },
 ];
 export const carById = (id: string): CarSpec => CARS.find((c) => c.id === id) ?? CARS[0]!;
 /** Egalik qilingan mashinalar (bepuli doim bor). */
@@ -24,7 +24,9 @@ export const animOfCar = (id: string): number => ANIM_CAR + Math.max(0, CARS.fin
 export interface CarState { readonly x: number; readonly z: number; readonly yaw: number; readonly speed: number }
 export interface CarInput { readonly gas: number; readonly steer: number; readonly isBraking: boolean }
 
-export const CAR_RADIUS = 1.35;
+export const CAR_RADIUS = 1.3;
+/** Markazdan old (yoki orqa) to'qnashuv nuqtasigacha, m. */
+const NOSE = 0.95;
 const REVERSE_TOP = 6;
 const DRAG = 2.6;
 const BRAKE = 24;
@@ -51,8 +53,12 @@ export const stepCar = (s: CarState, i: CarInput, dt: number, spec: CarSpec, sol
   const distance = speed * dt;
   const steps = Math.max(1, Math.ceil(Math.abs(distance) / MAX_STEP));
   const [dx, dz] = [(Math.sin(yaw) * distance) / steps, (Math.cos(yaw) * distance) / steps];
-  let at = { x: s.x, z: s.z };
-  for (let n = 0; n < steps; n++) at = movePlayer(at, dx, dz, solids, hasBridge, CAR_RADIUS);
+  // To'qnashuv mashinaning yurayotgan tomondagi uchidan o'lchanadi: burni devorga kirmaydi.
+  const tip = NOSE * (speed < 0 ? -1 : 1);
+  const [tx, tz] = [Math.sin(yaw) * tip, Math.cos(yaw) * tip];
+  let end = { x: s.x + tx, z: s.z + tz };
+  for (let n = 0; n < steps; n++) end = movePlayer(end, dx, dz, solids, hasBridge, CAR_RADIUS);
+  const at = { x: end.x - tx, z: end.z - tz };
   if (Math.abs(distance) < 1e-6) return { x: at.x, z: at.z, yaw, speed };
   // Urilganda faqat oldinga siljigan ulushi qoladi: to'g'ridan urilsa to'xtaydi, yonlab sirpansa sekinlashadi.
   const progress = ((at.x - s.x) * Math.sin(yaw) + (at.z - s.z) * Math.cos(yaw)) / distance;

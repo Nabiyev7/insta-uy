@@ -24,3 +24,5 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 5. **Tepadan qarayotgan odam** boshqalarga ko'rinmaydi (odamcha yo'q), lekin onlayn ro'yxatda bor.
 6. **Xazina qazish** faqat piyoda yoki mashinada: tepadan qazib bo'lmasin.
 7. **Chat majburiy Telegram** sharti 6-qadamda (kirish qismi) yoqiladi; server bunga tayyor.
+8. **Chatda `@nom` yozish ham taqiqlandi:** u Telegram kanalga yo'l ochadi. Odamga murojaat qilish uchun nikini `@` siz yozsa bo'ladi.
+9. **Sport mashina** 21 m/s: topshiriqdagi "4–5 barobar" chegarasida qolsin.

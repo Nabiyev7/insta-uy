@@ -112,7 +112,7 @@ p { margin: 0; }
   .sheet.half { max-height: 52dvh; }
 }
 @keyframes sheet-up { from { transform: translateY(60px); opacity: 0; } }
-.sheet.half .body { display: flex; flex-direction: column; gap: 10px; }
+.sheet.chat .body { display: flex; flex-direction: column; gap: 10px; }
 .messages { flex: 1; min-height: 110px; display: grid; gap: 5px; align-content: start; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .message > button { max-width: 100%; border: 0; text-align: left; padding: 6px 12px; border-radius: 12px 12px 12px 3px; background: var(--paper-2); overflow-wrap: anywhere; cursor: pointer; user-select: text; -webkit-user-select: text; }
 .message b { color: var(--clay); }

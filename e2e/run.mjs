@@ -62,6 +62,8 @@ try {
     await page.goto(url);
     await page.getByRole('button', { name: /Shaharga kirish/ }).click({ timeout: 60_000 });
     await page.locator('.nav5').waitFor();
+    await page.waitForFunction(() => Boolean(window.__scene));
+    await page.waitForTimeout(600);
   };
   const pos = (page) => page.evaluate(() => ({ x: window.__player.x, z: window.__player.z }));
   const view = (page) => page.evaluate(() => ({ ...window.__city.view }));
@@ -200,7 +202,7 @@ try {
     await enter(phone, `${SITE}/?uy=P0001`);
     await phone.keyboard.press('Escape');
     assert.equal(await phone.locator('.joystick').count(), 0, 'shahar rejimida joystick bo‘lmasin');
-    await phone.touchscreen.tap(195, 420);
+    await phone.touchscreen.tap(195, 290);
     await phone.locator('.sheet').waitFor();
     await phone.getByRole('button', { name: 'Yopish' }).click();
     await mode(phone, 'Piyoda');

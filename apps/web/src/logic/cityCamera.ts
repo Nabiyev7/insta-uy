@@ -66,6 +66,16 @@ export const viewOfPlot = (p: Plot): CityView => {
   const ahead = p.type === 'kvartira' ? 0 : p.d * 0.12;
   return { x: p.x + Math.sin(yaw) * ahead, z: p.z + Math.cos(yaw) * ahead, yaw, height: HOUSE_HEIGHT[p.type] + padHeight(p) * 0.2 };
 };
+export interface Screen { readonly width: number; readonly height: number }
+const NARROW = 640;
+const SHEET_WIDTH = 422;
+/** Ochiladigan oyna telefonda ekranning pastki yarmini, kompyuterda o'ng chetini egallaydi. */
+const PHONE_LIFT = 0.17;
+/** Uy oyna to'sib qo'ymagan qismda ko'rinishi uchun kamerani suradi. */
+export const framed = (v: CityView, s: Screen): CityView => {
+  const k = metersPerPixel(v, s.height > s.width ? 70 : 58, s.height);
+  return s.width <= NARROW ? pan(v, 0, -s.height * PHONE_LIFT * k) : pan(v, -Math.min(SHEET_WIDTH, s.width * 0.6) * 0.5 * k, 0);
+};
 export const viewOfPoint = (x: number, z: number, yaw: number, height: number): CityView => ({ x, z, yaw, height });
 
 /** Kamera qaragan tomondagi uchburchak: undan tashqaridagi narsa chizilmaydi. */

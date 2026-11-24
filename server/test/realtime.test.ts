@@ -50,21 +50,23 @@ describe('Room', () => {
     expect(say('g', 'salom')).toEqual({ ok: false, code: 'not_signed_in' });
     expect(say('x', 'salom')).toEqual({ ok: false, code: 'telegram_required' });
     expect(say('a', 'suka')).toEqual({ ok: false, code: 'banned_word' });
-    for (const link of ['kir www.x.uz', 'https://a.b', 't.me/x', 'reklama.uz ga kir', 'menga @kanalbot yoz', 'sayt . com']) expect(say('a', link), link).toEqual({ ok: false, code: 'no_links' });
+    for (const link of ['kir www.x.uz', 'https://a.b', 't.me/x', 'reklama.uz ga kir', 'menga @kanalbot yoz', 'sayt . com', 'bit.ly/abc', 'youtu.be/abc', 'discord.gg/x', 'mysite.kz', 'example.tv', 'tg://resolve?domain=x', '@mening_kanalim', 'yangi.sayt/kirish']) expect(say('a', link), link).toEqual({ ok: false, code: 'no_links' });
     for (const bad of [['  ', 0], ['x'.repeat(201), 0], ['salom', 13], ['salom', -1], ['salom', 1.5], ['salom', '0'], [5, 0]]) expect(say('a', bad[0], bad[1])).toEqual({ ok: false, code: 'bad_format' });
     expect(r.chat('a', 'salom', 1)).toEqual({ ok: false, code: 'bad_format' });
     expect(say('a', ' Salom   shahar. Yaxshimisiz? ')).toMatchObject({ ok: true, message: { channel: 0, nick: 'ali', text: 'Salom shahar. Yaxshimisiz?' } });
+    for (const fine of ['Salom. Top uy qaysi', 'Rahmat. Online bormisiz', 'Narxi 2.5 million', 'a. b. c.']) expect(say('a', fine), fine).toMatchObject({ ok: true });
     expect(say('a', 'mahalladoshlar', 3)).toMatchObject({ ok: true, message: { channel: 3 } });
     expect(say('a', 'begona', 4)).toEqual({ ok: false, code: 'not_resident' });
     expect(JSON.stringify(r.chatLog.messages())).not.toContain('userId');
-    expect(r.chatLog.messages()).toHaveLength(2);
+    expect(r.chatLog.messages()).toHaveLength(6);
+    expect(r.chatLog.messages()[0]!.author).toMatch(/^[0-9a-f]{10}$/);
   });
   test('nik va uy o‘zgarsa joyida yangilanadi', () => {
     const r = new Room();
     r.join('a', who('al***'));
     r.move('a', [5, 6, 0, 1, 2], 1000);
     r.update('a', who('ali', { homes: [2] }));
-    expect(r.online()).toEqual([{ nick: 'ali', district: 2, x: 5, z: 6 }]);
+    expect(r.online()).toMatchObject([{ nick: 'ali', district: 2, x: 5, z: 6 }]);
     expect(r.chat('a', { channel: 2, text: 'salom' }, 1000)).toMatchObject({ ok: true });
     r.update('yoq', who('x'));
     expect(r.size).toBe(1);
@@ -81,6 +83,18 @@ describe('Room', () => {
     const results = Array.from({ length: 20 }, (_, i) => r.chat('bot', { channel: 0, text: `b${i}` }, 40_000 + i).ok);
     expect(results.filter(Boolean)).toHaveLength(12);
     expect(r.chatLog.messages().length).toBeLessThanOrEqual(30);
+  });
+  test('bir xil nikli ikki odam ajraladi; shikoyatda haqiqiy muallif', () => {
+    const r = new Room();
+    r.join('a', { ...who('ya***'), userId: 'u-1' });
+    r.join('b', { ...who('ya***'), userId: 'u-2' });
+    const [x, y] = [r.chat('a', { channel: 0, text: 'bir' }, 1), r.chat('b', { channel: 0, text: 'ikki' }, 2)];
+    expect(x.ok && y.ok && x.message.author !== y.message.author).toBe(true);
+    expect(new Set(r.online().map((p) => p.author)).size).toBe(2);
+    r.join('g', who(null));
+    expect(r.reported('b', x.ok ? x.message.id : '')).toMatchObject({ userId: 'u-1', text: 'bir' });
+    expect(r.reported('g', x.ok ? x.message.id : '')).toBeNull();
+    expect(r.reported('b', 5)).toBeNull();
   });
   test('moderator xabarni o‘chiradi, boshqasi o‘chirolmaydi', () => {
     const r = new Room();
@@ -106,7 +120,7 @@ describe('Socket.io', () => {
     userByJwt: async (t: string) => (t.startsWith('u') ? { id: t, email: '' } : null),
     rpc: async (fn: string, a: { p_id: string }) => {
       if (fn === 'svc_chat_config') return { slow: 0 };
-      if (fn === 'svc_chat_ban') return null;
+      if (fn === 'svc_chat_ban' || fn === 'svc_chat_report') return null;
       return { instagram: a.p_id, login: 'l', is_banned: a.p_id === 'uban', avatar: {}, homes: [2], is_moderator: a.p_id === 'umod' };
     },
   } as unknown as Backend;
@@ -156,6 +170,9 @@ describe('Socket.io', () => {
     const late = io(url, { auth: { token: 'u8' }, transports: ['websocket'], forceNew: true, reconnection: false });
     open.push(late);
     expect((await new Promise<{ id: string }[]>((r) => { late.once('chat_history', r); })).map((m) => m.id)).toContain(id);
+    const reported = new Promise((r) => { late.once('chat_reported', () => r(true)); });
+    late.emit('chat_report', id);
+    expect(await reported).toBe(true);
     const denied = new Promise<string>((r) => { bad.once('chat_error', r); });
     bad.emit('chat_delete', id);
     expect(await denied).toBe('forbidden');

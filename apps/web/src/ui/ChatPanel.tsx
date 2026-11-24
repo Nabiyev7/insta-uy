@@ -1,12 +1,11 @@
 /** Chat oynasi: Umumiy, Mahalla, Onlayn. Yarim ekran — yuqorida shahar ko'rinib turadi. */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { setMuted } from '../app/chat.ts';
-import { rpc } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { goToPoint } from '../app/modes.ts';
-import { loadOnline, moderateMessage, sendChat, type OnlinePerson } from '../app/multiplayer.ts';
+import { loadOnline, moderateMessage, reportMessage, sendChat, type OnlinePerson } from '../app/multiplayer.ts';
 import { openPanel, setApp, toast, useApp, type ChatLine } from '../app/store.ts';
-import { Seg, Sheet, useAction } from './kit.tsx';
+import { Seg, Sheet } from './kit.tsx';
 
 type Tab = 'all' | 'district' | 'online';
 const MAX_TEXT = 200;
@@ -18,22 +17,20 @@ const useHomeDistricts = (): readonly number[] => {
   const plotById = useApp((s) => s.plotById);
   return [...new Set((profile?.plots ?? []).filter((p) => p.status === 'owned').map((p) => plotById.get(p.plot)?.districtId ?? 0).filter((d) => d > 0))];
 };
-const useCanModerate = (): boolean => useApp((s) => s.profile?.role === 'admin' || s.profile?.role === 'moderator');
+const useCanModerate = (): boolean => useApp((s) => s.profile?.role === 'admin' || (s.profile?.role === 'moderator' && s.profile.perms.includes('reports')));
 
 function MessageTools({ line, onClose }: { readonly line: ChatLine; readonly onClose: () => void }): React.JSX.Element {
   const t = useT();
   const canModerate = useCanModerate();
-  const isMine = useApp((s) => s.profile?.instagram === line.nick);
-  const { isBusy, run } = useAction();
-  const report = (): void => { void run(() => rpc('my_report', { p_kind: 'chat', p_target: `${line.nick}: ${line.text}`.slice(0, 300), p_reason: 'chat' }), t('sent')).then(onClose); };
+  const isMine = useApp((s) => s.myAuthor === line.author);
   const act = (fn: () => void) => (): void => {
     fn();
     onClose();
   };
   return (
     <div className="row tools">
-      {!isMine && <button type="button" className="btn small soft" disabled={isBusy} onClick={report}>⚑ {t('report')}</button>}
-      {!isMine && <button type="button" className="btn small soft" onClick={act(() => { setMuted(line.nick, true); toast(t('mutedDone')); })}>🔇 {t('mute')}</button>}
+      {!isMine && <button type="button" className="btn small soft" onClick={act(() => reportMessage(line.id))}>⚑ {t('report')}</button>}
+      {!isMine && <button type="button" className="btn small soft" onClick={act(() => { setMuted(line, true); toast(t('mutedDone')); })}>🔇 {t('mute')}</button>}
       {canModerate && <button type="button" className="btn small soft" onClick={act(() => moderateMessage(line.id, false))}>🗑 {t('chatDelete')}</button>}
       {canModerate && !isMine && <button type="button" className="btn small clay" onClick={act(() => { if (confirm(t('chatBanSure'))) moderateMessage(line.id, true); })}>⛔ {t('chatBan')}</button>}
     </div>
@@ -46,7 +43,7 @@ function Messages({ channel }: { readonly channel: number }): React.JSX.Element 
   const muted = useApp((s) => s.muted);
   const [selected, setSelected] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
-  const lines = chat.filter((m) => m.channel === channel && !muted.includes(m.nick));
+  const lines = chat.filter((m) => m.channel === channel && !muted.some((x) => x.author === m.author));
   const lastId = lines.at(-1)?.id;
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [lastId, channel]);
   return (
@@ -104,13 +101,13 @@ function OnlineList(): React.JSX.Element {
   return (
     <ul className="list">
       {people.map((p) => (
-        <li key={p.nick}>
+        <li key={p.author}>
           <button type="button" className="plain" onClick={() => goToPoint(p.x, p.z)}><b>{p.nick}</b><br /><span className="muted">{districtName(p.district)}</span></button>
-          {muted.includes(p.nick) && <button type="button" className="btn small soft" onClick={() => setMuted(p.nick, false)}>🔈 {t('unmute')}</button>}
           <span aria-hidden="true">→</span>
         </li>
       ))}
       {guests > 0 && <li className="muted">+{guests} {t('guests')}</li>}
+      {muted.map((m) => <li key={`jim-${m.author}`}><span className="grow muted">🔇 {m.nick}</span><button type="button" className="btn small soft" onClick={() => setMuted(m, false)}>{t('unmute')}</button></li>)}
     </ul>
   );
 }
@@ -142,7 +139,7 @@ export function ChatPanel(): React.JSX.Element {
     setApp({ unread: 0 });
   }, []);
   return (
-    <Sheet title={t('chatTitle')} variant="half">
+    <Sheet title={t('chatTitle')} variant="half chat">
       <Seg<Tab> label={t('chatTitle')} value={tab} onPick={setTab} options={[['all', t('chatAll')], ['district', t('chatDistrict')], ['online', `${t('chatOnline')} (${online})`]]} />
       {tab === 'all' && <><Messages channel={COMMON} /><Composer channel={COMMON} canWrite /></>}
       {tab === 'district' && <DistrictTab />}

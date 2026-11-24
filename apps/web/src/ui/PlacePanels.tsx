@@ -98,7 +98,7 @@ export function PlotPanel({ id }: IdProps): React.JSX.Element | null {
   const statusTag = data && (!data.open && data.status === 'free' ? <span className="tag clay">{t('closed')}</span> : <span className={`tag ${data.status === 'free' ? 'free' : ''}`}>{t(data.status)}</span>);
   const tier = TIERS.find((x) => x.id === data?.tier);
   return (
-    <Sheet title={t(`t_${plot.type}`)}>
+    <Sheet title={t(`t_${plot.type}`)} variant="half">
       <div className="row between"><button type="button" className="link address" onClick={() => openPanel({ kind: 'street', id: plot.streetId })}>{addressOf(plot)}</button>{statusTag}</div>
       {data?.instagram && <>
         <p className="nick">@{data.instagram}</p>

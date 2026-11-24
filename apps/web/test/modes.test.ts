@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import { CITY_HALF, decodePlan, footprint, inLake, SpatialIndex, type EncodedPlan } from '../../../packages/shared/src/index.ts';
-import { MIN_HEIGHT, START_VIEW, cityPose, clampView, flightAt, inWedge, metersPerPixel, pan, pitchOf, rotate, startFlight, viewOfPlot, wedgeOf, zoom } from '../src/logic/cityCamera.ts';
+import { MIN_HEIGHT, START_VIEW, cityPose, clampView, flightAt, framed, inWedge, metersPerPixel, pan, pitchOf, rotate, startFlight, viewOfPlot, wedgeOf, zoom } from '../src/logic/cityCamera.ts';
 import { ANIM_CAR, CARS, animOfCar, carById, carOfAnim, ownedCars, plotSolid, roadSpot, stepCar, treeSolid, type CarState } from '../src/logic/drive.ts';
 import { closedDistrictItems, commerceItem, type HouseState } from '../src/logic/placement.ts';
 import { item } from '../src/logic/item.ts';
@@ -48,6 +48,11 @@ describe('shahar kamerasi', () => {
     const p = plan.plots.find((q) => q.type === 'hovli' && q.rot === 0)!;
     expect(cityPose(viewOfPlot(p)).z).toBeGreaterThan(p.z + p.d / 2);
     expect(viewOfPlot(plan.plots.find((q) => q.type === 'kvartira')!).height).toBeGreaterThan(30);
+  });
+  test('oyna ochilganda uy to‘silmaydi: telefonda nuqta pastga, kompyuterda o‘ngga suriladi', () => {
+    const v = { x: 0, z: 0, yaw: 0, height: 22 };
+    expect(framed(v, { width: 360, height: 640 }).z).toBeGreaterThan(5);
+    expect(framed(v, { width: 1280, height: 720 }).x).toBeGreaterThan(5);
   });
   test('ko‘rinish uchburchagi: qaralgan nuqta ichida, orqa va yon tashqarida', () => {
     const w = wedgeOf({ x: 0, z: 0, yaw: 0, height: 100 }, 0.4);
@@ -117,7 +122,7 @@ describe('mashina', () => {
   test('gaz bilan tezlashadi: piyodadan 4–5 barobar tez', () => {
     const c = drive(start, { gas: 1, steer: 0, isBraking: false }, 5);
     expect(c.speed).toBeCloseTo(spec.top);
-    expect(spec.top / 4.2).toBeGreaterThanOrEqual(4);
+    for (const c of CARS) { expect(c.top / 4.2).toBeGreaterThanOrEqual(4); expect(c.top / 4.2).toBeLessThanOrEqual(5.01); }
     expect(c.z).toBeGreaterThan(40);
     expect(drive(c, { gas: 0, steer: 0, isBraking: true }, 1.2).speed).toBe(0);
     expect(drive(c, { gas: 0, steer: 0, isBraking: false }, 1).speed).toBeLessThan(c.speed);
@@ -131,7 +136,7 @@ describe('mashina', () => {
   test('devorga to‘g‘ridan urilsa to‘xtaydi, ichiga kirmaydi', () => {
     const wall = { x: 0, z: 30, hx: 20, hz: 2, h: 4 };
     const c = drive(start, { gas: 1, steer: 0, isBraking: false }, 6, [wall]);
-    expect(c.z).toBeLessThan(28);
+    expect(c.z).toBeLessThan(25.9); // burni ham devordan tashqarida
     expect(Math.abs(c.speed)).toBeLessThan(1);
   });
   test('uchastkaga kirmaydi, ko‘lga tushmaydi, daraxtga uriladi', () => {

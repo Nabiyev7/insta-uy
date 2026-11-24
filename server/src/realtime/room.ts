@@ -1,7 +1,7 @@
 /** Ko'p o'yinchi holati: tarmoqsiz, sinab bo'ladigan mantiq. */
 import { CITY_HALF } from '../../../packages/shared/src/masterplan/geometry.ts';
 import { sanitizeAvatar, type AvatarLook } from '../../../packages/shared/src/catalog.ts';
-import { ChatLog, type ChatMessage, type ChatResult } from './chat.ts';
+import { ChatLog, authorKey, type ChatMessage, type ChatResult } from './chat.ts';
 
 export interface Who {
   readonly userId: string | null;
@@ -23,7 +23,7 @@ export interface Player extends Who {
   lastMove: number;
 }
 export type Snapshot = readonly [id: string, x: number, z: number, yaw: number, anim: number];
-export interface OnlinePerson { readonly nick: string; readonly district: number; readonly x: number; readonly z: number }
+export interface OnlinePerson { readonly author: string; readonly nick: string; readonly district: number; readonly x: number; readonly z: number }
 
 const BOUND = CITY_HALF + 200;
 const VIEW_RADIUS = 140;
@@ -104,13 +104,18 @@ export class Room {
 
   /** Hozir saytda bo'lgan, ismi bor odamlar. */
   online(): OnlinePerson[] {
-    return [...this.players.values()].filter((p) => p.nick).slice(0, MAX_ONLINE_LIST).map((p) => ({ nick: p.nick ?? '', district: p.district, x: p.x, z: p.z }));
+    return [...this.players.values()].filter((p) => p.nick).slice(0, MAX_ONLINE_LIST).map((p) => ({ author: authorKey(p.userId ?? p.id), nick: p.nick ?? '', district: p.district, x: p.x, z: p.z }));
   }
 
   chat(id: string, raw: unknown, now: number): ChatResult {
     const p = this.players.get(id);
     if (!p?.nick || !p.userId) return { ok: false, code: 'not_signed_in' };
     return this.chatLog.post({ userId: p.userId, nick: p.nick, homes: p.homes ?? [], isModerator: p.isModerator ?? false, canWrite: p.canWrite ?? true }, raw, now);
+  }
+
+  /** Shikoyat uchun: xabar va uning haqiqiy muallifi (faqat serverda). */
+  reported(id: string, messageId: unknown): (ChatMessage & { readonly userId: string }) | null {
+    return this.players.get(id)?.userId && typeof messageId === 'string' ? this.chatLog.find(messageId) : null;
   }
 
   /** Moderator xabarni o'chiradi; muallifini bilish uchun xabar qaytadi. */

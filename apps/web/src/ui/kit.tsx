@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { errorText, useT } from '../app/i18n.ts';
 import { getApp, openPanel, toast } from '../app/store.ts';
 
-interface SheetProps { readonly title: string; readonly children: ReactNode; readonly onBack?: () => void; /** 'half' — pastki yarim ekran. */ readonly variant?: 'half' }
+interface SheetProps { readonly title: string; readonly children: ReactNode; readonly onBack?: () => void; /** 'half' — pastki yarim ekran. */ readonly variant?: 'half' | 'half chat' }
 export function Sheet({ title, children, onBack, variant }: SheetProps): React.JSX.Element {
   const t = useT();
   const ref = useRef<HTMLElement>(null);

@@ -1,7 +1,7 @@
 /** Uch rejim (Shahar, Piyoda, Mashina) orasida o'tish va "o'sha joyga borish". */
 import type { Plot } from '../../../../packages/shared/src/index.ts';
 import { frontOf } from '../../../../packages/shared/src/index.ts';
-import { startFlight, viewOfPlot, viewOfPoint, type CityView } from '../logic/cityCamera.ts';
+import { framed, startFlight, viewOfPlot, viewOfPoint, type CityView } from '../logic/cityCamera.ts';
 import { ownedCars, roadSpot, type CarState } from '../logic/drive.ts';
 import { movePlayer } from '../logic/motion.ts';
 import { walkSolids, worldIndex } from '../logic/worldIndex.ts';
@@ -70,7 +70,7 @@ export const flyTo = (to: CityView, isInstant = false): void => {
 
 /** Uyga borish: shaharda kamera uchadi, piyoda — eshik oldida, mashinada — ko'chada. */
 export const goToHouse = (p: Plot, isInstant = false): void => {
-  if (session.mode === 'city') { flyTo(viewOfPlot(p), isInstant); return; }
+  if (session.mode === 'city') { flyTo(framed(viewOfPlot(p), { width: innerWidth, height: innerHeight }), isInstant); return; }
   const f = frontOf(p, p.type === 'kvartira' ? 14 : 4);
   if (session.mode === 'walk') teleport(f.x, f.z, f.yaw + Math.PI);
   else spawnCar(f.x, f.z);

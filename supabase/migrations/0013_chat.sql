@@ -25,4 +25,14 @@ begin
   insert into public.audit_log (actor, action, data) values (p_moderator, 'chat:ban', jsonb_build_object('user', p_user));
 end $$;
 
+/* Chat shikoyati: muallifni server aniqlaydi (nik takrorlanishi mumkin), adminga login ko'rinadi. */
+create function public.svc_chat_report(p_reporter uuid, p_user uuid, p_text text) returns void language plpgsql security definer set search_path = '' as $$
+declare t public.profiles;
+begin
+  perform private.rate('report:' || p_reporter, 10, 86400);
+  select * into t from public.profiles where user_id = p_user;
+  if t.user_id is null then perform private.fail('not_found'); end if;
+  insert into public.reports (reporter, target_kind, target_id, reason) values (p_reporter, 'chat', t.login, left(p_text, 500));
+end $$;
+
 select private.apply_grants();

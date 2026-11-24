@@ -89,6 +89,8 @@ describe('markaz', () => {
 
   test('odam davlat binosiga kirmaydi, boshlanish nuqtasi bo‘sh', () => {
     expect(movePlayer({ x: 0, z: 40 }, 0, 0, PLAZA_SOLIDS)).toEqual({ x: 0, z: 40 });
+    const spawn = movePlayer({ x: 0, z: 0.1 }, 0, 0, PLAZA_SOLIDS);
+    expect(Math.hypot(spawn.x, spawn.z)).toBeGreaterThan(11);
     const p = movePlayer({ x: -59, z: -30 }, 0, -15, PLAZA_SOLIDS);
     expect(p.z).toBeGreaterThan(-42);
   });

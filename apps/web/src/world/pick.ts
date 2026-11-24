@@ -51,7 +51,9 @@ const openPicked = (id: string): void => {
 /** Sudrash emas, qisqa teginish. */
 export const attachPicking = (el: HTMLCanvasElement, camera: Camera, plan: MasterPlan): (() => void) => {
   let start: { readonly x: number; readonly y: number; readonly t: number } | null = null;
-  const down = (e: PointerEvent): void => { start = e.button === 0 ? { x: e.clientX, y: e.clientY, t: e.timeStamp } : null; };
+  const down = (e: PointerEvent): void => { start = e.button === 0 && e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.timeStamp } : null; };
+  /** Sudrab, boshlangan joyga qaytarilsa ham bosish emas. */
+  const move = (e: PointerEvent): void => { if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > TAP_MOVE) start = null; };
   const up = (e: PointerEvent): void => {
     const s = start;
     start = null;
@@ -63,9 +65,11 @@ export const attachPicking = (el: HTMLCanvasElement, camera: Camera, plan: Maste
     if (id) openPicked(id);
   };
   el.addEventListener('pointerdown', down);
+  el.addEventListener('pointermove', move);
   el.addEventListener('pointerup', up);
   return () => {
     el.removeEventListener('pointerdown', down);
+    el.removeEventListener('pointermove', move);
     el.removeEventListener('pointerup', up);
   };
 };
