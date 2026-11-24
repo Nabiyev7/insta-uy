@@ -5,7 +5,7 @@ Bu faylni o'qiyotgan AI yordamchi: sen kod yozmaysan. Vazifang — loyiha egasi 
 Rasmlar (`docs/chat/`):
 - `shahar-reja.png` — butun shahar chizmasi, koordinata to'ri bilan (asosiy rasm)
 - `xarita.jpg` — shahar tepadan (3D), `markaz-3d.jpg` — maydon va bulvar
-- `levellar.jpg` — uy levellari (1–5 yaqindan va to'rt tomondan), `binolar.jpg` — binolar, `bezaklar.jpg` — bezaklar
+- `levellar.jpg` — uy levellari (1–5 yaqindan va to'rt tomondan), `binolar.jpg` — binolar, `bezaklar.jpg` — bezaklar, `bezaklar-lyuks.jpg` — lyuks bezaklar
 - `bosh-uchastka.png` — bo'sh joylar, `uy-qurilishi-1..3.png` — uy qurilishi effekti
 - `ekran-*.png` — telefondagi ko'rinish
 
@@ -16,6 +16,7 @@ Instagram obunachilari uchun veb-saytdagi 3D virtual shahar. Odam shaharni tepad
 - Shahar 3×3 km, 12 tuman, 5 000 uchastka: 3 500 hovli (24×34 m), 1 000 kvartira, 400 villa (30×42), 100 qasr (40×56). Qo'shimcha 170 tijorat joyi (hozircha **sotilmaydi**).
 - Shahar **bo'sh ochiladi**: uy faqat egasi bor uchastkada. Bo'sh joyda taxtacha turadi; bosilsa — "Shu yerda uy qurish" (bepul, faqat hovli; kvartira hozircha berilmaydi).
 - Uylar 10 level; 1–5-level yangi uslubda to'liq ishlangan (4 — zamonaviy, 5 — ikki qavatli), 6–10 eski modellar. Uyni ko'tarish chegarasi — 3 (admin sozlamasi).
+- **Lyuks bezaklar (9 ta) faqat 7-leveldan**, oddiy jufti turadigan joyga qo'yiladi; uchburchak ≤ 600 (pavilyon va basseyn ≤ 900), har birining `_lod` shakli bor (`blender/scripts/kit_lux.py`).
 - **Bezaklar faqat 5-leveldan.** Nuqtalar: garaj oldi, old hovli chap/o'ng, darvoza yoni, 4 burchak (`packages/shared/src/anchors.ts`).
 - Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. Holat: `PLAN.md` oxiri.
 - Internetga hali chiqmagan, **hali hech kim uy olmagan**.

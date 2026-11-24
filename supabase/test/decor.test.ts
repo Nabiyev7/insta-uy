@@ -44,6 +44,22 @@ describe('katalog bazada', () => {
   });
 });
 
+describe('lyuks bezaklar', () => {
+  test('5–6-level uyga sotilmaydi va qo‘yilmaydi, 7-levelda — mumkin; tanga kamayadi', async () => {
+    for (const tier of [5, 6]) {
+      const { uid, plot } = await house(tier);
+      await expect(as(uid, 'my_buy_decor_coins', { p_id: 'lux_superkar' })).rejects.toThrow('level_low');
+      await give(uid, 'lux_superkar');
+      await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { garaj_oldi: 'lux_superkar' } })).rejects.toThrow('level_low');
+    }
+    const { uid, plot } = await house(7);
+    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'lux_superkar' })).toBe(35_000);
+    await as(uid, 'my_place_decor', { p_plot: plot, p_places: { garaj_oldi: 'lux_superkar' } });
+    expect((await placesOf(plot)).places).toEqual({ garaj_oldi: 'lux_superkar' });
+    await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { old_hovli_chap: 'lux_superkar' } })).rejects.toThrow('wrong_spot');
+  });
+});
+
 describe('joylash', () => {
   test('eski ma’lumot ko‘chadi: bezak yo‘qolmaydi', async () => {
     const { plot } = await house(5);

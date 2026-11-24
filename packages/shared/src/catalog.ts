@@ -18,6 +18,8 @@ export type TierId = (typeof TIERS)[number]['id'];
 export const MAX_TIER = TIERS.length;
 /** Bezaklar shu leveldan ochiladi (nik lavhasi bundan mustasno). */
 export const DECOR_LEVEL = 5;
+/** Lyuks bezaklar shu leveldan ochiladi. */
+export const LUXE_LEVEL = 7;
 
 export const MIN_TIER: Readonly<Record<PlotType, TierId>> = { hovli: 1, kvartira: 1, villa: 7, qasr: 9 };
 /** Bepul olinadigan turlar (kvartira hozircha berilmaydi — docs/chat/BOSQICH-2.md). */
@@ -150,8 +152,23 @@ export const DECOR: readonly DecorItem[] = [
   item('gul_zor', 'yard', 'Gulzor', 'Цветник', 7_500, 150, { spots: ['gate_side'] }),
   item('gul_kamar', 'yard', 'Gul kamari', 'Цветочная арка', 15_000, 300, { spots: ['gate_side'] }),
   item('suv_hovuz', 'water', 'Hovuz va favvora', 'Пруд с фонтаном', 40_000, 800, { spots: ['left'] }),
+  item('lux_pavilyon', 'yard', 'Pavilyon', 'Павильон', 400_000, 8000, { spots: ['left'], minLevel: LUXE_LEVEL }),
+  item('lux_gril', 'yard', 'Gril oshxona', 'Гриль-кухня', 200_000, 4000, { spots: ['right'], minLevel: LUXE_LEVEL }),
+  item('lux_basseyn', 'water', 'Lyuks basseyn va jakuzi', 'Люкс-бассейн с джакузи', 500_000, 10_000, { spots: ['left'], minLevel: LUXE_LEVEL }),
+  item('lux_favvora', 'water', 'Marmar favvora', 'Мраморный фонтан', 300_000, 6000, { spots: ['right', 'left'], minLevel: LUXE_LEVEL }),
+  item('lux_bog', 'yard', "Fransuz bog'i", 'Французский сад', 250_000, 5000, { spots: ['right', 'left'], minLevel: LUXE_LEVEL }),
+  item('lux_limuzin', 'car', 'Limuzin', 'Лимузин', 600_000, 12_000, { spots: ['car'], minLevel: LUXE_LEVEL }),
+  item('lux_superkar', 'car', 'Superkar', 'Суперкар', 750_000, 15_000, { spots: ['car'], minLevel: LUXE_LEVEL }),
+  item('lux_jip', 'car', 'Lyuks jip', 'Люкс-внедорожник', 500_000, 10_000, { spots: ['car'], minLevel: LUXE_LEVEL }),
+  item('lux_daraxt', 'tree', 'Tuvakdagi daraxt', 'Дерево в кадке', 150_000, 3000, { spots: ['corner', 'pet'], minLevel: LUXE_LEVEL }),
 ];
+/** Tarmoqdagi holat kodi: 0–5 odam, 6 — shaharga tepadan qarayapti, `carBase` dan boshlab mashinalar. `cars` — `drive.ts` dagi CARS soni (test tekshiradi). */
+export const ANIM = { away: 6, carBase: 10, cars: 10 } as const;
+export const MAX_ANIM = ANIM.carBase + ANIM.cars - 1;
 export const decorById = (id: string): DecorItem | undefined => DECOR.find((d) => d.id === id);
+
+/** Uzoq shakli (`_lod`) bor lyuks modellar. */
+export const LUXE_MODELS: ReadonlySet<string> = new Set(DECOR.filter((d) => d.id.startsWith('lux_')).map((d) => d.model));
 
 /** Level bilan tekin keladigan hovli bezaklari: indeks = level. 1–5 — standart hovli; bezak joylari hisobiga kirmaydi. */
 const GARDEN = ['path_stone', 'tree_round', 'tree_wide', 'tree_tall', 'tree_slim'] as const;

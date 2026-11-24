@@ -1,6 +1,6 @@
 /** Ko'p o'yinchi holati: tarmoqsiz, sinab bo'ladigan mantiq. */
 import { CITY_HALF } from '../../../packages/shared/src/masterplan/geometry.ts';
-import { sanitizeAvatar, type AvatarLook } from '../../../packages/shared/src/catalog.ts';
+import { ANIM, MAX_ANIM, sanitizeAvatar, type AvatarLook } from '../../../packages/shared/src/catalog.ts';
 import { ChatLog, authorKey, type ChatMessage, type ChatResult } from './chat.ts';
 
 export interface Who {
@@ -29,9 +29,7 @@ const BOUND = CITY_HALF + 200;
 const VIEW_RADIUS = 140;
 const MAX_VISIBLE = 30;
 const MOVE_GAP_MS = 60;
-/** 0–5 piyoda, 6 shaharga tepadan qarayapti, 10–13 mashinada. */
-const MAX_ANIM = 13;
-const ANIM_AWAY = 6;
+const ANIM_AWAY = ANIM.away;
 const MAX_ONLINE_LIST = 200;
 
 const isFiniteIn = (v: unknown, limit: number): v is number => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= limit;

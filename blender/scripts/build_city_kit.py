@@ -12,6 +12,7 @@ from kit_city import city_models, new_buildings  # noqa: E402
 from kit_decor import all_decor  # noqa: E402
 from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
+from kit_lux import lux_decor, lux_lods  # noqa: E402
 from kit_props import all_props  # noqa: E402
 from kit_yard import yard_decor  # noqa: E402
 
@@ -19,8 +20,9 @@ from kit_yard import yard_decor  # noqa: E402
 LOW_SIZE = {'x': 11.25, 'front': 11.0, 'back': 8.5}
 HIGH_SIZE = {'x': 7.7, 'front': 8.0, 'back': 6.7}
 LOW_LEVELS = 6
-MAX_TRIS = {'level': 2500, 'palace': 3500, 'civic': 2500, 'tower': 1000, 'decor': 300, 'big_decor': 500, 'two_floors': 3000}
+MAX_TRIS = {'level': 2500, 'palace': 3500, 'civic': 2500, 'tower': 1000, 'decor': 300, 'big_decor': 500, 'lux': 600, 'big_lux': 900, 'lod': 250, 'two_floors': 3000}
 BIG_DECOR = ('dam_besedka', 'dam_basseyn')
+BIG_LUX = ('lux_pavilyon', 'lux_basseyn')
 TWO_FLOORS = 5
 TOWERS = ('bank', 'agentlik', 'novostroyka')
 PALACE_FROM = 9
@@ -45,9 +47,15 @@ def check_center(model):
         raise ValueError(f'{model.name}: {tris} uchburchak > {limit}')
 
 
+def decor_kind(name):
+    if name.startswith('lux_'):
+        return 'lod' if name.endswith('_lod') else 'big_lux' if name in BIG_LUX else 'lux'
+    return 'big_decor' if name in BIG_DECOR else 'decor'
+
+
 def check_decor(model):
     tris = sum(len(poly[0]) - 2 for poly in model.polys)
-    limit = MAX_TRIS['big_decor' if model.name in BIG_DECOR else 'decor']
+    limit = MAX_TRIS[decor_kind(model.name)]
     if tris > limit:
         raise ValueError(f'{model.name}: {tris} uchburchak > {limit}')
 
@@ -67,7 +75,7 @@ def main():
     for model in city:
         if model.name in limited:
             check_center(model)
-    decor = all_decor() + yard_decor()
+    decor = all_decor() + yard_decor() + lux_decor() + lux_lods()
     for model in decor:
         check_decor(model)
     for model in levels + all_buildings() + center + city + all_props() + decor:

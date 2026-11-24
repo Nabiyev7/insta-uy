@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { CITY_HALF, DECOR, FRAME_COLORS, HILL, LAKE, MIN_TIER, REF_YARD, ROOF_COLORS, TIERS, WALL_COLORS, ZONES, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
+import { CITY_HALF, DECOR, FRAME_COLORS, HILL, LAKE, LUXE_MODELS, MIN_TIER, REF_YARD, ROOF_COLORS, TIERS, WALL_COLORS, ZONES, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
 import { buildingItem, commerceItem, houseItem, plotItems } from '../apps/web/src/logic/placement.ts';
 import { staticItems } from '../apps/web/src/logic/streets.ts';
 import { toWorld } from '../apps/web/src/logic/item.ts';
@@ -102,12 +102,25 @@ const sidesScene = () => {
 /** 5-level: hamma nuqtasi to'la hovli. */
 const FULL_YARD = ['garaj_oldi:avto_sedan', 'old_hovli_chap:dam_basseyn', 'old_hovli_ong:dam_stol', 'darvoza_yoni:gul_kamar', 'burchak_1:daraxt_olma', 'burchak_2:daraxt_palma', 'burchak_3:daraxt_archa', 'burchak_4:daraxt_gilos'];
 const newDecorScene = () => {
-  const fresh = DECOR.slice(DECOR.findIndex((d) => d.id === 'dam_besedka'));
+  const fresh = DECOR.slice(DECOR.findIndex((d) => d.id === 'dam_besedka')).filter((d) => !LUXE_MODELS.has(d.model));
   const items = fresh.map((d, i) => plain(d.model, (i % 5) * 9, 4 - Math.floor(i / 5) * 12));
   const p = nearPlot(TIERS[4], 62, -8, 0);
   return {
     name: '9c Yangi bezaklar', items: [...items, ...plotItems(p, state(p.id, 5, 0, 0, FULL_YARD), true)].map(pack),
     labels: fresh.map((d, i) => [d.uz, (i % 5) * 9, 0.1, 4 - Math.floor(i / 5) * 12 + 4.9, 0, 1.1]), floor: [40, 0, 400], camera: [[36, 54, 66], [36, 0, -6]],
+  };
+};
+/** Lyuks bezaklar (7-leveldan) va ular bilan to'la 7-, 8- va 10-level hovlilar. */
+const LUXE_YARD = ['garaj_oldi:lux_superkar', 'old_hovli_chap:lux_basseyn', 'old_hovli_ong:lux_favvora', 'burchak_1:lux_daraxt', 'burchak_2:lux_daraxt', 'burchak_3:lux_daraxt', 'burchak_4:lux_daraxt', 'p1:lux_daraxt', 'p2:lux_daraxt'];
+const LUXE_YARD_2 = ['garaj_oldi:lux_limuzin', 'old_hovli_chap:lux_pavilyon', 'old_hovli_ong:lux_gril', 'burchak_1:lux_daraxt', 'burchak_2:lux_daraxt', 'p1:lux_daraxt', 'p2:lux_daraxt'];
+const LUXE_YARD_3 = ['garaj_oldi:lux_jip', 'old_hovli_chap:lux_bog', 'old_hovli_ong:lux_favvora', 'burchak_1:lux_daraxt', 'burchak_2:lux_daraxt'];
+const luxeScene = () => {
+  const list = DECOR.filter((d) => LUXE_MODELS.has(d.model));
+  const at = (i) => [(i % 5) * 14, 34 - Math.floor(i / 5) * 12];
+  const yards = [[7, LUXE_YARD], [8, LUXE_YARD_2], [10, LUXE_YARD_3]].flatMap(([tier, yard], i) => { const p = nearPlot(TIERS[tier - 1], i * 28, -10, 0); return plotItems(p, state(p.id, tier, 0, 0, yard), true); });
+  return {
+    name: '9d Lyuks bezaklar', items: [...list.map((d, i) => plain(d.model, ...at(i))), ...yards].map(pack),
+    labels: list.map((d, i) => [`${d.uz} — ${d.priceCoins}`, at(i)[0], 0.1, at(i)[1] + 5, 0, 0.9]), floor: [28, 0, 400], camera: [[28, 48, 80], [28, 0, 8]],
   };
 };
 /** Yangi jamoat binolari yaqindan. */
@@ -179,7 +192,7 @@ const scenes = [
   region('4 Markaz', 0, 0, 300, [[-150, 190, 330], [0, 0, -20]]),
   region("5 Ko'l bo'yi", 1000, 1120, 230, [[800, 140, 1390], [1060, 0, 1140]], true),
   region('6 Tepalik', HILL.x, HILL.z, 240, [[-930, 190, -870], [HILL.x, 10, HILL.z]]),
-  mapScene(), firstScene(), newBuildingsScene(), sidesScene(), newDecorScene(),
+  mapScene(), firstScene(), newBuildingsScene(), sidesScene(), newDecorScene(), luxeScene(),
 ];
 writeFileSync(path.join(dir, 'show.json'), JSON.stringify({ lake: LAKE, scenes }));
 
@@ -206,6 +219,7 @@ const saveDocs = async () => {
   await jpg(sharp(shot(3)), 'markaz-3d.jpg');
   await jpg(sharp({ create: { width: W, height: H * 2, channels: 3, background: '#fff' } }).composite([{ input: shot(8), left: 0, top: 0 }, { input: shot(2), left: 0, top: H }]), 'binolar.jpg');
   await jpg(await stack([[10, 160, 760]]), 'bezaklar.jpg');
+  await jpg(await stack([[11, 90, 990]]), 'bezaklar-lyuks.jpg');
 };
 if (shouldRender && process.argv.includes('--docs')) await saveDocs();
 if (shouldRender) process.stdout.write(`Rasmlar: ${dir}\n`);

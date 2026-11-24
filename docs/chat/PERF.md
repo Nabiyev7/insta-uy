@@ -46,3 +46,9 @@ low: piyoda 275–285 → 342–361 FPS, shahar eng baland 140 → 170–340, ma
 mid: piyoda 225 → 300 (59 → 46 call), shahar 119–126 → 153, mashina 94–101 → 122–127
 high: piyoda 135 → 190 (186 → 82 call, 218 → 157 ming uchburchak), shahar 106–170 → 140, mashina 61–65 → 83
 Modellar fayli 1866 → 2086 KB (4–5-level, 15 bezak). Bo'sh uchastka: yer bo'lagi + 1 daraxt modeli + taxtacha (yozuvi bitta umumiy chizish).
+
+## 10-qadamdan keyin: 50 ta 10-level uy (past sifat, CPU 6 baravar sekin, `node e2e/perf-decor.mjs`)
+piyoda: bezaksiz 380 FPS / 41 call → 17 bezak 365 / 48 → lyuks bezaklar bilan 435 / 38
+shahar: bezaksiz 393 FPS / 56 call → 17 bezak 343 / 76 → lyuks bezaklar bilan 365 / 62
+`perf.mjs` (bo'sh shahar): low 397 / 196 / 162 FPS, mid 370 / 177 / 143, high 223 / 155 / 93 (piyoda / shahar / mashina) — 9-qadamdagidan yomon emas.
+Modellar fayli 2086 → 2276 KB (9 ta lyuks bezak va ularning uzoq shakllari). Lyuks model 220–568 uchburchak, uzoqda 56–150.

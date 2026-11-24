@@ -27,7 +27,7 @@ export const ANCHORS: readonly Anchor[] = [
   anchor('luxe', 'luxe', 6, 0, -7.5, 0, 0, 'Uy atrofi yoritilishi', 'Подсветка дома'),
   anchor('roof', 'roof', DECOR_LEVEL, 0, -7.5, 0, 0, 'Tom', 'Крыша'),
   anchor('sign', 'sign', 1, -2.8, 16.2, 1, 0.5, 'Darvoza yoni: lavha', 'У ворот: табличка'),
-  anchor('garaj_oldi', 'car', DECOR_LEVEL, 8, 6.4, 3, 5, 'Garaj oldi: mashina', 'У гаража: машина'),
+  anchor('garaj_oldi', 'car', DECOR_LEVEL, 8, 6.7, 3, 5.6, 'Garaj oldi: mashina', 'У гаража: машина'),
   anchor('old_hovli_chap', 'left', DECOR_LEVEL, -5.6, 8.6, 7.2, 7, 'Old hovli, chapda', 'Передний двор, слева'),
   anchor('old_hovli_ong', 'right', DECOR_LEVEL, 3.15, 8.6, 3.4, 4, "Old hovli, o'ngda", 'Передний двор, справа'),
   anchor('darvoza_yoni', 'gate_side', DECOR_LEVEL, -4.6, 14.8, 3.2, 1.6, 'Darvoza yonida', 'Рядом с воротами'),

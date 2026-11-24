@@ -98,7 +98,7 @@ def dam_stol() -> Model:
 
 
 # ---------- Mashinalar ----------
-def tyre(m: Model, x: float, y: float, r: float, w: float, n: int = 9) -> None:
+def tyre(m: Model, x: float, y: float, r: float, w: float, n: int = 9, hub_color: str = '#c9ced3') -> None:
     """O'qi x bo'ylab g'ildirak, tashqi yuzasi diskli."""
     s = 1 if x > 0 else -1
     ring = [(math.cos(2 * math.pi * i / n) * r, math.sin(2 * math.pi * i / n) * r) for i in range(n)]
@@ -110,10 +110,10 @@ def tyre(m: Model, x: float, y: float, r: float, w: float, n: int = 9) -> None:
     face = [(xo, y + a, r + b) for a, b in ring]
     m.poly_fan(face if s > 0 else face[::-1], PLAIN, TYRE, 0.0)
     hub = [(xo + s * 0.02, y + a * 0.55, r + b * 0.55) for a, b in ring[::2]]
-    m.poly_fan(hub if s > 0 else hub[::-1], PLAIN, '#c9ced3', 0.0)
+    m.poly_fan(hub if s > 0 else hub[::-1], PLAIN, hub_color, 0.0)
 
 
-def auto(name: str, length: float, width: float, body_h: float, cab_h: float, cab: float, shift: float, color: str, bevel: float) -> Model:
+def auto(name: str, length: float, width: float, body_h: float, cab_h: float, cab: float, shift: float, color: str, bevel: float, glass: str = '#cde7f2', hub: str = '#c9ced3', wheel: float = 0.37) -> Model:
     """Yumaloq qirrali umumiy mashina (brendsiz)."""
     m = Model(name, COARSE)
     hl, hw, z0 = length / 2, width / 2, 0.35
@@ -126,7 +126,7 @@ def auto(name: str, length: float, width: float, body_h: float, cab_h: float, ca
     b = [(-hw + 0.2, y0 + 0.35, zt), (hw - 0.2, y0 + 0.35, zt), (hw - 0.2, y1 - 0.25, zt), (-hw + 0.2, y1 - 0.25, zt)]
     for i in range(4):
         j = (i + 1) % 4
-        m.poly([a[i], a[j], b[j], b[i]], PLAIN, '#cde7f2')
+        m.poly([a[i], a[j], b[j], b[i]], PLAIN, glass)
     m.box(-hw + 0.16, y0 + 0.3, zt, hw - 0.16, y1 - 0.2, zt + 0.1, PLAIN, color, bottom=True)
     lamp_z = z0 + body_h * 0.55
     for s in (-1, 1):
@@ -136,7 +136,7 @@ def auto(name: str, length: float, width: float, body_h: float, cab_h: float, ca
         m.panel([(c - 0.21, -hl - 0.02, lamp_z), (c + 0.21, -hl - 0.02, lamp_z), (c + 0.21, -hl - 0.02, lamp_z + 0.16), (c - 0.21, -hl - 0.02, lamp_z + 0.16)], PLAIN, '#fff4cc', M_GLOW)
         m.panel([(c + 0.21, hl + 0.02, lamp_z), (c - 0.21, hl + 0.02, lamp_z), (c - 0.21, hl + 0.02, lamp_z + 0.14), (c + 0.21, hl + 0.02, lamp_z + 0.14)], PLAIN, '#d13a30')
         for y in (-length * 0.31, length * 0.31):
-            tyre(m, s * (hw - 0.1), y, 0.37, 0.26)
+            tyre(m, s * (hw - 0.1), y, wheel, 0.26, hub_color=hub)
     return m
 
 

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
-  ANCHORS, DECOR, DECOR_LEVEL, DEFAULT_DECOR_SLOTS, FREE_ANCHOR, LEVEL_DRIVE, MAX_DECOR_SLOTS, MAX_TIER, REF_YARD, TIERS, anchorById, decodePlan, decorSlots, footprint, levelYard, openAnchors, parsePlaced, type Anchor, type EncodedPlan, type Plot,
+  ANCHORS, DECOR, DECOR_LEVEL, DEFAULT_DECOR_SLOTS, FREE_ANCHOR, LEVEL_DRIVE, LUXE_LEVEL, LUXE_MODELS, MAX_DECOR_SLOTS, MAX_TIER, REF_YARD, TIERS, anchorById, decodePlan, decorSlots, footprint, levelYard, openAnchors, parsePlaced, type Anchor, type EncodedPlan, type Plot,
 } from '../../../packages/shared/src/index.ts';
 import { decorOf, setCatalog, type CatalogRow } from '../src/logic/decorCatalog.ts';
 import type { Item } from '../src/logic/item.ts';
@@ -159,6 +159,47 @@ describe('yangi bezaklar', () => {
       const [cx0, cx1, cz0, cz1] = boxOf(items.find((i) => i.model === 'avto_krossover')!);
       const [x0, x1, z0, z1] = boxOf(items.find((i) => i.model === LEVEL_DRIVE[tier])!);
       expect(cx0 >= x0 && cx1 <= x1 && cz0 >= z0 && cz1 <= z1, `${tier}-level`).toBe(true);
+    }
+  });
+});
+
+describe('lyuks bezaklar', () => {
+  const luxe = DECOR.filter((d) => LUXE_MODELS.has(d.model));
+  const PRICES = { lux_pavilyon: 8000, lux_gril: 4000, lux_basseyn: 10_000, lux_favvora: 6000, lux_bog: 5000, lux_limuzin: 12_000, lux_superkar: 15_000, lux_jip: 10_000, lux_daraxt: 3000 };
+  test('9 tasi katalogda, faqat 7-leveldan, promtdagi narxda', () => {
+    expect(LUXE_LEVEL).toBe(7);
+    expect(Object.fromEntries(luxe.map((d) => [d.id, d.priceCoins]))).toEqual(PRICES);
+    for (const d of luxe) expect(d, d.id).toMatchObject({ minLevel: LUXE_LEVEL, isActive: true, stock: null });
+  });
+  test('oddiy jufti bilan bir xil joyga tushadi', () => {
+    const pairs = { lux_pavilyon: 'dam_besedka', lux_gril: 'dam_mangal', lux_basseyn: 'dam_basseyn', lux_favvora: 'suv_hovuz', lux_limuzin: 'avto_sedan', lux_superkar: 'avto_sport', lux_jip: 'avto_krossover', lux_daraxt: 'daraxt_olma' };
+    for (const [id, pair] of Object.entries(pairs)) expect(DECOR.find((d) => d.id === id)!.spots, id).toEqual(expect.arrayContaining([...DECOR.find((d) => d.id === pair)!.spots]));
+    expect(DECOR.find((d) => d.id === 'lux_bog')!.spots).toEqual(['right', 'left']);
+  });
+  test('har biri uchun uzoq shakl bor', () => {
+    for (const d of luxe) { expect(boxes.has(d.model), d.id).toBe(true); expect(boxes.has(`${d.model}_lod`), d.id).toBe(true); }
+  });
+  test('7–10-levelda uyga, tekin bezaklarga va bir-biriga tegmaydi (har tur hovlida)', () => {
+    const SETS = [
+      ['garaj_oldi:lux_limuzin', 'old_hovli_chap:lux_basseyn', 'old_hovli_ong:lux_gril'], ['garaj_oldi:lux_superkar', 'old_hovli_chap:lux_pavilyon', 'old_hovli_ong:lux_favvora'],
+      ['garaj_oldi:lux_jip', 'old_hovli_chap:lux_bog', 'old_hovli_ong:lux_bog'], ['garaj_oldi:lux_jip', 'old_hovli_chap:lux_favvora', 'old_hovli_ong:lux_favvora'],
+    ].map((s) => [...s, ...['burchak_1', 'burchak_2', 'burchak_3', 'burchak_4', 'p1', 'p2'].map((a) => `${a}:lux_daraxt`)]);
+    const hits = (a: Box, b: Box): boolean => Math.min(a[1], b[1]) - Math.max(a[0], b[0]) > 0.02 && Math.min(a[3], b[3]) - Math.max(a[2], b[2]) > 0.02;
+    for (const type of ['hovli', 'villa', 'qasr']) {
+      for (let tier = LUXE_LEVEL; tier <= MAX_TIER; tier++) {
+        for (const decor of SETS) {
+          const items = plotItems(sample(type), state({ tier, decor }), true);
+          const own = items.filter((i) => LUXE_MODELS.has(i.model));
+          expect(own).toHaveLength(decor.length);
+          const solid = items.filter((i) => i.model.startsWith('house') || i.model === 'gul_zor' || i.model === 'path_stone' || i.model.startsWith('tree_'));
+          own.forEach((i, k) => {
+            for (const o of [...solid, ...own.slice(k + 1)]) expect(hits(boxOf(i), boxOf(o)), `${type} ${tier}-level ${i.model} va ${o.model}`).toBe(false);
+          });
+          const drive = boxOf(items.find((i) => i.model === LEVEL_DRIVE[tier])!);
+          const car = boxOf(own.find((i) => DECOR.find((d) => d.id === i.model)!.slot === 'car')!);
+          expect(car[0] >= drive[0] && car[1] <= drive[1] && car[2] >= drive[2] && car[3] <= drive[3], `${type} ${tier} mashina yo‘lda`).toBe(true);
+        }
+      }
     }
   });
 });

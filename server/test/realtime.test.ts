@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { io, type Socket } from 'socket.io-client';
+import { CARS, animOfCar } from '../../apps/web/src/logic/drive.ts';
+import { MAX_ANIM } from '../../packages/shared/src/index.ts';
 import { Room, type Who } from '../src/realtime/room.ts';
 import { attachRealtime } from '../src/realtime/server.ts';
 import type { Backend } from '../src/types.ts';
@@ -14,8 +16,14 @@ describe('Room', () => {
     r.join('a', who('ali'));
     expect(r.move('a', [1.234, 2, 0.5, 1, 3], 1000)).toBe(true);
     expect(r.move('a', [1, 2, 0, 1, 3], 1010)).toBe(false); // juda tez
-    for (const bad of [null, 'x', [NaN, 0, 0, 0, 0], [5000, 0, 0, 0, 0], [0, 0, 0, 99, 0], [0, 0, 0, 14, 0], ['1', 0, 0, 0, 0], [1]]) expect(r.move('a', bad, 5000)).toBe(false);
+    for (const bad of [null, 'x', [NaN, 0, 0, 0, 0], [5000, 0, 0, 0, 0], [0, 0, 0, 99, 0], [0, 0, 0, MAX_ANIM + 1, 0], ['1', 0, 0, 0, 0], [1]]) expect(r.move('a', bad, 5000)).toBe(false);
     expect(r.move('yoq', [0, 0, 0, 0, 0], 9000)).toBe(false);
+  });
+  test('har bir mashina kodi serverdan o‘tadi', () => {
+    const r = new Room();
+    r.join('a', who('ali'));
+    CARS.forEach((c, i) => { expect(r.move('a', [i, 0, 0, animOfCar(c.id), 1], 1000 * (i + 1)), c.id).toBe(true); });
+    expect(animOfCar(CARS.at(-1)!.id)).toBe(MAX_ANIM);
   });
   test('faqat yaqinlar, ko‘pi bilan 30', () => {
     const r = new Room();

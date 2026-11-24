@@ -10,4 +10,8 @@ To'rt markaz, yashil bulvarlar, halqa va diagonal yo'llar; yangi yorug' uslub; k
 - 15 ta yangi bezak; bezaklar faqat 5-leveldan; joy nuqtalari uyga, yo'lakka va bir-biriga tegmaydi (test bor).
 - Tezlik: oldingidan 20–40% tezroq (batafsil `PERF.md`).
 
-Hal qilinmagan savollar: `SAVOLLAR.md` (8- va 9-qadam bo'limlari). Haqiqiy Redmi A telefonda hali sinalmagan.
+## 10-qadam — lyuks bezaklar
+- 9 ta lyuks bezak: pavilyon, gril oshxona, lyuks basseyn + jakuzi, marmar favvora, fransuz bog'i, limuzin, superkar, lyuks jip, tuvakdagi daraxt. Faqat 7-leveldan; 5–6-levelda qulf.
+- Uchta mashina haydaladi. Kechasi chiroqlar va suv yonadi. Uyga va bir-biriga tegmasligi testda.
+
+Hal qilinmagan savollar: `SAVOLLAR.md` (8-, 9- va 10-qadam bo'limlari). Haqiqiy Redmi A telefonda hali sinalmagan.

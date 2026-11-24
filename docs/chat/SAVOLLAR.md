@@ -85,3 +85,12 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 9. **Bo'sh joydagi tugma:** kirmagan odamga "Telegram orqali kirish" chiqadi va kirish oynasi ochiladi; bot nomi yozilmaguncha u yerda Telegram "Tez kunda" turadi (login+parol ishlaydi — uni olib tashlash 2-bosqich ishi).
 10. **Villa va qasr** bo'sh uchastkalarida taxtacha yo'q (bepul emas), faqat daraxt.
 11. **`agents/` va `github/` papkalari** bu ishga kirmaydi, commitga qo'shilmadi.
+
+## 10-qadam: lyuks bezaklar (BEZAK-LYUKS-PROMT)
+1. **O'lchamlar.** Namunadagi pavilyon, basseyn va bog' (9 × 11 m gacha) hovliga sig'maydi — old hovli chap nuqtasi 7,2 × 7 m ga moslab kichraytirildi. Shezlonglar yotqizib joylashtirildi.
+2. **Marmar favvora va fransuz bog'i** ikki joyga sig'adi: o'ngda kichik, chap (keng) hovlida 1,6–1,8 baravar katta turadi. "Markaz" nuqtasi yo'q (u yerda yo'lak o'tadi) — o'rniga chap/o'ng.
+3. **Tuvakdagi daraxt** burchaklarda katta, eshik oldidagi 2 ta nuqtada 0,6 baravar kichik turadi.
+4. **So'mdagi narx** promtda yo'q: eski qoida bo'yicha 1 tanga = 50 so'm qilib yozildi (pulli to'lov o'chiq, admin o'zgartiradi).
+5. **Garaj oldi nuqtasi** 5 → 5,6 m uzaytirildi (limuzin sig'ishi uchun), avtomobil yo'lidan chiqmaydi.
+6. "YANGI" belgisi endi faqat lyuks bezaklarda; 9-qadamdagilardan olindi.
+7. **Topilgan eski xato (9-qadamdan):** yangi mashinalarni haydaganda boshqalar ko'rmas edi (server kodi 13 gacha ruxsat berardi). Tuzatildi, endi har mashina testdan o'tadi.

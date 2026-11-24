@@ -24,6 +24,8 @@ Egasi ishni bosqichlarga bo'ldi: `docs/chat/BOSQICHLAR.md`. Bu ro'yxatdagi **6 v
 - [ ] **7. Yuklamani taqsimlash** — `docs/chat/YUKLAMA-PROMT.md`
 - [x] **8. Xarita: shaharni qurish (CityLand UZ)** — `docs/chat/XARITA-PROMT.md`
 - [x] **9. Bo'sh uchastkalar, yangi uylar 1–5, bezaklar** — `docs/chat/UYLAR-BEZAK-PROMT.md`
+- [x] **10. Lyuks bezaklar (7-leveldan)** — `docs/chat/BEZAK-LYUKS-PROMT.md`
+- [ ] **11. Yangi interfeys** — `docs/chat/INTERFEYS-PROMT.md`
 
 ## Har qadamdan keyin
 

@@ -40,12 +40,14 @@ const houseGrow = (p: Plot, scale: number): number => (p.type === 'hovli' ? 1 : 
 /** Hovliga sig'ishi uchun kichraytiriladigan daraxtlar. */
 const YARD_SCALE: Readonly<Record<string, number>> = { tree_chinor: 0.5, tree_archa: 0.8 };
 const PALACE_GROW = 1.5;
+/** Lyuks bezak nuqtasiga qarab: keng chap hovlida kattaroq, eshik oldida kichikroq. */
+const SPOT_SCALE: Readonly<Record<string, Partial<Record<SpotKind, number>>>> = { lux_favvora: { left: 1.6 }, lux_bog: { left: 1.8 }, lux_daraxt: { pet: 0.6 } };
 
-const yardItem = (p: Plot, model: string, at: readonly [number, number], y: number, tint: string | null): Item => {
+const yardItem = (p: Plot, model: string, at: readonly [number, number], y: number, tint: string | null, spotScale = 1): Item => {
   const fz = p.d / REF_PLOT.d;
   const [x, z] = toWorld(p, at[0] * (p.w / REF_PLOT.w), at[1] * fz);
   const isGrown = p.type === 'qasr' && (model.startsWith('tree_') || model.startsWith('water_'));
-  const k = (YARD_SCALE[model] ?? 1) * (isGrown ? PALACE_GROW : 1);
+  const k = (YARD_SCALE[model] ?? 1) * (isGrown ? PALACE_GROW : 1) * spotScale;
   const base = { y, yaw: yawOf(p.rot), tint };
   return item(model, x, z, model === 'path_stone' ? { ...base, sz: fz } : { ...base, sx: k, sy: k, sz: k });
 };
@@ -72,7 +74,7 @@ const anchorItem = (p: Plot, anchor: Anchor, d: DecorItem, y: number, tier: numb
   if (anchor.kind === 'roof') return roofItem(p, tier, d.model, y, d.tint);
   if (anchor.kind === 'fence' || anchor.kind === 'gate') return null;
   if (anchor.kind === 'luxe') return luxeItem(p, d.model, y);
-  return yardItem(p, d.model, [anchor.x, anchor.z], y, d.tint);
+  return yardItem(p, d.model, [anchor.x, anchor.z], y, d.tint, SPOT_SCALE[d.model]?.[anchor.kind]);
 };
 
 /** Tungi yoritish: indeks = level. */

@@ -1,5 +1,5 @@
 /** Ko'rinishga qarab chiziladigan narsalar ro'yxati: uylar, daraxtlar, binolar, yorliqlar. */
-import { CIVIC, type Building, type MasterPlan, type Plot, type SpatialIndex } from '../../../../packages/shared/src/index.ts';
+import { CIVIC, LUXE_MODELS, type Building, type MasterPlan, type Plot, type SpatialIndex } from '../../../../packages/shared/src/index.ts';
 import type { Item } from '../logic/item.ts';
 import { BOARD, buildingItem, houseItem, houseTop, plotItems, shellSize, type HouseState } from '../logic/placement.ts';
 import { distanceFrom, type View } from '../logic/view.ts';
@@ -13,6 +13,9 @@ const TREE_FIT: Readonly<Record<string, number>> = { tree_tall: 0.72 };
 /** Yaqinda to'liq, uzoqda sodda shakl. */
 const CIVIC_LODS: Readonly<Record<string, string>> = Object.fromEntries(CIVIC.map((c) => [c.id, `${c.id}_lod`]));
 const FAR_LODS: Readonly<Record<string, string>> = { shop: 'shop_lod', office_low: 'office_low_lod' };
+const LUXE_LODS: Readonly<Record<string, string>> = Object.fromEntries([...LUXE_MODELS].map((m) => [m, `${m}_lod`]));
+/** Lyuks bezak shu masofadan (mayda bezaklar ko'rinadigan masofaning ulushi) sodda shaklda. */
+const LUXE_NEAR = 0.6;
 const CIVIC_NEAR = 2.2;
 const CIVIC_SLACK = 25;
 const BARRIER_FAR = 150;
@@ -86,6 +89,13 @@ const collectEmpty = (v: View, src: CollectSource, p: Plot, d: number, items: It
     if (d < v.near || lod) items.push(lod ? asLod(it, lod) : it);
   }
 };
+/** Yaqin hovlidagi hamma bezak; lyukslari sal uzoqda sodda shaklda. */
+const pushYard = (items: Item[], list: readonly Item[], isFar: boolean): void => {
+  for (const it of list) {
+    const lod = isFar ? LUXE_LODS[it.model] : undefined;
+    items.push(lod ? asLod(it, lod) : it);
+  }
+};
 const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResult => {
   const items: Item[] = [];
   const labels: { readonly d: number; readonly info: LabelInfo }[] = [];
@@ -101,7 +111,8 @@ const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResul
     }
     if (d < v.near) {
       const list = fullItems(src, p, s);
-      items.push(...(d < v.detail ? list : list.slice(0, shellSize(s.tier))));
+      if (d < v.detail) pushYard(items, list, d > v.detail * LUXE_NEAR);
+      else items.push(...list.slice(0, shellSize(s.tier)));
       const sign = d < v.detail ? signOf(p, s, list) : null;
       if (sign) signs.push({ d, info: sign });
     } else items.push(simpleItem(src, p, s, v.isSimple));
