@@ -15,6 +15,12 @@ export interface Item {
   /** 0..1 — tungi hashamatli yoritish. */
   readonly glow: number;
   readonly seed: number;
+  /** Devor materiali qatlami + 16 × deraza ramkasi rangi. */
+  readonly mat?: number;
+  /** Eshik rangi (indeks). */
+  readonly door?: number;
+  /** Butun modelga beriladigan rang. */
+  readonly tint?: string | null;
 }
 export const WHITE = '#ffffff';
 

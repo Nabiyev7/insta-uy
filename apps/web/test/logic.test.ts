@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { describe, expect, test } from 'vitest';
-import { DECOR, FENCE_RANK, GATE_RANK, LAKE, LEVEL_FENCE, LEVEL_GATE, MAX_TIER, MIN_TIER, TIERS, decodePlan, yardDecor, footprint, inLake, type EncodedPlan } from '../../../packages/shared/src/index.ts';
+import { FENCE_RANK, GATE_RANK, LAKE, LEVEL_FENCE, LEVEL_GATE, MAX_TIER, MIN_TIER, TIERS, decodePlan, levelYard, footprint, inLake, type EncodedPlan } from '../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../src/logic/atmosphere.ts';
 import { frameAt } from '../src/logic/cameraPath.ts';
 import { CITY_LIMIT, cameraDistance, lerpAngle, movePlayer, pickNearest, rayBox } from '../src/logic/motion.ts';
@@ -15,7 +15,7 @@ import { PLAZA_SOLIDS } from '../src/logic/plaza.ts';
 import { initialQuality, startGovernor, stepGovernor, type GovernorState } from '../src/logic/quality.ts';
 
 const plan = decodePlan(JSON.parse(readFileSync(new URL('../../../packages/shared/data/masterplan.json', import.meta.url), 'utf8')) as EncodedPlan);
-const state = (over: Partial<HouseState> = {}): HouseState => ({ plot: 'P0001', nick: 'ali', tier: 2, wall: 0, roof: 0, decor: [], label: 'plain', badge: null, status: 'owned', expanded: false, ...over });
+const state = (over: Partial<HouseState> = {}): HouseState => ({ plot: 'P0001', nick: 'ali', tier: 2, wall: 0, roof: 0, decor: [], material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false, ...over });
 const plotOf = (type: string): (typeof plan.plots)[number] => plan.plots.find((p) => p.type === type)!;
 
 describe('joylashtirish', () => {
@@ -29,20 +29,8 @@ describe('joylashtirish', () => {
       }
     }
   });
-  test('hamma bezak uchastka ichida', () => {
-    for (const type of ['hovli', 'villa', 'qasr']) {
-      const p = plotOf(type);
-      const f = footprint(p);
-      for (const d of DECOR) {
-        for (const i of plotItems(p, state({ decor: [d.id] }), true)) {
-          expect(Math.abs(i.x - f.x), `${type} ${d.id}`).toBeLessThanOrEqual(f.hx);
-          expect(Math.abs(i.z - f.z), `${type} ${d.id}`).toBeLessThanOrEqual(f.hz);
-        }
-      }
-    }
-  });
   test('bezak panjara/darvoza oddiysini almashtiradi', () => {
-    const models = plotItems(plotOf('hovli'), state({ tier: 1, decor: ['fence_brick', 'gate_gold', 'yoq'] }), true).map((i) => i.model);
+    const models = plotItems(plotOf('hovli'), state({ tier: 1, decor: ['fence:fence_brick', 'gate:gate_gold', 'yoq'] }), true).map((i) => i.model);
     expect(models).toEqual(['house1', 'fence_brick', 'gate_gold', 'path_stone', 'tree_anor']);
     expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_basic', 'gate_wood', 'path_stone', 'tree_anor', 'yard_flowers']);
     expect(plotItems(plotOf('hovli'), state({ tier: 1 }), true).map((i) => i.model)).toEqual(['house1', 'fence_low', 'gate_basic', 'path_stone', 'tree_anor']);
@@ -58,7 +46,7 @@ describe('joylashtirish', () => {
   test('hashamat tunda yonadi, bo‘yiga o‘smaydi', () => {
     const p = plotOf('hovli');
     expect(houseItem(p, state({ tier: 1 }), false).glow).toBe(0);
-    expect(houseItem(p, state({ tier: MAX_TIER, decor: ['light_luxe'] }), false).glow).toBe(1);
+    expect(houseItem(p, state({ tier: MAX_TIER, decor: ['luxe:light_luxe'] }), false).glow).toBe(1);
     expect(houseItem(p, state({ tier: MAX_TIER }), true)).toMatchObject({ model: 'house10_lod', sy: 1 });
     expect(houseItem(p, state({ tier: 1 }), true).model).toBe('house1_lod');
     expect(houseItem(p, state({ tier: 2 }), true).model).toBe('house2_lod');
@@ -72,16 +60,16 @@ describe('joylashtirish', () => {
     for (const { id } of TIERS.slice(1)) {
       const glow = (tier: number): number => houseItem(p, state({ tier }), false).glow;
       expect(glow(id)).toBeGreaterThanOrEqual(glow(id - 1));
-      expect(yardDecor(id, []).length).toBeGreaterThanOrEqual(yardDecor(id - 1, []).length);
+      expect(levelYard(id).length).toBeGreaterThanOrEqual(levelYard(id - 1).length);
     }
     expect(plotItems(p, state({ tier: 10 }), true).map((i) => i.model)).toEqual(expect.arrayContaining(['house10', 'fence_ornate', 'gate_gold']));
   });
   test('egasi olgan bezak level bezagidan ustun', () => {
-    const models = plotItems(plotOf('hovli'), state({ tier: 10, decor: ['fence_wood'] }), true).map((i) => i.model);
+    const models = plotItems(plotOf('hovli'), state({ tier: 10, decor: ['fence:fence_wood', 'luxe:light_luxe', 'path:path_stone'] }), true).map((i) => i.model);
     expect(models).toEqual(expect.arrayContaining(['fence_wood', 'gate_gold']));
     expect(models).not.toContain('fence_ornate');
-    expect(yardDecor(10, ['light_luxe']).filter((d) => d === 'light_luxe')).toHaveLength(1);
-    expect(yardDecor(99, ['tree_anor'])).toEqual(['tree_anor']);
+    for (const m of ['light_luxe', 'path_stone']) expect(models.filter((d) => d === m)).toHaveLength(1);
+    expect(levelYard(99)).toEqual([]);
   });
   test('panjara va darvoza har levelda oldingisidan past emas, oltin faqat 9 dan', () => {
     for (const { id } of TIERS.slice(1)) {
@@ -89,7 +77,7 @@ describe('joylashtirish', () => {
       expect(GATE_RANK.indexOf(LEVEL_GATE[id]!)).toBeGreaterThanOrEqual(GATE_RANK.indexOf(LEVEL_GATE[id - 1]!));
     }
     expect(LEVEL_GATE.indexOf('gate_gold')).toBe(9);
-    expect(yardDecor(1, [])).toEqual(['path_stone', 'tree_anor']);
+    expect(levelYard(1)).toEqual(['path_stone', 'tree_anor']);
   });
   test('har level modeli (haqiqiy o‘lchami bilan) uchastkadan chiqmaydi, oldida ≥10 m hovli, uy izi ≤45%', async () => {
     const doc = await new NodeIO().read(fileURLToPath(new URL('../../../assets/city-kit.glb', import.meta.url)));

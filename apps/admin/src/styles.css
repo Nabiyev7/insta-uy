@@ -39,6 +39,9 @@ tr:last-child td { border: 0; }
 .tag.failed, .tag.rejected, .tag.needs_review, .tag.unmatched { background: oklch(92% 0.05 35); }
 .login { min-height: 100dvh; display: grid; place-items: center; background: var(--deep); }
 .login form { display: grid; gap: 12px; width: min(340px, 90vw); background: var(--paper); padding: 28px; border-radius: 16px; border-top: 8px solid var(--gold); }
+.decor-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; padding: 14px; margin-bottom: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; border-top: 4px solid var(--gold); }
+.field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.field .input { color: var(--ink); }
 .toast { position: fixed; right: 20px; bottom: 20px; background: var(--deep); color: #fff; padding: 12px 18px; border-radius: 10px; font-weight: 600; }
 .toast.bad { background: var(--clay); }
 .map-wrap { display: grid; grid-template-columns: 190px 1fr; gap: 12px; }

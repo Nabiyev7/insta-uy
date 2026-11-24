@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { decodePlan, type EncodedPlan, type Lang, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
+import { setCatalog, type CatalogRow } from '../logic/decorCatalog.ts';
 import type { HouseState } from '../logic/placement.ts';
 import type { Mode } from './runtime.ts';
 import { initialQuality, type QualityLevel } from '../logic/quality.ts';
@@ -68,6 +69,7 @@ export interface AppState {
   readonly district: number;
   readonly street: number;
   readonly online: number;
+  readonly catalog: readonly CatalogRow[];
   readonly chat: readonly ChatLine[];
   readonly unread: number;
   readonly muted: readonly Muted[];
@@ -78,7 +80,7 @@ export interface AppState {
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, district: 0, street: 0, online: 0, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, district: 0, street: 0, online: 0, catalog: [], chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;
@@ -91,7 +93,7 @@ export const toast = (text: string, isError = false): void => {
 };
 export const openPanel = (panel: Panel | null): void => setApp({ panel });
 
-const toHouse = (r: CityRow): HouseState => ({ plot: r[0], nick: r[1], tier: r[2], wall: r[3], roof: r[4], decor: r[5], label: r[6], badge: r[7], status: r[8], expanded: r[9] });
+const toHouse = (r: CityRow): HouseState => ({ plot: r[0], nick: r[1], tier: r[2], wall: r[3], roof: r[4], decor: r[5], label: r[6], badge: r[7], status: r[8], expanded: r[9], material: r[10], frame: r[11], door: r[12] });
 
 export const loadPlan = async (): Promise<void> => {
   const res = await fetch('/assets/masterplan.json');
@@ -104,6 +106,11 @@ export const refreshBoot = async (): Promise<Boot> => {
   // O'zgarmagan bo'lsa eski obyekt qoladi — bilbord va xarita bekorga qayta qurilmasin.
   if (JSON.stringify(boot) !== JSON.stringify(getApp().boot)) setApp({ boot });
   return getApp().boot ?? boot;
+};
+export const refreshCatalog = async (): Promise<void> => {
+  const catalog = await rpc<readonly CatalogRow[]>('api_catalog');
+  setCatalog(catalog);
+  setApp({ catalog });
 };
 let lastRows = '';
 export const refreshHouses = async (): Promise<void> => {

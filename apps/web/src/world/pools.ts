@@ -2,6 +2,8 @@ import { Color, DynamicDrawUsage, Euler, Group, InstancedBufferAttribute, Instan
 import type { Item } from '../logic/item.ts';
 import type { Kit } from './kit.ts';
 
+/** Suvoq devor, oq ramka. */
+const DEFAULT_MAT = 1;
 const colorCache = new Map<string, Color>();
 const linear = (hex: string): Color => {
   const known = colorCache.get(hex);
@@ -45,7 +47,7 @@ export class Pools {
     }
     const capacity = Math.max(16, Math.ceil(count * 1.5));
     const g = source.clone();
-    for (const [name, size] of [['iWall', 3], ['iRoof', 3], ['iFx', 2]] as const) {
+    for (const [name, size] of [['iWall', 3], ['iRoof', 3], ['iFx', 4]] as const) {
       g.setAttribute(name, new InstancedBufferAttribute(new Float32Array(capacity * size), size).setUsage(DynamicDrawUsage));
     }
     const m = new InstancedMesh(g, this.kit.material, capacity);
@@ -75,8 +77,12 @@ export class Pools {
       m.setMatrixAt(i, M.compose(P.set(it.x, it.y, it.z), Q, S.set(it.sx, it.sy, it.sz)));
       linear(it.wall).toArray(wall.array, i * 3);
       linear(it.roof).toArray(roof.array, i * 3);
-      fx.setXY(i, it.glow, it.seed);
+      fx.setXYZW(i, it.glow, it.seed, it.mat ?? DEFAULT_MAT, it.door ?? 0);
     });
+    if (m.instanceColor || list.some((it) => it.tint)) {
+      list.forEach((it, i) => m.setColorAt(i, linear(it.tint ?? '#ffffff')));
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    }
     m.count = list.length;
     m.visible = list.length > 0;
     for (const a of [m.instanceMatrix, wall, roof, fx]) a.needsUpdate = true;

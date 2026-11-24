@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { parseInstagram } from '../../../../packages/shared/src/index.ts';
-import { AVATAR_OPTIONS, DECOR, MAX_TIER, ROOF_COLORS, TIERS, WALL_COLORS, normalizeDecor, parseBio, sanitizeAvatar, type AvatarLook, type TierId } from '../../../../packages/shared/src/index.ts';
+import { AVATAR_OPTIONS, DOOR_COLORS, FRAME_COLORS, MAX_TIER, ROOF_COLORS, TIERS, WALL_COLORS, WALL_MATERIALS, parseBio, sanitizeAvatar, type AvatarLook, type TierId } from '../../../../packages/shared/src/index.ts';
 import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareImage, storyImage } from '../app/actions.ts';
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { hasKey, money, useT } from '../app/i18n.ts';
 import { getApp, openPanel, refreshHouses, refreshProfile, setting, toast, useApp } from '../app/store.ts';
-import { createOrder, useCatalog } from './OrderPanels.tsx';
+import { createOrder } from './OrderPanels.tsx';
+import { YardEditor } from './YardEditor.tsx';
 import { Field, Section, Seg, Sheet, Swatches, useAction } from './kit.tsx';
 
 const refresh = async (): Promise<void> => { await Promise.all([refreshProfile(), refreshHouses()]); };
@@ -14,15 +15,20 @@ interface PlotProps { readonly plot: MyPlot }
 function LooksForm({ plot }: PlotProps): React.JSX.Element {
   const t = useT();
   const { isBusy, run } = useAction();
+  const hasHouse = useApp((x) => x.plotById.get(plot.plot)?.type !== 'kvartira');
   const [bio, setBio] = useState(plot.bio);
   const [wall, setWall] = useState(plot.wall);
   const [roof, setRoof] = useState(plot.roof);
+  const [material, setMaterial] = useState(plot.material);
+  const [frame, setFrame] = useState(plot.frame);
+  const [door, setDoor] = useState(plot.door);
+  const lang = useApp((x) => x.lang);
   const submit = (e: FormEvent): void => {
     e.preventDefault();
     void run(async () => {
       const text = parseBio(bio);
       if (!text.ok) throw new Error(text.code);
-      await rpc('my_edit_house', { p_plot: plot.plot, p_bio: text.value, p_wall: wall, p_roof: roof });
+      await rpc('my_edit_house', { p_plot: plot.plot, p_bio: text.value, p_wall: wall, p_roof: roof, p_material: material, p_frame: frame, p_door: door });
       await refresh();
     }, t('saved'));
   };
@@ -31,38 +37,13 @@ function LooksForm({ plot }: PlotProps): React.JSX.Element {
       <Field label={t('bio')}><input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} /></Field>
       <span className="muted">{t('wallColor')}</span><Swatches label={t('wallColor')} colors={WALL_COLORS} value={wall} onPick={setWall} />
       <span className="muted">{t('roofColor')}</span><Swatches label={t('roofColor')} colors={ROOF_COLORS} value={roof} onPick={setRoof} />
+      {hasHouse && <>
+        <span className="muted">{t('wallMaterial')}</span><Seg label={t('wallMaterial')} value={String(material)} onPick={(v) => setMaterial(Number(v))} options={WALL_MATERIALS.map((m, i) => [String(i), m[lang]] as const)} />
+        <span className="muted">{t('frameColor')}</span><Swatches label={t('frameColor')} colors={FRAME_COLORS} value={frame} onPick={setFrame} />
+        <span className="muted">{t('doorColor')}</span><Swatches label={t('doorColor')} colors={DOOR_COLORS} value={door} onPick={setDoor} />
+      </>}
       <button type="submit" className="btn" disabled={isBusy}>{t('save')}</button>
     </form>
-  );
-}
-
-function DecorShop({ plot }: PlotProps): React.JSX.Element {
-  const t = useT();
-  const lang = useApp((s) => s.lang);
-  const owned = useApp((s) => s.profile?.decor) ?? {};
-  const catalog = useCatalog();
-  const { isBusy, run } = useAction();
-  const isPaid = setting('payments_enabled', false);
-  const isCoins = setting('coins_enabled', true);
-  const setDecor = (ids: readonly string[]): void => { void run(async () => { await rpc('my_set_decor', { p_plot: plot.plot, p_decor: normalizeDecor(ids) }); await refresh(); }, t('saved')); };
-  return (
-    <Section title={t('decor')}>
-      <ul className="list">
-        {DECOR.filter((d) => catalog.has(d.id) || owned[d.id]).map((d) => {
-          const c = catalog.get(d.id);
-          const isPlaced = plot.decor.includes(d.id);
-          return (
-            <li key={d.id}>
-              <span className="grow">{d[lang]}{c?.left !== null && c?.left !== undefined && <span className="tag gold"> {c.left} {t('left')}</span>}<br /><span className="muted">{owned[d.id] ? t('owned2') : c && `${isCoins ? `💰 ${c.coins}` : ''}${isPaid ? ` · ${money(c.uzs)} ${t('som')}` : ''}`}</span></span>
-              {isPlaced && <button type="button" className="btn small soft" disabled={isBusy} onClick={() => setDecor(plot.decor.filter((x) => x !== d.id))}>{t('remove')}</button>}
-              {!isPlaced && owned[d.id] && <button type="button" className="btn small" disabled={isBusy} onClick={() => setDecor([...plot.decor, d.id])}>{t('place')}</button>}
-              {!owned[d.id] && isCoins && <button type="button" className="btn small" disabled={isBusy || (c?.left === 0)} onClick={() => run(async () => { await rpc('my_buy_decor_coins', { p_id: d.id }); await refreshProfile(); }, t('saved'))}>💰</button>}
-              {!owned[d.id] && isPaid && <button type="button" className="btn small clay" disabled={isBusy || (c?.left === 0)} onClick={() => run(() => createOrder('decor', { id: d.id }))}>{t('buy')}</button>}
-            </li>
-          );
-        })}
-      </ul>
-    </Section>
   );
 }
 
@@ -143,8 +124,8 @@ function HouseSection({ plot }: PlotProps): React.JSX.Element {
         <button type="button" className="btn soft" onClick={() => goToPlot(plot.plot)}>{t('goThere')}</button>
         <button type="button" className="btn soft" onClick={() => run(() => copyText(houseUrl(plot.plot)), t('copied'))}>🔗</button>
       </div>
-      <LooksForm key={`${plot.plot}${plot.bio}${plot.wall}${plot.roof}`} plot={plot} />
-      {full?.type !== 'kvartira' && plot.status === 'owned' && <><Upgrades plot={plot} /><DecorShop plot={plot} /></>}
+      <LooksForm key={`${plot.plot}${plot.bio}${plot.wall}${plot.roof}${plot.material}${plot.frame}${plot.door}`} plot={plot} />
+      {full?.type !== 'kvartira' && plot.status === 'owned' && <><Upgrades plot={plot} /><YardEditor plot={plot} /></>}
       {plot.status === 'owned' && <Gift plot={plot} />}
     </>
   );

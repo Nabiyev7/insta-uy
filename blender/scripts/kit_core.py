@@ -9,8 +9,8 @@ from mathutils.bvhtree import BVHTree
 # Tekstura qatlamlari (build-textures.mjs bilan bir xil tartib)
 PLAIN, PLASTER, BRICK, ROOF, WOOD, ASPHALT, GRASS, CONCRETE, LEAF, WINDOW, NAQSH, CARVED, FACADE, GLASS, SOIL, STONE = range(16)
 # Niqoblar: instance rangi qaysi qismga tegishli
-# M_SOFT — tunda o'z rangida yumshoq yonadi (gumbaz)
-M_NONE, M_WALL, M_ROOF, M_GLOW, M_SOFT = 0.0, 0.25, 0.5, 0.75, 1.0
+# M_DOOR — eshik (rangi instance'dan); M_SOFT — tunda o'z rangida yumshoq yonadi (gumbaz)
+M_NONE, M_DOOR, M_WALL, M_ROOF, M_GLOW, M_SOFT = 0.0, 0.1, 0.25, 0.5, 0.75, 1.0
 TILE = {PLASTER: 3.0, BRICK: 2.0, ROOF: 2.2, WOOD: 1.6, ASPHALT: 4.0, GRASS: 5.0, CONCRETE: 3.0, LEAF: 2.2,
         NAQSH: 1.2, CARVED: 1.0, FACADE: 3.6, GLASS: 4.0, SOIL: 4.0, STONE: 2.5, PLAIN: 1.0, WINDOW: 1.0}
 MAX_FACE = 3.0
@@ -157,11 +157,11 @@ class Model:
             p = [(at + out, lo, z0), (at + out, hi, z0), (at + out, hi, z1), (at + out, lo, z1)]
         self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], WINDOW, M_GLOW, rgb(WHITE)))
 
-    def panel(self, p, layer, color=WHITE):
-        self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], layer, M_NONE, rgb(color)))
+    def panel(self, p, layer, color=WHITE, mask=M_NONE):
+        self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], layer, mask, rgb(color)))
 
     def door(self, cx, at, w=1.2, h=2.3, color=WHITE):
-        self.panel([(cx - w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, h + 0.15), (cx - w / 2, at - 0.05, h + 0.15)], CARVED, color)
+        self.panel([(cx - w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, h + 0.15), (cx - w / 2, at - 0.05, h + 0.15)], CARVED, color, M_DOOR)
 
     def column(self, cx, cy, z0, z1, r=0.14, color='#8a5a30', layer=WOOD):
         self.cbox(cx, cy, z0, r * 3.2, r * 3.2, 0.25, STONE, '#cbbfa9')

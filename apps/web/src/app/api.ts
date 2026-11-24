@@ -71,7 +71,7 @@ export interface Boot {
 }
 export interface MyPlot {
   readonly plot: string; readonly status: string; readonly address: string; readonly instagram: string | null; readonly bio: string; readonly tier: number; readonly wall: number; readonly roof: number;
-  readonly decor: readonly string[]; readonly label: string; readonly has_expansion: boolean; readonly expansion: string | null;
+  readonly decor: readonly string[]; readonly places: Readonly<Record<string, string>>; readonly material: number; readonly frame: number; readonly door: number; readonly label: string; readonly has_expansion: boolean; readonly expansion: string | null;
 }
 export interface Profile {
   readonly id: string; readonly login: string; readonly instagram: string | null; readonly role: string; readonly perms: readonly string[]; readonly badges: readonly string[]; readonly avatar: unknown; readonly telegram: boolean; readonly coins: number;
@@ -83,4 +83,4 @@ export interface PlotInfo {
   readonly id: string; readonly district: number; readonly type: 'hovli' | 'kvartira' | 'villa' | 'qasr'; readonly value: number; readonly address: string; readonly open: boolean; readonly status: 'free' | 'reserved' | 'pending' | 'owned';
   readonly instagram: string | null; readonly bio: string | null; readonly tier: number | null; readonly decor: readonly string[] | null; readonly label: string | null; readonly badges: readonly string[]; readonly since: string | null; readonly price: number;
 }
-export type CityRow = readonly [string, string | null, number, number, number, readonly string[], 'plain' | 'silver' | 'gold', string | null, 'pending' | 'owned', boolean];
+export type CityRow = readonly [string, string | null, number, number, number, readonly string[], 'plain' | 'silver' | 'gold', string | null, 'pending' | 'owned', boolean, number, number, number];

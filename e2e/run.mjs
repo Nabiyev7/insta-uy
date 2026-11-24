@@ -197,6 +197,42 @@ try {
     await desk.getByText('Bugun olingan').waitFor();
   });
 
+  const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(args) }).then((r) => r.json());
+  const adminToken = async () => (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: 'admin@login.obunachilar-shahri.uz', password: 'admin12345' }) }).then((r) => r.json())).access_token;
+  await step("bezak: do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
+    const token = await adminToken();
+    const me = (await call('admin_users', { p_q: 'sinov_odam' }, token))[0];
+    await call('admin_user', { p_id: me.id, p_action: 'coins', p_data: { delta: 1000 } }, token);
+    await desk.keyboard.press('Escape');
+    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
+    await desk.getByText('7-levelda ochiladi').first().waitFor();
+    await desk.getByRole('button', { name: 'Anor: Sotib olish' }).click();
+    await desk.getByText(/Sotib olindi/).first().waitFor();
+    await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
+    await desk.getByRole('button', { name: 'Old hovli, chapda' }).click();
+    await desk.getByRole('button', { name: "Qo'yish" }).click();
+    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('s1:tree_anor'))), 'bezak qo‘yildi');
+    await desk.locator('.spot-panel select').selectOption('s2');
+    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('s2:tree_anor'))), 'bezak ko‘chdi');
+    await desk.getByRole('button', { name: "G'isht" }).click();
+    await desk.getByRole('button', { name: 'Eshik rangi 4' }).click();
+    await desk.getByRole('button', { name: 'Saqlash' }).click();
+    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.material === 1 && h.door === 3)), 'material saqlandi');
+    await shot(desk, 'yard');
+    await desk.keyboard.press('Escape');
+  });
+  await step('admin: mavjud modeldan yangi tovar', async () => {
+    await admin.getByRole('button', { name: 'Bezaklar' }).click();
+    await admin.getByRole('button', { name: '+ Yangi tovar' }).click();
+    await admin.getByLabel('ID', { exact: true }).fill('tree_anor_yosh');
+    await admin.getByLabel('3D model').selectOption('tree_anor');
+    await admin.getByLabel('Nomi (uz)').fill('Yosh anor');
+    await admin.getByLabel('Nomi (ru)').fill('Молодой гранат');
+    await admin.getByRole('button', { name: 'Saqlash' }).click();
+    await admin.getByText('Yosh anor').waitFor();
+    await shot(admin, 'admin-decor');
+  });
+
   const phone = await open({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
   await step("telefon: joystick, uyni bosish, ko'p o'yinchi, chat", async () => {
     await enter(phone, `${SITE}/?uy=P0001`);
@@ -256,11 +292,10 @@ try {
     }
   });
   await step('video: navbat → render → MP4', async () => {
-    const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(args) }).then((r) => r.json());
-    const login = await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: 'admin@login.obunachilar-shahri.uz', password: 'admin12345' }) }).then((r) => r.json());
-    const id = await call('admin_video_create', { p_kind: 'houses', p_plots: ['P0001', 'P0002'], p_style: { title: 'Yangi uylar!', seconds: 4 } }, login.access_token);
+    const token = await adminToken();
+    const id = await call('admin_video_create', { p_kind: 'houses', p_plots: ['P0001', 'P0002'], p_style: { title: 'Yangi uylar!', seconds: 4 } }, token);
     execFileSync(process.execPath, ['video/src/main.ts', '--once'], { cwd: root, env: { ...process.env, SUPABASE_URL: API, SUPABASE_SERVICE_KEY: service, SITE_URL: SITE }, stdio: 'inherit', timeout: 240_000 });
-    const job = (await call('admin_videos', {}, login.access_token)).find((j) => j.id === id);
+    const job = (await call('admin_videos', {}, token)).find((j) => j.id === id);
     assert.equal(job.status, 'ready', job.error);
     const file = path.join(data, 'storage', job.file);
     assert.ok(existsSync(file) && statSync(file).size > 200_000);

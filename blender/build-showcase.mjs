@@ -17,7 +17,7 @@ const ALL_OPEN = { openDistricts: new Set(plan.districts.map((d) => d.id)) };
 const TEX = 256;
 const TEX_LAYERS = 16;
 
-const state = (plot, tier, wall, roof, decor = []) => ({ plot, nick: null, tier, wall, roof, decor, label: 'plain', badge: null, status: 'owned', expanded: false });
+const state = (plot, tier, wall, roof, decor = []) => ({ plot, nick: null, tier, wall, roof, decor, material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false });
 const demoState = (p) => {
   const h = (k) => hash01(`show${k}${p.id}`);
   const tier = { qasr: h('t') < 0.6 ? 9 : 10, villa: h('t') < 0.6 ? 7 : 8 }[p.type] ?? 1 + Math.floor(h('t') ** 1.5 * 7);

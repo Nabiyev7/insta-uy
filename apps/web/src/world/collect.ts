@@ -4,6 +4,7 @@ import { toWorld, type Item } from '../logic/item.ts';
 import { PLOT_SHELL, buildingItem, houseItem, plotItems, type HouseState } from '../logic/placement.ts';
 import { distanceFrom, type View } from '../logic/view.ts';
 import type { LabelInfo } from './labels.ts';
+import type { SignInfo } from './signs.ts';
 
 const BIG = new Set(['crane', 'office', 'office_low', 'bank', 'agentlik', 'novostroyka', 'choyxona', 'maktab', 'stadium', 'bridge', 'hero_statue', 'plaza_fountain', 'billboard']);
 const TREES: Readonly<Record<string, string>> = { tree_chinor: 'tree_chinor_lod', tree_terak: 'tree_terak_lod', tree_archa: 'tree_archa' };
@@ -48,10 +49,19 @@ const simpleItem = (src: CollectSource, p: Plot, s: HouseState, isSimple: boolea
   return made;
 };
 
-interface PlotResult { readonly items: Item[]; readonly labels: readonly LabelInfo[] }
+interface PlotResult { readonly items: Item[]; readonly labels: readonly LabelInfo[]; readonly signs: readonly SignInfo[] }
+
+/** Lavhali uylar: yozuv modelning old yuzasida turadi. */
+const SIGN_MODEL = 'sign_nick';
+const SIGN_FACE = { y: 1.1, out: 0.07 } as const;
+const signOf = (p: Plot, s: HouseState, list: readonly Item[]): SignInfo | null => {
+  const board = s.nick ? list.find((i) => i.model === SIGN_MODEL) : undefined;
+  return board && s.nick ? { key: p.id, text: `@${s.nick}`, x: board.x + Math.sin(board.yaw) * SIGN_FACE.out, y: board.y + SIGN_FACE.y, z: board.z + Math.cos(board.yaw) * SIGN_FACE.out, yaw: board.yaw } : null;
+};
 const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResult => {
   const items: Item[] = [];
   const labels: { readonly d: number; readonly info: LabelInfo }[] = [];
+  const signs: { readonly d: number; readonly info: SignInfo }[] = [];
   for (const p of src.plots.query(v.x, v.z, v.radius)) {
     if (v.isHidden(p.x, p.z)) continue;
     const s = src.houses.get(p.id);
@@ -59,11 +69,14 @@ const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResul
     if (d < v.near) {
       const list = fullItems(src, p, s);
       items.push(...(d < v.detail ? list : list.slice(0, PLOT_SHELL)));
+      const sign = s && d < v.detail ? signOf(p, s, list) : null;
+      if (sign) signs.push({ d, info: sign });
     } else if (s) items.push(simpleItem(src, p, s, v.isSimple));
     if (s?.nick && d < v.label) labels.push({ d, info: labelOf(p, s) });
   }
   labels.sort((a, b) => a.d - b.d);
-  return { items, labels: labels.slice(0, maxLabels).map((l) => l.info) };
+  signs.sort((a, b) => a.d - b.d);
+  return { items, labels: labels.slice(0, maxLabels).map((l) => l.info), signs: signs.map((x) => x.info) };
 };
 
 const staticItem = (v: View, it: Item, d: number): Item | null => {
@@ -96,7 +109,7 @@ const collectBuildings = (v: View, list: readonly Building[]): Item[] => list.fl
 export const collect = (v: View, src: CollectSource, maxLabels: number): PlotResult => {
   const plots = collectPlots(v, src, maxLabels);
   return {
-    labels: plots.labels,
+    labels: plots.labels, signs: plots.signs,
     items: [
       ...plots.items, ...collectStatics(v, src.statics.query(v.x, v.z, v.far)), ...collectStatics({ ...v, near: v.near * 1.6 }, src.extras.query(v.x, v.z, v.far)),
       ...collectCommerce(v, src.commerce.query(v.x, v.z, v.far)), ...collectBuildings(v, src.plan.buildings),

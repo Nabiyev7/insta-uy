@@ -1,8 +1,10 @@
 /** Qaysi model qayerda turadi. Faqat hisob — Three.js yo'q. */
 import {
-  AVENUE_LINES, DECOR, HILL, LAKE, PLAZA_HALF, inPlaza, LEVEL_FENCE, LEVEL_GATE, TOWERS, TOWER_BASE, TOWER_HALF, yardDecor, WALL_COLORS, ROOF_COLORS, decorById, hash01, inLake, padHeight,
-  type Building, type Commerce, type DecorSlot, type Expansion, type MasterPlan, type Plot,
+  AVENUE_LINES, FREE_SPOTS, HILL, LAKE, LEVEL_FENCE, LEVEL_GATE, PLAZA_HALF, REF_YARD, ROOF_COLORS, TOWERS, TOWER_BASE, TOWER_HALF, WALL_COLORS, WALL_MATERIALS,
+  anchorById, hash01, inLake, inPlaza, levelYard, padHeight, parsePlaced,
+  type Anchor, type Building, type Commerce, type DecorItem, type Expansion, type MasterPlan, type Plot, type SpotKind,
 } from '../../../../packages/shared/src/index.ts';
+import { decorOf } from './decorCatalog.ts';
 import { WHITE, item, toWorld, yawOf, type Item, type Solid } from './item.ts';
 import { plazaItems } from './plaza.ts';
 
@@ -12,7 +14,11 @@ export interface HouseState {
   readonly tier: number;
   readonly wall: number;
   readonly roof: number;
+  /** "nuqta:bezak" ko'rinishida. */
   readonly decor: readonly string[];
+  readonly material: number;
+  readonly frame: number;
+  readonly door: number;
   readonly label: 'plain' | 'silver' | 'gold';
   readonly badge: string | null;
   readonly status: 'pending' | 'owned';
@@ -25,42 +31,48 @@ const HOUSE: Readonly<Record<Plot['type'], { readonly scale: number; readonly ba
 const OWN_SIZE_TIERS = 6;
 const houseScale = (p: Plot, tier: number): number => (p.type === 'hovli' && tier <= OWN_SIZE_TIERS ? 1 : HOUSE[p.type].scale);
 /** Panjara va bezaklar shu o'lchamdagi uchastkaga chizilgan, boshqalariga masshtablanadi. */
-export const REF_PLOT = { w: 25, d: 34 } as const;
-const SPOTS: Readonly<Record<string, readonly [number, number]>> = {
-  path_stone: [0, 7.8], tree_anor: [-9.6, 13.6], tree_chinor: [9.4, 13.2], tree_archa: [10.2, 4.6], yard_sori: [-7.6, 8.4], yard_tok: [-7.6, 8.4], yard_flowers: [-4.6, 14.6],
-  special_peacock: [2.9, 6.4], special_statue: [-3, 6.4], special_yurt: [-8.4, 4.4],
-};
-const SLOT_SPOTS: Readonly<Partial<Record<DecorSlot, readonly [number, number]>>> = { water: [7, 8], car: [5, 13], light: [0, 9.3], pet: [-2.6, 7.6] };
+const freeSpot = (id: string): readonly [number, number] => { const s = FREE_SPOTS[id]; return s ? [s[0], s[1]] : [0, 6]; };
+export const REF_PLOT = REF_YARD;
+/** Hovliga sig'ishi uchun kichraytiriladigan daraxtlar. */
+const YARD_SCALE: Readonly<Record<string, number>> = { tree_chinor: 0.62, tree_archa: 0.8 };
+const PALACE_GROW = 1.5;
 
-const decorItem = (p: Plot, id: string, y: number): Item | null => {
-  const d = decorById(id);
-  if (!d || d.slot === 'fence' || d.slot === 'gate') return null;
-  const fx = p.w / REF_PLOT.w;
+const yardItem = (p: Plot, model: string, at: readonly [number, number], y: number, tint: string | null): Item => {
   const fz = p.d / REF_PLOT.d;
-  const base = { y, yaw: yawOf(p.rot) };
-  if (id === 'light_luxe') {
-    const { scale, back } = HOUSE[p.type];
-    const [x, z] = toWorld(p, 0, -back);
-    return item(id, x, z, { ...base, sx: scale, sz: scale });
-  }
-  const spot = SPOTS[id] ?? SLOT_SPOTS[d.slot] ?? [0, 6];
-  const [x, z] = toWorld(p, spot[0] * fx, spot[1] * fz);
-  const grow = p.type === 'qasr' && (d.slot === 'water' || d.slot === 'tree') ? 1.5 : 1;
-  return item(id, x, z, { ...base, sx: grow, sy: grow, sz: grow * (id === 'path_stone' ? fz : 1) });
+  const [x, z] = toWorld(p, at[0] * (p.w / REF_PLOT.w), at[1] * fz);
+  const isGrown = p.type === 'qasr' && (model.startsWith('tree_') || model.startsWith('water_'));
+  const k = (YARD_SCALE[model] ?? 1) * (isGrown ? PALACE_GROW : 1);
+  const base = { y, yaw: yawOf(p.rot), tint };
+  return item(model, x, z, model === 'path_stone' ? { ...base, sz: fz } : { ...base, sx: k, sy: k, sz: k });
+};
+/** Uy atrofidagi yer chiroqlari uy bilan birga kattalashadi. */
+const luxeItem = (p: Plot, model: string, y: number): Item => {
+  const { scale, back } = HOUSE[p.type];
+  const [x, z] = toWorld(p, 0, -back);
+  return item(model, x, z, { y, yaw: yawOf(p.rot), sx: scale, sz: scale });
+};
+const LUXE = 'light_luxe';
+/** Darvoza soyaboni ham uchastka ichida qolsin. */
+const GATE_INSET = 0.65;
+const anchorItem = (p: Plot, anchor: Anchor, d: DecorItem, y: number): Item | null => {
+  if (anchor.kind === 'fence' || anchor.kind === 'gate') return null;
+  if (anchor.kind === 'luxe') return luxeItem(p, d.model, y);
+  return yardItem(p, d.model, [anchor.x, anchor.z], y, d.tint);
 };
 
 /** Tungi yoritish: indeks = level. */
 const LEVEL_GLOW = [0, 0, 0, 0.05, 0.1, 0.18, 0.28, 0.4, 0.55, 0.7, 0.85] as const;
-const houseGlow = (s: HouseState): number => (LEVEL_GLOW[s.tier] ?? 0) + (s.decor.includes('light_luxe') ? 0.3 : 0);
+const houseGlow = (s: HouseState): number => (LEVEL_GLOW[s.tier] ?? 0) + (s.decor.some((x) => x.endsWith(`:${LUXE}`)) ? 0.3 : 0);
 /** Kuchsiz telefonda ikki qo'shni level bitta uzoq shaklda (draw call kamayadi). */
 const lodOf = (tier: number, isSimple: boolean): string => `house${isSimple ? Math.ceil(tier / 2) * 2 - 1 : tier}_lod`;
 
+const FRAME_STRIDE = 16;
 export const houseItem = (p: Plot, s: HouseState, isFar: boolean, isSimple = false): Item => {
   const scale = houseScale(p, s.tier);
   const [x, z] = toWorld(p, 0, -HOUSE[p.type].back);
   return item(isFar ? lodOf(s.tier, isSimple) : `house${s.tier}`, x, z, {
     y: padHeight(p), yaw: yawOf(p.rot), sx: scale, sy: p.type === 'hovli' ? 1 : 1 + (scale - 1) * 0.6, sz: scale,
-    wall: WALL_COLORS[s.wall] ?? WALL_COLORS[0], roof: ROOF_COLORS[s.roof] ?? ROOF_COLORS[0], glow: Math.min(1, houseGlow(s)), seed: hash01(p.id),
+    wall: WALL_COLORS[s.wall] ?? WALL_COLORS[0], roof: ROOF_COLORS[s.roof] ?? ROOF_COLORS[0], glow: Math.min(1, houseGlow(s)), seed: hash01(p.id), mat: (WALL_MATERIALS[s.material]?.layer ?? 1) + FRAME_STRIDE * s.frame, door: s.door,
   });
 };
 
@@ -75,15 +87,19 @@ export const plotItems = (p: Plot, s: HouseState | undefined, isOpen: boolean): 
     return [item('forsale', x, z, { y, yaw })];
   }
   const fx = p.w / REF_PLOT.w;
-  const decor = yardDecor(s.tier, s.decor);
-  const own = (slot: DecorSlot): string | undefined => decor.find((id) => decorById(id)?.slot === slot);
-  const [gx, gz] = toWorld(p, 0, p.d / 2 - 0.35);
+  const placed = parsePlaced(s.decor).flatMap(({ anchor, decor }) => { const a = anchorById(anchor); const d = decorOf(decor); return a && d ? [{ a, d }] : []; });
+  const own = (kind: SpotKind): DecorItem | undefined => placed.find((x) => x.a.kind === kind)?.d;
+  const [gx, gz] = toWorld(p, 0, p.d / 2 - GATE_INSET);
   const wall = WALL_COLORS[s.wall] ?? WHITE;
+  const [fence, gate] = [own('fence'), own('gate')];
+  // Egasi qo'ygan yo'lak yoki chiroq leveldan kelganini almashtiradi.
+  const taken = new Set([own('path') ? 'path_stone' : '', own('lamps') ? 'light_lamps' : '', own('luxe') ? LUXE : '']);
+  const free = levelYard(s.tier).filter((id) => !taken.has(id)).map((id) => (id === LUXE ? luxeItem(p, id, y) : yardItem(p, id, freeSpot(id), y, null)));
   return [
     houseItem(p, s, false),
-    item(own('fence') ?? LEVEL_FENCE[s.tier] ?? 'fence_basic', p.x, p.z, { y, yaw, sx: fx, sz: p.d / REF_PLOT.d, wall }),
-    item(own('gate') ?? LEVEL_GATE[s.tier] ?? 'gate_basic', gx, gz, { y, yaw, sx: fx }),
-    ...decor.map((id) => decorItem(p, id, y)).filter((i): i is Item => i !== null),
+    item(fence?.model ?? LEVEL_FENCE[s.tier] ?? 'fence_basic', p.x, p.z, { y, yaw, sx: fx, sz: p.d / REF_PLOT.d, wall, tint: fence?.tint ?? null }),
+    item(gate?.model ?? LEVEL_GATE[s.tier] ?? 'gate_basic', gx, gz, { y, yaw, sx: fx, tint: gate?.tint ?? null }),
+    ...free, ...placed.map(({ a, d }) => anchorItem(p, a, d, y)).filter((i): i is Item => i !== null),
   ];
 };
 /** plotItems boshidagi uy, panjara, darvoza — qolgani mayda bezak (faqat yaqindan ko'rinadi). */
@@ -199,8 +215,8 @@ export const houseSolid = (p: Plot, s: HouseState): Solid | null => {
 };
 /** Bosish qutisining balandligi: indeks = level (bo'sh uchastka — belgi bo'yi). */
 const TIER_HEIGHT = [1.2, 5.5, 5.5, 6, 6, 6.5, 7.5, 8.5, 9, 12, 13] as const;
-const PALACE_GROW = 1.54;
-export const pickHeight = (p: Plot, s: HouseState | undefined): number => (TIER_HEIGHT[s?.tier ?? 0] ?? 6) * (p.type === 'qasr' && s ? PALACE_GROW : 1);
+const PALACE_PICK = 1.54;
+export const pickHeight = (p: Plot, s: HouseState | undefined): number => (TIER_HEIGHT[s?.tier ?? 0] ?? 6) * (p.type === 'qasr' && s ? PALACE_PICK : 1);
 export const buildingSolid = (b: Building): Solid => ({ x: b.x, z: b.z, hx: 22.2, hz: 8.2, h: b.floors * 3 + 2 });
 export const commerceSolid = (c: Commerce): Solid | null => {
   if (c.type === 'bilbord') return null;
@@ -209,4 +225,3 @@ export const commerceSolid = (c: Commerce): Solid | null => {
   return { x: c.x, z: c.z, hx: c.rot % 2 ? b : a, hz: c.rot % 2 ? a : b, h };
 };
 export const CITY_HILL = HILL;
-export const ALL_DECOR = DECOR;

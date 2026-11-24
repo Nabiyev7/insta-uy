@@ -64,7 +64,7 @@ describe('shahar kamerasi', () => {
 });
 
 describe('nima chiziladi', () => {
-  const houses = new Map(plan.plots.filter((p) => p.districtId <= 4).map((p): [string, HouseState] => [p.id, { plot: p.id, nick: 'ali', tier: 3, wall: 0, roof: 0, decor: [], label: 'plain', badge: null, status: 'owned', expanded: false }]));
+  const houses = new Map(plan.plots.filter((p) => p.districtId <= 4).map((p): [string, HouseState] => [p.id, { plot: p.id, nick: 'ali', tier: 3, wall: 0, roof: 0, decor: [], material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false }]));
   const index = worldIndex(plan);
   const src = (): CollectSource => ({
     plots: index.plots, statics: index.statics, extras: new SpatialIndex(closedDistrictItems(plan.districts[6]!.rect, 7)), commerce: new SpatialIndex(plan.commerce.map(commerceItem)),

@@ -335,6 +335,16 @@ def path_stone():
     return m
 
 
+def sign_nick():
+    """Darvoza yonidagi nik lavhasi: yozuvi saytda qo'yiladi."""
+    m = Model('sign_nick')
+    for x in (-0.42, 0.42):
+        m.cbox(x, 0.05, 0, 0.08, 0.08, 1.5, WOOD, '#7a4f2a')
+    m.box(-0.62, -0.04, 0.8, 0.62, 0.04, 1.4, WOOD, '#8a6238', bottom=True)
+    m.panel([(-0.56, -0.05, 0.86), (0.56, -0.05, 0.86), (0.56, -0.05, 1.34), (-0.56, -0.05, 1.34)], PLAIN, '#f6ead0')
+    return m
+
+
 def bench():
     m = Model('bench')
     m.box(-1, -0.25, 0.42, 1, 0.25, 0.5, WOOD, '#99683a', bottom=True)
@@ -493,5 +503,5 @@ def all_props():
         car('car_sport', 4.4, 1.85, 0.72, (-0.7, 1.3, 1.18), '#c22a2a', '#151515'),
         lamp('street_lamp', 4.6), light_lamps(), light_luxe(), animal('pet_dog', '#b5854f'), animal('pet_cat', '#d09a5a', 0.6, True),
         peacock(), statue('special_statue'), hero_statue(), yurt(), bench(), billboard(), choyxona(), bozor_stall(), maktab(), crane(), barrier(),
-        foundation(), forsale(), pigeon(), stadium(), bridge(),
+        sign_nick(), foundation(), forsale(), pigeon(), stadium(), bridge(),
     ]

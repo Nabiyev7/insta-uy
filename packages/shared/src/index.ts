@@ -2,6 +2,8 @@ export * from './types.ts';
 export * from './masterplan/geometry.ts';
 export * from './masterplan/codec.ts';
 export * from './catalog.ts';
+export * from './anchors.ts';
+export * from './exterior.ts';
 export * from './center.ts';
 export * from './city.ts';
 export * from './validation.ts';

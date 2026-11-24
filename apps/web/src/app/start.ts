@@ -4,7 +4,7 @@ import { goToPlot } from './actions.ts';
 import { onSession, rpc, supabase } from './api.ts';
 import { startAudio } from './audio.ts';
 import { connectMultiplayer } from './multiplayer.ts';
-import { getApp, loadPlan, refreshBoot, refreshHouses, refreshProfile, setApp } from './store.ts';
+import { getApp, loadPlan, refreshBoot, refreshCatalog, refreshHouses, refreshProfile, setApp } from './store.ts';
 import { exposeVideoApi } from './videoMode.ts';
 
 const REFRESH_MS = 60_000;
@@ -48,7 +48,7 @@ export const start = async (): Promise<void> => {
   }
   try {
     const [kit] = await Promise.all([
-      loadKit(() => bump(0.28)), loadPlan().then(() => bump(0.16)), refreshBoot().then(() => bump(0.12)), refreshHouses().then(() => bump(0.16)),
+      loadKit(() => bump(0.28)), loadPlan().then(() => bump(0.16)), refreshBoot().then(() => bump(0.08)), refreshCatalog().then(() => bump(0.04)), refreshHouses().then(() => bump(0.16)),
     ]);
     applyLink();
     let seen = false;

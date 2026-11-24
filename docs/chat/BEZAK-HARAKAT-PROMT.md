@@ -55,7 +55,12 @@ Sayt ochilganda odamcha **yo'q**, shaharni tepadan kamera bilan tez ko'rib yuril
 - Himoya vaqt bilan emas, shular bilan: Telegram majburiy (spamchi akkaunt ochishi qiyin), so'z filtri, chatda havolalar taqiqlanadi, shikoyat tugmasi, "jim qilish" (odamning xabarlarini faqat o'zingiz uchun yashirish), admin/moderator xabarni o'chirishi va akkauntni bloklashi.
 - Mavjud so'z filtri, shikoyat va moderatsiya ishlaydi. Chat yopiq bo'lsa ekranda xabar chiqmaydi (faqat tugmada yangi xabar belgisi).
 
-### 1.6 Qabul
+### 1.6 Qo'shimchalar
+- **Ekranni tozalash tugmasi:** bitta bosish bilan hamma UI yashirinadi (faqat shahar ko'rinadi, foto/video uchun); ekranga istalgan joyga bosish yoki kichik "ko'z" tugmasi bilan qaytadi.
+- **Shaxsiy xabar yo'q:** o'yinchilar bir-biriga yopiq xabar yoza olmaydi, faqat ochiq chat (Umumiy/Mahalla). Kodda shaxsiy xabar bo'lsa — olib tashlansin. Sabab: yosh cheklovi yo'q, bolalar xavfsizligi.
+- **Akkauntni o'chirish:** "Uyim → Sozlamalar" da ko'rinadigan tugma. Tasdiqlashdan keyin profil, chat xabarlari va shaxsiy ma'lumotlar o'chiriladi, uy bo'shatiladi (Telegram bilan bog'lanish ham uziladi). Zaxira nusxalarda qolgan ma'lumot maxfiylik siyosatida aytilgan muddatdan keyin yo'qoladi — `legal.ts` ga shu haqida qator qo'shilsin. Mavjud o'chirish funksiyasi bo'lsa, shuni ko'rinadigan joyga chiqar.
+
+### 1.7 Qabul
 - Uch rejim o'rtasida o'tish 1 soniyadan tez. Ochilish ekranidagi qisqa yo'riqnoma yangi boshqaruvga moslansin (uz + ru).
 - `perf.mjs` da eng yuqori kamera holatida ham past sifatda 30+ FPS mo'ljali saqlansin.
 

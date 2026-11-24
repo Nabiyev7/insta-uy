@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-  DECOR, canUpgrade, dayFraction, decorById, hasBannedWord, hash01, holidayOf, instagramUrl, isFreeType, loginEmail, normalizeDecor, parseBio,
+  DECOR, canUpgrade, dayFraction, decorById, hasBannedWord, hash01, holidayOf, instagramUrl, isFreeType, loginEmail, parseBio,
   parseInstagram, parseLogin, parsePassword, parseStreetName, parseText, plotAddress, plotPrice, sanitizeAvatar, seasonOf, weatherOf, DEFAULT_AVATAR,
 } from '../src/index.ts';
 
@@ -53,9 +53,6 @@ describe('katalog', () => {
   test('narx joy qiymatiga qarab oshadi, chegirma ishlaydi', () => {
     expect(plotPrice({ type: 'villa', value: 100 })).toBeGreaterThan(plotPrice({ type: 'villa', value: 0 }));
     expect(plotPrice({ type: 'hovli', value: 0 }, 30_000, 50)).toBe(15_000);
-  });
-  test('bitta joyga bitta bezak, oxirgisi qoladi', () => {
-    expect(normalizeDecor(['gate_wood', 'gate_gold', 'tree_anor', 'tree_chinor', 'yoq', 'tree_anor'])).toEqual(['gate_gold', 'tree_chinor', 'tree_anor']);
   });
   test('ID’lar noyob', () => {
     expect(new Set(DECOR.map((d) => d.id)).size).toBe(DECOR.length);

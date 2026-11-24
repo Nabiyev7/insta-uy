@@ -1,5 +1,5 @@
 """Farg'ona vodiysi ruhidagi uylar. Old tomoni -Y (glTF: +Z). Bu asosiy shakllar; levellar kit_levels*.py da."""
-from kit_core import (BRICK, CARVED, COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model)
+from kit_core import (BRICK, CARVED, COARSE, CONCRETE, FACADE, GLASS, M_DOOR, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model)
 
 TRIM = '#f3ead8'
 
@@ -139,7 +139,7 @@ def house5(name):
     for x in (-2.2, 2.0):
         for z in (0.9, 2.9):
             m.panel([(x - 0.1, -5.45, z), (x + 0.3, -5.45, z), (x + 0.3, -5.45, z + 2), (x - 0.1, -5.45, z + 2)], NAQSH)
-    m.panel([(-1.4, -5.46, 0.6), (1.4, -5.46, 0.6), (1.4, -5.46, 4.4), (-1.4, -5.46, 4.4)], CARVED)
+    m.panel([(-1.4, -5.46, 0.6), (1.4, -5.46, 0.6), (1.4, -5.46, 4.4), (-1.4, -5.46, 4.4)], CARVED, WHITE, M_DOOR)
     m.box(-2.6, -5.6, 7.6, 2.6, -3.5, 7.85, PLAIN, gold)
     for s in (-1, 1):
         for x in (3.0, 4.5, 6.0):

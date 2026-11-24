@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { decorById } from '../../../../packages/shared/src/index.ts';
 import { rpc } from '../api.ts';
 import { Btn, Table, useAction, useLoad, when } from '../ui.tsx';
 
 const TITLES: Readonly<Record<string, string>> = {
   city_name: 'Shahar nomi', maintenance: 'Texnik ishlar rejimi', require_approval: 'Uylarni admin tasdiqlaydi', free_claim_enabled: 'Bepul uy tarqatish', payments_enabled: "To'lovlar yoqilgan", payment_provider: "To'lov usuli (card/payme/click)", pay_card: "To'lov kartasi", reserve_minutes: 'Band qilish (daqiqa)',
   discount_pct: 'Chegirma (%)', coins_enabled: 'Tangalar', elections_enabled: 'Saylovlar', multiplayer_enabled: "Ko'p o'yinchi", release_inactive: "Faolsiz uylarni bo'shatish", inactive_days: 'Faolsizlik (kun)', founder_limit: 'Asoschi nishoni soni', sponsor_threshold: "Homiy chegarasi (so'm)",
-  street_vote_min: "Ko'cha ovozi uchun uy egasi", commerce_days: 'Biznes ijarasi (kun)', chat_slow_seconds: 'Chat sekin rejimi (soniya, 0 = o‘chiq)', commerce_closed: 'Sotuvdan olingan tijorat joylari', day_minutes: 'Kun uzunligi (daqiqa, 0 = haqiqiy)', telegram_bot: 'Telegram bot (nomi)', support_url: 'Yordam havolasi', prices: 'Narxlar', coins: 'Tanga iqtisodi',
+  street_vote_min: "Ko'cha ovozi uchun uy egasi", commerce_days: 'Biznes ijarasi (kun)', decor_slots: 'Level bo‘yicha bezak joylari (10 ta son, 20 dan oshmaydi)', chat_slow_seconds: 'Chat sekin rejimi (soniya, 0 = o‘chiq)', commerce_closed: 'Sotuvdan olingan tijorat joylari', day_minutes: 'Kun uzunligi (daqiqa, 0 = haqiqiy)', telegram_bot: 'Telegram bot (nomi)', support_url: 'Yordam havolasi', prices: 'Narxlar', coins: 'Tanga iqtisodi',
 };
 const ORDER = Object.keys(TITLES);
 
@@ -48,27 +47,11 @@ export function Settings(): React.JSX.Element {
   return <div className="scroll"><table><tbody>{rows.map(([k, v]) => <SettingRow key={`${k}${JSON.stringify(v)}`} name={k} value={v} onSaved={reload} />)}</tbody></table></div>;
 }
 
-interface CatalogRow { readonly id: string; readonly price_uzs: number; readonly price_coins: number; readonly stock: number | null; readonly sold: number; readonly is_active: boolean }
 const askNumber = (label: string, old: number | null, apply: (n: number) => void): void => {
   const raw = prompt(label, String(old ?? ''));
   const n = Number(raw);
   if (raw && Number.isInteger(n) && n >= 0) apply(n);
 };
-export function Catalog(): React.JSX.Element {
-  const { data, error, reload } = useLoad(() => rpc<readonly CatalogRow[]>('admin_catalog'));
-  const { isBusy, run } = useAction();
-  const set = (id: string, patch: Record<string, unknown>): void => { void run(() => rpc('admin_catalog', { p_id: id, ...patch })).then(reload); };
-  return (
-    <Table rows={data} error={error} rowKey={(c) => c.id} columns={[
-      { head: 'Bezak', cell: (c) => <><b>{decorById(c.id)?.uz ?? c.id}</b> <span className="muted">{c.id}</span></> },
-      { head: "So'm", cell: (c) => <Btn disabled={isBusy} onClick={() => askNumber("Narx (so'm)", c.price_uzs, (n) => set(c.id, { p_uzs: n }))}>{c.price_uzs}</Btn> },
-      { head: 'Tanga', cell: (c) => <Btn disabled={isBusy} onClick={() => askNumber('Narx (tanga)', c.price_coins, (n) => set(c.id, { p_coins: n }))}>{c.price_coins}</Btn> },
-      { head: 'Zaxira', cell: (c) => <Btn disabled={isBusy} onClick={() => askNumber('Jami soni', c.stock, (n) => set(c.id, { p_stock: n }))}>{c.stock ?? '∞'}</Btn> }, { head: 'Sotilgan', cell: (c) => c.sold },
-      { head: '', cell: (c) => <Btn disabled={isBusy} kind={c.is_active ? 'danger' : 'main'} onClick={() => set(c.id, { p_active: !c.is_active })}>{c.is_active ? 'Yashirish' : "Ko'rsatish"}</Btn> },
-    ]} />
-  );
-}
-
 interface Project { readonly id: number; readonly kind: string; readonly uz: string; readonly ru: string; readonly goal: number; readonly raised: number; readonly status: string }
 export function Projects(): React.JSX.Element {
   const { data, error, reload } = useLoad(() => rpc<{ projects: readonly Project[] }>('api_boot'));

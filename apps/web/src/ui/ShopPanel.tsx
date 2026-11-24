@@ -1,44 +1,65 @@
 /** Do'kon (bezaklar) va mashina tanlash. */
-import { DECOR } from '../../../../packages/shared/src/index.ts';
+import { useEffect } from 'react';
+import type { DecorSlot } from '../../../../packages/shared/src/index.ts';
 import { rpc } from '../app/api.ts';
-import { money, useT } from '../app/i18n.ts';
+import { money, useT, type Key } from '../app/i18n.ts';
 import { car } from '../app/runtime.ts';
-import { openPanel, refreshProfile, setting, useApp, write } from '../app/store.ts';
+import { openPanel, refreshCatalog, refreshProfile, setting, useApp, write } from '../app/store.ts';
+import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { CARS, ownedCars } from '../logic/drive.ts';
-import { createOrder, useCatalog } from './OrderPanels.tsx';
-import { Sheet, useAction } from './kit.tsx';
+import { createOrder } from './OrderPanels.tsx';
+import { Section, Sheet, useAction } from './kit.tsx';
 
-export function ShopPanel(): React.JSX.Element {
+const SECTIONS: readonly (readonly [Key, readonly DecorSlot[]])[] = [
+  ['sGate', ['fence', 'gate', 'path', 'sign']], ['sGarden', ['tree', 'yard', 'water']], ['sCars', ['car']], ['sLight', ['light', 'roof']], ['sPets', ['pet']], ['sSpecial', ['special']],
+];
+
+const useBestLevel = (): number => {
+  const profile = useApp((x) => x.profile);
+  const plotById = useApp((x) => x.plotById);
+  return Math.max(0, ...(profile?.plots ?? []).filter((p) => plotById.get(p.plot)?.type !== 'kvartira').map((p) => p.tier));
+};
+
+interface GoodsProps { readonly row: CatalogRow; readonly level: number }
+function Goods({ row, level }: GoodsProps): React.JSX.Element {
   const t = useT();
   const lang = useApp((s) => s.lang);
   const profile = useApp((s) => s.profile);
-  const catalog = useCatalog();
   const { isBusy, run } = useAction();
   const isPaid = setting('payments_enabled', false);
   const isCoins = setting('coins_enabled', true);
-  const owned = profile?.decor ?? {};
-  const buyWithCoins = (id: string): void => {
+  const qty = profile?.decor[row.id] ?? 0;
+  const isSoldOut = row.left === 0;
+  const isLocked = row.min > 1 && level < row.min;
+  const buy = (): void => {
     if (!profile) { openPanel({ kind: 'auth' }); return; }
-    void run(async () => { await rpc('my_buy_decor_coins', { p_id: id }); await refreshProfile(); }, t('bought'));
+    void run(async () => { await rpc('my_buy_decor_coins', { p_id: row.id }); await Promise.all([refreshProfile(), refreshCatalog()]); }, t('bought'));
   };
+  return (
+    <li className={isLocked ? 'locked' : ''}>
+      <span className="grow"><b>{row[lang]}</b>{row.isNew && <span className="tag clay">{t('isNew')}</span>}{row.left !== null && <span className="tag gold">{row.left} {t('left')}</span>}<br />
+        <span className="muted">{isLocked ? `🔒 ${row.min}-${t('opensAt')}` : `${isCoins ? `💰 ${row.coins}` : ''}${isPaid ? ` · ${money(row.uzs)} ${t('som')}` : ''}${qty > 0 ? ` · ${t('owned2')}: ${qty}` : ''}`}</span></span>
+      {!isLocked && isCoins && <button type="button" className="btn small" disabled={isBusy || isSoldOut} aria-label={`${row[lang]}: ${t('buy')}`} onClick={buy}>{isSoldOut ? t('e_sold_out') : '💰'}</button>}
+      {!isLocked && isPaid && <button type="button" className="btn small clay" disabled={isBusy || isSoldOut} onClick={() => run(() => createOrder('decor', { id: row.id }))}>{t('buy')}</button>}
+    </li>
+  );
+}
+
+export function ShopPanel(): React.JSX.Element {
+  const t = useT();
+  const profile = useApp((s) => s.profile);
+  const catalog = useApp((s) => s.catalog);
+  const level = useBestLevel();
+  useEffect(() => { void refreshCatalog().catch(() => undefined); }, []);
+  const rows = catalog.filter((c) => c.onSale);
   return (
     <Sheet title={t('shop')}>
       {profile && <p className="muted">💰 {profile.coins}</p>}
-      <ul className="list">
-        {DECOR.filter((d) => catalog.has(d.id)).map((d) => {
-          const c = catalog.get(d.id);
-          const isSoldOut = c?.left === 0;
-          return (
-            <li key={d.id}>
-              <span className="grow"><b>{d[lang]}</b>{c?.left !== null && c?.left !== undefined && <span className="tag gold"> {c.left} {t('left')}</span>}<br />
-                <span className="muted">{c && `${isCoins ? `💰 ${c.coins}` : ''}${isPaid ? ` · ${money(c.uzs)} ${t('som')}` : ''}`}</span></span>
-              {owned[d.id] ? <button type="button" className="btn small soft" onClick={() => openPanel({ kind: 'me' })}>{t('owned2')} →</button>
-                : <>{isCoins && <button type="button" className="btn small" disabled={isBusy || isSoldOut} aria-label={`${d[lang]}: ${t('buy')}`} onClick={() => buyWithCoins(d.id)}>💰</button>}
-                  {isPaid && <button type="button" className="btn small clay" disabled={isBusy || isSoldOut} onClick={() => run(() => createOrder('decor', { id: d.id }))}>{t('buy')}</button>}</>}
-            </li>
-          );
-        })}
-      </ul>
+      {SECTIONS.map(([key, slots]) => {
+        const list = rows.filter((c) => slots.includes(c.slot));
+        return list.length > 0 && <Section key={key} title={t(key)}><ul className="list">{list.map((c) => <Goods key={c.id} row={c} level={level} />)}</ul></Section>;
+      })}
+      {profile && profile.plots.length > 0 && <button type="button" className="btn soft" onClick={() => openPanel({ kind: 'me' })}>{t('decor')} → {t('myHouse')}</button>}
     </Sheet>
   );
 }

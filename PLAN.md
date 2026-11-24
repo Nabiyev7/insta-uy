@@ -244,6 +244,7 @@ obunachilar-shahri/
 - [x] Bosh reja v2 (2026-11-24): katta hovlilar, shahar 3×3 km, uylar o'z uchastkasida 1–10 level; `0010_masterplan_v2.sql`
 - [x] Markaz, 1-bosqich (2026-11-24): prezident saroyi, hokimiyat, sud, 12 burchak minorasi (sotilmaydi); `packages/shared/src/center.ts`, `apps/web/src/logic/plaza.ts`, `0012_center.sql`
 - [x] Harakat va ekran (2026-11-24): Shahar / Piyoda / Mashina rejimlari, pastki panel, uch bo'limli chat (`0013_chat.sql`); `npm run screens`
+- [x] Bezaklar tizimi (2026-11-24): katalog bazada va adminda, 24 joy nuqtasi, level bo'yicha 3–20 joy, devor materiali/ramka/eshik rangi, nik lavhasi; `0014_decor.sql`, `packages/shared/src/anchors.ts`
 - [x] 10 level tizimi (2026-11-23): modellar `blender/scripts/kit_levels.py`, baza `0009_levels.sql`, ko'rish `npm run showcase`
 - [ ] Internetga chiqarish (Supabase, Cloudflare, Telegram bot akkauntlari kerak)
 - [ ] Haqiqiy xizmatlar bilan sinash: Telegram bot, Payme/Click sandbox, bank xabari, ElevenLabs, Meta API, Turnstile, Sentry

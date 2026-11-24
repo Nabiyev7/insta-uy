@@ -101,9 +101,3 @@ export function AdsPanel(): React.JSX.Element {
     </Sheet>
   );
 }
-
-interface CatalogRow { readonly id: string; readonly uzs: number; readonly coins: number; readonly left: number | null }
-export const useCatalog = (): ReadonlyMap<string, CatalogRow> => {
-  const { data } = useLoad(() => rpc<readonly CatalogRow[]>('api_catalog'), 'catalog');
-  return new Map(data?.map((c) => [c.id, c]));
-};

@@ -6,14 +6,15 @@ import { Houses } from './sections/Houses.tsx';
 import { Moderation } from './sections/Moderation.tsx';
 import { Orders } from './sections/Orders.tsx';
 import { Users } from './sections/Users.tsx';
-import { Audit, Catalog, Projects, Settings } from './sections/Settings.tsx';
+import { Catalog } from './sections/Catalog.tsx';
+import { Audit, Projects, Settings } from './sections/Settings.tsx';
 import { MapEditor } from './sections/MapEditor.tsx';
 import { Videos } from './sections/Videos.tsx';
 
 type SectionDef = readonly [id: string, title: string, perm: string | null, view: () => React.JSX.Element];
 const SECTIONS: readonly SectionDef[] = [
   ['stats', 'Statistika', null, Stats], ['houses', 'Uylar', 'plots', Houses], ['mod', 'Moderatsiya', null, Moderation], ['districts', 'Tumanlar', 'settings', Districts], ['map', 'Xarita', 'map', MapEditor],
-  ['orders', "Buyurtma va to'lov", 'orders', Orders], ['video', 'Video', 'video', Videos], ['users', 'Foydalanuvchilar', 'users', Users], ['catalog', 'Narx va bezaklar', 'settings', Catalog],
+  ['orders', "Buyurtma va to'lov", 'orders', Orders], ['video', 'Video', 'video', Videos], ['users', 'Foydalanuvchilar', 'users', Users], ['catalog', 'Bezaklar', 'settings', Catalog],
   ['projects', 'Loyihalar', 'settings', Projects], ['settings', 'Sozlamalar', 'settings', Settings], ['audit', 'Jurnal', 'admin', Audit],
 ];
 

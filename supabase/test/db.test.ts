@@ -137,14 +137,16 @@ describe('uy bezash va sovg‘a', () => {
     await as(uid, 'my_edit_house', { p_plot: plot, p_bio: 'Yangi', p_wall: 3, p_roof: 2 });
     await expect(as(other.uid, 'my_edit_house', { p_plot: plot, p_bio: 'x', p_wall: 1, p_roof: 1 })).rejects.toThrow('not_owner');
     await expect(as(uid, 'my_edit_house', { p_plot: plot, p_bio: '', p_wall: 99, p_roof: 1 })).rejects.toThrow('bad_format');
-    await expect(as(uid, 'my_set_decor', { p_plot: plot, p_decor: ['tree_anor'] })).rejects.toThrow('not_owned');
+    await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { s1: 'tree_anor' } })).rejects.toThrow('not_owned');
     await sql('update profiles set coins = 1000 where user_id = $1', [uid]);
     expect(await as(uid, 'my_buy_decor_coins', { p_id: 'tree_anor' })).toBe(920);
-    await as(uid, 'my_set_decor', { p_plot: plot, p_decor: ['tree_anor'] });
+    await as(uid, 'my_place_decor', { p_plot: plot, p_places: { s1: 'tree_anor' } });
     await as(uid, 'my_buy_decor_coins', { p_id: 'gate_wood' });
-    await as(uid, 'my_buy_decor_coins', { p_id: 'gate_carved' });
-    await expect(as(uid, 'my_set_decor', { p_plot: plot, p_decor: ['gate_wood', 'gate_carved'] })).rejects.toThrow('slot_taken');
+    await expect(as(uid, 'my_buy_decor_coins', { p_id: 'gate_carved' })).rejects.toThrow('level_low');
+    await sql('update profiles set coins = 350 where user_id = $1', [uid]);
+    await sql('update plot_state set tier = 6 where plot_id = $1', [plot]);
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_statue' })).rejects.toThrow('not_enough_coins');
+    await sql('update plot_state set tier = 1 where plot_id = $1', [plot]);
     expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(100);
     expect(await as(uid, 'my_tier_coins', { p_plot: plot }).catch((e: Error) => e.message)).toBe('not_enough_coins');
   });
@@ -153,6 +155,7 @@ describe('uy bezash va sovg‘a', () => {
     const { uid } = await owner();
     await sql('update profiles set coins = 100000 where user_id = $1', [uid]);
     await sql("update decor_catalog set stock = 1, sold = 0 where id = 'special_peacock'");
+    await sql('update plot_state set tier = 5 where owner = $1', [uid]);
     await as(uid, 'my_buy_decor_coins', { p_id: 'special_peacock' });
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_peacock' })).rejects.toThrow('sold_out');
     expect(await as(uid, 'my_profile')).toMatchObject({ coins: 96000 });

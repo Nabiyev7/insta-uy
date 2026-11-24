@@ -26,3 +26,7 @@ low piyoda: 358 FPS, 50 call, 15 ming; low shahar eng baland: 385 FPS, 27 call, 
 mid piyoda: 281 FPS, 81 call, 39 ming; mid shahar: 157 FPS, 47 call, 21 ming; mid mashina: 111 FPS, 83 call, 40 ming
 high piyoda: 176 FPS, 172 call, 150 ming; high shahar: 135 FPS, 53 call, 27 ming; high mashina: 76 FPS, 155 call, 145 ming
 (CPU 6 baravar sekinlashtirilgan; mo'ljal 30+ FPS. Haqiqiy Redmi A da sinalmagan.)
+
+## 4-qadamdan keyin: 50 ta 10-level uy (past sifat, CPU 6 baravar sekin, `node e2e/perf-decor.mjs`)
+piyoda: bezaksiz 382 FPS / 46 call / 34 ming → 20 bezak 278 FPS / 51 call / 39 ming
+shahar: bezaksiz 351 FPS / 67 call / 74 ming → 20 bezak 265 FPS / 71 call / 69 ming

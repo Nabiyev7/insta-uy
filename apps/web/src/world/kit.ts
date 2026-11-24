@@ -1,7 +1,8 @@
 /** Modellar to'plami, tekstura massivi va yagona material (draw call = model soni). */
 import {
-  BufferAttribute, BufferGeometry, DataArrayTexture, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshLambertMaterial, RGBAFormat, RepeatWrapping, SRGBColorSpace, UnsignedByteType, Vector3,
+  BufferAttribute, BufferGeometry, Color, DataArrayTexture, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshLambertMaterial, RGBAFormat, RepeatWrapping, SRGBColorSpace, UnsignedByteType, Vector3,
 } from 'three';
+import { DOOR_COLORS, FRAME_COLORS } from '../../../../packages/shared/src/index.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
@@ -13,34 +14,42 @@ export const kitUniforms = {
   uNight: { value: 0 },
   uSnow: { value: 0 },
   uLeaf: { value: new Vector3(1, 1, 1) },
+  uFrames: { value: FRAME_COLORS.map((c) => new Color(c)) },
+  uDoors: { value: DOOR_COLORS.map((c) => new Color(c)) },
 };
 
 const VERTEX_HEAD = `#include <common>
 attribute vec2 uv1;
 #ifdef USE_INSTANCING
-attribute vec3 iWall; attribute vec3 iRoof; attribute vec2 iFx;
+attribute vec3 iWall; attribute vec3 iRoof; attribute vec4 iFx;
 #endif
-varying vec2 vTuv; varying vec2 vMat; varying vec3 vWall; varying vec3 vRoof; varying vec2 vFx; varying float vH; varying float vUp;`;
+varying vec2 vTuv; varying vec2 vMat; varying vec3 vWall; varying vec3 vRoof; varying vec4 vFx; varying float vH; varying float vUp;`;
 const VERTEX_BODY = `#include <begin_vertex>
 vTuv = uv; vMat = uv1; vH = position.y;
 #ifdef USE_INSTANCING
 vWall = iWall; vRoof = iRoof; vFx = iFx;
 vUp = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * normal).y;
 #else
-vWall = vec3(1.0); vRoof = vec3(1.0); vFx = vec2(0.0, 0.5); vUp = normalize(mat3(modelMatrix) * normal).y;
+vWall = vec3(1.0); vRoof = vec3(1.0); vFx = vec4(0.0, 0.5, 1.0, 0.0); vUp = normalize(mat3(modelMatrix) * normal).y;
 #endif`;
 const FRAGMENT_HEAD = `#include <common>
 precision highp sampler2DArray;
 uniform sampler2DArray uTex; uniform float uNight; uniform float uSnow; uniform vec3 uLeaf;
-varying vec2 vTuv; varying vec2 vMat; varying vec3 vWall; varying vec3 vRoof; varying vec2 vFx; varying float vH; varying float vUp;
+varying vec2 vTuv; varying vec2 vMat; varying vec3 vWall; varying vec3 vRoof; varying vec4 vFx; varying float vH; varying float vUp;
+uniform vec3 uFrames[8]; uniform vec3 uDoors[8];
 float kitHash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }`;
 const FRAGMENT_COLOR = `#include <color_fragment>
 float kLayer = floor(vMat.x * ${LAYERS}.0);
 float kMask = vMat.y;
-vec3 kTex = texture(uTex, vec3(vTuv, kLayer)).rgb;
-vec3 kTint = (kMask > 0.15 && kMask < 0.35) ? vWall : ((kMask > 0.4 && kMask < 0.6) ? vRoof : vec3(1.0));
+float kMat = floor(vFx.z + 0.5);
+float kWallLayer = mod(kMat, 16.0);
+bool kIsWall = kMask > 0.15 && kMask < 0.35;
+vec3 kTex = texture(uTex, vec3(vTuv, (kIsWall && kLayer == 1.0) ? kWallLayer : kLayer)).rgb;
+vec3 kTint = kIsWall ? vWall : ((kMask > 0.4 && kMask < 0.6) ? vRoof : vec3(1.0));
 diffuseColor.rgb *= kTex * kTint;
 if (kLayer == 8.0) diffuseColor.rgb *= uLeaf;
+if (kLayer == 9.0) diffuseColor.rgb *= mix(vec3(1.0), uFrames[int(floor(kMat / 16.0))], smoothstep(0.25, 0.5, dot(kTex, vec3(0.3, 0.6, 0.1))));
+if (kMask > 0.04 && kMask < 0.15) diffuseColor.rgb *= uDoors[int(floor(vFx.w + 0.5))];
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.9, 0.95), uSnow * smoothstep(0.5, 0.85, vUp));`;
 const FRAGMENT_EMISSIVE = `#include <emissivemap_fragment>
 if (uNight > 0.01) {
