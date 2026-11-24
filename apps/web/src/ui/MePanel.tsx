@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { parseInstagram } from '../../../../packages/shared/src/index.ts';
-import { AVATAR_OPTIONS, DOOR_COLORS, FRAME_COLORS, MAX_TIER, ROOF_COLORS, TIERS, WALL_COLORS, WALL_MATERIALS, parseBio, sanitizeAvatar, type AvatarLook, type TierId } from '../../../../packages/shared/src/index.ts';
+import { AVATAR_OPTIONS, DOOR_COLORS, FRAME_COLORS, MAX_TIER, ROOF_COLORS, TIERS, WALL_COLORS, WALL_MATERIALS, frameIndex, parseBio, roofColor, sanitizeAvatar, type AvatarLook, type TierId } from '../../../../packages/shared/src/index.ts';
 import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareImage, storyImage } from '../app/actions.ts';
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { hasKey, money, useT } from '../app/i18n.ts';
@@ -37,10 +37,10 @@ function LooksForm({ plot }: PlotProps): React.JSX.Element {
     <form className="section" onSubmit={submit}>
       <Field label={t('bio')}><input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} /></Field>
       <span className="muted">{t('wallColor')}</span><Swatches label={t('wallColor')} colors={WALL_COLORS} value={wall} onPick={setWall} />
-      <span className="muted">{t('roofColor')}</span><Swatches label={t('roofColor')} colors={ROOF_COLORS} value={roof} onPick={setRoof} />
+      <span className="muted">{t('roofColor')}</span><Swatches label={t('roofColor')} colors={ROOF_COLORS.map((c, i) => (i === 0 ? roofColor(plot.tier, 0) : c))} value={roof} onPick={setRoof} />
       {hasHouse && <>
         <span className="muted">{t('wallMaterial')}</span><Seg label={t('wallMaterial')} value={String(material)} onPick={(v) => setMaterial(Number(v))} options={WALL_MATERIALS.map((m, i) => [String(i), m[lang]] as const)} />
-        <span className="muted">{t('frameColor')}</span><Swatches label={t('frameColor')} colors={FRAME_COLORS} value={frame} onPick={setFrame} />
+        <span className="muted">{t('frameColor')}</span><Swatches label={t('frameColor')} colors={FRAME_COLORS.map((c, i) => FRAME_COLORS[frameIndex(plot.tier, i)] ?? c)} value={frame} onPick={setFrame} />
         <span className="muted">{t('doorColor')}</span><Swatches label={t('doorColor')} colors={DOOR_COLORS} value={door} onPick={setDoor} />
       </>}
       <button type="submit" className="btn" disabled={isBusy}>{t('save')}</button>

@@ -10,6 +10,9 @@ export const CARS: readonly CarSpec[] = [
   { id: 'furgon', model: 'car_van', scale: 1, top: 18.5, accel: 8, decor: 'car_van', uz: 'Oq furgon', ru: 'Белый фургон' },
   { id: 'sedan', model: 'car_sedan', scale: 1, top: 19.5, accel: 9, decor: 'car_sedan', uz: 'Sedan', ru: 'Седан' },
   { id: 'sport', model: 'car_sport', scale: 1, top: 21, accel: 13, decor: 'car_sport', uz: 'Sport mashina', ru: 'Спорткар' },
+  { id: 'yangi_sedan', model: 'avto_sedan', scale: 1, top: 19.5, accel: 9.5, decor: 'avto_sedan', uz: "Ko'k sedan", ru: 'Синий седан' },
+  { id: 'krossover', model: 'avto_krossover', scale: 1, top: 19, accel: 9, decor: 'avto_krossover', uz: 'Krossover', ru: 'Кроссовер' },
+  { id: 'yangi_sport', model: 'avto_sport', scale: 1, top: 21, accel: 13.5, decor: 'avto_sport', uz: 'Qizil sport', ru: 'Красный спорткар' },
 ];
 export const carById = (id: string): CarSpec => CARS.find((c) => c.id === id) ?? CARS[0]!;
 /** Egalik qilingan mashinalar (bepuli doim bor). */

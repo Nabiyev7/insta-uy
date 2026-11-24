@@ -1,6 +1,6 @@
 /** Hovlini bezash: reja ustidagi nuqtani bosing → bezak tanlang, ko'chiring yoki olib qo'ying. */
 import { useState, type FormEvent } from 'react';
-import { ANCHORS, REF_YARD, anchorById, decorSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
+import { ANCHORS, DECOR_LEVEL, REF_YARD, anchorById, decorSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
 import { rpc, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
@@ -11,10 +11,11 @@ type Places = Readonly<Record<string, string>>;
 const without = (places: Places, anchor: string): Places => Object.fromEntries(Object.entries(places).filter(([a]) => a !== anchor));
 const countOf = (places: Places, decor: string): number => Object.values(places).filter((d) => d === decor).length;
 
-const HOUSE = { x: -8.6, z: -14.6, w: 17.2, d: 15.4 } as const;
+const HOUSE = { x: -9.8, z: -13.4, w: 21, d: 13.6 } as const;
+const DRIVE = { x: 5.1, z: 0.2, w: 5.8, d: 16.8 } as const;
 const DOT = 1.15;
 /** Butun hovliga tegishli nuqtalar rejada chetda ko'rsatiladi. */
-const MARKS: Readonly<Record<string, readonly [number, number]>> = { fence: [-12, 16.6], gate: [0, 16.4], path: [0, 8.6], lamps: [1.9, 11.6], luxe: [0, -0.4], roof: [0, -7] };
+const MARKS: Readonly<Record<string, readonly [number, number]>> = { fence: [-12, 0], gate: [0, 16.8], path: [0, 6.6], lamps: [0, 11.4], luxe: [-6.4, -1], roof: [0, -7], sign: [-2.7, 16.8] };
 const markOf = (a: Anchor): readonly [number, number] => MARKS[a.id] ?? [a.x, a.z];
 
 interface YardMapProps { readonly level: number; readonly places: Places; readonly selected: string | null; readonly onPick: (id: string) => void }
@@ -26,6 +27,7 @@ function YardMap({ level, places, selected, onPick }: YardMapProps): React.JSX.E
     <svg className="yard" viewBox={`${-w / 2 - 1} ${-d / 2 - 1} ${w + 2} ${d + 2.4}`} role="group" aria-label={t('yardPlan')}>
       <rect className="ground" x={-w / 2} y={-d / 2} width={w} height={d} rx="0.6" />
       <rect className="house" x={HOUSE.x} y={HOUSE.z} width={HOUSE.w} height={HOUSE.d} rx="0.5" />
+      <rect className="path" x={DRIVE.x} y={DRIVE.z} width={DRIVE.w} height={DRIVE.d} />
       <rect className="path" x="-0.9" y="1" width="1.8" height="16" />
       {ANCHORS.map((a) => {
         const [x, z] = markOf(a);
@@ -115,7 +117,7 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
   return (
     <Section title={`${t('decor')} · ${used}/${max}`}>
       <YardMap level={plot.tier} places={places} selected={selected} onPick={setSelected} />
-      <p className="muted">{t('yardHint')}</p>
+      <p className="muted">{plot.tier < DECOR_LEVEL ? `🔒 ${t('decor')}: ${DECOR_LEVEL}-${t('opensAt')}` : t('yardHint')}</p>
       {anchor && (
         <div className="spot-panel">
           <b>{anchor[lang]}</b>

@@ -1,7 +1,7 @@
 /** Qaysi model qayerda turadi. Faqat hisob — Three.js yo'q. */
 import {
-  FREE_SPOTS, HILL, LAKE, LEVEL_FENCE, LEVEL_GATE, REF_YARD, ROOF_COLORS, TOWERS, TOWER_BASE, TOWER_HALF, WALL_COLORS, WALL_MATERIALS,
-  anchorById, hash01, levelYard, padHeight, parsePlaced,
+  DECOR_LEVEL, FREE_ANCHOR, HILL, LAKE, LEVEL_DRIVE, LEVEL_FENCE, LEVEL_GATE, REF_YARD, ROOF_COLORS, TOWERS, TOWER_BASE, TOWER_HALF, WALL_COLORS, WALL_MATERIALS,
+  anchorById, frameIndex, hash01, levelYard, padHeight, parsePlaced, roofColor,
   type Anchor, type Building, type Commerce, type DecorItem, type Expansion, type Plot, type SpotKind,
 } from '../../../../packages/shared/src/index.ts';
 import { decorOf } from './decorCatalog.ts';
@@ -31,7 +31,9 @@ const HOUSE: Readonly<Record<Plot['type'], { readonly scale: number; readonly ba
 const OWN_SIZE_TIERS = 6;
 const houseScale = (p: Plot, tier: number): number => (p.type === 'hovli' && tier <= OWN_SIZE_TIERS ? 1 : HOUSE[p.type].scale);
 /** Panjara va bezaklar shu o'lchamdagi uchastkaga chizilgan, boshqalariga masshtablanadi. */
-const freeSpot = (id: string): readonly [number, number] => { const s = FREE_SPOTS[id]; return s ? [s[0], s[1]] : [0, 6]; };
+/** 1–4-levelda orqa chap daraxt uy yonidagi hovlida: bu uylar orqa burchakka juda yaqin. */
+const LOW_SPOT: Readonly<Record<string, readonly [number, number]>> = { tree_tall: [-10.4, 3.8] };
+const freeSpot = (id: string, tier: number): readonly [number, number] => { const low = tier < DECOR_LEVEL ? LOW_SPOT[id] : undefined; if (low) return low; const a = anchorById(FREE_ANCHOR[id] ?? ''); return a ? [a.x, a.z] : [0, 6]; };
 export const REF_PLOT = REF_YARD;
 /** Uy bo'yiga deyarli o'smaydi; hovlida umuman o'smaydi. */
 const houseGrow = (p: Plot, scale: number): number => (p.type === 'hovli' ? 1 : 1 + (scale - 1) * 0.6);
@@ -58,7 +60,7 @@ const LUXE = 'light_luxe';
 const GATE_INSET = 0.65;
 /** Tomdagi joy (indeks = level): model o'lchamida x, balandlik, z (old +). */
 const ROOF_MOUNT: readonly (readonly [number, number, number])[] = [
-  [0, 4, 1.2], [0, 4.4, 2], [1, 4.4, -1], [0, 4.9, -2.4], [-0.6, 4.25, 0.5], [0, 4.75, 0.2], [0, 4.75, 0.2], [0.25, 7.3, 0.6], [0.25, 7.3, 0.6], [0, 8.1, 1.6], [0, 8.1, 1.6],
+  [0, 4, 1.2], [0, 4.4, 2], [1, 4.4, -1], [0, 4.9, -2.4], [-2.5, 4.85, 3.4], [-2.5, 8.05, 4], [0, 4.75, 0.2], [0.25, 7.3, 0.6], [0.25, 7.3, 0.6], [0, 8.1, 1.6], [0, 8.1, 1.6],
 ];
 const roofItem = (p: Plot, tier: number, model: string, y: number, tint: string | null): Item => {
   const [rx, ry, rz] = ROOF_MOUNT[tier] ?? [0, 4, 0];
@@ -76,8 +78,9 @@ const anchorItem = (p: Plot, anchor: Anchor, d: DecorItem, y: number, tier: numb
 /** Tungi yoritish: indeks = level. */
 const LEVEL_GLOW = [0, 0, 0, 0.05, 0.1, 0.18, 0.28, 0.4, 0.55, 0.7, 0.85] as const;
 const houseGlow = (s: HouseState): number => (LEVEL_GLOW[s.tier] ?? 0) + (s.decor.some((x) => x.endsWith(`:${LUXE}`)) ? 0.3 : 0);
-/** Kuchsiz telefonda ikki qo'shni level bitta uzoq shaklda (draw call kamayadi). */
-const lodOf = (tier: number, isSimple: boolean): string => `house${isSimple ? Math.ceil(tier / 2) * 2 - 1 : tier}_lod`;
+/** Kuchsiz telefonda shakli o'xshash qo'shni levellar bitta uzoq shaklda (draw call kamayadi). 3–6 bir-biriga o'xshamaydi. */
+const SIMPLE_LOD: Readonly<Record<number, number>> = { 2: 1, 8: 7, 10: 9 };
+const lodOf = (tier: number, isSimple: boolean): string => `house${(isSimple ? SIMPLE_LOD[tier] : undefined) ?? tier}_lod`;
 
 const FRAME_STRIDE = 16;
 export const houseItem = (p: Plot, s: HouseState, isFar: boolean, isSimple = false): Item => {
@@ -85,7 +88,7 @@ export const houseItem = (p: Plot, s: HouseState, isFar: boolean, isSimple = fal
   const [x, z] = toWorld(p, 0, -HOUSE[p.type].back);
   return item(isFar ? lodOf(s.tier, isSimple) : `house${s.tier}`, x, z, {
     y: padHeight(p), yaw: yawOf(p.rot), sx: scale, sy: houseGrow(p, scale), sz: scale,
-    wall: WALL_COLORS[s.wall] ?? WALL_COLORS[0], roof: ROOF_COLORS[s.roof] ?? ROOF_COLORS[0], glow: Math.min(1, houseGlow(s)), seed: hash01(p.id), mat: (WALL_MATERIALS[s.material]?.layer ?? 1) + FRAME_STRIDE * s.frame, door: s.door,
+    wall: WALL_COLORS[s.wall] ?? WALL_COLORS[0], roof: roofColor(s.tier, s.roof), glow: Math.min(1, houseGlow(s)), seed: hash01(p.id), mat: (WALL_MATERIALS[s.material]?.layer ?? 1) + FRAME_STRIDE * frameIndex(s.tier, s.frame), door: s.door,
   });
 };
 
@@ -100,15 +103,33 @@ const closedPlot = (p: Plot, y: number): Item[] => {
   return [item('barrier', x, z, { y, yaw: yawOf(p.rot) })];
 };
 
+/** Bo'sh uchastka taxtachasi va daraxti. Yozuvi `Boards` da bitta umumiy tekstura bilan chiziladi. */
+export const BOARD = 'forsale';
+export const EMPTY_TREE = 'tree_round';
+const SECOND_TREE_SHARE = 0.45;
+const BOARD_FROM_STREET = 1.6;
+const BOARD_SIZE = 1.35;
+/** Daraxt (1–2 ta) oldin, taxtacha oxirida: uzoqdan faqat daraxtlari ko'rinadi. Taxtacha faqat bepul beriladigan hovlilarda. */
+const emptyPlot = (p: Plot, y: number): Item[] => {
+  const yaw = yawOf(p.rot);
+  const tree = (k: string, lx: number, lz: number): Item => {
+    const [x, z] = toWorld(p, lx * p.w, lz * p.d);
+    const size = 0.75 + hash01(`${k}s${p.id}`) * 0.3;
+    return item(EMPTY_TREE, x, z, { y, yaw: hash01(`${k}y${p.id}`) * Math.PI * 2, sx: size, sy: size, sz: size });
+  };
+  const trees = [tree('a', 0.34 - hash01(`ax${p.id}`) * 0.12, -0.3 - hash01(`az${p.id}`) * 0.08), ...(hash01(`n${p.id}`) < SECOND_TREE_SHARE ? [tree('b', -0.32 + hash01(`bx${p.id}`) * 0.12, -0.1 + hash01(`bz${p.id}`) * 0.2)] : [])];
+  if (p.type !== 'hovli') return trees;
+  const [x, z] = toWorld(p, 0, p.d / 2 - BOARD_FROM_STREET);
+  return [...trees, item(BOARD, x, z, { y, yaw, sx: BOARD_SIZE, sy: BOARD_SIZE, sz: BOARD_SIZE })];
+};
+
 /** Bitta uchastkaning barcha modellari. `isOpen` — tuman ochiqmi. */
 export const plotItems = (p: Plot, s: HouseState | undefined, isOpen: boolean): Item[] => {
   if (p.type === 'kvartira') return [];
   const y = padHeight(p);
   const yaw = yawOf(p.rot);
   if (!s) {
-    if (!isOpen) return closedPlot(p, y);
-    const [x, z] = toWorld(p, 0, p.d / 2 - 2);
-    return [item('forsale', x, z, { y, yaw })];
+    return isOpen ? emptyPlot(p, y) : closedPlot(p, y);
   }
   const fx = p.w / REF_PLOT.w;
   const placed = parsePlaced(s.decor).flatMap(({ anchor, decor }) => { const a = anchorById(anchor); const d = decorOf(decor); return a && d ? [{ a, d }] : []; });
@@ -116,18 +137,20 @@ export const plotItems = (p: Plot, s: HouseState | undefined, isOpen: boolean): 
   const [gx, gz] = toWorld(p, 0, p.d / 2 - GATE_INSET);
   const wall = WALL_COLORS[s.wall] ?? WHITE;
   const [fence, gate] = [own('fence'), own('gate')];
-  // Egasi qo'ygan yo'lak yoki chiroq leveldan kelganini almashtiradi.
-  const taken = new Set([own('path') ? 'path_stone' : '', own('lamps') ? 'light_lamps' : '', own('luxe') ? LUXE : '']);
-  const free = levelYard(s.tier).filter((id) => !taken.has(id)).map((id) => (id === LUXE ? luxeItem(p, id, y) : yardItem(p, id, freeSpot(id), y, null)));
+  // Egasi nuqtaga qo'ygan bezak leveldan tekin kelganini almashtiradi.
+  const taken = new Set(placed.map((x) => x.a.id));
+  const free = levelYard(s.tier).filter((id) => !taken.has(FREE_ANCHOR[id] ?? '')).map((id) => (id === LUXE ? luxeItem(p, id, y) : yardItem(p, id, freeSpot(id, s.tier), y, null)));
+  const sz = p.d / REF_PLOT.d;
+  const drive = LEVEL_DRIVE[s.tier];
   return [
     houseItem(p, s, false),
-    item(fence?.model ?? LEVEL_FENCE[s.tier] ?? 'fence_basic', p.x, p.z, { y, yaw, sx: fx, sz: p.d / REF_PLOT.d, wall, tint: fence?.tint ?? null }),
+    item(fence?.model ?? LEVEL_FENCE[s.tier] ?? 'fence_basic', p.x, p.z, { y, yaw, sx: fx, sz, wall, roof: roofColor(s.tier, s.roof), tint: fence?.tint ?? null }),
     item(gate?.model ?? LEVEL_GATE[s.tier] ?? 'gate_basic', gx, gz, { y, yaw, sx: fx, tint: gate?.tint ?? null }),
-    ...free, ...placed.map(({ a, d }) => anchorItem(p, a, d, y, s.tier)).filter((i): i is Item => i !== null),
+    ...(drive ? [item(drive, p.x, p.z, { y, yaw, sx: fx, sz })] : []), ...free, ...placed.map(({ a, d }) => anchorItem(p, a, d, y, s.tier)).filter((i): i is Item => i !== null),
   ];
 };
-/** plotItems boshidagi uy, panjara, darvoza — qolgani mayda bezak (faqat yaqindan ko'rinadi). */
-export const PLOT_SHELL = 3;
+/** plotItems boshidagi uy, panjara, darvoza (va avtomobil yo'li) — qolgani mayda bezak (faqat yaqindan ko'rinadi). */
+export const shellSize = (tier: number): number => (LEVEL_DRIVE[tier] ? 4 : 3);
 
 export const expansionItems = (e: Expansion): Item[] => {
   const yaw = yawOf(e.rot);
@@ -175,19 +198,25 @@ export const projectItems = (projects: readonly ProjectInfo[]): Item[] => projec
   return done > 0 ? [item('crane', site[0], site[1]), item('foundation', site[0] + 12, site[1], { sx: 2, sz: 2 })] : [];
 });
 
-const HALF: Readonly<Record<number, readonly [number, number]>> = { 1: [5.3, 4.4], 2: [8.7, 6.5], 3: [8.6, 7], 4: [6.8, 6.2], 5: [7.8, 6.6], 6: [7.9, 6.9], 7: [6.5, 5.2], 8: [6.9, 5.4], 9: [6.8, 5.9], 10: [7.2, 6.2] };
+/** Devorlar: yarim eni, yarim chuqurligi va (garajli uylarda) o'rtasining yon siljishi. */
+const HALF: Readonly<Record<number, readonly [number, number, number?]>> = { 1: [5.3, 4.4], 2: [7.5, 6.5, -1.6], 3: [10.1, 7], 4: [9.5, 6.5, 0.8], 5: [10.2, 5.9, 0.7], 6: [7.9, 6.9], 7: [6.5, 5.2], 8: [6.9, 5.4], 9: [6.8, 5.9], 10: [7.2, 6.2] };
 export const houseSolid = (p: Plot, s: HouseState): Solid | null => {
   if (p.type === 'kvartira') return null;
   const scale = houseScale(p, s.tier);
-  const [x, z] = toWorld(p, 0, -HOUSE[p.type].back);
-  const [a, b] = HALF[s.tier] ?? [6, 5];
+  const [a, b, shift = 0] = HALF[s.tier] ?? [6, 5];
+  const [x, z] = toWorld(p, shift * scale, -HOUSE[p.type].back);
   const [hx, hz] = p.rot % 2 === 0 ? [a * scale, b * scale] : [b * scale, a * scale];
   return { x, z, hx, hz, h: 5 };
 };
 /** Bosish qutisining balandligi: indeks = level (bo'sh uchastka — belgi bo'yi). */
-const TIER_HEIGHT = [1.2, 5.5, 5.5, 6, 6, 6.5, 7.5, 8.5, 9, 12, 13] as const;
+const TIER_HEIGHT = [1.2, 5.5, 5.8, 6, 6.4, 9.3, 7.5, 8.5, 9, 12, 13] as const;
 const PALACE_PICK = 1.54;
 export const pickHeight = (p: Plot, s: HouseState | undefined): number => (TIER_HEIGHT[s?.tier ?? 0] ?? 6) * (p.type === 'qasr' && s ? PALACE_PICK : 1);
+/** Uy tomining ustki nuqtasi: nik yorlig'i shu yerda turadi. */
+export const houseTop = (p: Plot, s: HouseState): { readonly x: number; readonly y: number; readonly z: number } => {
+  const [x, z] = toWorld(p, 0, -HOUSE[p.type].back);
+  return { x, y: padHeight(p) + pickHeight(p, s), z };
+};
 export const buildingSolid = (b: Building): Solid => ({ x: b.x, z: b.z, hx: 22.2, hz: 8.2, h: b.floors * 3 + 2 });
 export const commerceSolid = (c: Commerce): Solid | null => {
   if (c.type === 'bilbord') return null;

@@ -6,7 +6,7 @@ export interface CatalogRow {
   readonly spots: readonly SpotKind[]; readonly min: number; readonly from: string | null; readonly to: string | null; readonly set: string | null; readonly isNew: boolean; readonly tint: string | null; readonly onSale: boolean;
 }
 export interface SetRow { readonly id: string; readonly uz: string; readonly ru: string; readonly discount: number; readonly coins: number; readonly items: readonly string[] }
-const toItem = (r: CatalogRow): DecorItem => ({ id: r.id, slot: r.slot, uz: r.uz, ru: r.ru, priceUzs: r.uzs, priceCoins: r.coins, stock: r.left, model: r.model, spots: r.spots, minLevel: r.min, tint: r.tint });
+const toItem = (r: CatalogRow): DecorItem => ({ id: r.id, slot: r.slot, uz: r.uz, ru: r.ru, priceUzs: r.uzs, priceCoins: r.coins, stock: r.left, model: r.model, spots: r.spots, minLevel: r.min, tint: r.tint, isActive: r.onSale });
 
 let current: ReadonlyMap<string, DecorItem> = new Map(DECOR.map((d) => [d.id, d]));
 export const setCatalog = (rows: readonly CatalogRow[]): void => { current = new Map(rows.map((r) => [r.id, toItem(r)])); };

@@ -11,7 +11,7 @@
 Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual shahar** (veb-sayt).
 - Boshida uylar obunachilarga **bepul** tarqatiladi → sahifa o'sadi.
 - Keyin uylar, bezaklar, ko'cha nomlari, bilbordlar **sotiladi**.
-- Ko'proq pul sarflagan odam **bo'yiga emas, hashamat, joy va sifat** bilan ajralib turadi (uyni tepaga qavat qilib qurish YO'Q).
+- Ko'proq pul sarflagan odam **hashamat, joy va sifat** bilan ajralib turadi: uy **ko'pi bilan 2 qavat** (5-leveldan boshlab; egasi qarori, 2026-11-24).
 - Videolar (reels) shu 3D shahardan admin panel orqali avtomatik yasaladi.
 
 ## 2. Asosiy qoidalar (buzilmasin!)
@@ -23,6 +23,8 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual s
 5. Har bir uchastka eng yuqori uy darajasiga (qasr) sig'adigan o'lchamda chiziladi — uy kattalashsa qo'shniga tegmaydi.
 6. Kuchsiz telefonlarda ishlashi shart. Har bir funksiya arzon Android'da (Redmi A seriyasi) sinaladi.
 7. Xarajat hozircha **0$**. Faqat bepul tariflar.
+8. **Uy ko'pi bilan 2 qavat** — 1–4-level bir qavat, 2 qavat 5-leveldan. Cheksiz qavat yo'q.
+9. **Egasi yo'q uchastkada uy chizilmaydi**: bo'sh joy — maysa, daraxt va "Bo'sh joy — oling!" taxtachasi. Bezaklar faqat 5-leveldan (uy ranglari va nik lavhasi bundan mustasno).
 
 ## 3. Shahar (bosh reja)
 
@@ -244,10 +246,11 @@ cityland-uz/
 - [x] Bosh reja v2 (2026-11-24): katta hovlilar, shahar 3×3 km, uylar o'z uchastkasida 1–10 level; keyin v3 bilan almashdi
 - [x] Davlat binolari va 12 minora (2026-11-24); v3 dan keyin joylari: `packages/shared/src/center.ts`, jamoat joylari `apps/web/src/logic/landscape.ts`, `0012_center.sql`
 - [x] Harakat va ekran (2026-11-24): Shahar / Piyoda / Mashina rejimlari, pastki panel, uch bo'limli chat (`0013_chat.sql`); `npm run screens`
-- [x] Bezaklar tizimi (2026-11-24): katalog bazada va adminda, 24 joy nuqtasi, level bo'yicha 3–20 joy, devor materiali/ramka/eshik rangi, nik lavhasi; `0014_decor.sql`, `packages/shared/src/anchors.ts`
+- [x] Bezaklar tizimi (2026-11-24; nuqtalar 9-qadamda yangilandi: 17 ta nuqta, 5-leveldan 8–17 joy): katalog bazada va adminda, devor materiali/ramka/eshik rangi, nik lavhasi; `0014_decor.sql`, `packages/shared/src/anchors.ts`
 - [x] Umumiy uslub (2026-11-24): uylar, saroylar, davlat binolari klassik/zamonaviy; ekranni tozalash, akkauntni o'chirish
 - [x] Yangi bezaklar va sotuv (2026-11-24): 26 model (`kit_decor.py`), noyob raqamlar, to'plamlar, sinab ko'rish, sovg'a, yangilik xabari, haftaning hovlisi; `0015_shop.sql`
 - [x] **1-bosqich: shaharni qurish, CityLand UZ (2026-11-24)** — egasi "Qulfni ochishga ruxsat beraman" dedi; bosh reja v3 chizildi va yana qulflandi (to'rt markaz + yashil bulvar, halqa va diagonal yo'llar, daryo yo'lagi bo'sh, 8 mahalla markazi); `0010_masterplan_v3.sql`. Yorug' uslub, 1–3-level yangi uylar (`kit_first.py`), kasalxona, masjid, o't o'chirish, teatr, univermag, bozor (`kit_city.py`). Tijorat joylarining hammasi sotuvdan olingan
+- [x] **9-qadam: bo'sh uchastkalar, yangi uylar 1–5, bezaklar (2026-11-24)** — shahar uysiz ochiladi (demo aholi faqat `DEMO=1`), bo'sh joy taxtachasi va "Shu yerda uy qurish", qurilish effekti (`apps/web/src/logic/construction.ts`); 2–3-level tuzatildi (karport/garaj, yo'l, ustunchali devor), 4–5-level yangi (`kit_modern.py`); 15 ta yangi bezak (`kit_yard.py`), 5–10-level uchun bir xil joy nuqtalari, bezak faqat 5-leveldan; bepul uy faqat hovli; `0016_yard.sql`
 - [x] 10 level tizimi (2026-11-23): modellar `blender/scripts/kit_levels.py`, baza `0009_levels.sql`, ko'rish `npm run showcase`
 - [ ] Internetga chiqarish (Supabase, Cloudflare, Telegram bot akkauntlari kerak)
 - [ ] Haqiqiy xizmatlar bilan sinash: Telegram bot, Payme/Click sandbox, bank xabari, ElevenLabs, Meta API, Turnstile, Sentry
@@ -255,7 +258,7 @@ cityland-uz/
 
 Rejadan farqlar (sababi bilan):
 - Video: Remotion o'rniga Playwright + ffmpeg (§7 ikkalasiga ruxsat bergan).
-- KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~1,8 MB, Pages'ning o'zi yetadi.
+- KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~2,1 MB, Pages'ning o'zi yetadi.
 - Ko'p o'yinchi: Socket.io. Musiqa va tabiat ovozi sintez qilinadi (litsenziya masalasi yo'q).
 - Ko'cha/panjara kabi protsedural qismlar koddan, modellar Blender skriptidan (`npm run models`); Blender MCP kerak bo'lmadi.
 - `TURNSTILE_SECRET` ishlab chiqarishda majburiy (soxta akkauntlarga qarshi).

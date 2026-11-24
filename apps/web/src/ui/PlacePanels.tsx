@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { BADGES, TIERS, TOWERS, TOWER_NAMES, instagramUrl, isFreeType, parseBio, parseInstagram, type BadgeId, type Commerce } from '../../../../packages/shared/src/index.ts';
-import { addressOf, goToPlot } from '../app/actions.ts';
+import { addressOf, goToPlot, startConstruction } from '../app/actions.ts';
 import { rpc, type PlotInfo } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
 import { goToPoint } from '../app/modes.ts';
-import { getApp, openPanel, refreshHouses, refreshProfile, setting, toast, useApp } from '../app/store.ts';
+import { getApp, openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
 import { createOrder } from './OrderPanels.tsx';
 import { drawBigMap, fromMap, MAP_SIZE } from './mapCanvas.ts';
 import { Field, Section, Sheet, useAction, useLoad } from './kit.tsx';
@@ -30,14 +30,16 @@ function ReportForm({ kind, target }: { readonly kind: string; readonly target: 
   );
 }
 
-function ClaimForm({ plot, onDone }: { readonly plot: PlotInfo; readonly onDone: () => void }): React.JSX.Element {
+function ClaimForm({ plot }: { readonly plot: PlotInfo }): React.JSX.Element {
   const t = useT();
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
   const [nick, setNick] = useState(profile?.instagram ?? '');
   const [bio, setBio] = useState('');
-  if (!profile) return <button type="button" className="btn clay block" onClick={() => openPanel({ kind: 'auth' })}>{t('needLogin')}</button>;
+  const [isOpen, setOpen] = useState(false);
+  if (!profile) return <><p className="muted">{t('needLogin')}</p><button type="button" className="btn clay block" onClick={() => openPanel({ kind: 'auth' })}>✈️ {t('viaTelegram')}</button></>;
   if (profile.free_used) return <p className="muted">{t('e_free_used')}</p>;
+  if (!isOpen) return <button type="button" className="btn clay block" onClick={() => setOpen(true)}>🏗️ {t('buildHere')}</button>;
   const submit = (e: FormEvent): void => {
     e.preventDefault();
     void run(async () => {
@@ -45,10 +47,10 @@ function ClaimForm({ plot, onDone }: { readonly plot: PlotInfo; readonly onDone:
       if (!ig.ok) throw new Error(ig.code);
       const text = parseBio(bio);
       if (!text.ok) throw new Error(text.code);
-      const r = await rpc<{ status: string }>('my_claim', { p_plot: plot.id, p_instagram: ig.value, p_bio: text.value });
+      await rpc('my_claim', { p_plot: plot.id, p_instagram: ig.value, p_bio: text.value });
+      const full = getApp().plotById.get(plot.id);
+      if (full) startConstruction(full);
       await Promise.all([refreshHouses(), refreshProfile()]);
-      toast(t(r.status === 'pending' ? 'claimedPending' : 'claimed'));
-      onDone();
     });
   };
   return (
@@ -56,7 +58,7 @@ function ClaimForm({ plot, onDone }: { readonly plot: PlotInfo; readonly onDone:
       <h3>{t('claimTitle')}</h3>
       <Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} placeholder="@nik" autoCapitalize="none" required maxLength={80} /></Field>
       <Field label={t('bio')}><input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} /></Field>
-      <button type="submit" className="btn clay block" disabled={isBusy}>{t('claimBtn')}</button>
+      <button type="submit" className="btn clay block" disabled={isBusy}>🏗️ {t('claimBtn')}</button>
       <button type="button" className="link" onClick={() => openPanel({ kind: 'rules' })}>{t('rulesAgree')}</button>
     </form>
   );
@@ -126,8 +128,9 @@ export function PlotPanel({ id }: IdProps): React.JSX.Element | null {
       </>}
       {data && data.rare.length > 0 && <div className="row">{data.rare.map((r) => <span className="tag gold" key={`${r.id}${r.serial}`}>💎 {catalog.find((c) => c.id === r.id)?.[lang].replace(/ \(.*\)$/, '') ?? r.id} №{r.serial} / {r.stock}</span>)}</div>}
       {data?.status === 'owned' && plot.type !== 'kvartira' && <YardVote id={id} votes={data.votes} onDone={reload} />}
-      {data?.status === 'free' && data.open && isFreeType(plot.type) && <ClaimForm plot={data} onDone={reload} />}
-      {data?.status === 'free' && data.open && (!isFreeType(plot.type) || setting('payments_enabled', false)) && <BuyPlot plot={data} />}
+      {data?.status === 'free' && data.open && isFreeType(plot.type) && <ClaimForm plot={data} />}
+      {data?.status === 'free' && data.open && plot.type === 'kvartira' && <p className="muted">{t('e_apartments_closed')}</p>}
+      {data?.status === 'free' && data.open && plot.type !== 'kvartira' && (!isFreeType(plot.type) || setting('payments_enabled', false)) && <BuyPlot plot={data} />}
       <button type="button" className="btn soft" onClick={() => goToPlot(id)}>{t('goThere')}</button>
       {data && data.status !== 'free' && <ReportForm kind="plot" target={id} />}
     </Sheet>

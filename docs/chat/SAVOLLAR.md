@@ -70,6 +70,18 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 13. **Taklif — kirish tugmasi.** 1-bosqichda "Kirish" o'rniga "Tez kunda — @citylanduz" chiqarish mumkin. Hozir kirish va uy olish to'liq ishlayapti (sinovdan o'tgan), shuning uchun yashirmadim. Yashirish kerak bo'lsa, ayting.
 14. **Stadion** — joyida to'siq, poydevor va kran turibdi; umumiy loyiha to'lganda quriladi.
 15. **Texnik manzillar** ham yangilandi (`citylanduz.pages.dev`, ichki login pochtasi). Haqiqiy domen hali ochilmagan.
-
-16. **Yo'l uchlaridagi 2 m tirqish** (tekshiruvchi topdi): o'nlab ko'cha uchi boshqa yo'lga 0,4–6 m yetmaydi. Reja qulflangani uchun joylarga tegmadim — ko'cha uchlari dumaloq chiziladi, tirqish ko'rinmaydi. Rejaning o'zini tuzatish uchun yangi "Qulfni ochishga ruxsat beraman" kerak.
+16. **Yo'l uchlaridagi 2 m tirqish** (tekshiruvchi topdi): o'nlab ko'cha uchi boshqa yo'lga 0,4–6 m yetmaydi. Reja qulflangani uchun joylarga tegmadim — asfalt qo'shni yo'lgacha cho'zib chiziladi, tirqish ko'rinmaydi. Rejaning o'zini tuzatish uchun yangi "Qulfni ochishga ruxsat beraman" kerak.
 17. **Telegram tugmasi**: bot nomi (`telegram_bot` sozlamasi) bo'sh turganda "Telegram orqali kirish · Tez kunda" bo'lib turadi (bosilmaydi).
+
+## 9-qadam: bo'sh uchastkalar, uylar 1–5, bezaklar (UYLAR-BEZAK-PROMT)
+1. **Garaj o'qi.** Hamma levelda (2–10) avtomobil yo'li bitta joyda: uy kattalashganda yo'l va darvoza ko'chmaydi. Shu sabab namunadagi uylar 0,3–0,5 m surildi.
+2. **6–10-level** modellarining shakli o'zgarmadi; ranglari 8-qadamda umumiy yangi palitraga o'tgan (`kit_core.py` `PALETTE`), bu qadamda qo'shimcha moslash qilinmadi, lekin ularga ham mashina maydonchasi va ikkinchi darvoza qo'shildi — "garaj oldi" nuqtasi ishlashi uchun. Muammo: 5-level ikki qavatli, 6-level esa bir qavatli eski uy — pastroq ko'rinadi. 6–10 ni yangilashda hal qilinadi.
+3. **Standart rang.** Tom va ramkaning "0" rangi endi "levelning o'z rangi": 1–3 qizil tom, 4–5 to'q kulrang-ko'k tom va to'q ramka. Egasi boshqa rang tanlasa — o'shanisi. Yangi olingan uy tomi 0 bilan boshlanadi (oldin tasodifiy edi).
+4. **Bezak joylari soni:** 1–4-level 1 (faqat nik lavhasi), keyin 8, 10, 12, 14, 16, 17. Admin o'zgartiradi (`decor_slots`).
+5. **Sotuvdan olingan eski bezaklar (13 ta):** o'rniga yangisi kelganlari — eski hovuz, favvora, furgon, sedan, sport, soyabon, besedka, mangal, archa, olma, o'rik, gulzor, garaj. Milliy narsalar (so'ri, tok, tandir, o'tov) qoldi. "Dam olish" to'plami yangi bezaklar bilan almashdi.
+6. **Panjara, darvoza, yo'lak, chiroq** ham bezak hisoblandi — 5-leveldan. Nik lavhasi har levelda.
+7. **Bepul uy faqat hovli** (`BOSQICH-2.md`): kvartira bosilsa "hozircha berilmaydi" chiqadi, bazada ham yopildi (bepul va pulli yo'l).
+8. **Nik tasdig'i** (`require_approval`) yoqiq turibdi: uy darhol quriladi, "Nikingizni admin tekshiradi" deb chiqadi. Kerak bo'lmasa, sozlamadan o'chiriladi.
+9. **Bo'sh joydagi tugma:** kirmagan odamga "Telegram orqali kirish" chiqadi va kirish oynasi ochiladi; bot nomi yozilmaguncha u yerda Telegram "Tez kunda" turadi (login+parol ishlaydi — uni olib tashlash 2-bosqich ishi).
+10. **Villa va qasr** bo'sh uchastkalarida taxtacha yo'q (bepul emas), faqat daraxt.
+11. **`agents/` va `github/` papkalari** bu ishga kirmaydi, commitga qo'shilmadi.

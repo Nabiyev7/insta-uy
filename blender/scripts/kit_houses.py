@@ -1,6 +1,7 @@
 """Umumiy uslubdagi uylar. Old tomoni -Y (glTF: +Z). Bu asosiy shakllar; levellar kit_levels*.py da."""
 from kit_core import BRICK, COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_ROOF, M_WALL, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model
 from kit_first import first_lods
+from kit_modern import modern_lods
 
 TRIM = '#f3ead8'
 
@@ -21,28 +22,6 @@ def ayvon(m, x0, x1, y0, y1, h, cols):
     for i in range(cols):
         m.column(x0 + 0.3 + (x1 - x0 - 0.6) * i / max(1, cols - 1), y0 + 0.3, 0.35, h)
     m.box(x0, y0 + 0.12, h, x1, y0 + 0.45, h + 0.3, WOOD, '#b98a5c', bottom=True)
-
-
-def house2(name):
-    m = Model(name)
-    walls(m, -5.5, -1.5, 5.5, 4.5, 3.2)
-    walls(m, 1.8, -5, 5.5, -1.5, 3.2)
-    ayvon(m, -5.5, 1.8, -3.6, -1.5, 2.9, 4)
-    moulding(m, -5.5, 1.8, -3.48, 3.2)
-    m.door(-1.4, -1.5)
-    for a, b in ((-4.8, -3.2), (0, 1.4)):
-        m.window('f', -1.5, a, b, 1.1, 2.6)
-    m.window('f', -5, 2.7, 4.6, 1.0, 2.6)
-    for y in (-3.8, 1.2):
-        m.window('r', 5.5, y, y + 1.5, 1.1, 2.6)
-    m.window('l', -5.5, 0.8, 2.3, 1.1, 2.6)
-    for x in (-3.6, 0, 3):
-        m.window('b', 4.5, x, x + 1.4, 1.1, 2.6)
-    m.poly([(-5.9, -4.1, 3.45), (1.8, -4.1, 3.45), (1.8, -1.5, 3.75), (-5.9, -1.5, 3.75)], ROOF, WHITE, M_ROOF)
-    m.hip(-5.5, -1.5, 5.5, 4.5, 3.2, 2.2)
-    m.hip(1.8, -5, 5.5, -0.5, 3.22, 1.7, 0.5)
-    m.cbox(-3, 2.4, 4, 0.7, 0.7, 1.7, BRICK)
-    return m
 
 
 def house3(name):
@@ -135,8 +114,7 @@ def house_lods():
     """Har levelga bitta uzoq ko'rinish: shakli tepadan ham farqlanadi."""
     return [
         *first_lods(),
-        lod('house4_lod', (-6.6, -1.8, 6.6, 5.4), 3.2, 2.4, wing=(-6.7, -6.3, -3.1, -3.0)),
-        lod('house5_lod', (-7.7, -4.2, 7.7, 6.0), 3.5, 2.6),
+        *modern_lods(),
         lod('house6_lod', (-7.7, -4.2, 7.7, 6.0), 3.5, 2.8, wing=(-3.0, -6.1, 3.0, -3.5)),
         lod('house7_lod', (-4.5, -2, 5, 5), 6.4, 2.0, wing=(-6.5, -5, 6.5, -1)),
         lod('house8_lod', (-5.5, -3, 5.5, 5.2), 6.4, 2.2, wing=(-6.6, -5.2, 6.5, -2)),

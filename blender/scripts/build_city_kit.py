@@ -13,12 +13,15 @@ from kit_decor import all_decor  # noqa: E402
 from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
 from kit_props import all_props  # noqa: E402
+from kit_yard import yard_decor  # noqa: E402
 
 # Hovli 24x34 m, uy markazi orqaga 7.5 m surilgan: 1–6 level o'z o'lchamida, 7–10 esa 1.2 baravar turadi.
-LOW_SIZE = {'x': 10.5, 'front': 11.0, 'back': 8.5}
+LOW_SIZE = {'x': 11.25, 'front': 11.0, 'back': 8.5}
 HIGH_SIZE = {'x': 7.7, 'front': 8.0, 'back': 6.7}
 LOW_LEVELS = 6
-MAX_TRIS = {'level': 2500, 'palace': 3500, 'civic': 2500, 'tower': 1000, 'decor': 300}
+MAX_TRIS = {'level': 2500, 'palace': 3500, 'civic': 2500, 'tower': 1000, 'decor': 300, 'big_decor': 500, 'two_floors': 3000}
+BIG_DECOR = ('dam_besedka', 'dam_basseyn')
+TWO_FLOORS = 5
 TOWERS = ('bank', 'agentlik', 'novostroyka')
 PALACE_FROM = 9
 
@@ -30,7 +33,7 @@ def check_level(model, level):
     if max(abs(p.x) for p in pts) > size['x'] or min(p.y for p in pts) < -size['front'] or max(p.y for p in pts) > size['back']:
         raise ValueError(f'{model.name}: uchastkaga sig\'maydi')
     tris = sum(len(poly[0]) - 2 for poly in model.polys)
-    if tris > MAX_TRIS['palace' if level >= PALACE_FROM else 'level']:
+    if tris > MAX_TRIS['palace' if level >= PALACE_FROM else 'two_floors' if level == TWO_FLOORS else 'level']:
         raise ValueError(f'{model.name}: {tris} uchburchak — ko\'p')
 
 
@@ -44,8 +47,9 @@ def check_center(model):
 
 def check_decor(model):
     tris = sum(len(poly[0]) - 2 for poly in model.polys)
-    if tris > MAX_TRIS['decor']:
-        raise ValueError(f'{model.name}: {tris} uchburchak > {MAX_TRIS["decor"]}')
+    limit = MAX_TRIS['big_decor' if model.name in BIG_DECOR else 'decor']
+    if tris > limit:
+        raise ValueError(f'{model.name}: {tris} uchburchak > {limit}')
 
 
 def main():
@@ -63,7 +67,7 @@ def main():
     for model in city:
         if model.name in limited:
             check_center(model)
-    decor = all_decor()
+    decor = all_decor() + yard_decor()
     for model in decor:
         check_decor(model)
     for model in levels + all_buildings() + center + city + all_props() + decor:

@@ -103,7 +103,7 @@ describe('tanga fermasi', () => {
 test('moderator pul va mulk amallarini bajara olmaydi', async () => {
   const m = await user('moderator', ['orders', 'plots', 'settings']);
   const u = await user();
-  const o = (await as(u, 'my_order', { p_kind: 'decor', p_payload: { id: 'tree_anor' } })) as { id: string };
+  const o = (await as(u, 'my_order', { p_kind: 'decor', p_payload: { id: 'sign_nick' } })) as { id: string };
   await expect(as(m, 'admin_order', { p_id: o.id, p_action: 'paid' })).rejects.toThrow('forbidden');
   await svc('svc_payment', { p_provider: 'card', p_external: 'orphan', p_amount: 4321 });
   const pay = (await sql("select id from payments where external_id = 'orphan'"))[0]!.id;

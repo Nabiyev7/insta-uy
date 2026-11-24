@@ -150,7 +150,7 @@ describe('to‘lovlar', () => {
   let jwt = '';
   const order = async (provider: string): Promise<{ id: string; amount: number }> => {
     await db.query("update settings set value = to_jsonb($1::text) where key = 'payment_provider'", [provider]);
-    return (await userRpc(jwt, 'my_order', { p_kind: 'decor', p_payload: { id: 'tree_anor' } })) as { id: string; amount: number };
+    return (await userRpc(jwt, 'my_order', { p_kind: 'decor', p_payload: { id: 'sign_nick' } })) as { id: string; amount: number };
   };
   beforeAll(async () => {
     await call('/auth/register', { login: 'xaridor', password: 'parol12345' });
@@ -164,7 +164,7 @@ describe('to‘lovlar', () => {
     expect((await call('/pay/card', { text }, { 'x-bank-secret': 'bs' })).body).toMatchObject({ result: 'paid', order: o.id });
     expect((await call('/pay/card', { text }, { 'x-bank-secret': 'bs' })).body).toEqual({ result: 'duplicate' });
     expect((await call('/pay/card', { text: 'Chiqim 5000 UZS' }, { 'x-bank-secret': 'bs' })).body).toEqual({ result: 'ignored' });
-    expect(await userRpc(jwt, 'my_profile')).toMatchObject({ decor: { tree_anor: 1 } });
+    expect(await userRpc(jwt, 'my_profile')).toMatchObject({ decor: { sign_nick: 1 } });
   });
   test('bank botidan forward faqat admindan qabul qilinadi', async () => {
     const o = await order('card');
@@ -199,7 +199,7 @@ describe('to‘lovlar', () => {
     expect((await rpcCall('GetStatement', { from: 0, to: Date.now() + 1000 })).result!.transactions).toHaveLength(1);
     expect((await rpcCall('toString', {})).error!.code).toBe(-32601);
     expect(((await call('/pay/payme', '{', head)).body.error as { code: number }).code).toBe(-32700);
-    expect(await userRpc(jwt, 'my_profile')).toMatchObject({ decor: { tree_anor: 3 } });
+    expect(await userRpc(jwt, 'my_profile')).toMatchObject({ decor: { sign_nick: 3 } });
     const o2 = await order('payme');
     await rpcCall('CreateTransaction', { id: 't3', time: Date.now(), amount: o2.amount * 100, account: { order: o2.id } });
     expect((await rpcCall('CancelTransaction', { id: 't3', reason: 3 })).result).toMatchObject({ state: -1 });

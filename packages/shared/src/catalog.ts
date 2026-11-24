@@ -1,7 +1,7 @@
 import type { SpotKind } from './anchors.ts';
 import type { Plot, PlotType } from './types.ts';
 
-/** Uy levellari: bo'yiga emas, hashamatga o'sadi (PLAN.md §1). Har level oldingisidan kuchli. */
+/** Uy levellari: ko'pi bilan 2 qavat (5-leveldan), asosan hashamatga o'sadi (PLAN.md §1). Har level oldingisidan kuchli. */
 export const TIERS = [
   { id: 1, key: 'kichik', uz: 'Kichik uy', ru: 'Маленький дом' },
   { id: 2, key: 'ayvonli', uz: 'Shinam uy', ru: 'Уютный дом' },
@@ -16,10 +16,12 @@ export const TIERS = [
 ] as const;
 export type TierId = (typeof TIERS)[number]['id'];
 export const MAX_TIER = TIERS.length;
+/** Bezaklar shu leveldan ochiladi (nik lavhasi bundan mustasno). */
+export const DECOR_LEVEL = 5;
 
 export const MIN_TIER: Readonly<Record<PlotType, TierId>> = { hovli: 1, kvartira: 1, villa: 7, qasr: 9 };
-/** Bepul olinadigan turlar. */
-export const FREE_TYPES: readonly PlotType[] = ['hovli', 'kvartira'];
+/** Bepul olinadigan turlar (kvartira hozircha berilmaydi — docs/chat/BOSQICH-2.md). */
+export const FREE_TYPES: readonly PlotType[] = ['hovli'];
 export const isFreeType = (t: PlotType): boolean => FREE_TYPES.includes(t);
 export const canUpgrade = (t: PlotType): boolean => t !== 'kvartira';
 
@@ -39,6 +41,16 @@ export const plotPrice = (p: Pick<Plot, 'type' | 'value'>, base: number = DEFAUL
 /** Bir xil model — rang bilan farqlanadi. */
 export const WALL_COLORS = ['#f7f2ea', '#fbe6cc', '#f6d3bd', '#ffffff', '#d9eaf2', '#e0efd4', '#fdecb0', '#f7d6d2'] as const;
 export const ROOF_COLORS = ['#d9604a', '#b5483a', '#5f7f95', '#4f9478', '#b98a5e', '#9486bd'] as const;
+/** Tanlanmagan (0) tom va ramka — levelning o'z rangi: 4–5-level zamonaviy, to'q kulrang-ko'k. */
+const MODERN_ROOF = '#4a5663';
+const MODERN_FRAME = 3;
+const isModern = (tier: number): boolean => tier === 4 || tier === 5;
+export const roofColor = (tier: number, roof: number): string => (roof === 0 && isModern(tier) ? MODERN_ROOF : ROOF_COLORS[roof] ?? ROOF_COLORS[0]);
+/** Zamonaviy uyda to'q ramka va oq ramka o'rin almashadi: standarti to'q, oqi ham tanlanadi. */
+export const frameIndex = (tier: number, frame: number): number => {
+  if (!isModern(tier)) return frame;
+  return frame === 0 ? MODERN_FRAME : frame === MODERN_FRAME ? 0 : frame;
+};
 
 /** Bezak turi (do'kon bo'limi). Qaysi nuqtaga qo'yilishi `spots` da. */
 export type DecorSlot = 'fence' | 'gate' | 'path' | 'tree' | 'yard' | 'water' | 'car' | 'light' | 'pet' | 'special' | 'sign' | 'roof';
@@ -59,88 +71,106 @@ export interface DecorItem {
   readonly minLevel: number;
   /** Modelga beriladigan rang (faqat admin yaratgan tovarlarda). */
   readonly tint: string | null;
+  /** false — sotuvdan olingan (olganlarda qoladi). */
+  readonly isActive: boolean;
 }
 const SLOT_SPOTS: Readonly<Record<DecorSlot, readonly SpotKind[]>> = {
-  fence: ['fence'], gate: ['gate'], path: ['path'], tree: ['small', 'medium', 'wall', 'back', 'big'], yard: ['medium', 'big'], water: ['medium', 'big'], car: ['car', 'big'], light: ['lamps'], pet: ['pet', 'small', 'medium'],
-  special: ['medium', 'big'], sign: ['sign'], roof: ['roof'],
+  fence: ['fence'], gate: ['gate'], path: ['path'], tree: ['corner', 'right', 'left'], yard: ['right', 'left'], water: ['right', 'left'], car: ['car', 'left'], light: ['lamps'], pet: ['pet', 'corner', 'right'],
+  special: ['right', 'left'], sign: ['sign'], roof: ['roof'],
 };
-interface ItemOptions { readonly stock?: number; readonly spots?: readonly SpotKind[]; readonly minLevel?: number }
-const item = (id: string, slot: DecorSlot, uz: string, ru: string, priceUzs: number, priceCoins: number, { stock, spots, minLevel = 1 }: ItemOptions = {}): DecorItem =>
-  ({ id, slot, uz, ru, priceUzs, priceCoins, stock: stock ?? null, model: id, spots: spots ?? SLOT_SPOTS[slot], minLevel, tint: null });
+interface ItemOptions { readonly stock?: number; readonly spots?: readonly SpotKind[]; readonly minLevel?: number; readonly isActive?: boolean }
+const item = (id: string, slot: DecorSlot, uz: string, ru: string, priceUzs: number, priceCoins: number, { stock, spots, minLevel = DECOR_LEVEL, isActive = true }: ItemOptions = {}): DecorItem =>
+  ({ id, slot, uz, ru, priceUzs, priceCoins, stock: stock ?? null, model: id, spots: spots ?? SLOT_SPOTS[slot], minLevel, tint: null, isActive });
 
 export const DECOR: readonly DecorItem[] = [
   item('fence_wood', 'fence', "Yog'och panjara", 'Деревянный забор', 5_000, 100),
-  item('fence_brick', 'fence', "G'isht devor", 'Кирпичная стена', 12_000, 260, { minLevel: 3 }),
+  item('fence_brick', 'fence', "G'isht devor", 'Кирпичная стена', 12_000, 260),
   item('fence_ornate', 'fence', 'Temir panjara', 'Кованый забор', 25_000, 600, { minLevel: 6 }),
   item('gate_wood', 'gate', "Yog'och darvoza", 'Деревянные ворота', 6_000, 120),
-  item('gate_carved', 'gate', 'Soyabonli darvoza', 'Ворота с навесом', 20_000, 450, { minLevel: 4 }),
+  item('gate_carved', 'gate', 'Soyabonli darvoza', 'Ворота с навесом', 20_000, 450),
   item('gate_gold', 'gate', 'Oltin darvoza', 'Золотые ворота', 60_000, 1500, { minLevel: 7 }),
   item('path_stone', 'path', "Tosh yo'lak", 'Каменная дорожка', 4_000, 80),
   item('tree_anor', 'tree', 'Anor', 'Гранат', 4_000, 80),
-  item('tree_chinor', 'tree', 'Chinor', 'Чинара', 7_000, 150, { spots: ['medium', 'big'] }),
-  item('tree_archa', 'tree', 'Archa', 'Ель', 7_000, 150),
+  item('tree_chinor', 'tree', 'Chinor', 'Чинара', 7_000, 150, { spots: ['right', 'left'] }),
+  item('tree_archa', 'tree', 'Archa', 'Ель', 7_000, 150, { isActive: false }),
   item('yard_sori', 'yard', "So'ri", 'Топчан', 8_000, 180),
-  item('yard_tok', 'yard', 'Tok (ishkom)', 'Виноградник', 10_000, 220, { spots: ['big'], minLevel: 4 }),
-  item('yard_flowers', 'yard', 'Gulzor', 'Цветник', 5_000, 100),
-  item('water_pool', 'water', 'Hovuz', 'Бассейн', 45_000, 1000, { spots: ['big'], minLevel: 5 }),
-  item('water_fountain', 'water', 'Kichik favvora', 'Фонтанчик', 35_000, 800, { minLevel: 5 }),
-  item('car_van', 'car', 'Oq furgon', 'Белый фургон', 15_000, 350, { minLevel: 2 }),
-  item('car_sedan', 'car', 'Sedan', 'Седан', 25_000, 600, { minLevel: 3 }),
-  item('car_sport', 'car', 'Sport mashina', 'Спорткар', 70_000, 1800, { minLevel: 6 }),
-  item('light_lamps', 'light', 'Hovli chiroqlari', 'Фонари', 8_000, 180, { minLevel: 3 }),
+  item('yard_tok', 'yard', 'Tok (ishkom)', 'Виноградник', 10_000, 220, { spots: ['left'] }),
+  item('yard_flowers', 'yard', 'Gulzor', 'Цветник', 5_000, 100, { isActive: false }),
+  item('water_pool', 'water', 'Hovuz', 'Бассейн', 45_000, 1000, { spots: ['left'], isActive: false }),
+  item('water_fountain', 'water', 'Kichik favvora', 'Фонтанчик', 35_000, 800, { isActive: false }),
+  item('car_van', 'car', 'Oq furgon', 'Белый фургон', 15_000, 350, { isActive: false }),
+  item('car_sedan', 'car', 'Sedan', 'Седан', 25_000, 600, { isActive: false }),
+  item('car_sport', 'car', 'Sport mashina', 'Спорткар', 70_000, 1800, { minLevel: 6, isActive: false }),
+  item('light_lamps', 'light', 'Hovli chiroqlari', 'Фонари', 8_000, 180),
   item('light_luxe', 'light', 'Hashamatli yoritish', 'Роскошная подсветка', 30_000, 700, { spots: ['luxe'], minLevel: 6 }),
   item('pet_dog', 'pet', 'Kuchuk', 'Собака', 10_000, 220),
   item('pet_cat', 'pet', 'Mushuk', 'Кошка', 8_000, 180),
-  item('special_peacock', 'special', 'Tovus (noyob)', 'Павлин (редкий)', 150_000, 4000, { stock: 10, spots: ['small', 'medium', 'big'], minLevel: 5 }),
+  item('special_peacock', 'special', 'Tovus (noyob)', 'Павлин (редкий)', 150_000, 4000, { stock: 10, spots: ['corner', 'right', 'left'] }),
   item('special_statue', 'special', 'Humo haykali (noyob)', 'Статуя Хумо (редкая)', 200_000, 5000, { stock: 10, minLevel: 6 }),
-  item('special_yurt', 'special', "Navro'z o'tovi (mavsumiy)", 'Юрта Навруза (сезон)', 60_000, 1500, { stock: 100, spots: ['big'], minLevel: 4 }),
-  item('sign_nick', 'sign', 'Nik lavhasi', 'Табличка с ником', 5_000, 100),
-  item('yard_tandir', 'yard', 'Tandir', 'Тандыр', 15_000, 300, { spots: ['small', 'medium', 'big'], minLevel: 2 }),
-  item('yard_tokzor', 'yard', 'Tokzor', 'Виноградные ряды', 15_000, 300, { minLevel: 3 }),
-  item('yard_umbrella', 'yard', "Bog' soyaboni", 'Садовый зонт', 12_000, 240),
-  item('yard_bike', 'yard', 'Velosiped', 'Велосипед', 8_000, 160, { spots: ['small', 'medium', 'wall', 'back'] }),
-  item('sign_mailbox', 'sign', 'Pochta qutisi', 'Почтовый ящик', 4_000, 80, { spots: ['sign', 'pet', 'small'] }),
-  item('yard_besedka', 'yard', 'Besedka', 'Беседка', 30_000, 600, { spots: ['big'], minLevel: 4 }),
-  item('yard_mangal', 'yard', 'Mangal', 'Мангал', 10_000, 200, { spots: ['small', 'medium', 'wall', 'big'], minLevel: 2 }),
-  item('yard_batut', 'yard', 'Batut', 'Батут', 25_000, 500, { spots: ['big'], minLevel: 4 }),
-  item('yard_basketball', 'yard', 'Basketbol halqasi', 'Баскетбольное кольцо', 15_000, 300, { spots: ['small', 'medium', 'wall', 'back', 'big'], minLevel: 3 }),
-  item('roof_solar', 'roof', 'Quyosh panellari', 'Солнечные панели', 40_000, 800, { minLevel: 5 }),
-  item('yard_garage', 'car', 'Garaj', 'Гараж', 50_000, 1000, { spots: ['big'], minLevel: 6 }),
-  item('yard_hammock', 'yard', 'Hamak', 'Гамак', 12_000, 240, { minLevel: 2 }),
-  item('yard_playground', 'yard', 'Bolalar maydonchasi', 'Детская площадка', 40_000, 800, { spots: ['big'], minLevel: 5 }),
-  item('pet_house', 'pet', 'It uyi', 'Конура', 8_000, 160, { spots: ['pet', 'small', 'wall', 'back'], minLevel: 2 }),
-  item('tree_orik', 'tree', "O'rik", 'Абрикос', 5_000, 100),
-  item('tree_olma', 'tree', 'Olma', 'Яблоня', 5_000, 100),
+  item('special_yurt', 'special', "Navro'z o'tovi (mavsumiy)", 'Юрта Навруза (сезон)', 60_000, 1500, { stock: 100, spots: ['left'] }),
+  item('sign_nick', 'sign', 'Nik lavhasi', 'Табличка с ником', 5_000, 100, { minLevel: 1 }),
+  item('yard_tandir', 'yard', 'Tandir', 'Тандыр', 15_000, 300, { spots: ['corner', 'right', 'left'] }),
+  item('yard_tokzor', 'yard', 'Tokzor', 'Виноградные ряды', 15_000, 300),
+  item('yard_umbrella', 'yard', "Bog' soyaboni", 'Садовый зонт', 12_000, 240, { isActive: false }),
+  item('yard_bike', 'yard', 'Velosiped', 'Велосипед', 8_000, 160, { spots: ['corner', 'right'] }),
+  item('sign_mailbox', 'sign', 'Pochta qutisi', 'Почтовый ящик', 4_000, 80, { spots: ['sign', 'pet', 'corner'] }),
+  item('yard_besedka', 'yard', 'Besedka', 'Беседка', 30_000, 600, { spots: ['left'], isActive: false }),
+  item('yard_mangal', 'yard', 'Mangal', 'Мангал', 10_000, 200, { spots: ['corner', 'right', 'left'], isActive: false }),
+  item('yard_batut', 'yard', 'Batut', 'Батут', 25_000, 500, { spots: ['left'] }),
+  item('yard_basketball', 'yard', 'Basketbol halqasi', 'Баскетбольное кольцо', 15_000, 300, { spots: ['corner', 'right', 'left'] }),
+  item('roof_solar', 'roof', 'Quyosh panellari', 'Солнечные панели', 40_000, 800),
+  item('yard_garage', 'car', 'Garaj', 'Гараж', 50_000, 1000, { spots: ['left'], minLevel: 6, isActive: false }),
+  item('yard_hammock', 'yard', 'Hamak', 'Гамак', 12_000, 240),
+  item('yard_playground', 'yard', 'Bolalar maydonchasi', 'Детская площадка', 40_000, 800, { spots: ['left'] }),
+  item('pet_house', 'pet', 'It uyi', 'Конура', 8_000, 160, { spots: ['pet', 'corner'] }),
+  item('tree_orik', 'tree', "O'rik", 'Абрикос', 5_000, 100, { isActive: false }),
+  item('tree_olma', 'tree', 'Olma', 'Яблоня', 5_000, 100, { isActive: false }),
   item('tree_tut', 'tree', 'Tut', 'Тутовник', 6_000, 120),
   item('tree_behi', 'tree', 'Behi', 'Айва', 6_000, 120),
-  item('pet_sheep', 'pet', "Qo'y", 'Овца', 12_000, 240, { minLevel: 2 }),
+  item('pet_sheep', 'pet', "Qo'y", 'Овца', 12_000, 240),
   item('pet_hens', 'pet', 'Tovuqlar', 'Куры', 8_000, 160),
-  item('pet_horse', 'pet', 'Ot', 'Лошадь', 60_000, 1200, { spots: ['small', 'medium', 'wall', 'back', 'big'], minLevel: 6 }),
-  item('pet_dovecote', 'pet', 'Kaptarxona', 'Голубятня', 20_000, 400, { spots: ['small', 'medium', 'wall', 'back'], minLevel: 4 }),
+  item('pet_horse', 'pet', 'Ot', 'Лошадь', 60_000, 1200, { spots: ['corner', 'right', 'left'], minLevel: 6 }),
+  item('pet_dovecote', 'pet', 'Kaptarxona', 'Голубятня', 20_000, 400, { spots: ['corner', 'right'] }),
   item('special_sumalak', 'special', "Sumalak qozoni (Navro'z)", 'Котёл сумаляка (Навруз)', 20_000, 400),
-  item('light_newyear', 'light', 'Yangi yil chiroqlari', 'Новогодние огни', 12_000, 240, { minLevel: 3 }),
-  item('tree_newyear', 'special', 'Yangi yil archasi', 'Новогодняя ёлка', 20_000, 400, { spots: ['small', 'medium', 'big'] }),
-  item('light_hayit', 'light', 'Hayit fonarlari', 'Фонари на Хайит', 15_000, 300, { minLevel: 3 }),
+  item('light_newyear', 'light', 'Yangi yil chiroqlari', 'Новогодние огни', 12_000, 240),
+  item('tree_newyear', 'special', 'Yangi yil archasi', 'Новогодняя ёлка', 20_000, 400, { spots: ['corner', 'right', 'left'] }),
+  item('light_hayit', 'light', 'Hayit fonarlari', 'Фонари на Хайит', 15_000, 300),
+  item('dam_besedka', 'yard', 'Besedka', 'Беседка', 30_000, 600, { spots: ['left'] }),
+  item('dam_mangal', 'yard', 'Mangal', 'Мангал', 20_000, 400, { spots: ['right'] }),
+  item('dam_basseyn', 'water', 'Basseyn', 'Бассейн', 75_000, 1500, { spots: ['left'] }),
+  item('dam_stol', 'yard', 'Soyabonli stol', 'Стол с зонтом', 25_000, 500, { spots: ['right'] }),
+  item('avto_sedan', 'car', 'Sedan', 'Седан', 60_000, 1200, { spots: ['car'] }),
+  item('avto_krossover', 'car', 'Krossover', 'Кроссовер', 90_000, 1800, { spots: ['car'] }),
+  item('avto_sport', 'car', 'Sport mashina', 'Спорткар', 125_000, 2500, { spots: ['car'] }),
+  item('daraxt_olma', 'tree', 'Olma daraxti', 'Яблоня', 10_000, 200, { spots: ['corner'] }),
+  item('daraxt_orik', 'tree', "O'rik daraxti", 'Абрикос', 10_000, 200, { spots: ['corner'] }),
+  item('daraxt_gilos', 'tree', 'Gilos daraxti', 'Черешня', 10_000, 200, { spots: ['corner'] }),
+  item('daraxt_archa', 'tree', 'Archa', 'Ель', 10_000, 200, { spots: ['corner'] }),
+  item('daraxt_palma', 'tree', 'Palma', 'Пальма', 15_000, 300, { spots: ['corner'] }),
+  item('gul_zor', 'yard', 'Gulzor', 'Цветник', 7_500, 150, { spots: ['gate_side'] }),
+  item('gul_kamar', 'yard', 'Gul kamari', 'Цветочная арка', 15_000, 300, { spots: ['gate_side'] }),
+  item('suv_hovuz', 'water', 'Hovuz va favvora', 'Пруд с фонтаном', 40_000, 800, { spots: ['left'] }),
 ];
 export const decorById = (id: string): DecorItem | undefined => DECOR.find((d) => d.id === id);
 
-/** Level bilan tekin keladigan hovli bezaklari: indeks = level. O'z joyida turadi, bezak joylari hisobiga kirmaydi. */
+/** Level bilan tekin keladigan hovli bezaklari: indeks = level. 1–5 — standart hovli; bezak joylari hisobiga kirmaydi. */
 const GARDEN = ['path_stone', 'tree_round', 'tree_wide', 'tree_tall', 'tree_slim'] as const;
-const FLOWER_GARDEN = [...GARDEN, 'tree_anor', 'yard_flowers', 'yard_umbrella'] as const;
-const RICH_GARDEN = [...FLOWER_GARDEN, 'light_lamps', 'tree_chinor'] as const;
-const LUXE_GARDEN = [...RICH_GARDEN, 'tree_archa', 'light_luxe'] as const;
+const LAMP_GARDEN = [...GARDEN, 'light_lamps'] as const;
+const FLOWER_GARDEN = [...LAMP_GARDEN, 'gul_zor'] as const;
+const LUXE_GARDEN = [...FLOWER_GARDEN, 'light_luxe'] as const;
 const LEVEL_YARD: readonly (readonly string[])[] = [
-  [], GARDEN, GARDEN, [...GARDEN, 'yard_flowers'], FLOWER_GARDEN, FLOWER_GARDEN, RICH_GARDEN, [...RICH_GARDEN, 'tree_archa'],
-  LUXE_GARDEN, LUXE_GARDEN, [...LUXE_GARDEN, 'water_fountain'],
+  [], GARDEN, GARDEN, GARDEN, GARDEN, GARDEN, LAMP_GARDEN, FLOWER_GARDEN, LUXE_GARDEN, LUXE_GARDEN, [...LUXE_GARDEN, 'water_fountain'],
 ];
+/** Avtomobil yo'li (indeks = level): 2–4 bitta, 5 ikki mashinalik, 6–10 maydoncha. */
+export const LEVEL_DRIVE: readonly (string | null)[] = [null, null, 'drive_narrow', 'drive_narrow', 'drive_narrow', 'drive_wide', 'drive_pad', 'drive_pad', 'drive_pad', 'drive_pad', 'drive_pad'];
 /** Levelning o'z panjara va darvozasi (indeks = level): har biri oldingisidan yomon emas. Oltin darvoza faqat 9 dan. */
 export const FENCE_RANK = ['fence_low', 'fence_basic', 'fence_brick', 'fence_ornate'] as const;
-export const GATE_RANK = ['gate_open', 'gate_basic', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_naqsh', 'gate_gold'] as const;
+export const GATE_RANK = ['gate_open', 'gate_basic', 'gate_wood', 'gate_slat', 'gate_carved', 'gate_naqsh', 'gate_gold'] as const;
 export const LEVEL_FENCE: readonly (typeof FENCE_RANK)[number][] = [
   'fence_low', 'fence_low', 'fence_basic', 'fence_basic', 'fence_brick', 'fence_brick', 'fence_brick', 'fence_ornate', 'fence_ornate', 'fence_ornate', 'fence_ornate',
 ];
 export const LEVEL_GATE: readonly (typeof GATE_RANK)[number][] = [
-  'gate_open', 'gate_open', 'gate_basic', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_carved', 'gate_naqsh', 'gate_naqsh', 'gate_gold', 'gate_gold',
+  'gate_open', 'gate_open', 'gate_basic', 'gate_wood', 'gate_slat', 'gate_slat', 'gate_carved', 'gate_naqsh', 'gate_naqsh', 'gate_gold', 'gate_gold',
 ];
 export const levelYard = (tier: number): readonly string[] => LEVEL_YARD[tier] ?? [];
 

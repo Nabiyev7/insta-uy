@@ -137,12 +137,11 @@ describe('uy bezash va sovg‘a', () => {
     await as(uid, 'my_edit_house', { p_plot: plot, p_bio: 'Yangi', p_wall: 3, p_roof: 2 });
     await expect(as(other.uid, 'my_edit_house', { p_plot: plot, p_bio: 'x', p_wall: 1, p_roof: 1 })).rejects.toThrow('not_owner');
     await expect(as(uid, 'my_edit_house', { p_plot: plot, p_bio: '', p_wall: 99, p_roof: 1 })).rejects.toThrow('bad_format');
-    await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { s1: 'tree_anor' } })).rejects.toThrow('not_owned');
+    await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } })).rejects.toThrow('not_owned');
     await sql('update profiles set coins = 1000 where user_id = $1', [uid]);
-    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'tree_anor' })).toBe(920);
-    await as(uid, 'my_place_decor', { p_plot: plot, p_places: { s1: 'tree_anor' } });
-    await as(uid, 'my_buy_decor_coins', { p_id: 'gate_wood' });
-    await expect(as(uid, 'my_buy_decor_coins', { p_id: 'gate_carved' })).rejects.toThrow('level_low');
+    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'sign_nick' })).toBe(900);
+    await as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } });
+    for (const id of ['gate_wood', 'tree_anor', 'daraxt_olma', 'avto_sedan']) await expect(as(uid, 'my_buy_decor_coins', { p_id: id })).rejects.toThrow('level_low');
     await sql('update profiles set coins = 350 where user_id = $1', [uid]);
     await sql('update plot_state set tier = 6 where plot_id = $1', [plot]);
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_statue' })).rejects.toThrow('not_enough_coins');
@@ -222,7 +221,9 @@ describe('buyurtma va to‘lov', () => {
     expect(await pay('tier', { plot, tier: 3 })).toBe('paid');
     await expect(as(uid, 'my_order', { p_kind: 'tier', p_payload: { plot, tier: 2 } })).rejects.toThrow('bad_format');
     expect(await pay('label', { plot, label: 'gold' })).toBe('paid');
-    expect(await pay('decor', { id: 'car_sedan' })).toBe('paid');
+    await expect(as(uid, 'my_quote', { p_kind: 'decor', p_payload: { id: 'avto_sedan' } })).rejects.toThrow('level_low');
+    expect(await pay('tier', { plot, tier: 5 })).toBe('paid');
+    expect(await pay('decor', { id: 'avto_sedan' })).toBe('paid');
     expect(await pay('street_name', { street: 1, name: "Bog'ishamol" })).toBe('paid');
     await as(a, 'admin_street', { p_id: 1, p_approve: true });
     expect(await anon('api_boot')).toMatchObject({ streets: { 1: "Bog'ishamol" } });
@@ -237,7 +238,7 @@ describe('buyurtma va to‘lov', () => {
     expect(((await anon('api_boot')) as { commerce: Row[] }).commerce).toEqual([]);
     await as(a, 'admin_ad', { p_id: bb, p_approve: true });
     expect(((await anon('api_boot')) as { commerce: Row[] }).commerce).toMatchObject([{ id: bb, title: 'Reklama' }]);
-    expect((await as(uid, 'my_orders') as Row[]).length).toBe(5);
+    expect((await as(uid, 'my_orders') as Row[]).length).toBe(6);
     expect(await as(uid, 'my_profile')).toMatchObject({ badges: expect.arrayContaining(['asoschi']) });
   });
 
@@ -245,8 +246,8 @@ describe('buyurtma va to‘lov', () => {
     const u = await user();
     const plots = [await freePlot()];
     const first = ((await as(u, 'my_order', { p_kind: 'plot', p_payload: { plot: plots[0], instagram: 'kop_1' } })) as { id: string }).id;
-    for (const id of ['tree_anor', 'tree_archa']) await as(u, 'my_order', { p_kind: 'decor', p_payload: { id } });
-    await expect(as(u, 'my_order', { p_kind: 'decor', p_payload: { id: 'tree_anor' } })).rejects.toThrow('too_many_orders');
+    for (const id of ['sign_nick', 'sign_nick']) await as(u, 'my_order', { p_kind: 'decor', p_payload: { id } });
+    await expect(as(u, 'my_order', { p_kind: 'decor', p_payload: { id: 'sign_nick' } })).rejects.toThrow('too_many_orders');
     await as(u, 'my_order_cancel', { p_id: first });
     expect(await anon('api_plot', { p_plot: plots[0] })).toMatchObject({ status: 'free' });
     await set('payments_enabled', false);

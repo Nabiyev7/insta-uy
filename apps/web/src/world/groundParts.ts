@@ -68,7 +68,7 @@ export type Layers = Readonly<Record<(typeof LAYER_NAMES)[number], GeoBuilder>>;
 export const emptyLayers = (): Layers => ({ base: new GeoBuilder(), low: new GeoBuilder(), walk: new GeoBuilder(), high: new GeoBuilder(), top: new GeoBuilder() });
 
 const C = {
-  grass: new Color('#76b550'), verge: new Color('#7fbf55'), yardA: new Color('#83c45a'), yardB: new Color('#8acb62'), closed: new Color('#a3c97c'), edge: new Color('#a9d884'),
+  grass: new Color('#76b550'), verge: new Color('#7fbf55'), yardA: new Color('#83c45a'), yardB: new Color('#8acb62'), closed: new Color('#a3c97c'), edge: new Color('#dfe3d2'),
   asphalt: new Color('#6b6e75'), walk: new Color('#e7dfd0'), curb: new Color('#d6d3cd'), line: new Color('#f7f5ee'), plinth: new Color('#cfcac2'), sand: new Color('#f3e6bf'), meadow: new Color('#8ccf66'),
 };
 const PAVE_COLOR = Object.fromEntries(Object.entries(PAVE).map(([k, v]) => [k, new Color(v)])) as Readonly<Record<PaveKind, Color>>;
@@ -123,25 +123,39 @@ const addRingRoad = (out: Layers, chunk: Rect, isFar: boolean): void => {
     for (const [from, to, color, isHigh] of strips) (isHigh ? out.high : out.walk).quad(at(a, to), at(a, from), at(b, from), at(b, to), color);
   }
 };
-/** Ko'cha uchlari dumaloq: burilish va tutashgan joylarda tirqish ko'rinmaydi. */
+/** Yoy bo'laklarining uchi dumaloq: burilishda tirqish ko'rinmaydi. */
 const CAP_PARTS = 12;
 const CAPS = [[6, C.walk, false], [4.1, C.asphalt, true]] as const;
-const addCaps = (out: Layers, r: Road, chunk: Rect): void => {
-  const isX = r.w > r.d;
-  const ends = r.angle !== undefined ? [fromLocal(r, -r.w / 2, 0), fromLocal(r, r.w / 2, 0)]
-    : isX ? [[r.x - r.w / 2, r.z], [r.x + r.w / 2, r.z]] as const : [[r.x, r.z - r.d / 2], [r.x, r.z + r.d / 2]] as const;
-  for (const [x, z] of ends) {
-    if (!holds(chunk, x, z)) continue;
-    for (const [radius, color, isHigh] of CAPS) {
-      const at = (i: number): P3 => { const t = (i / CAP_PARTS) * Math.PI * 2; const [px, pz] = [x + Math.cos(t) * radius, z + Math.sin(t) * radius]; return [px, terrainHeight(px, pz), pz]; };
-      for (let i = 0; i < CAP_PARTS; i++) (isHigh ? out.high : out.walk).tri(at(i), [x, terrainHeight(x, z), z], at(i + 1), color);
-    }
+const addCap = (out: Layers, x: number, z: number): void => {
+  for (const [radius, color, isHigh] of CAPS) {
+    const at = (i: number): P3 => { const t = (i / CAP_PARTS) * Math.PI * 2; const [px, pz] = [x + Math.cos(t) * radius, z + Math.sin(t) * radius]; return [px, terrainHeight(px, pz), pz]; };
+    for (let i = 0; i < CAP_PARTS; i++) (isHigh ? out.high : out.walk).tri(at(i), [x, terrainHeight(x, z), z], at(i + 1), color);
+  }
+};
+/** To'g'ri ko'cha boshqa yo'lning chetida tugasa, asfalti o'sha yo'lgacha davom etadi (reja 4 m ga yaxlitlangani uchun tirqish qolgan). */
+const JOIN = 3.2;
+const ASPHALT_HALF = 4.1;
+const addJoin = (out: Layers, plan: MasterPlan, r: Road, x: number, z: number, dx: number, dz: number): void => {
+  if (!isOnRoad(plan, x + dx * JOIN, z + dz * JOIN, 0, (o) => o === r) || isOnRoad(plan, x, z, -JOIN, (o) => o === r)) return;
+  const [ex, ez] = [x + dx * JOIN, z + dz * JOIN];
+  const [w, d] = [Math.abs(dz) * ASPHALT_HALF, Math.abs(dx) * ASPHALT_HALF];
+  out.high.rect(Math.min(x, ex) - w, Math.min(z, ez) - d, Math.max(x, ex) + w, Math.max(z, ez) + d, C.asphalt);
+};
+const addEnds = (out: Layers, plan: MasterPlan, r: Road, chunk: Rect): void => {
+  if (r.angle !== undefined) {
+    for (const u of [-r.w / 2, r.w / 2]) { const [x, z] = fromLocal(r, u, 0); if (holds(chunk, x, z)) addCap(out, x, z); }
+    return;
+  }
+  const [dx, dz] = r.w > r.d ? [1, 0] : [0, 1];
+  for (const k of [-1, 1]) {
+    const [x, z] = [r.x + (k * dx * r.w) / 2, r.z + (k * dz * r.d) / 2];
+    if (holds(chunk, x, z)) addJoin(out, plan, r, x, z, k * dx, k * dz);
   }
 };
 export const addRoads = (out: Layers, plan: MasterPlan, chunk: Rect, isFar: boolean): void => {
   for (const r of plan.roads) {
     if (r.kind === 'halqa') continue;
-    if (!isWide(r)) addCaps(out, r, chunk);
+    if (!isWide(r)) addEnds(out, plan, r, chunk);
     if (r.angle !== undefined) { addTiltedRoad(out, r, chunk, isFar); continue; }
     const isX = r.w > r.d;
     for (const [from, to, color, isHigh] of stripsOf(r, Math.min(r.w, r.d) / 2, isFar)) {
@@ -207,8 +221,8 @@ const addPlinth = (out: Layers, p: Plot, y: number, top: Color): void => {
   out.base.quad([x0, y, z1], [x1, y, z1], [x1, y, z0], [x0, y, z0], top);
   for (const [ax, az, bx, bz] of [[x0, z1, x1, z1], [x1, z1, x1, z0], [x1, z0, x0, z0], [x0, z0, x0, z1]] as const) out.base.quad([ax, b, az], [bx, b, bz], [bx, y, bz], [ax, y, az], C.plinth);
 };
-const EDGE = 0.7;
-/** Bo'sh uchastka ham chiroyli: ikki xil maysa va och hoshiya. */
+const EDGE = 0.32;
+/** Bo'sh uchastka ham chiroyli: ikki xil maysa va chegarasida ingichka och bordyur. */
 export const addPlot = (out: Layers, p: Plot, isOpen: boolean, hasEdge: boolean): void => {
   const color = isOpen ? (hash01(p.id) < 0.5 ? C.yardA : C.yardB) : C.closed;
   const y = padHeight(p) + 0.02;

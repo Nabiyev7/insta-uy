@@ -34,7 +34,7 @@ interface SwatchesProps { readonly colors: readonly string[]; readonly value: nu
 export function Swatches({ colors, value, onPick, label }: SwatchesProps): React.JSX.Element {
   return (
     <div className="swatches" role="group" aria-label={label}>
-      {colors.map((c, i) => <button type="button" key={c} style={{ background: c }} aria-label={`${label} ${i + 1}`} aria-pressed={i === value} onClick={() => onPick(i)} />)}
+      {colors.map((c, i) => <button type="button" key={`${i}${c}`} style={{ background: c }} aria-label={`${label} ${i + 1}`} aria-pressed={i === value} onClick={() => onPick(i)} />)}
     </div>
   );
 }

@@ -38,7 +38,7 @@ const step = async (name, fn) => {
 let browser;
 try {
   let log = '';
-  const api = run(['server/dev/main.ts'], root, { PORT: '8797', DEV_DATA: data, SITE_URL: SITE, ALLOWED_ORIGINS: `${SITE},${ADMIN}` });
+  const api = run(['server/dev/main.ts'], root, { PORT: '8797', DEMO: '1', DEV_DATA: data, SITE_URL: SITE, ALLOWED_ORIGINS: `${SITE},${ADMIN}` });
   api.stdout.on('data', (d) => { log += d; });
   await waitFor(async () => log.includes('Admin:'), 'API', 60_000);
   const anon = /ANON=(\S+)/.exec(log)[1];
@@ -136,16 +136,20 @@ try {
     await desk.getByRole('button', { name: "O'zbekcha" }).click();
     await desk.keyboard.press('Escape');
   });
-  await step("ro'yxatdan o'tish va bo'sh uyni bepul olish", async () => {
+  await step("ro'yxatdan o'tish va bo'sh joyga bepul uy qurish", async () => {
     await desk.locator('.nav5').getByRole('button', { name: 'Kirish' }).click();
     await desk.getByRole('button', { name: "Ro'yxatdan o'tish" }).first().click();
     await desk.getByLabel('Login').fill('sinov_odam');
     await desk.getByLabel('Parol').fill('parol12345');
     await desk.locator('form button[type=submit]').click();
-    await desk.getByRole('button', { name: /Bo'sh uy topish/ }).click();
+    await desk.getByRole('button', { name: /Bo'sh joy topish/ }).click();
+    await desk.getByRole('button', { name: /Shu yerda uy qurish/ }).click();
     await desk.getByLabel('Instagram nikingiz').fill('@Sinov.Nik');
-    await desk.getByRole('button', { name: 'Uyni olish' }).click();
-    await desk.getByText('Tasdiq kutilmoqda').waitFor();
+    await desk.locator('.sheet form button[type=submit]').click();
+    await desk.waitForFunction(() => window.__app.getState().building !== null);
+    const plotId = await desk.evaluate(() => window.__app.getState().building.plot);
+    await desk.getByRole('heading', { name: /Tabriklaymiz/ }).waitFor();
+    assert.ok(await desk.evaluate((id) => { const s = window.__app.getState(); const h = s.houses.get(id); return s.building === null && h.tier === 1 && h.nick === 'sinov.nik' && s.plotById.get(id).type === 'hovli'; }, plotId), 'uy qurilmadi');
     await shot(desk, 'claim');
   });
 
@@ -198,22 +202,35 @@ try {
   });
 
   const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(args) }).then((r) => r.json());
-  const adminToken = async () => (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: 'admin@login.citylanduz.uz', password: 'admin12345' }) }).then((r) => r.json())).access_token;
-  await step("bezak: do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
+  const tokenOf = async (login, password) => (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: `${login}@login.citylanduz.uz`, password }) }).then((r) => r.json())).access_token;
+  const adminToken = () => tokenOf('admin', 'admin12345');
+  await step("bezak: 1-levelda yopiq; 5-levelda do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
     const token = await adminToken();
     const me = (await call('admin_users', { p_q: 'sinov_odam' }, token))[0];
+    await desk.keyboard.press('Escape');
+    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
+    await desk.getByText('5-levelda ochiladi').first().waitFor();
+    assert.equal(await desk.getByRole('button', { name: 'Olma daraxti: Sotib olish' }).count(), 0, '1-levelda bezak sotilmasin');
+    const plot = await desk.evaluate(() => window.__app.getState().profile.plots[0].plot);
+    const coins = await desk.evaluate(() => window.__app.getState().boot.settings.coins);
+    await call('admin_setting', { p_key: 'coins', p_value: { ...coins, tierBase: 1, maxTier: 5 } }, token);
+    const mine = await tokenOf('sinov_odam', 'parol12345');
+    for (let tier = 2; tier <= 5; tier++) await call('my_tier_coins', { p_plot: plot }, mine);
+    await desk.reload();
+    await desk.locator('.nav5').waitFor();
+    await desk.waitForFunction(() => window.__app.getState().profile?.plots[0]?.tier === 5);
     await call('admin_user', { p_id: me.id, p_action: 'coins', p_data: { delta: 1000 } }, token);
     await desk.keyboard.press('Escape');
     await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
     await desk.getByText('7-levelda ochiladi').first().waitFor();
-    await desk.getByRole('button', { name: 'Anor: Sotib olish' }).click();
+    await desk.getByRole('button', { name: 'Olma daraxti: Sotib olish' }).click();
     await desk.getByText(/Sotib olindi/).first().waitFor();
     await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
-    await desk.getByRole('button', { name: 'Old hovli, chapda' }).click();
+    await desk.getByRole('button', { name: 'Old burchak, chapda' }).click();
     await desk.getByRole('button', { name: "Qo'yish" }).click();
-    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('s1:tree_anor'))), 'bezak qo‘yildi');
-    await desk.locator('.spot-panel select').selectOption('s2');
-    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('s2:tree_anor'))), 'bezak ko‘chdi');
+    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('burchak_1:daraxt_olma'))), 'bezak qo‘yildi');
+    await desk.locator('.spot-panel select').selectOption('burchak_2');
+    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('burchak_2:daraxt_olma'))), 'bezak ko‘chdi');
     await desk.getByRole('button', { name: "G'isht" }).click();
     await desk.getByRole('button', { name: 'Eshik rangi 4' }).click();
     await desk.getByRole('button', { name: 'Saqlash' }).click();
@@ -230,11 +247,11 @@ try {
     await shot(desk, 'preview');
     await desk.locator('.preview').getByRole('button', { name: 'Yopish' }).click();
     await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
-    await desk.getByRole('button', { name: 'Olma: Sotib olish' }).click();
+    await desk.getByRole('button', { name: 'Gulzor: Sotib olish' }).click();
     await desk.getByText(/Sotib olindi/).first().waitFor();
     await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
     await desk.getByText("Bezakni sovg'a qilish").first().click();
-    await desk.locator('details[open] select').selectOption('tree_olma');
+    await desk.locator('details[open] select').selectOption('gul_zor');
     await desk.getByPlaceholder('@nik').fill('@demo_0001');
     desk.once('dialog', (d) => d.accept());
     await desk.locator('details[open] button[type=submit]').click();

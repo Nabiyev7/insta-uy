@@ -350,10 +350,10 @@ def light_newyear() -> Model:
     colors = ['#ff5a4a', '#ffd24a', '#5ad06a', '#5aa0ff']
     for s in (-1, 1):
         for y in (-3, 3):
-            m.cbox(s * 2.6, y, 0, 0.08, 0.08, 1.7, PLAIN, IRON)
-        m.box(s * 2.6 - 0.01, -3, 1.6, s * 2.6 + 0.01, 3, 1.63, PLAIN, IRON, bottom=True)
+            m.cbox(s * 1.25, y, 0, 0.08, 0.08, 1.7, PLAIN, IRON)
+        m.box(s * 1.25 - 0.01, -3, 1.6, s * 1.25 + 0.01, 3, 1.63, PLAIN, IRON, bottom=True)
         for i in range(9):
-            m.cbox(s * 2.6, -2.7 + i * 0.67, 1.38, 0.14, 0.14, 0.2, PLAIN, colors[i % 4], M_GLOW)
+            m.cbox(s * 1.25, -2.7 + i * 0.67, 1.38, 0.14, 0.14, 0.2, PLAIN, colors[i % 4], M_GLOW)
     return m
 
 
@@ -377,10 +377,10 @@ def light_hayit() -> Model:
     m = Model('light_hayit', COARSE)
     for s in (-1, 1):
         for y in (-2.6, 0, 2.6):
-            m.cbox(s * 2.5, y, 0, 0.09, 0.09, 1.8, WOOD, OAK)
-            m.box(min(s * 2.1, s * 2.5), y - 0.04, 1.74, max(s * 2.1, s * 2.5), y + 0.04, 1.82, WOOD, OAK, bottom=True)
-            m.cyl(s * 2.15, y, 1.28, 1.6, 0.16, 0.2, 5, PLAIN, '#ffd98a', M_GLOW, cap=False)
-            m.cyl(s * 2.15, y, 1.6, 1.76, 0.22, 0.0, 5, PLAIN, '#2f8f9f')
+            m.cbox(s * 1.4, y, 0, 0.09, 0.09, 1.8, WOOD, OAK)
+            m.box(min(s * 1.05, s * 1.4), y - 0.04, 1.74, max(s * 1.05, s * 1.4), y + 0.04, 1.82, WOOD, OAK, bottom=True)
+            m.cyl(s * 1.1, y, 1.28, 1.6, 0.16, 0.2, 5, PLAIN, '#ffd98a', M_GLOW, cap=False)
+            m.cyl(s * 1.1, y, 1.6, 1.76, 0.22, 0.0, 5, PLAIN, '#2f8f9f')
     return m
 
 

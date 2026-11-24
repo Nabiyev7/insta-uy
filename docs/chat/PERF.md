@@ -40,3 +40,9 @@ low: piyoda 361 → 362 FPS (14,8 → 22,3 ming uchburchak), shahar eng baland 1
 mid: piyoda 290 → 291, shahar 152 → 145 (48 → 39 call), mashina 105 → 118
 high: piyoda 165 → 182, shahar 133 → 127, mashina 72 → 69
 O'lchov xatosi ±10%. Draw call kamaydi (mid piyoda 88 → 57). Teksturalar 109 → 4 KB, modellar 1293 → 1822 KB (yumaloq daraxtlar, yangi binolar). Birinchi yuklanish ~2,7 MB (chegara 3–5 MB).
+
+## 9-qadamdan keyin: bo'sh shahar (bir kompyuterda ketma-ket 2 marta, CPU ÷6; oldin — 8-qadam demo aholi bilan → keyin — bo'sh shahar)
+low: piyoda 275–285 → 342–361 FPS, shahar eng baland 140 → 170–340, mashina 125–128 → 151–289
+mid: piyoda 225 → 300 (59 → 46 call), shahar 119–126 → 153, mashina 94–101 → 122–127
+high: piyoda 135 → 190 (186 → 82 call, 218 → 157 ming uchburchak), shahar 106–170 → 140, mashina 61–65 → 83
+Modellar fayli 1866 → 2086 KB (4–5-level, 15 bezak). Bo'sh uchastka: yer bo'lagi + 1 daraxt modeli + taxtacha (yozuvi bitta umumiy chizish).

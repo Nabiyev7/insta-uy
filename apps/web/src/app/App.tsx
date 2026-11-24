@@ -11,11 +11,13 @@ import { AvatarPanel, MePanel } from '../ui/MePanel.tsx';
 import { AdsPanel, OrdersPanel } from '../ui/OrderPanels.tsx';
 import { ChatPanel } from '../ui/ChatPanel.tsx';
 import { CarsPanel, ShopPanel } from '../ui/ShopPanel.tsx';
+import { CongratsPanel } from '../ui/CongratsPanel.tsx';
 import { BuildingPanel, CommercePanel, MapPanel, PlotPanel, StreetPanel } from '../ui/PlacePanels.tsx';
 import { CityPanel, CoinsPanel, GazettePanel, RankPanel } from '../ui/SocialPanels.tsx';
 
 function PanelView({ panel }: { readonly panel: Panel }): React.JSX.Element {
   switch (panel.kind) {
+    case 'congrats': return <CongratsPanel key={panel.id} id={panel.id} />;
     case 'plot': return <PlotPanel key={panel.id} id={panel.id} />;
     case 'building': return <BuildingPanel key={panel.id} id={panel.id} />;
     case 'commerce': return <CommercePanel key={panel.id} id={panel.id} />;

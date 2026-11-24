@@ -23,7 +23,7 @@ const plotOf = (type: string): (typeof plan.plots)[number] => plan.plots.find((p
 describe('joylashtirish', () => {
   test.each(['hovli', 'villa', 'qasr'])('%s: har darajadagi uy o‘z uchastkasidan chiqmaydi', (type) => {
     for (const p of plan.plots.filter((q) => q.type === type).slice(0, 40)) {
-      for (const { id: tier } of TIERS) {
+      for (const { id: tier } of TIERS.filter((t) => t.id >= MIN_TIER[p.type])) {
         const s = houseSolid(p, state({ tier }))!;
         const f = footprint(p);
         expect(Math.abs(s.x - f.x) + s.hx).toBeLessThanOrEqual(f.hx + 0.01);
@@ -34,12 +34,23 @@ describe('joylashtirish', () => {
   test('bezak panjara/darvoza oddiysini almashtiradi', () => {
     const models = plotItems(plotOf('hovli'), state({ tier: 1, decor: ['fence:fence_brick', 'gate:gate_gold', 'yoq'] }), true).map((i) => i.model);
     expect(models).toEqual(['house1', 'fence_brick', 'gate_gold', ...GARDEN]);
-    expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_basic', 'gate_wood', ...GARDEN, 'yard_flowers']);
+    expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_basic', 'gate_wood', 'drive_narrow', ...GARDEN]);
+    expect(plotItems(plotOf('hovli'), state({ tier: 4 }), true).map((i) => i.model)).toEqual(['house4', 'fence_brick', 'gate_slat', 'drive_narrow', ...GARDEN]);
+    expect(plotItems(plotOf('hovli'), state({ tier: 5 }), true).map((i) => i.model).slice(0, 4)).toEqual(['house5', 'fence_brick', 'gate_slat', 'drive_wide']);
     expect(plotItems(plotOf('hovli'), state({ tier: 2 }), true).map((i) => i.model).slice(0, 3)).toEqual(['house2', 'fence_basic', 'gate_basic']);
     expect(plotItems(plotOf('hovli'), state({ tier: 1 }), true).map((i) => i.model)).toEqual(['house1', 'fence_low', 'gate_open', ...GARDEN]);
   });
   test('bo‘sh, yopiq va kvartira', () => {
-    expect(plotItems(plotOf('hovli'), undefined, true)[0]!.model).toBe('forsale');
+    const empty = plotItems(plotOf('hovli'), undefined, true).map((i) => i.model);
+    expect(empty.at(-1)).toBe('forsale');
+    expect(new Set(empty.slice(0, -1))).toEqual(new Set(['tree_round']));
+    for (const q of plan.plots.filter((x) => x.districtId === 1 && x.type === 'hovli')) {
+      const list = plotItems(q, undefined, true);
+      const f = footprint(q);
+      expect(list.length === 2 || list.length === 3, q.id).toBe(true);
+      for (const i of list) expect(Math.abs(i.x - q.x) < f.hx - 1 && Math.abs(i.z - q.z) < f.hz - 1, `${q.id} ${i.model}`).toBe(true);
+    }
+    expect(plotItems(plotOf('villa'), undefined, true).map((i) => i.model)).not.toContain('forsale');
     expect(plotItems(plotOf('kvartira'), state(), true)).toEqual([]);
     const closed = plan.plots.filter((p) => p.districtId === 5).flatMap((p) => plotItems(p, undefined, false));
     expect(closed.length).toBeGreaterThan(100);
@@ -67,6 +78,12 @@ describe('joylashtirish', () => {
     }
     expect(plotItems(p, state({ tier: 10 }), true).map((i) => i.model)).toEqual(expect.arrayContaining(['house10', 'fence_ornate', 'gate_gold']));
   });
+  test('4–5-level zamonaviy: tanlanmagan tom va ramka to‘q; tanlangani o‘zgarmaydi', () => {
+    const p = plotOf('hovli');
+    expect(houseItem(p, state({ tier: 3 }), false).roof).toBe('#d9604a');
+    expect(houseItem(p, state({ tier: 4 }), false)).toMatchObject({ roof: '#4a5663', mat: 1 + 16 * 3 });
+    expect(houseItem(p, state({ tier: 5, roof: 3, frame: 2 }), false)).toMatchObject({ roof: '#4f9478', mat: 1 + 16 * 2 });
+  });
   test('egasi olgan bezak level bezagidan ustun', () => {
     const models = plotItems(plotOf('hovli'), state({ tier: 10, decor: ['fence:fence_wood', 'luxe:light_luxe', 'path:path_stone'] }), true).map((i) => i.model);
     expect(models).toEqual(expect.arrayContaining(['fence_wood', 'gate_gold']));
@@ -90,6 +107,7 @@ describe('joylashtirish', () => {
       return pos ? [[n.getName(), { min: pos.getMin([]), max: pos.getMax([]) }] as const] : [];
     }));
     const SIZE_LIMIT = 2500;
+    const TWO_FLOORS_LIMIT = 3000;
     const PALACE_LIMIT = 3500;
     for (const [type, from] of [['hovli', 1], ['villa', 7], ['qasr', 9]] as const) {
       const p = plan.plots.find((q) => q.type === type && q.rot === 0)!;
@@ -107,7 +125,7 @@ describe('joylashtirish', () => {
     }
     for (const n of doc.getRoot().listMeshes().filter((m) => /^house\d+$/.test(m.getName()))) {
       const tris = (n.listPrimitives()[0]?.getIndices()?.getCount() ?? 0) / 3;
-      expect(tris, n.getName()).toBeLessThanOrEqual(/house(9|10)$/.test(n.getName()) ? PALACE_LIMIT : SIZE_LIMIT);
+      expect(tris, n.getName()).toBeLessThanOrEqual(/house(9|10)$/.test(n.getName()) ? PALACE_LIMIT : n.getName() === 'house5' ? TWO_FLOORS_LIMIT : SIZE_LIMIT);
     }
   });
   test('baland uyning tomini bosganda ham tanlanadi', () => {

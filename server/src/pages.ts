@@ -19,7 +19,7 @@ export const housePage = async (_req: Request, ctx: Ctx, id: string): Promise<Re
   if (!plot) throw new HttpError(404, 'not_found');
   const site = ctx.env.SITE_URL.replace(/\/$/, '');
   const target = `${site}/?uy=${id}`;
-  const title = escapeHtml(plot.instagram ? `@${plot.instagram} ning uyi` : "Bo'sh uy");
+  const title = escapeHtml(plot.instagram ? `@${plot.instagram} ning uyi` : "Bo'sh joy");
   const desc = escapeHtml(`${plot.address} — CityLand UZ`);
   const html = `<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>${title}</title>
 <meta property="og:title" content="${title}"><meta property="og:description" content="${desc}"><meta property="og:image" content="${site}/og.png">

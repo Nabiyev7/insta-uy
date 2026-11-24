@@ -12,7 +12,7 @@ npm run dev            # API 8787 · sayt http://localhost:5173 · admin http://
 npm run dev -- --host  # telefondan (bir xil Wi-Fi) sinash uchun
 ```
 
-Lokal admin: `admin` / `admin12345`. Baza `.dev-data/` da saqlanadi (o'chirsangiz noldan boshlanadi; demo aholisiz: `NO_DEMO=1`).
+Lokal admin: `admin` / `admin12345`. Baza `.dev-data/` da saqlanadi (o'chirsangiz noldan boshlanadi; shahar bo'sh ochiladi; sinov uchun demo aholi: `DEMO=1`).
 Lokal muhitda haqiqiy Postgres (PGlite) ishlaydi va aynan `supabase/migrations/` qo'llanadi.
 
 ## Buyruqlar

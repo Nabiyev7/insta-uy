@@ -34,15 +34,15 @@ describe('noyob raqamlangan bezaklar', () => {
     await as(b.uid, 'my_buy_decor_coins', { p_id: 'special_peacock' });
     expect(await sql('select serial, owner from decor_serials where decor_id = $1 order by serial', ['special_peacock'])).toEqual([{ serial: 1, owner: a.uid }, { serial: 2, owner: b.uid }]);
     expect(await anon('api_plot', { p_plot: b.plot })).toMatchObject({ rare: [] });
-    await as(b.uid, 'my_place_decor', { p_plot: b.plot, p_places: { s1: 'special_peacock' } });
+    await as(b.uid, 'my_place_decor', { p_plot: b.plot, p_places: { old_hovli_ong: 'special_peacock' } });
     expect(await anon('api_plot', { p_plot: b.plot })).toMatchObject({ rare: [{ id: 'special_peacock', serial: 2, stock: 10 }] });
     expect(await as(b.uid, 'my_profile')).toMatchObject({ serials: { special_peacock: [2] } });
   });
   test('cheksiz bezakka raqam berilmaydi; akkaunt o‘chsa raqam ham o‘chadi', async () => {
     const a = await house();
-    await as(a.uid, 'my_buy_decor_coins', { p_id: 'tree_olma' });
+    await as(a.uid, 'my_buy_decor_coins', { p_id: 'daraxt_olma' });
     await as(a.uid, 'my_buy_decor_coins', { p_id: 'special_peacock' });
-    expect(await sql("select 1 from decor_serials where decor_id = 'tree_olma'")).toEqual([]);
+    expect(await sql("select 1 from decor_serials where decor_id = 'daraxt_olma'")).toEqual([]);
     await svc('svc_delete_account', { p_user: a.uid });
     expect(await sql('select 1 from decor_serials where owner = $1', [a.uid])).toEqual([]);
   });
@@ -62,8 +62,8 @@ describe('to‘plamlar', () => {
   test('chegirmali narx, hammasi beriladi', async () => {
     const { uid } = await house(5);
     const set = (await anon<Row[]>('api_sets')).find((s) => s.id === 'dam_olish')!;
-    expect([...(set.items as string[])].sort()).toEqual(['yard_besedka', 'yard_flowers', 'yard_hammock', 'yard_mangal']);
-    const full = 600 + 100 + 240 + 200;
+    expect([...(set.items as string[])].sort()).toEqual(['dam_besedka', 'dam_mangal', 'gul_zor', 'yard_hammock']);
+    const full = 600 + 150 + 240 + 400;
     expect(set.coins).toBe(Math.ceil(full * 0.8));
     expect(await as(uid, 'my_buy_set_coins', { p_set: 'dam_olish' })).toBe(20_000 - Math.ceil(full * 0.8));
     for (const id of set.items as string[]) expect(await qty(uid, id)).toBe(1);
@@ -74,7 +74,7 @@ describe('to‘plamlar', () => {
     const poor = await house(5);
     await sql('update profiles set coins = 10 where user_id = $1', [poor.uid]);
     await expect(as(poor.uid, 'my_buy_set_coins', { p_set: 'dam_olish' })).rejects.toThrow('not_enough_coins');
-    expect(await qty(poor.uid, 'yard_mangal')).toBe(0);
+    expect(await qty(poor.uid, 'dam_mangal')).toBe(0);
     await expect(as(poor.uid, 'my_buy_set_coins', { p_set: 'yoq' })).rejects.toThrow('not_found');
     const admin = await user('admin');
     await as(admin, 'admin_set_save', { p_id: 'dam_olish', p_uz: 'Dam', p_ru: 'Отдых', p_discount: 20, p_active: false });
@@ -100,7 +100,7 @@ describe('sovg‘a', () => {
     const gift = (p: Row): Promise<unknown> => as(a.uid, 'my_gift_decor', { p_id: 'tree_tut', p_to: b.nick, ...p });
     await expect(gift({})).rejects.toThrow('not_owned');
     await as(a.uid, 'my_buy_decor_coins', { p_id: 'tree_tut' });
-    await as(a.uid, 'my_place_decor', { p_plot: a.plot, p_places: { s1: 'tree_tut' } });
+    await as(a.uid, 'my_place_decor', { p_plot: a.plot, p_places: { burchak_1: 'tree_tut' } });
     await expect(gift({})).rejects.toThrow('decor_in_use');
     await as(a.uid, 'my_place_decor', { p_plot: a.plot, p_places: {} });
     await expect(gift({ p_to: a.nick })).rejects.toThrow('user_not_found');

@@ -8,14 +8,19 @@ from kit_core import (BRICK, CARVED, COARSE, CONCRETE, FACADE, GRASS, LEAF, M_GL
 GOLD = '#d9a93f'
 IRON = '#4a4f57'
 BARK = '#7a5132'
+CAP = '#f2ece2'  # devor qopqog'i
 GATE = 4.0  # darvoza eni
 W, D = 25.0, 34.0  # panjara shu o'lchamda; boshqa uchastkalarga masshtablanadi
 
 
-def perimeter(m, draw, gap=GATE, inset=0.35, step=4.0):
+DRIVE = (5.0, 11.0)  # avtomobil yo'li darvozasi (x)
+
+
+def perimeter(m, draw, gap=GATE, inset=0.35, step=4.0, drive=DRIVE):
     """draw(x0, y0, x1, y1) har bo'lak uchun; old tomonda darvoza joyi ochiq qoladi."""
     hw, hd = W / 2 - inset, D / 2 - inset
-    runs = [((-hw, -hd), (-gap / 2, -hd)), ((gap / 2, -hd), (hw, -hd)), ((hw, -hd), (hw, hd)), ((hw, hd), (-hw, hd)), ((-hw, hd), (-hw, -hd))]
+    right = [((gap / 2, -hd), (drive[0], -hd)), ((drive[1], -hd), (hw, -hd))] if drive else [((gap / 2, -hd), (hw, -hd))]
+    runs = [((-hw, -hd), (-gap / 2, -hd)), *right, ((hw, -hd), (hw, hd)), ((hw, hd), (-hw, hd)), ((-hw, hd), (-hw, -hd))]
     for (ax, ay), (bx, by) in runs:
         n = max(1, round(math.hypot(bx - ax, by - ay) / step))
         for i in range(n):
@@ -36,8 +41,8 @@ def fence_low():
     def rails(x0, y0, x1, y1):
         for z in (0.35, 0.72):
             slab(m, x0, y0, x1, y1, z, z + 0.12, 0.035, PLAIN, '#fafafa')
-    perimeter(m, draw, step=2.9)
-    perimeter(m, rails, step=COARSE)
+    perimeter(m, draw, step=2.9, drive=None)
+    perimeter(m, rails, step=COARSE, drive=None)
     return m
 
 
@@ -46,19 +51,21 @@ def gate_open():
     m = Model('gate_open')
     for s in (-1, 1):
         m.cbox(s * (GATE / 2 - 0.1), 0, 0, 0.18, 0.18, 1.1, PLAIN, '#fafafa')
-    m.cbox(2.6, 0.25, 0, 0.12, 0.12, 1.05, PLAIN, '#fafafa')
-    m.bevel = 0.05
-    m.cbox(2.6, 0.25, 1.05, 0.38, 0.55, 0.32, PLAIN, '#3b86d8', bottom=True)
+    mailbox(m)
     return m
 
 
 def fence_basic():
-    """Suvoq devor, tepasi tosh (2–3 level)."""
+    """Suvoq devor (2–3 level): har 4–5 m da ustuncha, qopqog'i uy tomi rangida."""
     m = Model('fence_basic', COARSE)
+    def wall(x0, y0, x1, y1):
+        slab(m, x0, y0, x1, y1, 0, 1.2, 0.12, PLASTER, '#ffffff', M_WALL)
+        slab(m, x0, y0, x1, y1, 1.2, 1.3, 0.18, PLAIN, '#d6d3cd')
     def draw(x0, y0, x1, y1):
-        slab(m, x0, y0, x1, y1, 0, 1.25, 0.12, PLASTER, '#ffffff', M_WALL)
-        slab(m, x0, y0, x1, y1, 1.25, 1.37, 0.18, PLAIN, '#d6d3cd')
-    perimeter(m, draw, step=17)
+        m.cbox(x0, y0, 0, 0.46, 0.46, 1.5, PLASTER, '#ffffff', M_WALL, top=False)
+        m.cbox(x0, y0, 1.5, 0.62, 0.62, 0.14, PLAIN, '#ffffff', M_ROOF, bottom=True)
+    perimeter(m, wall, step=COARSE)
+    perimeter(m, draw, step=4.6)
     return m
 
 
@@ -72,12 +79,16 @@ def fence_wood():
 
 
 def fence_brick():
+    """G'isht devor, ustun va oq qopqoq (4-leveldan) — "Uy L4" namunasi."""
     m = Model('fence_brick', COARSE)
+    def wall(x0, y0, x1, y1):
+        slab(m, x0, y0, x1, y1, 0, 1.3, 0.15, BRICK)
+        slab(m, x0, y0, x1, y1, 1.3, 1.4, 0.21, PLAIN, CAP)
     def draw(x0, y0, x1, y1):
-        slab(m, x0, y0, x1, y1, 0, 1.6, 0.14, BRICK)
-        slab(m, x0, y0, x1, y1, 1.6, 1.72, 0.22, STONE, '#d8cbb5')
-        m.cbox(x0, y0, 0, 0.5, 0.5, 2.0, BRICK)
-    perimeter(m, draw, step=8.5)
+        m.cbox(x0, y0, 0, 0.5, 0.5, 1.6, BRICK, WHITE, top=False)
+        m.cbox(x0, y0, 1.6, 0.62, 0.62, 0.12, PLAIN, CAP, bottom=True)
+    perimeter(m, wall, step=COARSE)
+    perimeter(m, draw, step=4.4)
     return m
 
 
@@ -96,8 +107,73 @@ def fence_ornate():
     return m
 
 
-def gate(name, post_layer, post, leaf_layer, leaf, h, crown=None):
+def mailbox(m):
+    """Darvoza yonidagi pochta qutisi."""
+    m.cbox(2.75, 0.45, 0, 0.12, 0.12, 1.05, PLAIN, '#fafafa')
+    m.bevel = 0.05
+    m.cbox(2.75, 0.45, 1.05, 0.38, 0.5, 0.32, PLAIN, '#3b86d8', bottom=True)
+    m.bevel = 0.0
+
+
+def both_sides(m, x0, x1, z0, z1, y, layer, color):
+    """Old va orqadan ko'rinadigan yupqa taxta."""
+    for d, flip in ((-y, False), (y, True)):
+        p = [(x0, d, z0), (x1, d, z0), (x1, d, z1), (x0, d, z1)]
+        m.panel([p[1], p[0], p[3], p[2]] if flip else p, layer, color)
+
+
+def drive_gate(m, post_layer, post, leaf_layer, leaf, h):
+    """Avtomobil yo'lining ikki tabaqali darvozasi."""
+    x0, x1 = DRIVE
+    for x in (x0, x1):
+        m.cbox(x, 0, 0, 0.5, 0.5, h, post_layer, post, top=False)
+        m.cbox(x, 0, h, 0.62, 0.62, 0.14, PLAIN, CAP, bottom=True)
+    mid = (x0 + x1) / 2
+    for a, b in ((x0 + 0.28, mid - 0.04), (mid + 0.04, x1 - 0.28)):
+        both_sides(m, a, b, 0.1, h - 0.3, 0.06, leaf_layer, leaf)
+
+
+def gate_slat():
+    """G'isht ustunli yog'och reyka darvoza (4–5 level) — "Uy L4" namunasi."""
+    m = Model('gate_slat')
+    h = 1.7
+    drive_gate(m, BRICK, WHITE, PLAIN, '#9a6438', h)
+    for s in (-1, 1):
+        m.cbox(s * (GATE / 2 - 0.1), 0, 0, 0.5, 0.5, h, BRICK, WHITE, top=False)
+        m.cbox(s * (GATE / 2 - 0.1), 0, h, 0.62, 0.62, 0.14, PLAIN, CAP, bottom=True)
+    both_sides(m, -GATE / 2 + 0.15, GATE / 2 - 0.15, 0.1, h - 0.3, 0.06, PLAIN, '#9a6438')
+    for a, b, n in ((-GATE / 2 + 0.3, GATE / 2 - 0.3, 8), (DRIVE[0] + 0.4, DRIVE[1] - 0.4, 12)):
+        for i in range(n):
+            x = a + (b - a) * (i + 0.5) / n
+            both_sides(m, x - 0.06, x + 0.06, 0.12, h - 0.25, 0.09, PLAIN, '#7e4f2b')
+    mailbox(m)
+    return m
+
+
+def drive(name, width, end):
+    """Avtomobil yo'li: ko'chadan garajgacha (25×34 o'lchovda)."""
+    m = Model(name, COARSE)
+    mid = (DRIVE[0] + DRIVE[1]) / 2
+    x0, x1 = mid - width / 2, mid + width / 2
+    m.box(x0, -17, 0, x1, -end, 0.07, PLAIN, '#beb9b1')
+    for i in range(1, 5):
+        y = -17 + (17 - end) * i / 5
+        m.poly([(x0, y, 0.08), (x1, y, 0.08), (x1, y + 0.08, 0.08), (x0, y + 0.08, 0.08)], PLAIN, '#aaa59d')
+    return m
+
+
+def dust():
+    """Qurilish changi."""
+    m = Model('dust', COARSE)
+    m.blob(0, 0, 0, 1, '#fbf6ea', 3, 0.85, PLAIN, 2, True, 0.03)
+    return m
+
+
+def gate(name, post_layer, post, leaf_layer, leaf, h, crown=None, has_mail=False):
     m = Model(name)
+    drive_gate(m, post_layer, post, leaf_layer, leaf, min(h, 2.2))
+    if has_mail:
+        mailbox(m)
     for s in (-1, 1):
         m.cbox(s * (GATE / 2 - 0.1), 0, 0, 0.5, 0.5, h, post_layer, post)
         m.cbox(s * (GATE / 2 - 0.1), 0, h, 0.7, 0.7, 0.2, STONE, '#e6dcc8')
@@ -246,7 +322,7 @@ def light_luxe():
 
 def light_lamps():
     m = Model('light_lamps')
-    for x in (-2.6, 2.6):
+    for x in (-1.25, 1.25):
         for y in (-3, 3):
             m.cyl(x, y, 0, 1.1, 0.04, 0.04, 5, PLAIN, IRON, cap=False)
             m.cyl(x, y, 1.1, 1.35, 0.14, 0.1, 6, PLAIN, '#ffe3a0', M_GLOW)
@@ -455,10 +531,12 @@ def bridge():
 
 
 def forsale():
-    m = Model('forsale')
-    m.cbox(0, 0, 0, 0.12, 0.12, 1.9, WOOD, '#7a5a38')
-    m.box(-0.8, -0.1, 1.0, 0.8, -0.06, 1.8, PLAIN, '#4fa3c7', bottom=True)
-    m.box(-0.8, -0.06, 1.0, 0.8, -0.02, 1.8, WOOD, '#99683a', bottom=True)
+    """Bo'sh uchastka taxtachasi (yozuvi saytda chiziladi)."""
+    m = Model('forsale', COARSE)
+    for x in (-0.7, 0.7):
+        m.cbox(x, 0, 0, 0.1, 0.1, 0.75, PLAIN, '#9a6438', top=False)
+    m.box(-0.95, -0.06, 0.7, 0.95, 0.06, 1.6, PLAIN, '#4e9f3d', bottom=True)
+    m.poly([(-0.87, -0.065, 0.78), (0.87, -0.065, 0.78), (0.87, -0.065, 1.52), (-0.87, -0.065, 1.52)], PLAIN, '#fffdf6')
     return m
 
 
@@ -476,9 +554,9 @@ def pigeon():
 def all_props():
     return [
         fence_low(), fence_basic(), fence_wood(), fence_brick(), fence_ornate(),
-        gate_open(), gate('gate_basic', PLASTER, '#f7f2ea', PLAIN, '#5e8fa8', 1.9),
-        gate('gate_wood', WOOD, '#7a4f2a', WOOD, '#a3764a', 2.1),
-        gate('gate_wood_carved', WOOD, '#6b4423', WOOD, '#c79a6a', 2.3),
+        gate_open(), gate('gate_basic', PLASTER, '#f7f2ea', PLAIN, '#5e8fa8', 1.9, has_mail=True),
+        gate('gate_wood', WOOD, '#7a4f2a', WOOD, '#a3764a', 2.1, has_mail=True), gate_slat(),
+        drive('drive_narrow', 4.3, -4.4), drive('drive_wide', 5.8, -2.1), drive('drive_pad', 5.8, 2.7), dust(),
         gate('gate_naqsh', STONE, '#efe4cf', PLAIN, '#33454f', 2.6, '#3d4a52'),
         gate('gate_carved', BRICK, WHITE, WOOD, '#8a5a30', 2.4, '#8a4b38'),
         gate('gate_gold', STONE, '#f0e6d2', PLAIN, '#e0b84f', 2.8, GOLD),

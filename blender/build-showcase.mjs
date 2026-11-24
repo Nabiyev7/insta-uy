@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { CITY_HALF, DECOR, HILL, LAKE, MIN_TIER, REF_YARD, ROOF_COLORS, TIERS, WALL_COLORS, ZONES, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
+import { CITY_HALF, DECOR, FRAME_COLORS, HILL, LAKE, MIN_TIER, REF_YARD, ROOF_COLORS, TIERS, WALL_COLORS, ZONES, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
 import { buildingItem, commerceItem, houseItem, plotItems } from '../apps/web/src/logic/placement.ts';
 import { staticItems } from '../apps/web/src/logic/streets.ts';
 import { toWorld } from '../apps/web/src/logic/item.ts';
@@ -24,7 +24,7 @@ const demoState = (p) => {
   const tier = { qasr: h('t') < 0.6 ? 9 : 10, villa: h('t') < 0.6 ? 7 : 8 }[p.type] ?? 1 + Math.floor(h('t') * 3);
   return state(p.id, tier, Math.floor(h('w') * 8), Math.floor(h('r') * 6));
 };
-const pack = (i) => [i.model, ...[i.x, i.y, i.z, i.yaw, i.sx, i.sy, i.sz].map((v) => Number(v.toFixed(3))), i.wall, i.roof];
+const pack = (i) => [i.model, ...[i.x, i.y, i.z, i.yaw, i.sx, i.sy, i.sz].map((v) => Number(v.toFixed(3))), i.wall, i.roof, FRAME_COLORS[Math.floor((i.mat ?? 0) / 16)] ?? '#ffffff'];
 
 const groundOf = (x, z, radius) => {
   const g = new Ground(plan, ALL_OPEN);
@@ -63,7 +63,7 @@ const BIG = [['apt5', 'K1. 5 qavatli'], ['apt9', 'K2. 9 qavatli'], ['office', 'K
 const plain = (model, x, z) => ({ model, x, y: 0, z, yaw: 0, sx: 1, sy: 1, sz: 1, wall: WALL_COLORS[0], roof: ROOF_COLORS[0] });
 
 const PER_ROW = 5;
-const LOOK = [[0, 0], [0, 0], [0, 0], [1, 2], [0, 4], [4, 2], [3, 3], [0, 1], [0, 0], [0, 2]];
+const LOOK = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [4, 2], [3, 3], [0, 1], [0, 0], [0, 2]];
 const levelsScene = () => {
   const items = [];
   const labels = [];
@@ -81,12 +81,33 @@ const levelsScene = () => {
   });
   return { name: '1 Levellar', items: items.map(pack), labels, floor: [84, -56, 400], camera: [[70, 92, 96], [70, 0, -38]] };
 };
-/** 1–3 level yaqindan. */
+/** 1–5 level yaqindan (old tomoni) va to'rt tomondan. */
+const NEAR_LEVELS = TIERS.slice(0, 5);
+const nearPlot = (t, x, z, rot) => ({ id: `F${t.id}${rot}`, x, z, w: 24, d: REF_YARD.d, rot, type: 'hovli' });
 const firstScene = () => {
-  const list = TIERS.slice(0, 3).map((t, i) => ({ t, p: { id: `F${t.id}`, x: i * 29, z: 0, w: 24, d: REF_YARD.d, rot: 0, type: 'hovli' } }));
+  const list = NEAR_LEVELS.map((t, i) => ({ t, p: nearPlot(t, i * 28, 0, 0) }));
   return {
-    name: '8 Levellar 1-3', items: list.flatMap(({ t, p }) => plotItems(p, state(p.id, t.id, 0, 0), true)).map(pack),
-    labels: list.flatMap(({ t, p }) => [[`${t.id}. ${t.uz}`, p.x, 0.1, 20, 0, 2]]), floor: [29, 0, 300], camera: [[29, 44, 74], [29, 0, 3]],
+    name: '8 Levellar 1-5', items: list.flatMap(({ t, p }) => plotItems(p, state(p.id, t.id, 0, 0), true)).map(pack),
+    labels: list.flatMap(({ t, p }) => [[`${t.id}. ${t.uz}`, p.x, 0.1, 20.5, 0, 2.2]]), floor: [56, 0, 600], camera: [[58, 66, 122], [56, 0, 2]],
+  };
+};
+const SIDES = [[0, 'old'], [2, 'orqa'], [1, 'chap'], [3, "o'ng"]];
+const sidesScene = () => {
+  const list = NEAR_LEVELS.flatMap((t, i) => SIDES.map(([rot, side], k) => ({ t, side, p: nearPlot(t, i * 27, k * -28, rot) })));
+  return {
+    name: '9b Levellar 4 tomon', items: list.map(({ t, p }) => ({ ...houseItem(p, state(p.id, t.id, 0, 0), false), x: p.x, z: p.z })).map(pack),
+    labels: list.map(({ t, side, p }) => [`${t.id}-level, ${side}`, p.x, 0.1, p.z + 13, 0, 1.7]), floor: [54, -40, 600], camera: [[54, 108, 76], [54, 0, -36]],
+  };
+};
+/** 5-level: hamma nuqtasi to'la hovli. */
+const FULL_YARD = ['garaj_oldi:avto_sedan', 'old_hovli_chap:dam_basseyn', 'old_hovli_ong:dam_stol', 'darvoza_yoni:gul_kamar', 'burchak_1:daraxt_olma', 'burchak_2:daraxt_palma', 'burchak_3:daraxt_archa', 'burchak_4:daraxt_gilos'];
+const newDecorScene = () => {
+  const fresh = DECOR.slice(DECOR.findIndex((d) => d.id === 'dam_besedka'));
+  const items = fresh.map((d, i) => plain(d.model, (i % 5) * 9, 4 - Math.floor(i / 5) * 12));
+  const p = nearPlot(TIERS[4], 62, -8, 0);
+  return {
+    name: '9c Yangi bezaklar', items: [...items, ...plotItems(p, state(p.id, 5, 0, 0, FULL_YARD), true)].map(pack),
+    labels: fresh.map((d, i) => [d.uz, (i % 5) * 9, 0.1, 4 - Math.floor(i / 5) * 12 + 4.9, 0, 1.1]), floor: [40, 0, 400], camera: [[36, 54, 66], [36, 0, -6]],
   };
 };
 /** Yangi jamoat binolari yaqindan. */
@@ -108,14 +129,14 @@ const buildingsScene = () => {
 
 const EXTRA = [
   ['street_lamp', "Ko'cha chirog'i"], ['bench', "O'rindiq"], ['tree_terak', 'Terak'], ['tree_round', 'Yumaloq daraxt'], ['tree_wide', 'Keng daraxt'], ['tree_tall', 'Baland daraxt'], ['tree_slim', 'Ingichka daraxt'], ['hedge', 'Buta qatori'], ['flower_ring', 'Doira gulzor'], ['car_ambulance', 'Tez yordam'], ['car_fire', "O't o'chirish mashinasi"], ['bozor_stall', "Bozor do'koni"], ['billboard', 'Bilbord'], ['plaza_fountain', 'Katta favvora'],
-  ['hero_statue', 'Qahramon haykali'], ['forsale', 'Sotiladi belgisi'], ['foundation', 'Poydevor'], ['barrier', "To'siq"], ['crane', 'Kran'], ['fence_low', 'Past panjara (1-level)'], ['fence_basic', 'Suvoq devor (2–3-level)'], ['gate_open', 'Ochiq kirish (1-level)'], ['gate_basic', 'Temir darvoza (2-level)'], ['gate_wood_carved', "Yog'och naqshli darvoza (4-level)"], ['gate_naqsh', 'Naqshli darvoza (7–8-level)'], ['stadium', 'Stadion'],
+  ['hero_statue', 'Qahramon haykali'], ['forsale', "Bo'sh joy taxtachasi"], ['foundation', 'Poydevor'], ['barrier', "To'siq"], ['crane', 'Kran'], ['fence_low', 'Past panjara (1-level)'], ['fence_basic', 'Suvoq devor (2–3-level)'], ['gate_open', 'Ochiq kirish (1-level)'], ['gate_basic', 'Temir darvoza (2-level)'], ['gate_slat', "Reykali darvoza (4–5-level)"], ['gate_naqsh', 'Naqshli darvoza (7–8-level)'], ['stadium', 'Stadion'],
 ];
-const WIDE = new Set(['fence_low', 'fence_basic', 'fence_wood', 'fence_brick', 'fence_ornate', 'light_luxe', 'light_lamps', 'plaza_fountain', 'foundation', 'crane', 'billboard', 'hero_statue']);
+const WIDE = new Set(['gate_wood', 'gate_carved', 'gate_gold', 'gate_basic', 'gate_open', 'gate_slat', 'gate_naqsh', 'fence_low', 'fence_basic', 'fence_wood', 'fence_brick', 'fence_ornate', 'light_luxe', 'light_lamps', 'plaza_fountain', 'foundation', 'crane', 'billboard', 'hero_statue']);
 const decorScene = () => {
   const items = [];
   const labels = [];
   const all = [...DECOR.map((d) => [d.model, d.uz]), ...EXTRA].map(([model, label], i) => ({ model, label: `B${i + 1}. ${label}` }));
-  const fresh = all.slice(DECOR.findIndex((d) => d.id === 'yard_tandir'), DECOR.length);
+  const fresh = all.slice(DECOR.findIndex((d) => d.id === 'dam_besedka'), DECOR.length);
   const isFresh = new Set(fresh);
   const put = (list, columns, dx, dz, z0, size, gap) => list.forEach(({ model, label }, i) => {
     const x = (i % columns) * dx;
@@ -158,7 +179,7 @@ const scenes = [
   region('4 Markaz', 0, 0, 300, [[-150, 190, 330], [0, 0, -20]]),
   region("5 Ko'l bo'yi", 1000, 1120, 230, [[800, 140, 1390], [1060, 0, 1140]], true),
   region('6 Tepalik', HILL.x, HILL.z, 240, [[-930, 190, -870], [HILL.x, 10, HILL.z]]),
-  mapScene(), firstScene(), newBuildingsScene(),
+  mapScene(), firstScene(), newBuildingsScene(), sidesScene(), newDecorScene(),
 ];
 writeFileSync(path.join(dir, 'show.json'), JSON.stringify({ lake: LAKE, scenes }));
 
@@ -174,11 +195,17 @@ const saveDocs = async () => {
   const docs = (name) => path.join(root, 'docs/chat', name);
   const jpg = (img, name) => img.jpeg({ quality: 86 }).toFile(docs(name));
   const [W, H] = [1920, 1080];
-  await jpg(sharp({ create: { width: W, height: H * 2, channels: 3, background: '#fff' } }).composite([{ input: shot(7), left: 0, top: 0 }, { input: shot(0), left: 0, top: H }]), 'levellar.jpg');
+  // Bo'sh yashil joylar kesiladi: [ko'rsatma tartibi, yuqori, balandlik]
+  const stack = async (parts) => {
+    const cuts = await Promise.all(parts.map(([i, top, height]) => sharp(shot(i)).extract({ left: 0, top, width: W, height }).toBuffer()));
+    const tops = parts.map((_, k) => parts.slice(0, k).reduce((n, p) => n + p[2], 0));
+    return sharp({ create: { width: W, height: parts.reduce((n, p) => n + p[2], 0), channels: 3, background: '#fff' } }).composite(cuts.map((input, k) => ({ input, left: 0, top: tops[k] })));
+  };
+  await jpg(await stack([[7, 300, 480], [9, 60, 1000], [0, 40, 980]]), 'levellar.jpg');
   await jpg(sharp(shot(6)), 'xarita.jpg');
   await jpg(sharp(shot(3)), 'markaz-3d.jpg');
   await jpg(sharp({ create: { width: W, height: H * 2, channels: 3, background: '#fff' } }).composite([{ input: shot(8), left: 0, top: 0 }, { input: shot(2), left: 0, top: H }]), 'binolar.jpg');
-  await jpg(sharp(shot(1)), 'bezaklar.jpg');
+  await jpg(await stack([[10, 160, 760]]), 'bezaklar.jpg');
 };
 if (shouldRender && process.argv.includes('--docs')) await saveDocs();
 if (shouldRender) process.stdout.write(`Rasmlar: ${dir}\n`);

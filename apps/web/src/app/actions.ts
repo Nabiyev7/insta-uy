@@ -1,7 +1,8 @@
 /** Umumiy foydalanuvchi amallari: borish, ulashish, stories rasmi. */
-import { ANCHORS, plotAddress, type Plot } from '../../../../packages/shared/src/index.ts';
+import { ANCHORS, isFreeType, plotAddress, type Plot } from '../../../../packages/shared/src/index.ts';
 import { padHeight } from '../../../../packages/shared/src/city.ts';
 import { viewOfPlot } from '../logic/cityCamera.ts';
+import { BUILD_MS, FLIGHT_MS } from '../logic/construction.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { flyTo, goToHouse, setMode } from './modes.ts';
 import { director, here, session, snapshotters } from './runtime.ts';
@@ -24,7 +25,7 @@ export const nearestFree = (): string | null => {
   const s = getApp();
   const at = here();
   const open = new Set(s.boot?.districts.filter((d) => d.open).map((d) => d.id));
-  const free = s.plan?.plots.filter((p) => open.has(p.districtId) && (p.type === 'hovli' || p.type === 'kvartira') && !s.houses.has(p.id)) ?? [];
+  const free = s.plan?.plots.filter((p) => open.has(p.districtId) && isFreeType(p.type) && !s.houses.has(p.id)) ?? [];
   return free.reduce<{ id: string; d: number } | null>((best, p) => {
     const d = Math.hypot(p.x - at.x, p.z - at.z);
     return best && best.d <= d ? best : { id: p.id, d };
@@ -45,6 +46,14 @@ export const tryDecor = (row: CatalogRow): boolean => {
   if (session.mode !== 'city') setMode('city');
   flyTo(viewOfPlot(plot));
   return true;
+};
+
+/** Uy olindi: kamera uchastkaga uchadi, uy quriladi, so'ng "Tabriklaymiz". */
+export const startConstruction = (p: Plot): void => {
+  setApp({ building: { plot: p.id, at: performance.now() + FLIGHT_MS }, panel: null });
+  if (session.mode !== 'city') setMode('city');
+  flyTo(viewOfPlot(p));
+  setTimeout(() => setApp({ building: null, panel: { kind: 'congrats', id: p.id } }), FLIGHT_MS + BUILD_MS);
 };
 
 export const inviteUrl = (ref: string): string => `${location.origin}/?ref=${ref}`;

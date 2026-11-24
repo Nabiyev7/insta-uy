@@ -5,16 +5,16 @@ export type Doc = Readonly<Record<Lang, readonly (readonly [string, readonly str
 
 export const FAQ: Doc = {
   uz: [
-    ['Uyni qanday olaman?', ["Ro'yxatdan o'ting, yashil belgili bo'sh uyni bosing, Instagram nikingizni yozing.", 'Admin nikni tekshirgach, uy sizning nomingizga o‘tadi.', '1 kishiga 1 ta bepul uy.']],
+    ['Uyni qanday olaman?', ["Ro'yxatdan o'ting, \"Bo'sh joy — oling!\" taxtachali joyni bosing va \"Shu yerda uy qurish\" ni tanlang.", 'Uy darhol quriladi, Instagram nikingizni admin tekshiradi.', '1 kishiga 1 ta bepul uy.']],
     ['Uyim joyi o‘zgaradimi?', ['Yo‘q. Uchastka ID, ko‘cha va joy qulflangan. Yangilanishlarda faqat ko‘rinish o‘zgaradi.']],
-    ['Boshqa uylardan qanday ajralib turaman?', ['Daraja, bezak, nik yorlig‘i bilan. Uy bo‘yiga o‘smaydi — hashamati oshadi.']],
+    ['Boshqa uylardan qanday ajralib turaman?', ['Daraja, bezak, nik yorlig‘i bilan. Uy ko‘pi bilan ikki qavat (5-leveldan) — asosan hashamati oshadi.']],
     ['Parolni unutdim', ['Telegram ulangan bo‘lsa, botga /parol yuboring.']],
     ['O‘yin qotyapti', ['Menyu → Sozlamalar → Sifat: Past. Brauzerni yangilang.']],
   ],
   ru: [
-    ['Как получить дом?', ['Зарегистрируйтесь, нажмите на свободный дом (зелёная табличка), укажите ник в Instagram.', 'После проверки ника дом станет вашим.', 'Один бесплатный дом на человека.']],
+    ['Как получить дом?', ['Зарегистрируйтесь, нажмите на участок с табличкой «Свободно — забирайте!» и выберите «Построить дом здесь».', 'Дом строится сразу, ник в Instagram проверит админ.', 'Один бесплатный дом на человека.']],
     ['Изменится ли место моего дома?', ['Нет. Участок, улица и координаты зафиксированы. При обновлениях меняется только внешний вид.']],
-    ['Как выделиться?', ['Уровнем дома, украшениями, табличкой. Дома растут не в высоту, а в роскоши.']],
+    ['Как выделиться?', ['Уровнем дома, украшениями, табличкой. Дом — максимум два этажа (с 5 уровня), дальше растёт роскошь.']],
     ['Забыл пароль', ['Если Telegram подключён — отправьте боту /parol.']],
     ['Тормозит', ['Меню → Настройки → Качество: Низкое. Обновите браузер.']],
   ],

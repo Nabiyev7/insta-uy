@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { decodePlan, type EncodedPlan, type Lang, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
 import { setCatalog, type CatalogRow, type SetRow } from '../logic/decorCatalog.ts';
+import type { Construction } from '../logic/construction.ts';
 import type { HouseState } from '../logic/placement.ts';
 import type { Mode } from './runtime.ts';
 import { initialQuality, type QualityLevel } from '../logic/quality.ts';
@@ -8,7 +9,7 @@ import type { Kit } from '../world/kit.ts';
 import { rpc, type Boot, type CityRow, type Profile } from './api.ts';
 
 export type Panel =
-  | { readonly kind: 'plot'; readonly id: string } | { readonly kind: 'building'; readonly id: number } | { readonly kind: 'commerce'; readonly id: string } | { readonly kind: 'street'; readonly id: number }
+  | { readonly kind: 'plot' | 'congrats'; readonly id: string } | { readonly kind: 'building'; readonly id: number } | { readonly kind: 'commerce'; readonly id: string } | { readonly kind: 'street'; readonly id: number }
   | { readonly kind: 'auth' | 'me' | 'map' | 'rank' | 'coins' | 'city' | 'gazette' | 'settings' | 'help' | 'rules' | 'avatar' | 'orders' | 'menu' | 'ads' | 'privacy' | 'chat' | 'shop' | 'cars' };
 export type Stage = 'loading' | 'intro' | 'play' | 'error';
 export interface Toast { readonly id: number; readonly text: string; readonly isError: boolean }
@@ -77,6 +78,8 @@ export interface AppState {
   readonly catalog: readonly CatalogRow[];
   readonly sets: readonly SetRow[];
   readonly preview: Preview | null;
+  /** Hozir qurilayotgan uy (effekt). */
+  readonly building: Construction | null;
   readonly chat: readonly ChatLine[];
   readonly unread: number;
   readonly muted: readonly Muted[];
@@ -87,7 +90,7 @@ export interface AppState {
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;

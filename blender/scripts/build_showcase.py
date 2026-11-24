@@ -17,6 +17,7 @@ from kit_decor import all_decor  # noqa: E402
 from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
 from kit_props import all_props  # noqa: E402
+from kit_yard import yard_decor  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index('--') + 1:]
 DIR, OUT = ARGS[0], ARGS[1]
@@ -32,7 +33,7 @@ def principled(m):
 
 def material(layer, mask):
     """Har (tekstura, rang turi) uchun bitta material: tekstura x AO rangi x uyning tanlangan rangi."""
-    tint = TINT.get(mask)
+    tint = 'frame' if LAYERS[layer] == 'deraza' and mask == 0 else TINT.get(mask)
     name = LAYERS[layer] + (f'_{tint}' if tint else '')
     m = bpy.data.materials.get(name)
     if m:
@@ -75,7 +76,7 @@ def assign(mesh, keys):
 
 def build_kit():
     kit = {}
-    for model in all_levels() + all_buildings() + all_center() + city_models() + all_props() + all_decor():
+    for model in all_levels() + all_buildings() + all_center() + city_models() + all_props() + all_decor() + yard_decor():
         obj = model.build()
         assign(obj.data, [(p[2], round(p[3] * 4)) for p in model.polys])
         kit[model.name] = obj.data
@@ -94,12 +95,12 @@ def collection(scene, name):
 
 
 def add_items(col, items, kit):
-    for model, x, y, z, yaw, sx, sy, sz, wall, roof in items:
+    for model, x, y, z, yaw, sx, sy, sz, wall, roof, frame in items:
         o = bpy.data.objects.new(model, kit[model])
         o.location = to_blender(x, y, z)
         o.rotation_euler.z = yaw
         o.scale = (sx, sz, sy)
-        o['wall'], o['roof'] = rgb(wall), rgb(roof)
+        o['wall'], o['roof'], o['frame'] = rgb(wall), rgb(roof), rgb(frame)
         col.objects.link(o)
 
 

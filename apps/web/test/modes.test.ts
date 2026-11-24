@@ -64,12 +64,34 @@ describe('shahar kamerasi', () => {
   });
 });
 
+describe('bo‘sh shahar', () => {
+  const index = worldIndex(plan);
+  const src = (building: string | null = null): CollectSource => ({ plots: index.plots, statics: new SpatialIndex([]), extras: new SpatialIndex([]), commerce: new SpatialIndex([]), plan: { ...plan, buildings: [] }, houses: new Map(), open: new Set([1]), building, full: new Map(), simple: new Map() });
+  const p = plan.plots.find((q) => q.districtId === 1 && q.type === 'hovli')!;
+  test('uy yo‘q; taxtacha yaqinda bor, uzoqda yo‘q; daraxt uzoqda sodda', () => {
+    const near = collect(groundView({ x: p.x, z: p.z, yaw: 0, quality: QUALITY.mid, boost: 1, isVideo: false }), src(), 10);
+    expect(near.items.some((i) => i.model.startsWith('house'))).toBe(false);
+    expect(near.boards.length).toBeGreaterThan(0);
+    expect(near.boards.every((b) => Math.hypot(b.x - p.x, b.z - p.z) < QUALITY.mid.detail + 25)).toBe(true);
+    expect(near.items.some((i) => i.model === 'tree_round_lod')).toBe(true);
+    expect(near.labels).toEqual([]);
+    const high = collect(cityView({ x: p.x, z: p.z, yaw: 0, height: 150 }, QUALITY.mid, 0.6), src(), 10);
+    expect(high.boards).toEqual([]);
+  });
+  test('yopiq tumanda taxtacha yo‘q, qurilayotgan uchastkada ham', () => {
+    const closed = plan.plots.find((q) => q.districtId === 5 && q.type === 'hovli')!;
+    expect(collect(groundView({ x: closed.x, z: closed.z, yaw: 0, quality: QUALITY.mid, boost: 1, isVideo: false }), src(), 10).boards).toEqual([]);
+    const v = groundView({ x: p.x, z: p.z, yaw: 0, quality: QUALITY.mid, boost: 1, isVideo: false });
+    expect(collect(v, src(p.id), 10).boards).toHaveLength(collect(v, src(), 10).boards.length - 1);
+  });
+});
+
 describe('nima chiziladi', () => {
   const houses = new Map(plan.plots.filter((p) => p.districtId <= 4).map((p): [string, HouseState] => [p.id, { plot: p.id, nick: 'ali', tier: 3, wall: 0, roof: 0, decor: [], material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false }]));
   const index = worldIndex(plan);
   const src = (): CollectSource => ({
     plots: index.plots, statics: index.statics, extras: new SpatialIndex(closedDistrictItems(plan, 7)), commerce: new SpatialIndex(plan.commerce.map(commerceItem)),
-    plan, houses, open: new Set([1, 2, 3, 4]), full: new Map(), simple: new Map(),
+    plan, houses, open: new Set([1, 2, 3, 4]), building: null, full: new Map(), simple: new Map(),
   });
   const isFull = (m: string): boolean => /^house\d+$/.test(m);
 

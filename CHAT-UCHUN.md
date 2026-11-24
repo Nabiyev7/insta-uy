@@ -5,7 +5,8 @@ Bu faylni o'qiyotgan AI yordamchi: sen kod yozmaysan. Vazifang — loyiha egasi 
 Rasmlar (`docs/chat/`):
 - `shahar-reja.png` — butun shahar chizmasi, koordinata to'ri bilan (asosiy rasm)
 - `xarita.jpg` — shahar tepadan (3D), `markaz-3d.jpg` — maydon va bulvar
-- `levellar.jpg` — uy levellari, `binolar.jpg` — binolar, `bezaklar.jpg` — bezaklar
+- `levellar.jpg` — uy levellari (1–5 yaqindan va to'rt tomondan), `binolar.jpg` — binolar, `bezaklar.jpg` — bezaklar
+- `bosh-uchastka.png` — bo'sh joylar, `uy-qurilishi-1..3.png` — uy qurilishi effekti
 - `ekran-*.png` — telefondagi ko'rinish
 
 ## 1. Loyiha nima
@@ -13,7 +14,9 @@ Rasmlar (`docs/chat/`):
 Instagram obunachilari uchun veb-saytdagi 3D virtual shahar. Odam shaharni tepadan ko'radi, uylarni bosib egasining nikini ko'radi.
 
 - Shahar 3×3 km, 12 tuman, 5 000 uchastka: 3 500 hovli (24×34 m), 1 000 kvartira, 400 villa (30×42), 100 qasr (40×56). Qo'shimcha 170 tijorat joyi (hozircha **sotilmaydi**).
-- Uylar 10 level; hozir 1–3-level to'liq ishlangan, uyni ko'tarish chegarasi — 3.
+- Shahar **bo'sh ochiladi**: uy faqat egasi bor uchastkada. Bo'sh joyda taxtacha turadi; bosilsa — "Shu yerda uy qurish" (bepul, faqat hovli; kvartira hozircha berilmaydi).
+- Uylar 10 level; 1–5-level yangi uslubda to'liq ishlangan (4 — zamonaviy, 5 — ikki qavatli), 6–10 eski modellar. Uyni ko'tarish chegarasi — 3 (admin sozlamasi).
+- **Bezaklar faqat 5-leveldan.** Nuqtalar: garaj oldi, old hovli chap/o'ng, darvoza yoni, 4 burchak (`packages/shared/src/anchors.ts`).
 - Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. Holat: `PLAN.md` oxiri.
 - Internetga hali chiqmagan, **hali hech kim uy olmagan**.
 
@@ -48,9 +51,9 @@ Yorug', toza, stilize: deyarli teksturasiz tekis ranglar, yumaloqroq qirralar, y
 ## 5. Buzilmaydigan qoidalar
 
 1. **Uchastka raqami, joyi, ko'chasi, yo'llar va tijorat joylari qulflangan.** Qulf faqat egasi aniq "Qulfni ochishga ruxsat beraman" desa ochiladi.
-2. Arzon telefonda (Redmi A) ishlashi kerak: asosiy bino ≤ 2 500 uchburchak va uzoq shakli (LOD) bilan, oddiy bino ≤ 1 000, bezak ≤ 300.
+2. Arzon telefonda (Redmi A) ishlashi kerak: asosiy bino ≤ 2 500 uchburchak va uzoq shakli (LOD) bilan, oddiy bino ≤ 1 000, bezak ≤ 300 (basseyn, besedka ≤ 500), 5-level uy ≤ 3 000.
 3. Xarajat 0 so'm: pullik model va xizmat yo'q. Modellar Blender'da koddan yasaladi.
-4. Uylar bo'yiga o'smaydi, faqat hashamat.
+4. Uy ko'pi bilan 2 qavat (2 qavat 5-leveldan); asosan hashamatga o'sadi.
 5. Haqiqiy davlat ramzlari, shaxslar, bank va brendlar yo'q.
 
 ## 6. Promt qanday bo'lsin

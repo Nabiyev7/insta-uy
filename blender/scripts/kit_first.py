@@ -1,5 +1,5 @@
-"""1–3 levellar (yorug' uslub): kichik uy, L shaklidagi shinam uy, ikki qanotli hovli uy. Old tomoni -Y, hovli 24×34 m."""
-from kit_core import BASE, COARSE, CURB, FRAME, M_ROOF, M_WALL, PLAIN, PLASTER, ROOF, WHITE, Model
+"""1–3 levellar (yorug' uslub): kichik uy, L shaklidagi shinam uy, ikki qanotli hovli uy. Old tomoni -Y, hovli 24×34 m; mashina joyi o'qi x = 7.68."""
+from kit_core import BASE, COARSE, CURB, FRAME, M_GLOW, M_ROOF, M_WALL, PLAIN, PLASTER, ROOF, WHITE, Model
 from kit_style import bush, chimney, column, door, flower_bed, frame_box, gable, lantern, lean_to, steps, walls, window
 
 
@@ -42,84 +42,110 @@ def carport(m: Model, x0: float, x1: float, y0: float, y1: float, z: float) -> N
 def level2() -> Model:
     """Shinam uy: 15×13 m, oldinga chiqqan qanoti (L shakl) va yonida soyabonli mashina joyi."""
     m = Model('house2', 5.0)
-    walls(m, -8.6, -1.5, 6.4, 6.5, 3.6)
-    walls(m, -8.6, -6.5, -2.8, -1.4, 3.6)
-    gable(m, -8.6, -1.5, 6.4, 6.5, 3.6, 2.2)
-    gable(m, -8.6, -6.5, -2.8, 2.2, 3.6, 1.9, 'y', trim=(True, False), ribs=3)
-    window(m, 'f', -6.5, -5.7, 1.25, 2.4, 1.7, shutters=True)
-    frame_box(m, -6.1, -6.56, 4.1, -5.3, -6.5, 4.75)
-    chimney(m, 3.4, 4.0, 4.6, 7.0)
+    walls(m, -9.1, -1.5, 5.9, 6.5, 3.6)
+    walls(m, -9.1, -6.5, -3.3, -1.4, 3.6)
+    gable(m, -9.1, -1.5, 5.9, 6.5, 3.6, 2.2)
+    gable(m, -9.1, -6.5, -3.3, 2.2, 3.6, 1.9, 'y', trim=(True, False), ribs=3)
+    window(m, 'f', -6.5, -6.2, 1.25, 2.4, 1.7, shutters=True)
+    frame_box(m, -6.6, -6.56, 4.1, -5.8, -6.5, 4.75)
+    chimney(m, 2.9, 4.0, 4.6, 7.0)
     # ayvon qanot yonida
     m.bevel = 0.05
-    m.box(-2.6, -4.3, 0, 4.0, -1.6, 0.45, PLAIN, BASE)
+    m.box(-3.1, -4.3, 0, 3.5, -1.6, 0.45, PLAIN, BASE)
     m.bevel = 0.0
-    steps(m, -0.6, 1.4, -4.3, 0.36, 2)
-    for x in (-0.9, 1.7, 3.7):
+    steps(m, -1.0, 1.0, -4.3, 0.36, 2)
+    for x in (-2.8, -1.3, 1.3, 3.2):
         column(m, x, -4.0, 0.45, 2.95)
-    lean_to(m, -2.6, 4.0, -1.5, -4.5, 3.6, 2.9)
-    door(m, -1.5, 0.4, 0.5, 1.2, 2.3)
-    window(m, 'f', -1.5, -1.5, 1.3, 1.3, 1.5)
-    window(m, 'f', -1.5, 2.8, 1.3, 1.6, 1.5)
-    window(m, 'f', -1.5, 5.3, 1.3, 1.2, 1.5, cross=False)
+    lean_to(m, -3.1, 3.5, -1.5, -4.5, 3.6, 2.9)
+    door(m, -1.5, 0, 0.5, 1.2, 2.3)
+    window(m, 'f', -1.5, -2.0, 1.3, 1.3, 1.5)
+    window(m, 'f', -1.5, 2.3, 1.3, 1.6, 1.5)
+    window(m, 'f', -1.5, 4.8, 1.3, 1.2, 1.5, cross=False)
     for y in (-4.4, 0.6, 4.2):
-        window(m, 'l', -8.6, y, 1.3, cross=False)
-    window(m, 'r', 6.4, 4.6, 1.3, cross=False)
-    for x in (-5.6, -1.0, 3.6):
+        window(m, 'l', -9.1, y, 1.3, cross=False)
+    window(m, 'r', 5.9, 5.3, 1.3, cross=False)
+    for x in (-6.1, -1.5, 3.1):
         window(m, 'b', 6.5, x, 1.3, cross=False)
-    carport(m, 6.5, 9.4, -1.6, 4.6, 2.75)
-    for x, y, seed in ((-8.0, -7.2, 1), (-3.4, -7.2, 2), (4.9, -2.2, 1), (6.0, -2.2, 2)):
+    carport(m, 6.0, 9.36, -1.6, 4.6, 2.75)
+    for x, y, seed in ((-8.5, -7.2, 1), (-3.9, -7.2, 2), (4.4, -2.2, 1), (5.2, -2.2, 2)):
         bush(m, x, y, seed=seed)
-    flower_bed(m, -5.7, -7.2, 3.2)
-    flower_bed(m, 2.8, -5.2, 2.2, 1)
-    lantern(m, -0.6, -1.5, 2.1)
+    flower_bed(m, -6.2, -7.2, 3.2)
+    flower_bed(m, 2.9, -5.2, 2.2, 1)
+    for x in (-0.95, 0.95):
+        lantern(m, x, -1.5, 2.1)
     return m
 
 
 def dormer(m: Model, x: float, y: float, z: float) -> None:
     """Tomdagi mansarda oynasi."""
-    m.box(x - 1.1, y, z, x + 1.1, y + 2.6, z + 1.4, PLASTER, WHITE, M_WALL, top=False)
-    gable(m, x - 1.1, y, x + 1.1, y + 3.0, z + 1.4, 0.8, 'y', over=0.25, ribs=0, trim=(True, False))
-    window(m, 'f', y, x, z + 0.25, 1.2, 1.05)
+    m.box(x - 1.1, y, z, x + 1.1, y + 2.6, z + 1.3, PLASTER, WHITE, M_WALL, top=False)
+    gable(m, x - 1.1, y, x + 1.1, y + 3.0, z + 1.3, 0.7, 'y', over=0.2, ribs=0, trim=(True, False))
+    window(m, 'f', y, x, z + 0.2, 1.2, 1.0)
 
 
-def level3() -> Model:
-    """Hovli uy: 17×14 m, ikki qanot, o'rtada keng veranda, tomda mansarda oynasi."""
-    m = Model('house3', 5.0)
-    walls(m, -8.5, -1.2, 8.5, 7.0, 3.8)
-    walls(m, -8.5, -6.8, -3.6, -1.1, 3.8)
-    walls(m, 3.6, -6.8, 8.5, -1.1, 3.8)
-    gable(m, -8.5, -1.2, 8.5, 7.0, 3.8, 2.7, ribs=5)
-    for x0, x1 in ((-8.5, -3.6), (3.6, 8.5)):
-        mid = (x0 + x1) / 2
-        gable(m, x0, -6.8, x1, 2.4, 3.8, 1.75, 'y', trim=(True, False), ribs=3)
-        window(m, 'f', -6.8, mid, 1.25, 2.2, 1.8, shutters=True)
-        frame_box(m, mid - 0.45, -6.86, 4.25, mid + 0.45, -6.8, 4.8)
-        flower_bed(m, mid, -7.5, 3.0, 1 if x0 > 0 else 0)
-        for x in (x0 + 0.5, x1 - 0.5):
-            bush(m, x, -7.5, seed=1 if x > mid else 2)
-    dormer(m, 0, 0.6, 4.3)
-    chimney(m, -5.2, 4.2, 5.4, 7.8)
-    chimney(m, 5.2, 4.2, 5.4, 7.8)
-    # veranda
-    m.bevel = 0.05
-    m.box(-3.5, -5.0, 0, 3.5, -1.2, 0.5, PLAIN, BASE)
+def _small_garage(m: Model) -> None:
+    """3-level garaji: bitta mashinalik, o'z tomi bilan."""
+    m.bevel = 0.06
+    m.box(5.3, -3.4, 0, 10.0, 3.6, 2.9, PLASTER, WHITE, M_WALL, top=False)
     m.bevel = 0.0
-    steps(m, -1.5, 1.5, -5.0, 0.42, 2)
-    for x in (-3.1, -1.2, 1.2, 3.1):
-        column(m, x, -4.7, 0.5, 3.15, 0.15)
-    for x0, x1 in ((-3.1, -1.2), (1.2, 3.1)):
+    gable(m, 5.3, -3.4, 10.0, 3.6, 2.9, 1.1, 'y', over=0.3, ribs=2)
+    m.box(5.95, -3.5, 0.05, 9.35, -3.4, 2.45, PLAIN, '#eae5dd')
+    for i in range(1, 4):
+        z = 0.05 + 0.6 * i
+        m.poly([(5.95, -3.53, z), (9.35, -3.53, z), (9.35, -3.53, z + 0.06), (5.95, -3.53, z + 0.06)], PLAIN, '#beb9b1')
+    window(m, 'r', 10.0, 0.1, 1.25, 1.5, 1.1, cross=False)
+    window(m, 'b', 3.6, 7.65, 1.25, 1.5, 1.1, cross=False)
+
+
+def _veranda(m: Model) -> None:
+    """Ikki qanot orasidagi veranda; zina yo'lak to'g'risida, yonida chiroqlar."""
+    m.bevel = 0.05
+    m.box(-4.6, -5.0, 0, 1.6, -1.2, 0.5, PLAIN, BASE)
+    m.bevel = 0.0
+    steps(m, -1.2, 1.2, -5.0, 0.42, 2)
+    for x in (-4.3, -2.8, -1.35, 1.35):
+        column(m, x, -4.7, 0.5, 3.3, 0.15)
+    for x0, x1 in ((-4.3, -2.8), (-2.8, -1.35)):
         m.box(x0, -4.74, 1.15, x1, -4.66, 1.25, PLAIN, FRAME, bottom=True)
         for i in range(1, 4):
             m.cbox(x0 + (x1 - x0) * i / 4, -4.7, 0.5, 0.08, 0.08, 0.65, PLAIN, FRAME, top=False)
-    lean_to(m, -3.5, 3.5, -1.2, -5.2, 3.8, 3.1, over=0.05)
-    door(m, -1.2, 0, 0.55, 1.6, 2.4)
-    for s in (-1, 1):
-        window(m, 'f', -1.2, s * 2.2, 1.3, 1.4, 1.6)
-        lantern(m, s * 1.15, -1.2, 2.2)
-        for y in (-4.4, 0.8, 4.6):
-            window(m, 'r' if s > 0 else 'l', s * 8.5, y, 1.35, cross=False)
-        window(m, 'b', 7.0, s * 5.2, 1.35, cross=False)
-    window(m, 'b', 7.0, 0, 1.35, 2.0, 1.6)
+    lean_to(m, -4.6, 1.6, -1.2, -5.2, 4.0, 3.25, over=0.0)
+    door(m, -1.2, 0, 0.55, 1.5, 2.4)
+    window(m, 'f', -1.2, -3.0, 1.3, 1.9, 1.7)
+    for x in (-1.15, 1.15):
+        lantern(m, x, -1.2, 2.2)
+    for x in (-1.75, 1.75):
+        m.cbox(x, -5.5, 0, 0.14, 0.14, 1.0, PLAIN, '#4a4f57', top=False)
+        m.cbox(x, -5.5, 1.0, 0.26, 0.26, 0.3, PLAIN, '#fff0c4', M_GLOW)
+
+
+def level3() -> Model:
+    """Hovli uy: ikki qanot, o'rtada veranda, ixcham tomda mansarda oynasi, yonida garaj."""
+    m = Model('house3', 5.0)
+    walls(m, -10.1, -1.2, 5.3, 7.0, 4.1)
+    walls(m, -10.1, -6.6, -4.7, -1.1, 4.1)
+    walls(m, 1.7, -6.6, 5.3, -1.1, 4.1)
+    gable(m, -10.1, -1.2, 5.3, 7.0, 4.1, 1.9, over=0.45, ribs=3)
+    for x0, x1 in ((-10.1, -4.7), (1.7, 5.3)):
+        mid = (x0 + x1) / 2
+        gable(m, x0, -6.6, x1, 2.4, 4.1, 1.3, 'y', over=0.45, trim=(True, False), ribs=2)
+        window(m, 'f', -6.6, mid, 1.25, min(2.4, x1 - x0 - 1.7), 1.9, shutters=True)
+        frame_box(m, mid - 0.4, -6.66, 4.35, mid + 0.4, -6.6, 4.85)
+        flower_bed(m, mid, -7.3, 2.4, 1 if x0 > 0 else 0)
+        for x in (x0 + 0.4, x1 - 0.4):
+            bush(m, x, -7.3, seed=1 if x > mid else 2, r=0.55)
+    dormer(m, -1.5, 0.4, 4.35)
+    chimney(m, -6.4, 4.2, 5.2, 7.2)
+    chimney(m, 2.6, 4.2, 5.2, 7.2)
+    _veranda(m)
+    for y in (-4.4, 0.8, 4.6):
+        window(m, 'l', -10.1, y, 1.35, cross=False)
+    window(m, 'r', 5.3, 5.6, 1.35, cross=False)
+    window(m, 'r', 5.3, -5.2, 1.35, 1.3, cross=False)
+    for x in (-7.4, 2.6):
+        window(m, 'b', 7.0, x, 1.35, cross=False)
+    window(m, 'b', 7.0, -2.4, 1.35, 2.0, 1.6)
+    _small_garage(m)
     return m
 
 
@@ -136,21 +162,22 @@ def first_lods() -> list[Model]:
     one.box(-2.2, -6.7, 2.9, 2.2, -4.2, 3.2, ROOF, WHITE, M_ROOF, bottom=True)
     one.window('f', -4.25, -4, 4, 1.1, 2.9)
     two = Model('house2_lod', COARSE)
-    two.box(-8.6, -1.5, 0, 6.4, 6.5, 3.7, PLASTER, WHITE, M_WALL, top=False)
-    two.gable(-8.6, -1.5, 6.4, 6.5, 3.6, 2.4, 0.6)
-    _far_wing(two, -8.6, -6.5, -2.8, 1.5, 3.6, 2.0)
-    two.box(-2.6, -4.5, 2.95, 4.2, -1.5, 3.2, ROOF, WHITE, M_ROOF, bottom=True)
-    two.box(6.5, -1.8, 2.75, 9.8, 4.7, 3.05, ROOF, WHITE, M_ROOF, bottom=True)
-    two.window('f', -6.5, -7.2, -4.2, 1.1, 2.9)
-    two.window('f', -1.5, -2, 6, 1.1, 2.9)
+    two.box(-9.1, -1.5, 0, 5.9, 6.5, 3.7, PLASTER, WHITE, M_WALL, top=False)
+    two.gable(-9.1, -1.5, 5.9, 6.5, 3.6, 2.4, 0.6)
+    _far_wing(two, -9.1, -6.5, -3.3, 1.5, 3.6, 2.0)
+    two.box(-3.1, -4.5, 2.95, 3.7, -1.5, 3.2, ROOF, WHITE, M_ROOF, bottom=True)
+    two.box(6.0, -1.8, 2.75, 9.7, 4.7, 3.05, ROOF, WHITE, M_ROOF, bottom=True)
+    two.window('f', -6.5, -7.7, -4.7, 1.1, 2.9)
+    two.window('f', -1.5, -2.5, 5.5, 1.1, 2.9)
     three = Model('house3_lod', COARSE)
-    three.box(-8.5, -1.2, 0, 8.5, 7, 3.9, PLASTER, WHITE, M_WALL, top=False)
-    three.gable(-8.5, -1.2, 8.5, 7, 3.8, 2.9, 0.6)
-    for x0, x1 in ((-8.5, -3.6), (3.6, 8.5)):
-        _far_wing(three, x0, -6.8, x1, 2, 3.8, 1.9)
-        three.window('f', -6.8, x0 + 1, x1 - 1, 1.1, 3)
-    three.box(-3.5, -5.2, 3.1, 3.5, -1.2, 3.5, ROOF, WHITE, M_ROOF, bottom=True)
-    three.box(-1.1, 0.6, 4.4, 1.1, 2.6, 5.9, PLASTER, WHITE, M_WALL)
+    three.box(-10.1, -1.2, 0, 5.3, 7, 4.2, PLASTER, WHITE, M_WALL, top=False)
+    three.gable(-10.1, -1.2, 5.3, 7, 4.1, 2.1, 0.45)
+    for x0, x1 in ((-10.1, -4.7), (1.7, 5.3)):
+        _far_wing(three, x0, -6.6, x1, 2, 4.1, 1.45)
+        three.window('f', -6.6, x0 + 1, x1 - 1, 1.1, 3)
+    three.box(-4.6, -5.2, 3.25, 1.6, -1.2, 3.6, ROOF, WHITE, M_ROOF, bottom=True)
+    three.box(-2.6, 0.4, 4.4, -0.4, 2.4, 5.8, PLASTER, WHITE, M_WALL)
+    _far_wing(three, 5.3, -3.4, 10.0, 3.6, 2.9, 1.2)
     return [one, two, three]
 
 

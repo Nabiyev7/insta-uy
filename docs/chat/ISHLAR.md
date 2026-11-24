@@ -23,7 +23,7 @@ Egasi ishni bosqichlarga bo'ldi: `docs/chat/BOSQICHLAR.md`. Bu ro'yxatdagi **6 v
 - [ ] **6. Kirish, tanga, referal, zaxira** — `docs/chat/IQTISOD-PROMT.md`
 - [ ] **7. Yuklamani taqsimlash** — `docs/chat/YUKLAMA-PROMT.md`
 - [x] **8. Xarita: shaharni qurish (CityLand UZ)** — `docs/chat/XARITA-PROMT.md`
-- [ ] **9. Bo'sh uchastkalar, yangi uylar 1–5, bezaklar** — `docs/chat/UYLAR-BEZAK-PROMT.md` ← **HOZIR SHU**
+- [x] **9. Bo'sh uchastkalar, yangi uylar 1–5, bezaklar** — `docs/chat/UYLAR-BEZAK-PROMT.md`
 
 ## Har qadamdan keyin
 

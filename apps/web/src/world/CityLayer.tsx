@@ -5,6 +5,7 @@ import { SpatialIndex, dayFraction, holidayOf, seasonOf, weatherOf, type MasterP
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
 import type { Item } from '../logic/item.ts';
 import { HERO_SPOT, holidayItems } from '../logic/landscape.ts';
+import { constructionItems, freshHouse, BUILD_MS } from '../logic/construction.ts';
 import { commerceItem, expansionItems, projectItems, type HouseState } from '../logic/placement.ts';
 import { QUALITY } from '../logic/quality.ts';
 import { closedDistrictItems } from '../logic/streets.ts';
@@ -18,7 +19,7 @@ import { FAR_CHUNK, Ground } from './ground.ts';
 import { kitUniforms, type Kit } from './kit.ts';
 import { Labels, type LabelInfo } from './labels.ts';
 import { Pools } from './pools.ts';
-import { Signs } from './signs.ts';
+import { Boards, Signs } from './signs.ts';
 import { Lake, Sky } from './sky.ts';
 
 const WHITE_COLOR = new Color('#ffffff');
@@ -56,6 +57,9 @@ const withPreview = (houses: ReadonlyMap<string, HouseState>, preview: Preview |
   return new Map(houses).set(preview.plot, { ...h, decor });
 };
 
+const without = (houses: ReadonlyMap<string, HouseState>, plot: string | null): ReadonlyMap<string, HouseState> =>
+  (plot && houses.has(plot) ? new Map([...houses].filter(([id]) => id !== plot)) : houses);
+
 interface CityLayerProps { readonly kit: Kit; readonly plan: MasterPlan }
 
 export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
@@ -63,14 +67,17 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const level = useApp((s) => s.quality);
   const saved = useApp((s) => s.houses);
   const preview = useApp((s) => s.preview);
-  const houses = useMemo(() => withPreview(saved, preview), [saved, preview]);
+  const building = useApp((s) => s.building);
+  const lang = useApp((s) => s.lang);
+  /** Qurilayotgan uy effekt tugaguncha oddiy ro'yxatda ko'rinmaydi. */
+  const houses = useMemo(() => without(withPreview(saved, preview), building?.plot ?? null), [saved, preview, building]);
   const boot = useApp((s) => s.boot);
   const catalog = useApp((s) => s.catalog);
   const q = QUALITY[level];
   const index = useMemo(() => worldIndex(plan), [plan]);
 
   const world = useMemo(() => ({
-    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(),
+    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(), boards: new Boards(), works: new Pools(kit),
   }), [kit, plan]);
   const sun = useMemo(() => new DirectionalLight('#fff', 2), []);
   const hemi = useMemo(() => new HemisphereLight('#fff', '#c9d6b4', 1), []);
@@ -95,10 +102,11 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.ground.setState({ openDistricts: open });
     world.farGround.setState({ openDistricts: open });
   }, [houses, open, extras, world, level, catalog]);
+  useEffect(() => { world.boards.setLang(lang); }, [lang, world]);
 
   useEffect(() => {
     scene.fog = fog;
-    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, sun, sun.target, hemi];
+    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, world.boards.mesh, world.works.group, sun, sun.target, hemi];
     scene.add(...parts);
     return () => {
       scene.remove(...parts);
@@ -107,6 +115,8 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       world.farGround.dispose();
       world.labels.dispose();
       world.signs.dispose();
+      world.boards.dispose();
+      world.works.dispose();
       world.lake.mesh.geometry.dispose();
       world.lake.mesh.material.dispose();
     };
@@ -124,6 +134,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     sun.shadow.bias = -0.0006;
     sun.shadow.normalBias = 0.25;
     world.pools.setShadows(q.hasShadows);
+    world.works.setShadows(q.hasShadows);
     kit.material.needsUpdate = true;
   }, [q, gl, sun, world, kit]);
 
@@ -136,10 +147,11 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   };
 
   const refresh = (v: View): void => {
-    const src: CollectSource = { plots: index.plots, statics: index.statics, extras, commerce, plan, houses, open, ...caches.current };
-    const { items, labels, signs } = collect(v, src, q.labels);
+    const src: CollectSource = { plots: index.plots, statics: index.statics, extras, commerce, plan, houses, open, building: building?.plot ?? null, ...caches.current };
+    const { items, labels, signs, boards } = collect(v, src, q.labels);
     world.pools.set(items);
     world.signs.set(signs);
+    world.boards.set(boards);
     const hero = boot?.hero;
     const heroLabel: LabelInfo[] = hero && Math.hypot(v.x - HERO_SPOT.x, v.z - HERO_SPOT.z) < HERO_RANGE ? [{ key: 'hero', text: `🏆 ${hero.nick}`, kind: 'gold', badge: null, x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
     world.labels.set([...heroLabel, ...labels]);
@@ -160,6 +172,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.sky.update(light, x, z);
     world.lake.update(seconds);
     kitUniforms.uNight.value = light.night;
+    world.boards.setNight(light.night);
     kitUniforms.uSnow.value = snowAmount(season, weather);
     kitUniforms.uLeaf.value.set(...leafTint(season));
     sun.castShadow = q.hasShadows && !isHigh;
@@ -172,6 +185,18 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     fog.color.copy(world.sky.fogColor);
   };
 
+  const isWorking = useRef(false);
+  const updateWorks = (): void => {
+    const plot = building ? plan.plots.find((p) => p.id === building.plot) : undefined;
+    if (!building || !plot) {
+      if (isWorking.current) world.works.set([]);
+      isWorking.current = false;
+      return;
+    }
+    isWorking.current = true;
+    world.works.set(constructionItems(plot, saved.get(plot.id) ?? freshHouse(plot.id), (performance.now() - building.at) / BUILD_MS));
+  };
+
   useFrame(({ clock }) => {
     const s = snapshot();
     const isHigh = s.mode === 'city' && s.height > HIGH_ALTITUDE;
@@ -180,6 +205,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     fog.near = v.fogNear;
     fog.far = v.fogFar;
     updateGround(v, isHigh);
+    updateWorks();
     if (!isStale(last.current, s)) return;
     last.current = s;
     refresh(v);

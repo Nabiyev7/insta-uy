@@ -64,7 +64,8 @@ if (isFresh) {
   const user = await backend.createUser(`${ADMIN.login}@login.citylanduz.uz`, ADMIN.password);
   await backend.rpc('svc_profile_create', { p_user: user.id, p_login: ADMIN.login });
   await db.query("update profiles set role = 'admin', coins = 50000 where user_id = $1", [user.id]);
-  if (process.env.NO_DEMO !== '1') await seedDemo(db);
+  // Shahar bo'sh ochiladi (docs/chat/UYLAR-BEZAK-PROMT.md §1). Sinov aholisi faqat DEMO=1 bilan.
+  if (process.env.DEMO === '1') await seedDemo(db);
 }
 setInterval(() => { void runCron(ctx('cron'), '*/10 * * * *').then((e) => e.forEach((m) => logError('cron', m))); }, 600_000);
 http.listen(port, '127.0.0.1', () => {

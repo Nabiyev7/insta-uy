@@ -1,7 +1,8 @@
-"""4–6 levellar (1–3 — kit_first.py): 25×34 m hovliga mo'ljallangan, bo'yiga o'smaydigan bir qavatli uylar. Oltin rang yo'q (u 7-leveldan)."""
+"""6-level va umumiy bo'laklar (1–3 — kit_first.py, 4–5 — kit_modern.py). Oltin rang yo'q (u 7-leveldan)."""
 from kit_core import BRICK, M_GLOW, M_ROOF, M_WALL, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model
 from kit_first import first_levels
-from kit_houses import TRIM, house2, house3, moulding, walls
+from kit_houses import TRIM, house3, moulding, walls
+from kit_modern import level4, level5
 
 COPPER = '#b0623a'
 LAMP = '#ffe2a0'
@@ -64,45 +65,8 @@ def hood(m: Model, y: float, lo: float, hi: float, z: float) -> None:
     m.box(lo - 0.18, y - 0.18, z, hi + 0.18, y, z + 0.18, WOOD, '#b98a5c', bottom=True)
 
 
-def courtyard_house(name: str) -> Model:
-    """3- va 4-level asosi: katta qanotli, to'rt nishab tomli uy."""
-    m = house2(name)
-    m.stretch(SCALE, SCALE)
-    side_windows(m, 6.6, (3.4,), 1.4, 1.1, 2.6)
-    m.window('b', 5.4, -6.0, -4.9, 1.1, 2.6)
-    steps(m, -2.5, -0.9, -4.32, 0.35, 2)
-    shutters(m, -6.0, 3.24, 5.52, 1.0, 2.6)
-    m.cbox(4.6, 2.6, 4.2, 0.7, 0.7, 1.6, BRICK)
-    return m
-
-
-def level4() -> Model:
-    m = courtyard_house('house4')
-    moulding(m, 2.16, 6.6, -6.0, 2.78)
-    for x in (2.1, 6.36):
-        m.box(x - 0.08, -6.14, 0, x + 0.34, -5.76, 3.2, BRICK)
-    for a, b in ((-5.76, -3.84), (0, 1.68)):
-        hood(m, -1.8, a, b, 2.66)
-    side_room(m, -1, 6.6, 0.4, 4.6, 1.4)
-    # shiypon — ochiq yozgi ayvon
-    m.box(-6.7, -6.3, 0, -3.1, -4.32, 0.35, STONE, '#d8cbb5', top_layer=WOOD)
-    for x in (-6.4, -3.4):
-        m.column(x, -6.0, 0.35, 2.9)
-    m.box(-6.7, -6.2, 2.9, -3.1, -5.85, 3.2, WOOD, '#b98a5c', bottom=True)
-    moulding(m, -6.7, -3.1, -6.2, 3.2, 0.3)
-    m.hip(-6.7, -6.3, -3.1, -4.1, 3.46, 1.0, 0.35)
-    finial(m, -4.9, -5.2, 4.7, 0.7)
-    finial(m, -3.0, 1.8, 5.6)
-    finial(m, 3.0, 1.8, 5.6)
-    planter(m, 0.7, -4.75, 0, 1.0, '#e5785f')
-    planter(m, 4.4, -6.5, 0, 1.6)
-    lantern(m, -2.7, -1.8, 2.2)
-    lantern(m, 2.6, -6.0, 2.2)
-    return m
-
-
 def big_house(name: str) -> Model:
-    """5- va 6-level asosi: ikki qanotli, o'rtasi ayvonli uy."""
+    """6-level asosi: ikki qanotli, o'rtasi ayvonli uy."""
     m = house3(name)
     m.stretch(SCALE, SCALE)
     side_windows(m, 7.68, (2.9,), 1.6, 1.0, 2.8)
@@ -111,17 +75,6 @@ def big_house(name: str) -> Model:
         mid = s * 5.58
         shutters(m, -6.72, mid - 1.2, mid + 1.2, 1.0, 2.8, SHUTTER_RED)
         m.box(mid - 2.0, -6.9, 0.2, mid + 2.0, -6.72, 0.42, STONE, '#d8cbb5')
-    return m
-
-
-def level5() -> Model:
-    m = big_house('house5')
-    steps(m, -1.5, 1.5, -4.8, 0.35, 3)
-    for x in (-2.6, 2.6):
-        planter(m, x, -5.2, 0, 1.0)
-    for s in (-1, 1):
-        hood(m, -6.72, s * 5.58 - 1.2, s * 5.58 + 1.2, 2.84)
-        lantern(m, s * 1.6, -1.68, 2.4)
     return m
 
 
