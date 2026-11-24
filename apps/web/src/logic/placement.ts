@@ -1,12 +1,12 @@
 /** Qaysi model qayerda turadi. Faqat hisob — Three.js yo'q. */
 import {
-  AVENUE_LINES, FREE_SPOTS, HILL, LAKE, LEVEL_FENCE, LEVEL_GATE, PLAZA_HALF, REF_YARD, ROOF_COLORS, TOWERS, TOWER_BASE, TOWER_HALF, WALL_COLORS, WALL_MATERIALS,
-  anchorById, hash01, inLake, inPlaza, levelYard, padHeight, parsePlaced,
-  type Anchor, type Building, type Commerce, type DecorItem, type Expansion, type MasterPlan, type Plot, type SpotKind,
+  FREE_SPOTS, HILL, LAKE, LEVEL_FENCE, LEVEL_GATE, REF_YARD, ROOF_COLORS, TOWERS, TOWER_BASE, TOWER_HALF, WALL_COLORS, WALL_MATERIALS,
+  anchorById, hash01, levelYard, padHeight, parsePlaced,
+  type Anchor, type Building, type Commerce, type DecorItem, type Expansion, type Plot, type SpotKind,
 } from '../../../../packages/shared/src/index.ts';
 import { decorOf } from './decorCatalog.ts';
 import { WHITE, item, toWorld, yawOf, type Item, type Solid } from './item.ts';
-import { plazaItems } from './plaza.ts';
+import { STADIUM } from './paving.ts';
 
 export interface HouseState {
   readonly plot: string;
@@ -33,10 +33,10 @@ const houseScale = (p: Plot, tier: number): number => (p.type === 'hovli' && tie
 /** Panjara va bezaklar shu o'lchamdagi uchastkaga chizilgan, boshqalariga masshtablanadi. */
 const freeSpot = (id: string): readonly [number, number] => { const s = FREE_SPOTS[id]; return s ? [s[0], s[1]] : [0, 6]; };
 export const REF_PLOT = REF_YARD;
-/** Hovliga sig'ishi uchun kichraytiriladigan daraxtlar. */
 /** Uy bo'yiga deyarli o'smaydi; hovlida umuman o'smaydi. */
 const houseGrow = (p: Plot, scale: number): number => (p.type === 'hovli' ? 1 : 1 + (scale - 1) * 0.6);
-const YARD_SCALE: Readonly<Record<string, number>> = { tree_chinor: 0.62, tree_archa: 0.8 };
+/** Hovliga sig'ishi uchun kichraytiriladigan daraxtlar. */
+const YARD_SCALE: Readonly<Record<string, number>> = { tree_chinor: 0.5, tree_archa: 0.8 };
 const PALACE_GROW = 1.5;
 
 const yardItem = (p: Plot, model: string, at: readonly [number, number], y: number, tint: string | null): Item => {
@@ -58,7 +58,7 @@ const LUXE = 'light_luxe';
 const GATE_INSET = 0.65;
 /** Tomdagi joy (indeks = level): model o'lchamida x, balandlik, z (old +). */
 const ROOF_MOUNT: readonly (readonly [number, number, number])[] = [
-  [0, 4, 1.2], [0, 3.85, 1.6], [-2.2, 3.85, 1.6], [-2.2, 4.25, 0.5], [-0.6, 4.25, 0.5], [0, 4.75, 0.2], [0, 4.75, 0.2], [0.25, 7.3, 0.6], [0.25, 7.3, 0.6], [0, 8.1, 1.6], [0, 8.1, 1.6],
+  [0, 4, 1.2], [0, 4.4, 2], [1, 4.4, -1], [0, 4.9, -2.4], [-0.6, 4.25, 0.5], [0, 4.75, 0.2], [0, 4.75, 0.2], [0.25, 7.3, 0.6], [0.25, 7.3, 0.6], [0, 8.1, 1.6], [0, 8.1, 1.6],
 ];
 const roofItem = (p: Plot, tier: number, model: string, y: number, tint: string | null): Item => {
   const [rx, ry, rz] = ROOF_MOUNT[tier] ?? [0, 4, 0];
@@ -89,13 +89,24 @@ export const houseItem = (p: Plot, s: HouseState, isFar: boolean, isSimple = fal
   });
 };
 
+const FOUNDATION_SHARE = 0.22;
+const BARRIER_SHARE = 0.4;
+/** Yopiq tumandagi uchastka: ba'zisida poydevor, ba'zisining oldida to'siq. */
+const closedPlot = (p: Plot, y: number): Item[] => {
+  const h = hash01(`f${p.id}`);
+  if (h < FOUNDATION_SHARE) return [item('foundation', p.x, p.z, { y, yaw: yawOf(p.rot), sx: p.w / 18, sz: p.w / 18 })];
+  if (h > BARRIER_SHARE) return [];
+  const [x, z] = toWorld(p, 0, p.d / 2 - 1);
+  return [item('barrier', x, z, { y, yaw: yawOf(p.rot) })];
+};
+
 /** Bitta uchastkaning barcha modellari. `isOpen` — tuman ochiqmi. */
 export const plotItems = (p: Plot, s: HouseState | undefined, isOpen: boolean): Item[] => {
   if (p.type === 'kvartira') return [];
   const y = padHeight(p);
   const yaw = yawOf(p.rot);
   if (!s) {
-    if (!isOpen) return hash01(`f${p.id}`) < 0.55 ? [item('foundation', p.x, p.z, { y, yaw, sx: p.w / 18, sz: p.w / 18 })] : [];
+    if (!isOpen) return closedPlot(p, y);
     const [x, z] = toWorld(p, 0, p.d / 2 - 2);
     return [item('forsale', x, z, { y, yaw })];
   }
@@ -123,7 +134,7 @@ export const expansionItems = (e: Expansion): Item[] => {
   const at = (lx: number, lz: number): readonly [number, number] => toWorld(e, lx, lz);
   const tree = (model: string, lx: number, lz: number): Item => item(model, ...at(lx, lz), { yaw });
   return [
-    item('fence_basic', e.x, e.z, { yaw, sx: e.w / REF_PLOT.w, sz: e.d / REF_PLOT.d }), tree('tree_anor', -6, 9), tree('tree_anor', 6, 9), tree('tree_chinor', 0, -8), tree('yard_tok', -5, 0), tree('yard_flowers', 5, 1),
+    item('fence_basic', e.x, e.z, { yaw, sx: e.w / REF_PLOT.w, sz: e.d / REF_PLOT.d }), tree('tree_round', -6, 9), tree('tree_tall', 6, 9), tree('tree_wide', 0, -8), tree('yard_flowers', -5, 0), tree('yard_flowers', 5, 1),
   ];
 };
 
@@ -141,62 +152,9 @@ export const commerceItem = (c: Commerce): Item => {
   return item(tower.look, c.x, c.z, { yaw, sy: tower.height / TOWER_BASE[tower.look], wall: tower.tint, seed: h });
 };
 
-/** Bog'chalarda bitta daraxtga to'g'ri keladigan maydon, m². */
-const GREEN_PER_TREE = 300;
-
-/** Yo'l chetidagi daraxt va chiroqlar, maydon jihozlari, bog'chalar — bir marta hisoblanadi. */
-export const staticItems = (plan: MasterPlan): Item[] => {
-  const out: Item[] = [];
-  const crossesAvenue = (v: number): boolean => AVENUE_LINES.some((l) => Math.abs(v - l) < 17);
-  for (const r of plan.roads.filter((q) => q.kind === 'prospekt')) {
-    const isX = r.w > r.d;
-    const len = isX ? r.w : r.d;
-    const from = (isX ? r.x : r.z) - len / 2;
-    for (let i = 0; i * 14 < len; i++) {
-      const u = from + i * 14 + 7;
-      if (crossesAvenue(u) || (Math.abs(u) < PLAZA_HALF && Math.abs(isX ? r.z : r.x) < PLAZA_HALF)) continue;
-      for (const side of [-1, 1]) {
-        const v = (isX ? r.z : r.x) + side * 10.4;
-        const [x, z] = isX ? [u, v] : [v, u];
-        if (inLake(x, z, 3)) continue;
-        if (i % 2 === 0) out.push(item('street_lamp', x, z));
-        else out.push(item(hash01(`t${x}${z}`) < 0.6 ? 'tree_chinor' : 'tree_terak', x, z, { yaw: hash01(`y${x}${z}`) * 6, sx: 0.9, sz: 0.9, sy: 0.85 + hash01(`h${x}${z}`) * 0.35 }));
-      }
-    }
-  }
-  for (const [x, z, w, d] of plan.greens) {
-    const n = Math.max(1, Math.floor((w * d) / GREEN_PER_TREE));
-    for (let i = 0; i < n; i++) {
-      const gx = x + (hash01(`gx${x}${z}${i}`) - 0.5) * (w - 5);
-      const gz = z + (hash01(`gz${x}${z}${i}`) - 0.5) * (d - 5);
-      out.push(item(['tree_chinor', 'tree_terak', 'tree_anor', 'tree_archa'][Math.floor(hash01(`gm${gx}`) * 4)] ?? 'tree_anor', gx, gz, { yaw: i }));
-    }
-    if (hash01(`bench${x}${z}`) < 0.5) out.push(item('bench', x, z));
-  }
-  for (const b of plan.buildings) {
-    for (let i = 0; i < 4; i++) {
-      out.push(item(i % 2 ? 'tree_chinor' : 'tree_terak', b.x - 18 + i * 12, b.z + (b.rot === 0 ? -16 : 16), { yaw: i }));
-      out.push(item('bench', b.x - 14 + i * 9, b.z + (b.rot === 0 ? 14 : -14), { yaw: b.rot === 0 ? Math.PI : 0 }));
-    }
-  }
-  return [...out, ...plazaItems()];
-};
-
-/** Yopiq tuman: to'siq va kranlar (PLAN §3). */
-export const closedDistrictItems = (rect: readonly [number, number, number, number], id: number): Item[] => {
-  const [x0, z0, x1, z1] = rect;
-  const out: Item[] = [];
-  const fence = (x: number, z: number, yaw: number): void => { if (!inPlaza(x, z, 4)) out.push(item('barrier', x, z, { yaw })); };
-  for (let x = x0 + 4; x < x1; x += 8) { fence(x, z0 - 0.5, 0); fence(x, z1 + 0.5, Math.PI); }
-  for (let z = z0 + 4; z < z1; z += 8) { fence(x0 - 0.5, z, Math.PI / 2); fence(x1 + 0.5, z, -Math.PI / 2); }
-  for (let i = 0; i < 4; i++) {
-    const x = x0 + (x1 - x0) * (0.2 + hash01(`cx${id}${i}`) * 0.6);
-    const z = z0 + (z1 - z0) * (0.2 + hash01(`cz${id}${i}`) * 0.6);
-    if (!inLake(x, z, 5)) out.push(item('crane', x, z, { yaw: hash01(`cy${id}${i}`) * 6 }));
-  }
-  return out;
-};
-
+/** Umumiy loyiha bog'i: dam olish bog'ining shimoli-sharqida. */
+const GARDEN_SPOT = { x: -1100, z: -190 } as const;
+const GARDEN_TREES = 60;
 /** Ko'prik modelining yarim uzunligi (zaxirasiz). */
 const BRIDGE_HALF = 105;
 
@@ -205,19 +163,19 @@ export interface ProjectInfo { readonly id: number; readonly kind: 'bog' | 'stad
 export const projectItems = (projects: readonly ProjectInfo[]): Item[] => projects.flatMap((p) => {
   const done = Math.min(1, p.raised / p.goal);
   if (p.kind === 'bog') {
-    return Array.from({ length: Math.floor(60 * done) }, (_, i) => {
+    return Array.from({ length: Math.floor(GARDEN_TREES * done) }, (_, i) => {
       const a = i * 2.4;
-      const r = 10 + Math.sqrt(i) * 11;
-      return item(['tree_chinor', 'tree_anor', 'tree_archa'][i % 3] ?? 'tree_anor', -1140 + Math.cos(a) * r, -960 + Math.sin(a) * r, { yaw: a });
+      const r = 4 + Math.sqrt(i) * 5;
+      return item(['tree_chinor', 'tree_round', 'tree_archa'][i % 3] ?? 'tree_round', GARDEN_SPOT.x + Math.cos(a) * r, GARDEN_SPOT.z + Math.sin(a) * r, { yaw: a });
     });
   }
-  const [model, x, z] = p.kind === 'stadion' ? ['stadium', -1125, -1275] as const : ['bridge', LAKE.x, LAKE.z] as const;
+  const [model, x, z] = p.kind === 'stadion' ? ['stadium', STADIUM.x, STADIUM.z] as const : ['bridge', LAKE.x, LAKE.z] as const;
   if (done >= 1) return [item(model, x, z, { sz: p.kind === 'koprik' ? LAKE.rz / BRIDGE_HALF : 1 })];
   const site = p.kind === 'stadion' ? [x, z] as const : [x, z + LAKE.rz + 20] as const;
   return done > 0 ? [item('crane', site[0], site[1]), item('foundation', site[0] + 12, site[1], { sx: 2, sz: 2 })] : [];
 });
 
-const HALF: Readonly<Record<number, readonly [number, number]>> = { 1: [5, 4.2], 2: [5.9, 4.9], 3: [6.7, 5.8], 4: [6.8, 6.2], 5: [7.8, 6.6], 6: [7.9, 6.9], 7: [6.5, 5.2], 8: [6.9, 5.4], 9: [6.8, 5.9], 10: [7.2, 6.2] };
+const HALF: Readonly<Record<number, readonly [number, number]>> = { 1: [5.3, 4.4], 2: [8.7, 6.5], 3: [8.6, 7], 4: [6.8, 6.2], 5: [7.8, 6.6], 6: [7.9, 6.9], 7: [6.5, 5.2], 8: [6.9, 5.4], 9: [6.8, 5.9], 10: [7.2, 6.2] };
 export const houseSolid = (p: Plot, s: HouseState): Solid | null => {
   if (p.type === 'kvartira') return null;
   const scale = houseScale(p, s.tier);

@@ -1,6 +1,6 @@
 /** Xarita muharriri: faqat bo'sh joylarga, kodsiz. Uchastka va yo'llar qulflangan (PLAN §6). */
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { LAKE, decodePlan, footprint, type EncodedPlan, type MasterPlan } from '../../../../packages/shared/src/index.ts';
+import { CENTER_BOXES, CIVIC, LAKE, SITES, boxHitsTilted, civicRect, decodePlan, footprint, type EncodedPlan, type MasterPlan, type Road } from '../../../../packages/shared/src/index.ts';
 import { rpc, SITE_URL } from '../api.ts';
 import { Btn, Table, useAction, useLoad, when } from '../ui.tsx';
 
@@ -10,7 +10,7 @@ interface Solid { readonly x: number; readonly z: number; readonly hx: number; r
 interface View { readonly cx: number; readonly cz: number; readonly span: number }
 
 const MODELS: readonly (readonly [string, string])[] = [
-  ['tree_chinor', 'Chinor'], ['tree_terak', 'Terak'], ['tree_archa', 'Archa'], ['tree_anor', 'Anor'], ['bench', "O'rindiq"], ['street_lamp', 'Chiroq'], ['yard_flowers', 'Gulzor'], ['yard_sori', "So'ri"], ['yard_tok', 'Ishkom'], ['water_fountain', 'Favvora'],
+  ['tree_round', 'Yumaloq daraxt'], ['tree_wide', 'Keng daraxt'], ['tree_tall', 'Baland daraxt'], ['tree_chinor', 'Chinor'], ['tree_terak', 'Terak'], ['hedge', 'Buta qatori'], ['flower_ring', 'Doira gulzor'], ['tree_archa', 'Archa'], ['tree_anor', 'Anor'], ['bench', "O'rindiq"], ['street_lamp', 'Chiroq'], ['yard_flowers', 'Gulzor'], ['yard_sori', "So'ri"], ['yard_tok', 'Ishkom'], ['water_fountain', 'Favvora'],
   ['special_statue', 'Haykal'], ['special_yurt', "O'tov"], ['choyxona', 'Choyxona'], ['bozor_stall', 'Bozor rastasi'], ['maktab', 'Maktab'], ['billboard', 'Bilbord'], ['car_van', 'Furgon'], ['car_sedan', 'Sedan'], ['crane', 'Kran'], ['foundation', 'Poydevor'], ['barrier', "To'siq"],
 ];
 const SIZE = 900;
@@ -18,9 +18,10 @@ const MIN_SPAN = 60;
 const MAX_SPAN = 3300;
 
 const solidsOf = (plan: MasterPlan): Solid[] => [
-  ...plan.plots.filter((p) => p.unit <= 1).map(footprint), ...plan.expansions.map(footprint), ...plan.commerce.map(footprint), ...plan.roads.map((r) => ({ x: r.x, z: r.z, hx: r.w / 2, hz: r.d / 2 })),
+  ...plan.plots.filter((p) => p.unit <= 1).map(footprint), ...plan.expansions.map(footprint), ...plan.commerce.map(footprint), ...CIVIC.map(civicRect),
 ];
-const isFree = (solids: readonly Solid[], x: number, z: number, s: number): boolean => !solids.some((b) => Math.abs(b.x - x) < b.hx + 0.6 * s && Math.abs(b.z - z) < b.hz + 0.6 * s);
+const isFree = (solids: readonly Solid[], roads: readonly Road[], x: number, z: number, s: number): boolean =>
+  !solids.some((b) => Math.abs(b.x - x) < b.hx + 0.6 * s && Math.abs(b.z - z) < b.hz + 0.6 * s) && !roads.some((r) => boxHitsTilted(x, z, 0.6 * s, 0.6 * s, r));
 const tenth = (v: number): number => Math.round(v * 10) / 10;
 
 const draw = (g: CanvasRenderingContext2D, plan: MasterPlan, objs: readonly Obj[], v: View, selected: number | null): void => {
@@ -37,7 +38,16 @@ const draw = (g: CanvasRenderingContext2D, plan: MasterPlan, objs: readonly Obj[
   g.beginPath();
   g.ellipse(X(LAKE.x), Z(LAKE.z), LAKE.rx * k, LAKE.rz * k, 0, 0, Math.PI * 2);
   g.fill();
-  for (const r of plan.roads) box({ x: r.x, z: r.z, hx: r.w / 2, hz: r.d / 2 }, '#a9a9a9');
+  for (const [x0, z0, x1, z1] of [...Object.values(SITES), ...CENTER_BOXES]) box({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hx: (x1 - x0) / 2, hz: (z1 - z0) / 2 }, '#f0dc9a');
+  g.fillStyle = '#a9a9a9';
+  for (const r of plan.roads) {
+    g.save();
+    g.translate(X(r.x), Z(r.z));
+    g.rotate(r.angle ?? 0);
+    g.fillRect((-r.w / 2) * k, (-r.d / 2) * k, r.w * k, r.d * k);
+    g.restore();
+  }
+  for (const c of CIVIC) box(civicRect(c), '#c98a7a');
   for (const p of plan.plots) {
     if (p.unit > 1) continue;
     const f = footprint(p);
@@ -101,7 +111,7 @@ function Editor({ plan, version, onSaved }: EditorProps): React.JSX.Element {
       drag.current = { ...p, mode: 'pan' };
       return;
     }
-    if (!isFree(solids, p.x, p.z, 1)) return;
+    if (!isFree(solids, plan.roads, p.x, p.z, 1)) return;
     setObjs([...objs, { m: model, x: tenth(p.x), z: tenth(p.z), r: 0, s: 1 }]);
     setSelected(objs.length);
   };
@@ -114,7 +124,7 @@ function Editor({ plan, version, onSaved }: EditorProps): React.JSX.Element {
       return;
     }
     if (selected === null || !isDraft) return;
-    setObjs(objs.map((o, i) => (i === selected && isFree(solids, p.x, p.z, o.s) ? { ...o, x: tenth(p.x), z: tenth(p.z) } : o)));
+    setObjs(objs.map((o, i) => (i === selected && isFree(solids, plan.roads, p.x, p.z, o.s) ? { ...o, x: tenth(p.x), z: tenth(p.z) } : o)));
   };
   const patch = (p: Partial<Obj>): void => setObjs(objs.map((o, i) => (i === selected ? { ...o, ...p } : o)));
   const remove = (): void => {

@@ -3,7 +3,7 @@ import { parseLogin, parsePassword } from '../../../../packages/shared/src/index
 import { post, signIn, signInWithToken } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { errorText, translate } from '../app/i18n.ts';
-import { getApp, openPanel, toast } from '../app/store.ts';
+import { getApp, openPanel, setting, toast } from '../app/store.ts';
 import { Captcha } from './Captcha.tsx';
 import { Field, Seg, Sheet, useAction } from './kit.tsx';
 
@@ -100,7 +100,7 @@ export function AuthPanel(): React.JSX.Element {
   };
   return (
     <Sheet title={t(mode === 'register' ? 'register' : 'login')}>
-      <TelegramLogin />
+      {setting('telegram_bot', '') ? <TelegramLogin /> : <button type="button" className="btn block" disabled>✈️ {t('viaTelegram')} · {t('soon')}</button>}
       <Seg label={t('login')} value={mode} onPick={setMode} options={[['login', t('login')], ['register', t('register')]]} />
       {mode === 'reset' ? <ResetForm onDone={done} /> : (
         <form className="section" onSubmit={submit}>

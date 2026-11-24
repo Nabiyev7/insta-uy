@@ -1,5 +1,5 @@
 /** "Mashina" rejimi: oddiy arkada fizikasi. Sof hisob. */
-import { footprint, type Plot, type Road } from '../../../../packages/shared/src/index.ts';
+import { footprint, fromLocal, toLocal, type Plot, type Road } from '../../../../packages/shared/src/index.ts';
 import type { Item, Solid } from './item.ts';
 import { movePlayer } from './motion.ts';
 
@@ -68,21 +68,22 @@ export const stepCar = (s: CarState, i: CarInput, dt: number, spec: CarSpec, sol
 
 /** Uchastka ichiga mashina kirmaydi (bo'sh bo'lsa ham). */
 export const plotSolid = (p: Plot): Solid => ({ ...footprint(p), h: 1.6 });
-const TREE_HALF: Readonly<Record<string, number>> = { tree_chinor: 0.45, tree_terak: 0.35, tree_archa: 0.35, tree_anor: 0.3, street_lamp: 0.2 };
+const TREE_HALF: Readonly<Record<string, number>> = { tree_chinor: 0.45, tree_round: 0.3, tree_wide: 0.35, tree_tall: 0.3, tree_terak: 0.35, tree_archa: 0.35, tree_anor: 0.3, street_lamp: 0.2 };
 export const treeSolid = (i: Item): Solid | null => {
   const half = TREE_HALF[i.model];
   return half === undefined ? null : { x: i.x, z: i.z, hx: half, hz: half, h: 3 };
 };
 
-const LANE: Readonly<Record<Road['kind'], number>> = { prospekt: 5.2, kocha: 1.9 };
+const LANE: Readonly<Record<Road['kind'], number>> = { prospekt: 5.2, halqa: 4.8, diagonal: 4.5, kocha: 1.9 };
 /** Eng yaqin yo'l bo'lagi — mashina shu yerda paydo bo'ladi. */
 export const roadSpot = (roads: readonly Road[], x: number, z: number): CarState => {
   const spot = (r: Road): { readonly x: number; readonly z: number; readonly yaw: number; readonly d: number } => {
-    const isX = r.w > r.d;
-    const end = (isX ? r.w : r.d) / 2 - 3;
-    const u = Math.max(-end, Math.min(end, isX ? x - r.x : z - r.z));
-    const [px, pz] = isX ? [r.x + u, r.z + LANE[r.kind]] : [r.x - LANE[r.kind], r.z + u];
-    return { x: px, z: pz, yaw: isX ? Math.PI / 2 : 0, d: Math.hypot(px - x, pz - z) };
+    const isX = r.angle !== undefined || r.w > r.d;
+    const end = Math.max(0, (isX ? r.w : r.d) / 2 - 3);
+    const [lu, lv] = toLocal(r, x, z);
+    const u = Math.max(-end, Math.min(end, isX ? lu : lv));
+    const [px, pz] = isX ? fromLocal(r, u, LANE[r.kind]) : [r.x - LANE[r.kind], r.z + u];
+    return { x: px, z: pz, yaw: isX ? Math.PI / 2 - (r.angle ?? 0) : 0, d: Math.hypot(px - x, pz - z) };
   };
   const best = roads.map(spot).reduce<ReturnType<typeof spot> | null>((b, s) => (b && b.d <= s.d ? b : s), null);
   return best ? { x: best.x, z: best.z, yaw: best.yaw, speed: 0 } : { x, z, yaw: 0, speed: 0 };

@@ -37,7 +37,7 @@ const call = async (p: string, body?: unknown, headers: Record<string, string> =
   return { status: res.status, headers: res.headers, body: text.startsWith('{') ? (JSON.parse(text) as Record<string, unknown>) : { text } };
 };
 const signIn = async (login: string, password: string): Promise<string | undefined> => {
-  const res = await emu(new Request('http://emu/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email: `${login}@login.obunachilar-shahri.uz`, password }) }));
+  const res = await emu(new Request('http://emu/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email: `${login}@login.citylanduz.uz`, password }) }));
   return ((await res.json()) as { access_token?: string }).access_token;
 };
 const userRpc = async (jwt: string, fn: string, args: unknown = {}): Promise<Record<string, unknown>> =>

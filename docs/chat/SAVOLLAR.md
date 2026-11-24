@@ -42,7 +42,7 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 3. **Level nomi** "Naqshli hovli" → "Chiroyli hovli"; leveldan tekin so'ri o'rniga bog' soyaboni. So'ri, tok, tandir do'konda qoldi.
 4. **Choyxona binosi** maydonda qoldi (MARKAZ promtida bor), faqat naqshi olib tashlandi.
 5. **Avatar** sukut bo'yicha bosh kiyimsiz (do'ppi tanlovda qoldi). Sayt panellaridagi rangli hoshiya o'zgarmadi — u dizayn belgisi.
-6. **`YUKLAMA-PROMT.md`** paydo bo'ldi, lekin `ISHLAR.md` ro'yxatida yo'q — shuning uchun bajarilmadi.
+6. **`YUKLAMA-PROMT.md`** — `ISHLAR.md` da 7-qadam, egasi keyingi bosqichga qoldirdi.
 
 ## 5-qadam: yangi bezaklar va sotuv
 1. **Ro'yxat yangi promtdan:** qozon-o'choq, supa va ariq ko'prikchasi olib tashlandi; bog' soyaboni, velosiped, pochta qutisi qo'shildi. Jami 26 ta yangi model.
@@ -53,3 +53,23 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 6. **Haftaning hovlisi:** hafta dushanbadan (Toshkent vaqti); ovoz o'zgartirilmaydi; teng bo'lsa birinchi ovoz olgan yutadi; nishon keyingi g'olibga o'tadi.
 7. **Hayit mavsumi** har yili siljiydi: hozir 10–31 may qo'yildi, admin har yili sanani o'zgartiradi.
 8. **Sinab ko'rish** do'kondagi 👁 tugmasi: bezak o'z hovlingizda faqat sizga ko'rinadi.
+
+## 8-qadam: shaharni qurish (XARITA-PROMT, CityLand UZ)
+1. **Qulf.** Egasidan so'raldi, javob: "Qulfni ochishga ruxsat beraman" (2026-11-24). Bosh reja v3 chizildi va qayta qulflandi.
+2. **Bot nomi.** Egasi "keyin aytaman" dedi: `TELEGRAM_BOT` sozlamasi bo'sh turibdi (kodga yozilmagan), keyin bitta qatorga yoziladi. Kanal `@citylanduz` — `telegram_channel` sozlamasida.
+3. **Villalar sig'madi.** Ko'l bo'yi zonasiga (500×600 m) ko'l bilan birga 400 ta villa sig'maydi. Zona kengaydi: x 750…1500, z 375…1500 va g'arbidagi kvartal (x 375…750, z 750…1500). Uchastka kichraymadi.
+4. **Qasrlar** uchun tepalik 500×500 → 620×620 m bo'ldi (100 ta qasr va yo'llar sig'sin).
+5. **Mahalla markazlari** 15–100 m surildi: aks holda halqa yo'l, diagonal yoki ko'cha ichidan o'tardi. O't o'chirish ham (620, 600) dan (690, 596) ga — diagonal yo'l ustida edi; prospektga qaraydi.
+6. **Ma'muriy va savdo markazi** x bo'yicha ±300 → ±288: yonidagi yo'lakka ikki qator hovli sig'di.
+7. **Maydon va bulvar ustidan yo'l o'tmaydi** (promt matnidagidek, rasmdan farqli). Faqat halqa yo'l bulvarni kesadi (piyodalar yo'lagi bilan). Bulvar yoniga 12 m li ko'chalar qo'shildi — hovlilar shularga qaraydi.
+8. **Daryo qirg'og'iga** ikki ko'cha qo'shildi (yo'lakdan tashqarida), sharqiy chetdagi hovlilar yo'lsiz qolmasin.
+9. **Janubi-sharqiy diagonal** ko'l qirg'og'ida tugaydi, ko'l atrofida aylanma ko'cha bor.
+10. **Tijorat joylari** (170 ta) hammasi sotuvdan olindi; admin sozlamasidagi `commerce_closed` ro'yxatidan chiqarilsa, yana sotiladi.
+11. **Tun qisqardi** (sutkaning ~28%) va yorug'landi: egasi "juda qorong'i" degani uchun.
+12. **Uy ko'tarish chegarasi** bazada 5 edi, promtdagidek 3 qilindi; 4-leveldan "Tez kunda" chiqadi.
+13. **Taklif — kirish tugmasi.** 1-bosqichda "Kirish" o'rniga "Tez kunda — @citylanduz" chiqarish mumkin. Hozir kirish va uy olish to'liq ishlayapti (sinovdan o'tgan), shuning uchun yashirmadim. Yashirish kerak bo'lsa, ayting.
+14. **Stadion** — joyida to'siq, poydevor va kran turibdi; umumiy loyiha to'lganda quriladi.
+15. **Texnik manzillar** ham yangilandi (`citylanduz.pages.dev`, ichki login pochtasi). Haqiqiy domen hali ochilmagan.
+
+16. **Yo'l uchlaridagi 2 m tirqish** (tekshiruvchi topdi): o'nlab ko'cha uchi boshqa yo'lga 0,4–6 m yetmaydi. Reja qulflangani uchun joylarga tegmadim — ko'cha uchlari dumaloq chiziladi, tirqish ko'rinmaydi. Rejaning o'zini tuzatish uchun yangi "Qulfni ochishga ruxsat beraman" kerak.
+17. **Telegram tugmasi**: bot nomi (`telegram_bot` sozlamasi) bo'sh turganda "Telegram orqali kirish · Tez kunda" bo'lib turadi (bosilmaydi).

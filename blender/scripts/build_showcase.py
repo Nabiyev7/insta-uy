@@ -12,6 +12,7 @@ sys.dont_write_bytecode = True
 
 from kit_core import rgb  # noqa: E402
 from kit_center import all_center  # noqa: E402
+from kit_city import city_models  # noqa: E402
 from kit_decor import all_decor  # noqa: E402
 from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
@@ -74,7 +75,7 @@ def assign(mesh, keys):
 
 def build_kit():
     kit = {}
-    for model in all_levels() + all_buildings() + all_center() + all_props() + all_decor():
+    for model in all_levels() + all_buildings() + all_center() + city_models() + all_props() + all_decor():
         obj = model.build()
         assign(obj.data, [(p[2], round(p[3] * 4)) for p in model.polys])
         kit[model.name] = obj.data
@@ -145,12 +146,12 @@ def add_flat(col, name, points, mat):
 def add_lake(col, lake, z):
     n = 96
     ring = [2 * math.pi * i / n for i in range(n)]
-    add_flat(col, 'kol', [(lake['x'] + math.cos(a) * lake['rx'], -lake['z'] + math.sin(a) * lake['rz'], z) for a in ring], flat_material('suv', '#3f9cb8', 0.12))
+    add_flat(col, 'kol', [(lake['x'] + math.cos(a) * lake['rx'], -lake['z'] + math.sin(a) * lake['rz'], z) for a in ring], flat_material('suv', '#6cc4ea', 0.3))
 
 
 def add_floor(col, floor):
     x, z, r = floor
-    add_flat(col, 'maydoncha', [(x - r, -z - r, -0.03), (x + r, -z - r, -0.03), (x + r, -z + r, -0.03), (x - r, -z + r, -0.03)], flat_material('maydoncha', '#b9c4a0'))
+    add_flat(col, 'maydoncha', [(x - r, -z - r, -0.03), (x + r, -z - r, -0.03), (x + r, -z + r, -0.03), (x - r, -z + r, -0.03)], flat_material('maydoncha', '#8acb62'))
 
 
 def add_labels(col, labels, is_map):
@@ -169,7 +170,7 @@ def light(scene):
     sun = bpy.data.lights.get('quyosh')
     if sun is None:
         sun = bpy.data.lights.new('quyosh', 'SUN')
-        sun.energy, sun.angle, sun.color = 3.6, math.radians(1.5), (1, 0.94, 0.84)
+        sun.energy, sun.angle, sun.color = 2.6, math.radians(4), (1, 0.98, 0.95)
     o = bpy.data.objects.new('quyosh', sun)
     o.rotation_euler = (math.radians(48), math.radians(12), math.radians(-38))
     scene.collection.objects.link(o)
@@ -178,8 +179,8 @@ def light(scene):
         world = bpy.data.worlds.new('osmon')
         world.use_nodes = True
         bg = next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND')
-        bg.inputs['Color'].default_value = (0.5, 0.7, 0.95, 1)
-        bg.inputs['Strength'].default_value = 0.75
+        bg.inputs['Color'].default_value = (0.72, 0.85, 1.0, 1)
+        bg.inputs['Strength'].default_value = 0.62
     scene.world = world
 
 
@@ -198,7 +199,7 @@ def setup_render(scene):
     scene.render.engine = 'BLENDER_EEVEE'
     scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
     scene.view_settings.view_transform = 'Standard'
-    scene.view_settings.exposure = -0.1
+    scene.view_settings.exposure = -0.15
     scene.eevee.taa_render_samples = 32
 
 
@@ -235,7 +236,7 @@ def main():
             add_ground(ground, spec['ground'], spec['clip'], step)
         if spec.get('isLake'):
             add_lake(ground, data['lake'], step * 1.5)
-        add_labels(collection(scene, 'Yozuvlar'), spec['labels'], i == len(data['scenes']) - 1)
+        add_labels(collection(scene, 'Yozuvlar'), spec['labels'], spec.get('isMap', False))
         light(scene)
         camera(scene, spec['camera'])
         setup_render(scene)

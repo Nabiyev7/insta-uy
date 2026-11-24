@@ -20,7 +20,7 @@ export const housePage = async (_req: Request, ctx: Ctx, id: string): Promise<Re
   const site = ctx.env.SITE_URL.replace(/\/$/, '');
   const target = `${site}/?uy=${id}`;
   const title = escapeHtml(plot.instagram ? `@${plot.instagram} ning uyi` : "Bo'sh uy");
-  const desc = escapeHtml(`${plot.address} — Obunachilar shahri`);
+  const desc = escapeHtml(`${plot.address} — CityLand UZ`);
   const html = `<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>${title}</title>
 <meta property="og:title" content="${title}"><meta property="og:description" content="${desc}"><meta property="og:image" content="${site}/og.png">
 <meta property="og:url" content="${site}/uy/${id}"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image">

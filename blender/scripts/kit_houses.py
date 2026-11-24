@@ -1,5 +1,6 @@
 """Umumiy uslubdagi uylar. Old tomoni -Y (glTF: +Z). Bu asosiy shakllar; levellar kit_levels*.py da."""
 from kit_core import BRICK, COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_ROOF, M_WALL, PLAIN, PLASTER, ROOF, STONE, WHITE, WOOD, Model
+from kit_first import first_lods
 
 TRIM = '#f3ead8'
 
@@ -9,7 +10,7 @@ def moulding(m, x0, x1, y, z, h=0.35):
     m.box(x0, y - 0.09, z, x1, y, z + h, STONE, TRIM, bottom=True)
 
 
-def walls(m, x0, y0, x1, y1, h, base=BRICK):
+def walls(m, x0, y0, x1, y1, h, base=STONE):
     m.box(x0 - 0.06, y0 - 0.06, 0, x1 + 0.06, y1 + 0.06, 0.6, base, '#d9c7b4')
     m.box(x0, y0, 0.6, x1, y1, h, PLASTER, WHITE, M_WALL, top=False)
 
@@ -20,22 +21,6 @@ def ayvon(m, x0, x1, y0, y1, h, cols):
     for i in range(cols):
         m.column(x0 + 0.3 + (x1 - x0 - 0.6) * i / max(1, cols - 1), y0 + 0.3, 0.35, h)
     m.box(x0, y0 + 0.12, h, x1, y0 + 0.45, h + 0.3, WOOD, '#b98a5c', bottom=True)
-
-
-def house1(name):
-    m = Model(name)
-    walls(m, -4, -2.6, 4, 3.4, 3.0)
-    ayvon(m, -4, 0.6, -4.4, -2.6, 2.7, 3)
-    m.door(-2.4, -2.6)
-    m.window('f', -2.6, -1.2, 0.2, 1.1, 2.4)
-    m.window('f', -2.6, 1.5, 3.1, 1.1, 2.4)
-    m.window('r', 4, -0.6, 0.8, 1.1, 2.4)
-    m.window('l', -4, -0.4, 1.0, 1.1, 2.4)
-    m.window('b', 3.4, -1, 0.6, 1.1, 2.4)
-    m.poly([(-4.3, -4.8, 2.95), (0.9, -4.8, 2.95), (0.9, -2.6, 3.25), (-4.3, -2.6, 3.25)], ROOF, WHITE, M_ROOF)
-    m.gable(-4, -2.6, 4, 3.4, 3.0, 1.9)
-    m.cbox(2.2, 1.5, 3.6, 0.6, 0.6, 1.6, BRICK)
-    return m
 
 
 def house2(name):
@@ -124,12 +109,12 @@ def lod(name, body, h, roof_h, gable=False, wing=None, portico=False, grand=Fals
     """Uzoqdagi sodda shakl. body/wing = (x0, y0, x1, y1)."""
     m = Model(name, COARSE)
     x0, y0, x1, y1 = body
-    m.box(x0, y0, 0, x1, y1, h, PLASTER, '#e9e2d4', M_WALL, top=False)
+    m.box(x0, y0, 0, x1, y1, h, PLASTER, WHITE, M_WALL, top=False)
     (m.gable if gable else m.hip)(x0, y0, x1, y1, h, roof_h, 0.4)
     if wing:
         a, b, c, d = wing
         wh = min(h, 3.4)
-        m.box(a, b, 0, c, d, wh, PLASTER, '#e9e2d4', M_WALL, top=False)
+        m.box(a, b, 0, c, d, wh, PLASTER, WHITE, M_WALL, top=False)
         m.hip(a, b, c, d, wh, roof_h * 0.75, 0.4)
     if portico:
         m.box(-4, y0 - 1.9, h - 0.6, 4, y0, h, STONE, TRIM, bottom=True)
@@ -149,9 +134,7 @@ def lod(name, body, h, roof_h, gable=False, wing=None, portico=False, grand=Fals
 def house_lods():
     """Har levelga bitta uzoq ko'rinish: shakli tepadan ham farqlanadi."""
     return [
-        lod('house1_lod', (-4.8, -3.1, 4.8, 4.1), 3, 1.9, gable=True),
-        lod('house2_lod', (-4.8, -3.1, 4.8, 4.1), 3, 1.9, gable=True, wing=(1.1, -6.4, 4.8, -2.0)),
-        lod('house3_lod', (-6.6, -1.8, 6.6, 5.4), 3.2, 2.2, wing=(2.2, -6.0, 6.6, -0.6)),
+        *first_lods(),
         lod('house4_lod', (-6.6, -1.8, 6.6, 5.4), 3.2, 2.4, wing=(-6.7, -6.3, -3.1, -3.0)),
         lod('house5_lod', (-7.7, -4.2, 7.7, 6.0), 3.5, 2.6),
         lod('house6_lod', (-7.7, -4.2, 7.7, 6.0), 3.5, 2.8, wing=(-3.0, -6.1, 3.0, -3.5)),
@@ -227,7 +210,7 @@ def shop():
 def far_boxes():
     """Tepadan ko'rilganda do'kon va past ofislar uchun eng sodda shakl."""
     s = Model('shop_lod', COARSE)
-    s.box(-7.5, -5, 0, 7.5, 7, 4.7, PLASTER, '#e9e2d4', M_WALL, top_layer=CONCRETE)
+    s.box(-7.5, -5, 0, 7.5, 7, 4.7, PLASTER, WHITE, M_WALL, top_layer=CONCRETE)
     s.box(-5, -5.25, 3.6, 5, -5.02, 4.8, PLASTER, WHITE, M_ROOF)
     o = Model('office_low_lod', COARSE)
     o.box(-15, -8, 0, 15, 8, 13.7, GLASS, WHITE, M_GLOW, top_layer=CONCRETE)

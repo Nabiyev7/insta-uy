@@ -1,6 +1,6 @@
 /** Ekran: yuqori qator, rejim tugmalari, pastki panel. Elementlar faqat chetda, o'rta ochiq (telefon birinchi). */
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { PLAZA_HALF, streetLabel } from '../../../../packages/shared/src/index.ts';
+import { inPlaza, streetLabel, zoneAt } from '../../../../packages/shared/src/index.ts';
 import { shareImage } from '../app/actions.ts';
 import { useT, type Key } from '../app/i18n.ts';
 import { setMode } from '../app/modes.ts';
@@ -85,8 +85,10 @@ function TopRow(): React.JSX.Element {
   const { district, street, lang, boot, profile } = useApp();
   const d = boot?.districts.find((x) => x.id === district);
   const at = here();
-  const isPlaza = Math.abs(at.x) < PLAZA_HALF && Math.abs(at.z) < PLAZA_HALF;
-  const place = isPlaza ? t('plaza') : d ? (lang === 'uz' ? d.name_uz : d.name_ru) : t('outskirts');
+  const isPlaza = inPlaza(at.x, at.z);
+  const zone = zoneAt(at.x, at.z);
+  const districtName = d ? (lang === 'uz' ? d.name_uz : d.name_ru) : t('outskirts');
+  const place = isPlaza ? t('plaza') : zone?.[lang] ?? districtName;
   const hasBonus = profile !== null && !profile.daily_done;
   return (
     <header className="topbar">

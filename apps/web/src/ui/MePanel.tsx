@@ -62,6 +62,7 @@ function Upgrades({ plot }: PlotProps): React.JSX.Element {
   return (
     <Section title={`${t('tier')} ${plot.tier}/${MAX_TIER}: ${name(plot.tier)}`}>
       {plot.tier < MAX_TIER && coins && plot.tier < coins.maxTier && setting('coins_enabled', true) && <button type="button" className="btn" disabled={isBusy} onClick={() => run(async () => { await rpc('my_tier_coins', { p_plot: plot.plot }); await refresh(); }, t('saved'))}>⬆ {next}. {name(next)} · 💰 {coins.tierBase * plot.tier}</button>}
+      {plot.tier < MAX_TIER && !isPaid && coins && plot.tier >= coins.maxTier && <p className="muted">🔒 {next}. {name(next)} · {t('soon')}</p>}
       {plot.tier < MAX_TIER && isPaid && prices && <button type="button" className="btn clay" disabled={isBusy} onClick={() => run(() => createOrder('tier', { plot: plot.plot, tier: next }))}>⬆ {next}. {name(next)} · {money(prices.tierUp[next] ?? 0)} {t('som')}</button>}
       {isPaid && prices && plot.label !== 'gold' && <div className="row">{(['silver', 'gold'] as const).filter((l) => l !== plot.label).map((l) => <button type="button" key={l} className="btn small soft" disabled={isBusy} onClick={() => run(() => createOrder('label', { plot: plot.plot, label: l }))}>{t('label')}: {t(l)} · {money(prices.label[l] ?? 0)}</button>)}</div>}
       {isPaid && prices && plot.expansion && !plot.has_expansion && <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(() => createOrder('expansion', { plot: plot.plot }))}>{t('expand')} · {money(prices.expansion)}</button>}

@@ -53,7 +53,8 @@ export const handle = async (req: Request, ctx: Ctx, log: ErrorLog): Promise<Res
   try {
     res = await route(req, ctx, new URL(req.url).pathname);
   } catch (error: unknown) {
-    const isKnown = error instanceof HttpError && error.status < 500;
+    // 503 — "xizmat sozlanmagan" degan ataylab kod (telegram_off), tafsilot emas.
+    const isKnown = error instanceof HttpError && (error.status < 500 || error.status === 503);
     if (!isKnown) log(`${req.method} ${new URL(req.url).pathname}`, error);
     // Kutilmagan xato tafsiloti tashqariga chiqmaydi.
     res = isKnown ? json({ error: error.message }, error.status) : json({ error: 'server_error' }, error instanceof HttpError ? error.status : 500);

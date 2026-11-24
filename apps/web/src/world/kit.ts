@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 const LAYERS = 16;
-const SIZE = 256;
+const SIZE = 128;
 
 export const kitUniforms = {
   uTex: { value: null as DataArrayTexture | null },
@@ -45,16 +45,18 @@ float kMat = floor(vFx.z + 0.5);
 float kWallLayer = mod(kMat, 16.0);
 bool kIsWall = kMask > 0.15 && kMask < 0.35;
 vec3 kTex = texture(uTex, vec3(vTuv, (kIsWall && kLayer == 1.0) ? kWallLayer : kLayer)).rgb;
+bool kHasGlass = kLayer == 9.0 || kLayer == 12.0 || kLayer == 13.0;
+float kGlass = kHasGlass ? smoothstep(0.1, 0.24, kTex.b - kTex.r) : 0.0;
 vec3 kTint = kIsWall ? vWall : ((kMask > 0.4 && kMask < 0.6) ? vRoof : vec3(1.0));
-diffuseColor.rgb *= kTex * kTint;
+diffuseColor.rgb *= kTex * (kLayer == 13.0 ? kTint : mix(kTint, vec3(1.0), kGlass));
 if (kLayer == 8.0) diffuseColor.rgb *= uLeaf;
-if (kLayer == 9.0) diffuseColor.rgb *= mix(vec3(1.0), uFrames[int(floor(kMat / 16.0))], smoothstep(0.25, 0.5, dot(kTex, vec3(0.3, 0.6, 0.1))));
+if (kLayer == 9.0) diffuseColor.rgb *= mix(uFrames[int(floor(kMat / 16.0))], vec3(1.0), kGlass);
 int kDoor = int(floor(vFx.w + 0.5));
-if (kMask > 0.04 && kMask < 0.15 && kDoor > 0) diffuseColor.rgb = vColor.rgb * uDoors[kDoor] * clamp(dot(kTex, vec3(0.3, 0.6, 0.1)) / 0.16, 0.45, 1.35); // o'yma naqsh soyasi qoladi, rang tiniq
+if (kMask > 0.04 && kMask < 0.15 && kDoor > 0) diffuseColor.rgb = uDoors[kDoor] * kTex;
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.9, 0.95), uSnow * smoothstep(0.5, 0.85, vUp));`;
 const FRAGMENT_EMISSIVE = `#include <emissivemap_fragment>
 if (uNight > 0.01) {
-  float kDark = 1.0 - smoothstep(0.03, 0.14, dot(kTex, vec3(0.3, 0.6, 0.1)));
+  float kDark = kGlass;
   vec3 kWarm = vec3(1.0, 0.68, 0.32);
   float kSeed = floor(vFx.y * 997.0 + 0.5); // interpolyatsiya xatosi donadorlik bermasin
   float kLit = 0.0;

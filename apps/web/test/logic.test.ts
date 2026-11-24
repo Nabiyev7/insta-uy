@@ -7,15 +7,17 @@ import { daylightAt, leafTint, snowAmount } from '../src/logic/atmosphere.ts';
 import { frameAt } from '../src/logic/cameraPath.ts';
 import { CITY_LIMIT, cameraDistance, lerpAngle, movePlayer, pickNearest, rayBox } from '../src/logic/motion.ts';
 import {
-  buildingItem, buildingSolid, closedDistrictItems, commerceItem, commerceSolid, expansionItems, houseItem, houseSolid, pickHeight, plotItems, projectItems, staticItems,
+  buildingItem, buildingSolid, commerceItem, commerceSolid, expansionItems, houseItem, houseSolid, pickHeight, plotItems, projectItems,
   type HouseState,
 } from '../src/logic/placement.ts';
 import { toWorld } from '../src/logic/item.ts';
-import { PLAZA_SOLIDS } from '../src/logic/plaza.ts';
+import { PUBLIC_SOLIDS } from '../src/logic/landscape.ts';
+import { closedDistrictItems, staticItems } from '../src/logic/streets.ts';
 import { initialQuality, startGovernor, stepGovernor, type GovernorState } from '../src/logic/quality.ts';
 
 const plan = decodePlan(JSON.parse(readFileSync(new URL('../../../packages/shared/data/masterplan.json', import.meta.url), 'utf8')) as EncodedPlan);
 const state = (over: Partial<HouseState> = {}): HouseState => ({ plot: 'P0001', nick: 'ali', tier: 2, wall: 0, roof: 0, decor: [], material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false, ...over });
+const GARDEN = ['path_stone', 'tree_round', 'tree_wide', 'tree_tall', 'tree_slim'];
 const plotOf = (type: string): (typeof plan.plots)[number] => plan.plots.find((p) => p.type === type)!;
 
 describe('joylashtirish', () => {
@@ -31,16 +33,17 @@ describe('joylashtirish', () => {
   });
   test('bezak panjara/darvoza oddiysini almashtiradi', () => {
     const models = plotItems(plotOf('hovli'), state({ tier: 1, decor: ['fence:fence_brick', 'gate:gate_gold', 'yoq'] }), true).map((i) => i.model);
-    expect(models).toEqual(['house1', 'fence_brick', 'gate_gold', 'path_stone', 'tree_anor']);
-    expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_basic', 'gate_wood', 'path_stone', 'tree_anor', 'yard_flowers']);
-    expect(plotItems(plotOf('hovli'), state({ tier: 1 }), true).map((i) => i.model)).toEqual(['house1', 'fence_low', 'gate_basic', 'path_stone', 'tree_anor']);
+    expect(models).toEqual(['house1', 'fence_brick', 'gate_gold', ...GARDEN]);
+    expect(plotItems(plotOf('hovli'), state({ tier: 3 }), true).map((i) => i.model)).toEqual(['house3', 'fence_basic', 'gate_wood', ...GARDEN, 'yard_flowers']);
+    expect(plotItems(plotOf('hovli'), state({ tier: 2 }), true).map((i) => i.model).slice(0, 3)).toEqual(['house2', 'fence_basic', 'gate_basic']);
+    expect(plotItems(plotOf('hovli'), state({ tier: 1 }), true).map((i) => i.model)).toEqual(['house1', 'fence_low', 'gate_open', ...GARDEN]);
   });
   test('bo‘sh, yopiq va kvartira', () => {
     expect(plotItems(plotOf('hovli'), undefined, true)[0]!.model).toBe('forsale');
     expect(plotItems(plotOf('kvartira'), state(), true)).toEqual([]);
     const closed = plan.plots.filter((p) => p.districtId === 5).flatMap((p) => plotItems(p, undefined, false));
     expect(closed.length).toBeGreaterThan(100);
-    expect(closed.every((i) => i.model === 'foundation')).toBe(true);
+    expect(new Set(closed.map((i) => i.model))).toEqual(new Set(['foundation', 'barrier']));
     expect(houseSolid(plotOf('kvartira'), state())).toBeNull();
   });
   test('hashamat tunda yonadi, bo‘yiga o‘smaydi', () => {
@@ -77,7 +80,8 @@ describe('joylashtirish', () => {
       expect(GATE_RANK.indexOf(LEVEL_GATE[id]!)).toBeGreaterThanOrEqual(GATE_RANK.indexOf(LEVEL_GATE[id - 1]!));
     }
     expect(LEVEL_GATE.indexOf('gate_gold')).toBe(9);
-    expect(levelYard(1)).toEqual(['path_stone', 'tree_anor']);
+    expect(levelYard(1)).toEqual(GARDEN);
+    expect(TIERS.map((t) => t.uz)).toEqual(['Kichik uy', 'Shinam uy', 'Hovli uy', 'Bezakli uy', 'Katta uy', 'Boy uy', 'Villa', 'Hashamatli villa', 'Qasr', 'Saroy']);
   });
   test('har level modeli (haqiqiy o‘lchami bilan) uchastkadan chiqmaydi, oldida ≥10 m hovli, uy izi ≤45%', async () => {
     const doc = await new NodeIO().read(fileURLToPath(new URL('../../../assets/city-kit.glb', import.meta.url)));
@@ -128,7 +132,7 @@ describe('joylashtirish', () => {
     expect(buildingItem(plan.buildings[0]!, true).model).toMatch(/apt\d_lod/);
     expect(buildingSolid(plan.buildings[0]!).h).toBeGreaterThan(15);
     expect(expansionItems(plan.expansions[0]!).length).toBeGreaterThan(3);
-    expect(closedDistrictItems(plan.districts[4]!.rect, 5).some((i) => i.model === 'crane')).toBe(true);
+    expect(closedDistrictItems(plan, 5).some((i) => i.model === 'crane')).toBe(true);
     const project = (kind: 'bog' | 'stadion' | 'koprik', raised: number): string[] => projectItems([{ id: 1, kind, goal: 100, raised, status: 'open' }]).map((i) => i.model);
     expect(project('bog', 50)).toHaveLength(30);
     expect(project('stadion', 100)).toEqual(['stadium']);
@@ -162,14 +166,14 @@ describe('harakat', () => {
     expect(rayBox({ ...ray, oy: 20 }, box('a', 0))).toBeNull();
   });
   test('burchak qisqa yo‘ldan', () => expect(lerpAngle(3, -3, 0.5)).toBeCloseTo(Math.PI, 1));
-  test('maydonda boshlanish nuqtasi bo‘sh', () => expect(movePlayer({ x: 0, z: 30 }, 0, 0, PLAZA_SOLIDS)).toEqual({ x: 0, z: 30 }));
+  test('maydonda boshlanish nuqtasi bo‘sh', () => expect(movePlayer({ x: 0, z: 30 }, 0, 0, PUBLIC_SOLIDS)).toEqual({ x: 0, z: 30 }));
 });
 
 describe('kun/tun va sifat', () => {
   test('tunda qorong‘i, kunduz yorug‘, uzluksiz', () => {
     expect(daylightAt(0).night).toBe(1);
     expect(daylightAt(0.5).night).toBe(0);
-    expect(daylightAt(0.5).sunIntensity).toBeGreaterThan(daylightAt(0).sunIntensity * 3);
+    expect(daylightAt(0.5).sunIntensity).toBeGreaterThan(daylightAt(0).sunIntensity * 2);
     expect(daylightAt(0.5, 'yomgir').sunIntensity).toBeLessThan(daylightAt(0.5).sunIntensity);
     for (let f = 0; f < 1; f += 0.002) {
       const [a, b] = [daylightAt(f), daylightAt(f + 0.002)];

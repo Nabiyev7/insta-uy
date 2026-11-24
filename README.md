@@ -1,6 +1,6 @@
-# Obunachilar shahri
+# CityLand UZ
 
-Instagram obunachilari uchun ichida yurish mumkin bo'lgan 3D o'zbek shahri. Qoidalar va reja: [PLAN.md](PLAN.md).
+Instagram obunachilari uchun ichida yurish mumkin bo'lgan 3D shahar. Qoidalar va reja: [PLAN.md](PLAN.md).
 
 ## Tez boshlash
 
@@ -23,8 +23,8 @@ Lokal muhitda haqiqiy Postgres (PGlite) ishlaydi va aynan `supabase/migrations/`
 | `npm run e2e` | Haqiqiy Chrome'da to'liq ssenariy (o'z portlari va bazasi bilan) |
 | `npm run typecheck` · `npm run build` | Turlar · ishlab chiqarish yig'ilishi |
 | `npm run masterplan` | Bosh reja qulfini (xesh) tekshirish |
-| `npm run seed` | Bosh reja → `0010_masterplan_v2.sql` |
-| `npm run models` · `npm run textures` | Blender modellari · teksturalar (Poly Haven CC0) |
+| `npm run seed` | Bosh reja → `0010_masterplan_v3.sql` |
+| `npm run models` · `npm run textures` | Blender modellari · teksturalar (koddan, deyarli tekis ranglar) |
 | `npm run showcase` | Uylar, bezaklar va xaritani Blender'da ko'rish (`blender/shahar.blend`) |
 | `npm run video` | Admin paneldagi video navbatini render qilish |
 | `npm run carousel` · `npm run og` | Haftalik gazeta rasmlari · ijtimoiy tarmoq rasmi |
@@ -49,7 +49,7 @@ Asosiy qarorlar:
 
 - **Bosh reja qulfi**: `masterplan.json` xeshi testda, bazada esa trigger bilan himoyalangan.
 - **Baza**: jadvallar yopiq (RLS), faqat RPC. Nom = ruxsat: `api_*` hammaga, `my_*` kirganga, `admin_*` rolga, `svc_*` faqat serverga.
-- **3D**: bitta material + 16 qatlamli tekstura massivi + instancing; AO Blender'da vertex rangga bake qilingan.
+- **3D**: bitta material + 16 qatlamli kichik tekstura massivi (tekis ranglar) + instancing; AO Blender'da vertex rangga bake qilingan.
 - **Kirish**: login Supabase Auth'da ichki email'ga aylanadi; Telegram orqali kirish — bir martalik token + botda tasdiq tugmasi.
 - **To'lov**: `PaymentProvider` interfeysi — `card` (noyob summa), `payme`, `click`. Boshlang'ich holatda **o'chiq** (`payments_enabled=false`).
 

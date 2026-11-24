@@ -69,7 +69,7 @@ export class SpatialIndex<T extends { readonly x: number; readonly z: number }> 
 }
 
 export const districtAt = (plan: MasterPlan, x: number, z: number): number => {
-  const d = plan.districts.find(({ rect }) => x >= rect[0] && x <= rect[2] && z >= rect[1] && z <= rect[3]);
+  const d = plan.districts.find(({ rects }) => rects.some((r) => x >= r[0] && x <= r[2] && z >= r[1] && z <= r[3]));
   return d?.id ?? 0;
 };
 

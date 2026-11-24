@@ -8,8 +8,8 @@ from kit_core import COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_NONE, M_SOFT, M_
 from kit_houses import TRIM
 
 IVORY = '#f7f1e3'
-SAND = '#e2c08e'  # och qumrang: qizil g'isht teksturasi to'q qilib yuborgani uchun suvoq ustida
-DOME = '#f1ece0'
+SAND = '#f3e3c3'
+DOME = '#b9d7e2'
 COPPER = '#b0704a'
 GOLD = '#d9a93f'
 LAMP = '#ffe2a0'
@@ -69,6 +69,7 @@ def spire(m: Model, x: float, y: float, z: float, h: float) -> None:
 def prezident() -> Model:
     """50×36 m, 3 qavat, 8 ustunli portik va fronton, ustunli baraban ustida katta oq gumbaz (uchi 34 m)."""
     m = Model('prezident', FACE)
+    m.bevel = 0.16
     m.box(-25, -14.2, 0, 25, 18, 1.6, STONE, '#e6dcc8')
     stairs(m, 15, -14.2, 1.6, 5)
     m.box(-24, -9, 1.6, 24, 17, 18.6, PLASTER, IVORY, top=False)
@@ -86,7 +87,7 @@ def prezident() -> Model:
     m.box(-4.4, -9.6, 1.6, 4.4, -9, 10.2, PLASTER, TRIM)
     for s in (-1, 1):
         x0, x1 = sorted((s * 0.05, s * 2.4))
-        m.panel([(x0, -9.66, 1.6), (x1, -9.66, 1.6), (x1, -9.66, 8.4), (x0, -9.66, 8.4)], WOOD, '#a9743f')
+        m.panel([(x0, -9.66, 1.6), (x1, -9.66, 1.6), (x1, -9.66, 8.4), (x0, -9.66, 8.4)], WOOD, '#ba7533')
         m.cbox(s * 3.2, -9.9, 6, 0.5, 0.5, 1.0, PLAIN, LAMP, M_GLOW)
     floors = [(3.6, 7.0), (8.6, 12.0), (13.2, 16.2)]
     rows(m, 'f', -9, [-21, -17.6, -12, -8, 8, 12, 17.6, 21], 1.1, floors)
@@ -138,6 +139,7 @@ def clock(m: Model, axis: str, at: float, z: float, r: float) -> None:
 def hokimiyat() -> Model:
     """46×32 m, 3 qavat, qumrang g'isht, soat minorasi (30 m)."""
     m = Model('hokimiyat', FACE)
+    m.bevel = 0.16
     m.box(-23, -12.6, 0, 23, 16, 1.2, STONE, '#d9cfbd')
     stairs(m, 12, -12.6, 1.2, 4)
     m.box(-22, -8, 1.2, 22, 15, 16.4, PLASTER, SAND, top=False)
@@ -154,7 +156,7 @@ def hokimiyat() -> Model:
     m.box(-12.5, -12.8, 12.0, 12.5, -7.8, 12.5, STONE, '#cbbfa9', bottom=True)
     for s in (-1, 1):
         x0, x1 = sorted((s * 0.05, s * 1.8))
-        m.panel([(x0, -8.1, 1.2), (x1, -8.1, 1.2), (x1, -8.1, 6.2), (x0, -8.1, 6.2)], WOOD, '#8a5a30')
+        m.panel([(x0, -8.1, 1.2), (x1, -8.1, 1.2), (x1, -8.1, 6.2), (x0, -8.1, 6.2)], WOOD, '#ba7533')
         m.cbox(s * 2.6, -8.4, 4.4, 0.4, 0.4, 0.8, PLAIN, LAMP, M_GLOW)
     floors = [(2.9, 5.9), (7.7, 10.6), (12.2, 14.8)]
     rows(m, 'f', -8, [-19.5, -16, -8, -5, 5, 8, 16, 19.5], 1.0, floors)
@@ -194,6 +196,7 @@ def hokimiyat_lod() -> Model:
 def sud() -> Model:
     """44×30 m, 2 qavat, oq tosh, oldida 10 ustun, fronton va karniz."""
     m = Model('sud', FACE)
+    m.bevel = 0.16
     white = '#f2efe8'
     m.box(-22, -12.4, 0, 22, 15, 1.8, STONE, '#e6e1d6')
     stairs(m, 20, -12.4, 1.8, 4)
@@ -207,7 +210,7 @@ def sud() -> Model:
     gable_front(m, -9, 9, -12.2, -6.0, 13.6, 2.2)
     for s in (-1, 1):
         x0, x1 = sorted((s * 0.05, s * 1.7))
-        m.panel([(x0, -6.7, 1.8), (x1, -6.7, 1.8), (x1, -6.7, 7.0), (x0, -6.7, 7.0)], WOOD, '#7a4f2a')
+        m.panel([(x0, -6.7, 1.8), (x1, -6.7, 1.8), (x1, -6.7, 7.0), (x0, -6.7, 7.0)], WOOD, '#ba7533')
         m.cbox(s * 2.6, -7.0, 5, 0.4, 0.4, 0.8, PLAIN, LAMP, M_GLOW)
     floors = [(3.2, 6.6), (8.2, 11.6)]
     rows(m, 'f', -6.6, [-18.9, -14.7, -10.5, -6.3, 6.3, 10.5, 14.7, 18.9], 1.1, floors)
@@ -236,7 +239,7 @@ def glass_box(m: Model, half: float, z0: float, z1: float, color: str, mask: flo
 def bank() -> Model:
     """Minora 48 m: 2 qavat tosh asos, to'q ko'k-yashil shisha, pog'onali toj."""
     m = Model('bank', FACE)
-    glass = '#2f8c86'
+    glass = '#bfe3ea'
     m.box(-12, -12, 0, 12, 12, 8, STONE, '#d9cfbd', top_layer=CONCRETE)
     m.box(-12.3, -12.3, 7.6, 12.3, 12.3, 8.3, STONE, TRIM, bottom=True)
     for x in (-9, -6, 6, 9):

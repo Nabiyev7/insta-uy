@@ -1,4 +1,4 @@
-name = "obunachilar-shahri-api"
+name = "citylanduz-api"
 main = "src/worker.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
@@ -8,5 +8,5 @@ crons = ["*/10 * * * *", "10 22 * * *"]
 
 # Maxfiylar: `wrangler secret put <NOM>` — ro'yxat server/.env.example da.
 [vars]
-SITE_URL = "https://obunachilar-shahri.pages.dev"
-ALLOWED_ORIGINS = "https://obunachilar-shahri.pages.dev,https://obunachilar-admin.pages.dev"
+SITE_URL = "https://citylanduz.pages.dev"
+ALLOWED_ORIGINS = "https://citylanduz.pages.dev,https://citylanduz-admin.pages.dev"

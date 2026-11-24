@@ -79,7 +79,8 @@ function DocPanel({ title, doc, children }: { readonly title: string; readonly d
 export function HelpPanel(): React.JSX.Element {
   const t = useT();
   const bot = setting('telegram_bot', '');
-  return <DocPanel title={t('help')} doc={FAQ}>{bot && <a className="btn" href={`https://t.me/${encodeURIComponent(bot)}`} target="_blank" rel="noopener noreferrer">✈️ {t('supportTg')}</a>}</DocPanel>;
+  const channel = setting('telegram_channel', '');
+  return <DocPanel title={t('help')} doc={FAQ}>{bot && <a className="btn" href={`https://t.me/${encodeURIComponent(bot)}`} target="_blank" rel="noopener noreferrer">✈️ {t('supportTg')}</a>}{channel && <a className="btn soft" href={`https://t.me/${encodeURIComponent(channel)}`} target="_blank" rel="noopener noreferrer">📣 @{channel}</a>}</DocPanel>;
 }
 export function RulesPanel(): React.JSX.Element {
   return <DocPanel title={useT()('rules')} doc={RULES} />;

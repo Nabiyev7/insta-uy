@@ -1,5 +1,5 @@
 /** Oddiy yo'lovchilar: o'yinchi atrofidagi yo'lkalarda yuradi. */
-import { AVATAR_OPTIONS, hash01, type AvatarLook, type Road } from '../../../../packages/shared/src/index.ts';
+import { AVATAR_OPTIONS, fromLocal, hash01, inTilted, toLocal, type AvatarLook, type Road } from '../../../../packages/shared/src/index.ts';
 import { lerpAngle } from '../logic/motion.ts';
 
 export interface Npc { x: number; z: number; tx: number; tz: number; yaw: number; readonly look: AvatarLook; readonly speed: number; pause: number; readonly seed: number }
@@ -15,18 +15,21 @@ export const createNpcs = (n: number): Npc[] =>
 
 const KEEP = 95;
 const WALK_LENGTH = 60;
+/** Yo'lka o'rtasi yo'l chetidan shuncha ichkarida. */
+const SIDEWALK_HALF = 0.8;
 
 const respawn = (n: Npc, at: { readonly x: number; readonly z: number }, roads: readonly Road[]): void => {
-  const near = roads.filter((r) => Math.abs(r.x - at.x) < r.w / 2 + 70 && Math.abs(r.z - at.z) < r.d / 2 + 70);
+  const near = roads.filter((r) => inTilted(r, at.x, at.z, 70));
   const r = near[Math.floor(Math.random() * near.length)];
   if (!r) return;
-  const isX = r.w > r.d;
-  const side = (Math.random() < 0.5 ? -1 : 1) * (r.kind === 'prospekt' ? 12.6 : 5.2);
+  const isX = r.angle !== undefined || r.w > r.d;
+  const side = (Math.random() < 0.5 ? -1 : 1) * ((isX ? r.d : r.w) / 2 - SIDEWALK_HALF);
   const length = isX ? r.w : r.d;
-  const u = Math.max(-0.5, Math.min(0.5, ((isX ? at.x - r.x : at.z - r.z) + (Math.random() - 0.5) * 120) / length)) * length;
-  [n.x, n.z] = isX ? [r.x + u, r.z + side] : [r.x + side, r.z + u];
-  const far = (Math.random() < 0.5 ? -1 : 1) * WALK_LENGTH;
-  [n.tx, n.tz] = isX ? [n.x + far, n.z] : [n.x, n.z + far];
+  const [lu, lv] = toLocal(r, at.x, at.z);
+  const u = Math.max(-0.5, Math.min(0.5, ((isX ? lu : lv) + (Math.random() - 0.5) * 120) / length)) * length;
+  const spot = (t: number): readonly [number, number] => (isX ? fromLocal(r, t, side) : [r.x + side, r.z + t]);
+  [n.x, n.z] = spot(u);
+  [n.tx, n.tz] = spot(u + (Math.random() < 0.5 ? -1 : 1) * Math.min(WALK_LENGTH, length));
 };
 
 export const updateNpcs = (npcs: readonly Npc[], at: { readonly x: number; readonly z: number }, roads: readonly Road[], dt: number): void => {

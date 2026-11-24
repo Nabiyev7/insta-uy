@@ -1,4 +1,4 @@
-/** Hovlidagi bezak joylari (nuqtalar). 25×34 m hovliga chizilgan, villa va qasrda shu nisbatda kattalashadi. */
+/** Hovlidagi bezak joylari (nuqtalar). 25×34 m lik o'lchov to'rida chizilgan, villa va qasrda shu nisbatda kattalashadi. */
 import { MAX_TIER } from './catalog.ts';
 
 /** Nuqta turi: qaysi bezak qayerga sig'ishini belgilaydi. */
@@ -65,5 +65,6 @@ export const parsePlaced = (list: readonly string[]): Placed[] => list.flatMap((
 /** Leveldan tekin keladigan bezaklar joyi — nuqtalar bilan ustma-ust tushmaydi: [x, z, w, d]. */
 export const FREE_SPOTS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   path_stone: [0, 7.8, 1.8, 17.6], tree_anor: [-10.7, 14.8, 2, 2], yard_flowers: [-4.6, 14.9, 3.2, 1.3], yard_umbrella: [-9.4, 10.9, 3, 2.6], tree_chinor: [10.2, 14.7, 1.6, 1.6],
+  tree_round: [8.5, 9.1, 2, 2.4], tree_wide: [-8.5, 8.8, 2.4, 1.4], tree_tall: [-10.6, -11.4, 1.4, 1.6], tree_slim: [10.7, -11.4, 1.4, 1.6],
   tree_archa: [11.2, 4.4, 1.4, 1.6], water_fountain: [10.7, 12.4, 2.8, 2.8], light_lamps: [0, 9.3, 0, 0], light_luxe: [0, -7.5, 0, 0],
 };

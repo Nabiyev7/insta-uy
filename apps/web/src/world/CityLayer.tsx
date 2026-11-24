@@ -4,9 +4,10 @@ import { Color, DirectionalLight, Fog, HemisphereLight } from 'three';
 import { SpatialIndex, dayFraction, holidayOf, seasonOf, weatherOf, type MasterPlan } from '../../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
 import type { Item } from '../logic/item.ts';
-import { closedDistrictItems, commerceItem, expansionItems, projectItems, type HouseState } from '../logic/placement.ts';
-import { HERO_SPOT, holidayItems } from '../logic/plaza.ts';
+import { HERO_SPOT, holidayItems } from '../logic/landscape.ts';
+import { commerceItem, expansionItems, projectItems, type HouseState } from '../logic/placement.ts';
 import { QUALITY } from '../logic/quality.ts';
+import { closedDistrictItems } from '../logic/streets.ts';
 import { HIGH_ALTITUDE, cityView, groundView, type View } from '../logic/view.ts';
 import { worldIndex } from '../logic/worldIndex.ts';
 import { camera as cam, city, director, here, session } from '../app/runtime.ts';
@@ -72,7 +73,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(),
   }), [kit, plan]);
   const sun = useMemo(() => new DirectionalLight('#fff', 2), []);
-  const hemi = useMemo(() => new HemisphereLight('#fff', '#8a7a60', 1), []);
+  const hemi = useMemo(() => new HemisphereLight('#fff', '#c9d6b4', 1), []);
   const fog = useMemo(() => new Fog('#cde', 40, 400), []);
   const last = useRef<Last>(FRESH);
   const caches = useRef({ full: new Map<string, readonly Item[]>(), simple: new Map<string, Item>() });
@@ -80,7 +81,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const open = useMemo(() => new Set(boot?.districts.filter((d) => d.open).map((d) => d.id) ?? [1]), [boot]);
   /** Dinamik (bazadan) narsalar: yopiq tumanlar, loyihalar, admin xaritasi, kengaytirish, bayram. */
   const extras = useMemo(() => {
-    const closed = plan.districts.filter((d) => !open.has(d.id)).flatMap((d) => closedDistrictItems(d.rect, d.id));
+    const closed = plan.districts.filter((d) => !open.has(d.id)).flatMap((d) => closedDistrictItems(plan, d.id));
     const custom = (boot?.objects ?? []).map((o): Item => ({ model: o.m, x: Number(o.x), y: 0, z: Number(o.z), yaw: Number(o.r), sx: Number(o.s), sy: Number(o.s), sz: Number(o.s), wall: '#ffffff', roof: '#ffffff', glow: 0, seed: 0.5 }));
     const expanded = plan.expansions.filter((e) => houses.get(e.plotId)?.expanded).flatMap(expansionItems);
     return new SpatialIndex([...closed, ...custom, ...expanded, ...projectItems(boot?.projects ?? []), ...holidayItems(holidayOf(Date.now()))]);

@@ -5,7 +5,7 @@ import { LAKE, hash01 } from '../../../../packages/shared/src/index.ts';
 import type { Daylight } from '../logic/atmosphere.ts';
 
 const DOME = 1500;
-const RIDGE = { nearNight: new Color('#0b1226'), nearDay: new Color('#4c6b66'), farNight: new Color('#111a33'), farDay: new Color('#7f97ab') };
+const RIDGE = { nearNight: new Color('#243562'), nearDay: new Color('#8fc2a0'), farNight: new Color('#2c4076'), farDay: new Color('#a9cbe6') };
 
 /** Osmon gumbazi, quyosh/oy, yulduzlar va uzoqdagi tog'lar. */
 export class Sky {
@@ -98,14 +98,14 @@ export class Lake {
     const g = new CircleGeometry(1, 72);
     g.rotateX(-Math.PI / 2);
     g.scale(LAKE.rx, 1, LAKE.rz);
-    const m = new MeshLambertMaterial({ color: '#4aa7c0', polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -20 });
+    const m = new MeshLambertMaterial({ color: '#6cc4ea', polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -20 });
     m.onBeforeCompile = (s) => {
       s.uniforms.uTime = this.time;
       s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vW;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvW = position.xz;');
       s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vW; uniform float uTime;')
         .replace('#include <color_fragment>', `#include <color_fragment>
-        float w = sin(vW.x * 0.35 + uTime) * sin(vW.y * 0.42 - uTime * 0.8) + sin(vW.x * 0.11 - vW.y * 0.16 + uTime * 0.5);
-        diffuseColor.rgb *= 0.92 + 0.07 * w; diffuseColor.rgb += 0.10 * smoothstep(1.35, 1.8, w);`);
+        float w = sin(vW.x * 0.05 + sin(vW.y * 0.07 + uTime * 0.4) * 1.6) + sin(vW.y * 0.06 - vW.x * 0.03 - uTime * 0.3);
+        diffuseColor.rgb *= 0.97 + 0.03 * w; diffuseColor.rgb += 0.06 * smoothstep(1.5, 1.9, w);`);
     };
     this.mesh = new Mesh(g, m);
     this.mesh.position.set(LAKE.x, 0.01, LAKE.z);

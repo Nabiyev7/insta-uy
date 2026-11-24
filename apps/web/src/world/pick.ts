@@ -1,13 +1,12 @@
 /** Bosilgan joydagi uy, bino yoki tijorat joyini topish. */
 import { Vector3, type Camera } from 'three';
-import { CIVIC, civicById, footprint, padHeight, type MasterPlan } from '../../../../packages/shared/src/index.ts';
+import { CIVIC, civicById, civicRect, footprint, padHeight, type MasterPlan } from '../../../../packages/shared/src/index.ts';
 import { here, session } from '../app/runtime.ts';
 import { getApp, openPanel, toast } from '../app/store.ts';
 import { flyTo, goToHouse } from '../app/modes.ts';
 import { viewOfPoint } from '../logic/cityCamera.ts';
 import { pickNearest, type PickBox, type Ray } from '../logic/motion.ts';
 import { commerceSolid, pickHeight } from '../logic/placement.ts';
-import { civicRects } from '../logic/plaza.ts';
 import { worldIndex } from '../logic/worldIndex.ts';
 
 const TAP_MOVE = 8;
@@ -21,7 +20,7 @@ const boxes = (plan: MasterPlan): PickBox[] => {
   const index = worldIndex(plan);
   return [
     ...index.plots.query(at.x, at.z, REACH[session.mode]).map((p): PickBox => { const y = padHeight(p); return { id: p.id, ...footprint(p), y0: y - 1, y1: y + pickHeight(p, houses.get(p.id)) }; }),
-    ...CIVIC.map((c, i): PickBox => ({ id: c.id, ...civicRects[i]!, y0: 0, y1: c.height * 0.7 })),
+    ...CIVIC.map((c): PickBox => ({ id: c.id, ...civicRect(c), y0: 0, y1: c.height * 0.7 })),
     ...plan.buildings.map((b): PickBox => ({ id: `#${b.id}`, x: b.x, z: b.z, hx: 22, hz: 8, y0: 0, y1: b.floors * 3 + 1 })),
     ...index.commerce.query(at.x, at.z, COMMERCE_REACH[session.mode]).map((c): PickBox => (c.type === 'bilbord'
       ? { id: c.id, x: c.x, z: c.z, hx: c.rot % 2 ? 0.6 : 4, hz: c.rot % 2 ? 4 : 0.6, y0: 4, y1: 7.5 }
@@ -37,7 +36,7 @@ const openPicked = (id: string): void => {
   if (civic) {
     if (isCity) flyTo(viewOfPoint(civic.x, civic.z, (civic.rot * Math.PI) / 2, CIVIC_VIEW_HEIGHT));
     toast(s.lang === 'uz' ? civic.uz : civic.ru);
-    openPanel({ kind: civic.panel });
+    if (civic.panel) openPanel({ kind: civic.panel });
     return;
   }
   if (id.startsWith('P')) {

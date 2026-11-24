@@ -11,8 +11,10 @@ export interface District {
   readonly zone: Zone;
   readonly nameUz: string;
   readonly nameRu: string;
-  /** [minX, minZ, maxX, maxZ] */
-  readonly rect: readonly [number, number, number, number];
+  /** Tuman hududi: [minX, minZ, maxX, maxZ] bo'laklari. */
+  readonly rects: readonly (readonly [number, number, number, number])[];
+  /** Xaritada nomi yoziladigan nuqta. */
+  readonly label: readonly [number, number];
 }
 export interface Street {
   readonly id: number;
@@ -65,13 +67,17 @@ export interface Commerce {
   readonly d: number;
   readonly rot: Rot;
 }
+/** halqa — halqa yo'l bo'lagi, diagonal — burchaklarga ketgan prospekt. */
+export type RoadKind = StreetKind | 'halqa' | 'diagonal';
 export interface Road {
   readonly x: number;
   readonly z: number;
-  /** x va z bo'ylab o'lchamlar. */
+  /** x va z bo'ylab o'lchamlar (burilgan bo'lsa — o'z o'qlari bo'ylab). */
   readonly w: number;
   readonly d: number;
-  readonly kind: StreetKind;
+  readonly kind: RoadKind;
+  /** w o'qining burilishi (radian); yo'q bo'lsa 0. */
+  readonly angle?: number;
 }
 export interface MasterPlan {
   readonly version: number;

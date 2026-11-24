@@ -15,13 +15,14 @@ TILE = {PLASTER: 3.0, BRICK: 2.0, ROOF: 2.2, WOOD: 1.6, ASPHALT: 4.0, GRASS: 5.0
         NAQSH: 1.2, CARVED: 1.0, FACADE: 3.6, GLASS: 4.0, SOIL: 4.0, STONE: 2.5, PLAIN: 1.0, WINDOW: 1.0}
 MAX_FACE = 3.0
 COARSE = 99.0  # panjara va uzoq ko'rinishlar bo'linmaydi
+AO_STRENGTH = 0.36
 AO_RAYS = 28
 AO_DISTANCE = 3.5
 
 
 def rgb(hex_color):
-    """sRGB hex -> linear."""
-    h = hex_color.lstrip('#')
+    """sRGB hex -> linear (avval yangi palitraga o'giriladi)."""
+    h = PALETTE.get(hex_color.lower(), hex_color).lstrip('#')
     out = []
     for i in (0, 2, 4):
         c = int(h[i:i + 2], 16) / 255
@@ -30,6 +31,29 @@ def rgb(hex_color):
 
 
 WHITE = '#ffffff'
+# Yorug' uslub palitrasi (docs/chat/XARITA-PROMT.md §3).
+GRASS_A, GRASS_B = '#7fbf55', '#72b24b'
+WALL, BASE, GLASS_BLUE, FRAME = '#f7f2ea', '#b9b4ac', '#9fd6ee', '#ffffff'
+PATH, CURB, SHUTTER_BLUE, TRUNK, DOOR = '#e7dfd0', '#d6d3cd', '#5e8fa8', '#7a5132', '#ba7533'
+LEAVES = ('#4e9f3d', '#65b547', '#7cc458')
+IRON = '#4a4f57'
+_GROUPS = {
+    WHITE: ('#f3ead8', '#f5e8cc', '#efe6d4', '#efe8da'),
+    '#fafafa': ('#b98a5c', '#8a5a30'),
+    '#c58a52': ('#c79a6a',),
+    WALL: ('#f7f1e3', '#f6eeda', '#f1ece0', '#f3eee2', '#e9e2d4', '#f2efe8', '#e9e4da', '#ece7dd', '#efe4cf', '#f0e6d2'),
+    PATH: ('#e6dcc8', '#e6e1d6', '#e8dcc0', '#e6dccb', '#8a6a48'),
+    CURB: ('#d8cbb5', '#ddd2bd', '#d9cfbd', '#d9c7b4'),
+    BASE: ('#cbbfa9', '#cfc5b3', '#b9ae9c', '#b7ad9c', '#bdb4a4', '#8d867a'),
+    '#f3e3c3': ('#e2c08e',),
+    '#a9713f': ('#8a6238', '#7a4f2a', '#7a5a38', '#99683a', '#6b4423', '#6d4423'),
+    TRUNK: ('#6b5238', '#b7a78c', '#c9bda5'),
+    LEAVES[0]: ('#4f7a34', '#64893a', '#557f33', '#2f5a3a', '#376643', '#5d8a3c'),
+    LEAVES[1]: ('#6f9440', '#759a43', '#769846', '#5f8c3a', '#3f714a', '#6d9a44'),
+    LEAVES[2]: ('#7fa548', '#89ab4f', '#89ab55', '#7ea04c', '#477c51'),
+    IRON: ('#2b2b2e', '#33454f', '#3a3f45', '#3d4a52'),
+}
+PALETTE = {old: new for new, olds in _GROUPS.items() for old in olds}
 
 
 class Model:
@@ -38,7 +62,8 @@ class Model:
     def __init__(self, name, max_face=MAX_FACE):
         self.name = name
         self.max_face = max_face  # katta yuzalar AO uchun shu o'lchamda bo'linadi
-        self.polys = []  # (points, uvs, layer, mask, color)
+        self.bevel = 0.0  # katta qutilar qirrasi shuncha yumaloqlanadi
+        self.polys = []  # (points, uvs, layer, mask, color, normals | None)
 
     def poly(self, pts, layer=PLAIN, color=WHITE, mask=M_NONE, fit=False):
         pts = [Vector(p) for p in pts]
@@ -59,7 +84,7 @@ class Model:
                 self._emit(pts, cs if fit else self._box_uv(pts, layer), layer, color, mask)
 
     def _emit(self, pts, uvs, layer, color, mask):
-        self.polys.append((pts, uvs, layer, mask, rgb(color)))
+        self.polys.append((pts, uvs, layer, mask, rgb(color), None))
 
     @staticmethod
     def _box_uv(pts, layer):
@@ -73,6 +98,9 @@ class Model:
         return [(horizontal(q) / s, q.z / s) for q in pts]
 
     def box(self, x0, y0, z0, x1, y1, z1, layer=PLAIN, color=WHITE, mask=M_NONE, bottom=False, top=True, top_layer=None):
+        if self.bevel and min(x1 - x0, y1 - y0, z1 - z0) > 5 * self.bevel:
+            self._soft_box((x0, y0, z0, x1, y1, z1), self.bevel, layer, color, mask, bottom, top, top_layer)
+            return
         a = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0)]
         b = [(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
         for i in range(4):
@@ -82,6 +110,27 @@ class Model:
             self.poly(b, layer if top_layer is None else top_layer, color, mask)
         if bottom:
             self.poly(a[::-1], layer, color, mask)
+
+    def _soft_box(self, box, r, layer, color, mask, bottom, top, top_layer):
+        """Vertikal va yuqori qirralari kesilgan (yumaloqroq) quti."""
+        x0, y0, z0, x1, y1, z1 = box
+        ring = [(x0 + r, y0), (x1 - r, y0), (x1, y0 + r), (x1, y1 - r), (x1 - r, y1), (x0 + r, y1), (x0, y1 - r), (x0, y0 + r)]
+        inner = [(x0 + r, y0 + r), (x1 - r, y0 + r), (x1 - r, y0 + r), (x1 - r, y1 - r), (x1 - r, y1 - r), (x0 + r, y1 - r), (x0 + r, y1 - r), (x0 + r, y0 + r)]
+        side_top = z1 - r if top else z1
+        for i in range(8):
+            (ax, ay), (bx, by) = ring[i], ring[(i + 1) % 8]
+            self.poly([(ax, ay, z0), (bx, by, z0), (bx, by, side_top), (ax, ay, side_top)], layer, color, mask)
+            if not top:
+                continue
+            p, q = inner[i], inner[(i + 1) % 8]
+            if p == q:
+                self.poly([(ax, ay, side_top), (bx, by, side_top), (*p, z1)], layer, color, mask)
+            else:
+                self.poly([(ax, ay, side_top), (bx, by, side_top), (*q, z1), (*p, z1)], layer, color, mask)
+        if top:
+            self.poly([(*inner[k], z1) for k in (0, 2, 4, 6)], layer if top_layer is None else top_layer, color, mask)
+        if bottom:
+            self.poly([(*inner[k], z0) for k in (6, 4, 2, 0)], layer, color, mask)
 
     def cbox(self, cx, cy, z0, sx, sy, sz, *args, **kw):
         self.box(cx - sx / 2, cy - sy / 2, z0, cx + sx / 2, cy + sy / 2, z0 + sz, *args, **kw)
@@ -112,15 +161,18 @@ class Model:
                 p = [pt(i, j), pt(i + 1, j)]
                 self.poly(p + ([pt(i, j + 1)] if j == rows - 1 else [pt(i + 1, j + 1), pt(i, j + 1)]), layer, color, mask)
 
-    def blob(self, cx, cy, cz, r, color, seed=1, squash=0.85, layer=LEAF, sub=1):
+    def blob(self, cx, cy, cz, r, color, seed=1, squash=0.85, layer=LEAF, sub=1, smooth=True, noise=0.1):
         """Notekis ikosfera — barg to'plami."""
         import bmesh
         rnd = random.Random(seed)
         bm = bmesh.new()
         bmesh.ops.create_icosphere(bm, subdivisions=sub, radius=r)
-        shift = {v.index: 1 + rnd.uniform(-0.14, 0.14) for v in bm.verts}
+        shift = {v.index: 1 + rnd.uniform(-noise, noise) for v in bm.verts}
         for f in bm.faces:
-            self.poly([(cx + v.co.x * shift[v.index], cy + v.co.y * shift[v.index], cz + v.co.z * squash * shift[v.index]) for v in f.verts], layer, color)
+            pts = [Vector((v.co.x * shift[v.index], v.co.y * shift[v.index], v.co.z * squash * shift[v.index])) for v in f.verts]
+            normals = [Vector((p.x, p.y, p.z / squash)).normalized() for p in pts] if smooth else None
+            pts = [p + Vector((cx, cy, cz)) for p in pts]
+            self.polys.append((pts, self._box_uv(pts, layer), layer, M_NONE, rgb(color), normals))
         bm.free()
 
     def gable(self, x0, y0, x1, y1, z, h, over=0.5, color=WHITE, wall='#ffffff'):
@@ -131,6 +183,15 @@ class Model:
         self.poly([(x1, y0, z), (x1, y1, z), (x1, ym, z + h * 0.94)], PLASTER, wall, M_WALL)
         self.poly([(x0, y1, z), (x0, y0, z), (x0, ym, z + h * 0.94)], PLASTER, wall, M_WALL)
         self.poly([(a, d, z), (c, d, z), (c, b, z), (a, b, z)], WOOD, '#8a6a48')
+
+    def gable_y(self, x0, y0, x1, y1, z, h, over=0.4):
+        """Tizmasi y bo'ylab ketgan sodda ikki nishabli tom (uzoq ko'rinishlar uchun)."""
+        xm = (x0 + x1) / 2
+        a, b, c, d = x0 - over, y0 - over, x1 + over, y1 + over
+        self.poly([(c, b, z), (c, d, z), (xm, d, z + h), (xm, b, z + h)], ROOF, WHITE, M_ROOF)
+        self.poly([(a, d, z), (a, b, z), (xm, b, z + h), (xm, d, z + h)], ROOF, WHITE, M_ROOF)
+        self.poly([(x0, y0, z), (x1, y0, z), (xm, y0, z + h * 0.94)], PLASTER, WHITE, M_WALL)
+        self.poly([(x1, y1, z), (x0, y1, z), (xm, y1, z + h * 0.94)], PLASTER, WHITE, M_WALL)
 
     def hip(self, x0, y0, x1, y1, z, h, over=0.6, color=WHITE):
         a, b, c, d = x0 - over, y0 - over, x1 + over, y1 + over
@@ -155,12 +216,12 @@ class Model:
             p = [(at - out, hi, z0), (at - out, lo, z0), (at - out, lo, z1), (at - out, hi, z1)]
         else:
             p = [(at + out, lo, z0), (at + out, hi, z0), (at + out, hi, z1), (at + out, lo, z1)]
-        self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], WINDOW, M_GLOW, rgb(WHITE)))
+        self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], WINDOW, M_GLOW, rgb(WHITE), None))
 
     def panel(self, p, layer, color=WHITE, mask=M_NONE):
-        self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], layer, mask, rgb(color)))
+        self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], layer, mask, rgb(color), None))
 
-    def door(self, cx, at, w=1.2, h=2.3, color=WHITE):
+    def door(self, cx, at, w=1.2, h=2.3, color=DOOR):
         self.panel([(cx - w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, h + 0.15), (cx - w / 2, at - 0.05, h + 0.15)], WOOD, color, M_DOOR)
 
     def column(self, cx, cy, z0, z1, r=0.14, color='#8a5a30', layer=WOOD):
@@ -206,7 +267,7 @@ class Model:
                     loc, _n, _i, dist = tree.ray_cast(origin, d, AO_DISTANCE)
                     if loc is not None:
                         hit += w * (1 - dist / AO_DISTANCE) ** 0.5
-                row.append(1 - 0.5 * hit / max(total, 0.001))
+                row.append(1 - AO_STRENGTH * hit / max(total, 0.001))
             out.append(row)
         return out
 
@@ -223,13 +284,15 @@ class Model:
         uv1 = mesh.uv_layers.new(name='uv1')
         col = mesh.color_attributes.new('Col', 'FLOAT_COLOR', 'CORNER')
         k = 0
-        for (pts, uvs, layer, mask, c), shade in zip(self.polys, ao):
+        for (pts, uvs, layer, mask, c, _n), shade in zip(self.polys, ao):
             for i in range(len(pts)):
                 uv0.data[k].uv = uvs[i]
                 uv1.data[k].uv = ((layer + 0.5) / 16, 1 - mask)  # glTF eksport v ni ag'daradi
                 col.data[k].color = (c[0] * shade[i], c[1] * shade[i], c[2] * shade[i], 1)
                 k += 1
         mesh.color_attributes.active_color = col
+        if any(n for *_, n in self.polys):
+            mesh.normals_split_custom_set([tuple(v) for poly, face in zip(self.polys, mesh.polygons) for v in (poly[5] or [face.normal] * len(poly[0]))])
         mesh.materials.append(kit_material())
         obj = bpy.data.objects.new(self.name, mesh)
         bpy.context.scene.collection.objects.link(obj)

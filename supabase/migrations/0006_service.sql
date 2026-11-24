@@ -134,11 +134,11 @@ begin
 end $$;
 
 insert into public.settings (key, value, is_public) values
-  ('city_name', '"Obunachilar shahri"', true), ('maintenance', 'false', true), ('require_approval', 'true', false), ('free_claim_enabled', 'true', true),
+  ('city_name', '"CityLand UZ"', true), ('maintenance', 'false', true), ('require_approval', 'true', false), ('free_claim_enabled', 'true', true),
   ('payments_enabled', 'false', true), ('payment_provider', '"card"', true), ('pay_card', '""', false), ('reserve_minutes', '30', true), ('discount_pct', '0', true),
   ('coins_enabled', 'true', true), ('elections_enabled', 'false', true), ('multiplayer_enabled', 'true', true), ('release_inactive', 'false', false), ('inactive_days', '180', false),
   ('founder_limit', '100', true), ('sponsor_threshold', '500000', false), ('street_vote_min', '5', true), ('commerce_days', '30', true), ('day_minutes', '24', true),
-  ('telegram_bot', '""', true), ('support_url', '""', true),
+  ('telegram_bot', '""', true), ('telegram_channel', '"citylanduz"', true), ('support_url', '""', true),
   ('prices', '{"base":{"hovli":30000,"kvartira":20000,"villa":150000,"qasr":400000},"tierUp":{"2":25000,"3":50000,"4":120000,"5":300000},"expansion":80000,"streetName":200000,"label":{"silver":15000,"gold":40000},"commerce":{"dokon":100000,"ofis":250000,"bilbord":150000}}', true),
   ('coins', '{"daily":10,"streakStep":5,"referral":50,"treasure":100,"treasureSlots":10,"tierBase":500,"maxTier":3,"quest":{"telegram":50,"house":30,"bio":10,"decor":40,"invite3":150,"walk":15,"contribute":10}}', true);
 insert into public.projects (kind, title_uz, title_ru, goal) values

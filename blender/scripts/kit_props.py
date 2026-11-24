@@ -2,11 +2,12 @@
 import math
 import random
 
+from kit_style import path_stone, trees
 from kit_core import (BRICK, CARVED, COARSE, CONCRETE, FACADE, GRASS, LEAF, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model)
 
 GOLD = '#d9a93f'
-IRON = '#2b2b2e'
-BARK = '#6b5238'
+IRON = '#4a4f57'
+BARK = '#7a5132'
 GATE = 4.0  # darvoza eni
 W, D = 25.0, 34.0  # panjara shu o'lchamda; boshqa uchastkalarga masshtablanadi
 
@@ -28,13 +29,26 @@ def slab(m, x0, y0, x1, y1, z0, z1, t, layer, color=WHITE, mask=0.0):
 
 
 def fence_low():
-    """Past yog'och panjara (1-level)."""
+    """Past oq panjara (1-level): ustunlar va ikki taxta."""
     m = Model('fence_low', COARSE)
     def draw(x0, y0, x1, y1):
-        m.cbox(x0, y0, 0, 0.16, 0.16, 1.0, WOOD, '#8a6238')
-        for z in (0.25, 0.65):
-            slab(m, x0, y0, x1, y1, z, z + 0.16, 0.03, WOOD, '#a3764a')
-    perimeter(m, draw, step=5.8)
+        m.cbox(x0, y0, 0, 0.16, 0.16, 1.0, PLAIN, '#fafafa')
+    def rails(x0, y0, x1, y1):
+        for z in (0.35, 0.72):
+            slab(m, x0, y0, x1, y1, z, z + 0.12, 0.035, PLAIN, '#fafafa')
+    perimeter(m, draw, step=2.9)
+    perimeter(m, rails, step=COARSE)
+    return m
+
+
+def gate_open():
+    """1-level kirishi: ikki ustun va pochta qutisi (eshiksiz)."""
+    m = Model('gate_open')
+    for s in (-1, 1):
+        m.cbox(s * (GATE / 2 - 0.1), 0, 0, 0.18, 0.18, 1.1, PLAIN, '#fafafa')
+    m.cbox(2.6, 0.25, 0, 0.12, 0.12, 1.05, PLAIN, '#fafafa')
+    m.bevel = 0.05
+    m.cbox(2.6, 0.25, 1.05, 0.38, 0.55, 0.32, PLAIN, '#3b86d8', bottom=True)
     return m
 
 
@@ -42,8 +56,8 @@ def fence_basic():
     """Suvoq devor, tepasi tosh (2–3 level)."""
     m = Model('fence_basic', COARSE)
     def draw(x0, y0, x1, y1):
-        slab(m, x0, y0, x1, y1, 0, 1.4, 0.1, PLASTER, '#e6dccb', M_WALL)
-        slab(m, x0, y0, x1, y1, 1.4, 1.5, 0.16, STONE, '#d8cbb5')
+        slab(m, x0, y0, x1, y1, 0, 1.25, 0.12, PLASTER, '#ffffff', M_WALL)
+        slab(m, x0, y0, x1, y1, 1.25, 1.37, 0.18, PLAIN, '#d6d3cd')
     perimeter(m, draw, step=17)
     return m
 
@@ -96,29 +110,6 @@ def gate(name, post_layer, post, leaf_layer, leaf, h, crown=None):
         m.box(-GATE / 2 - 0.2, -0.5, h + 0.65, GATE / 2 + 0.2, 0.5, h + 0.8, ROOF if crown != GOLD else PLAIN, crown, bottom=True)
         if crown == GOLD:
             m.dome(0, 0, h + 0.8, 0.6, 8, 3, PLAIN, GOLD)
-    return m
-
-
-def tree_chinor(name='tree_chinor', lod=False):
-    m = Model(name)
-    if lod:
-        m.cyl(0, 0, 0, 3, 0.3, 0.2, 4, PLAIN, BARK, cap=False)
-        m.blob(0, 0, 5, 2.9, '#6f9440', 3, 0.8, sub=1)
-        return m
-    m.cyl(0, 0, 0, 3.2, 0.38, 0.24, 7, WOOD, '#b7a78c', cap=False)
-    for i, (x, y, z, r) in enumerate([(0, 0, 5.4, 2.2), (1.5, 0.5, 4.5, 1.6), (-1.4, 0.7, 4.7, 1.6), (0.2, -1.5, 4.4, 1.6), (0.3, 1.5, 4.9, 1.4)]):
-        m.blob(x, y, z, r, ['#6f9440', '#7fa548', '#64893a', '#89ab4f', '#759a43'][i], i + 3)
-    return m
-
-
-def tree_terak(name='tree_terak', lod=False):
-    m = Model(name)
-    m.cyl(0, 0, 0, 1.6, 0.2, 0.16, 5, WOOD, '#c9bda5', cap=False)
-    if lod:
-        m.cyl(0, 0, 1, 9, 0.9, 0, 5, LEAF, '#7ea04c')
-        return m
-    for i in range(5):
-        m.blob(0.12 * math.sin(i * 2), 0.12 * math.cos(i * 3), 2.2 + i * 1.6, 1.05 - i * 0.13, ['#7ea04c', '#89ab55', '#769846'][i % 3], i + 11, 1.2)
     return m
 
 
@@ -329,12 +320,6 @@ def yurt():
     return m
 
 
-def path_stone():
-    m = Model('path_stone')
-    m.box(-0.9, -8.8, 0, 0.9, 8.8, 0.06, STONE, '#e6dcc8')
-    return m
-
-
 def sign_nick():
     """Darvoza yonidagi nik lavhasi: yozuvi saytda qo'yiladi. Eng baland devordan (1.72 m) ham ko'rinadi."""
     m = Model('sign_nick')
@@ -425,7 +410,7 @@ def barrier():
     """8 m to'siq bo'lagi — yopiq tuman chegarasi."""
     m = Model('barrier')
     for i in range(4):
-        m.box(-4 + i * 2, -0.05, 0.1, -2.04 + i * 2, 0.05, 2.1, PLAIN, '#2f7f8c' if i % 2 else '#e9e3d6', bottom=True)
+        m.box(-4 + i * 2, -0.05, 0.1, -2.04 + i * 2, 0.05, 2.1, PLAIN, '#4fa3c7' if i % 2 else '#ffffff', bottom=True)
     m.cbox(-4, 0, 0, 0.12, 0.12, 2.3, PLAIN, '#8d867a')
     m.box(-4, -0.06, 1.6, 4, 0.06, 1.75, PLAIN, '#e3a52c')
     return m
@@ -472,7 +457,7 @@ def bridge():
 def forsale():
     m = Model('forsale')
     m.cbox(0, 0, 0, 0.12, 0.12, 1.9, WOOD, '#7a5a38')
-    m.box(-0.8, -0.1, 1.0, 0.8, -0.06, 1.8, PLAIN, '#2e9b5b', bottom=True)
+    m.box(-0.8, -0.1, 1.0, 0.8, -0.06, 1.8, PLAIN, '#4fa3c7', bottom=True)
     m.box(-0.8, -0.06, 1.0, 0.8, -0.02, 1.8, WOOD, '#99683a', bottom=True)
     return m
 
@@ -491,13 +476,13 @@ def pigeon():
 def all_props():
     return [
         fence_low(), fence_basic(), fence_wood(), fence_brick(), fence_ornate(),
-        gate('gate_basic', PLASTER, '#e6dccb', PLAIN, '#4a6b7a', 1.9),
+        gate_open(), gate('gate_basic', PLASTER, '#f7f2ea', PLAIN, '#5e8fa8', 1.9),
         gate('gate_wood', WOOD, '#7a4f2a', WOOD, '#a3764a', 2.1),
         gate('gate_wood_carved', WOOD, '#6b4423', WOOD, '#c79a6a', 2.3),
         gate('gate_naqsh', STONE, '#efe4cf', PLAIN, '#33454f', 2.6, '#3d4a52'),
         gate('gate_carved', BRICK, WHITE, WOOD, '#8a5a30', 2.4, '#8a4b38'),
         gate('gate_gold', STONE, '#f0e6d2', PLAIN, '#e0b84f', 2.8, GOLD),
-        path_stone(), tree_anor(), tree_chinor(), tree_chinor('tree_chinor_lod', True), tree_terak(), tree_terak('tree_terak_lod', True), tree_archa(),
+        path_stone(), tree_anor(), *trees(), tree_archa(),
         yard_sori(), yard_tok(), yard_flowers(), water_pool(), fountain('water_fountain', 1.4, 1), fountain('plaza_fountain', 11, 3),
         car('car_van', 3.4, 1.5, 0.95, (-1.65, 1.65, 1.85), '#eef0f0'), car('car_sedan', 4.4, 1.75, 0.85, (-1.1, 1.5, 1.45), '#c9ced2'),
         car('car_sport', 4.4, 1.85, 0.72, (-0.7, 1.3, 1.18), '#c22a2a', '#151515'),

@@ -198,7 +198,7 @@ try {
   });
 
   const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(args) }).then((r) => r.json());
-  const adminToken = async () => (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: 'admin@login.obunachilar-shahri.uz', password: 'admin12345' }) }).then((r) => r.json())).access_token;
+  const adminToken = async () => (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: 'admin@login.citylanduz.uz', password: 'admin12345' }) }).then((r) => r.json())).access_token;
   await step("bezak: do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
     const token = await adminToken();
     const me = (await call('admin_users', { p_q: 'sinov_odam' }, token))[0];

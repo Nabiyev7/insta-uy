@@ -4,15 +4,15 @@ import type { Plot, PlotType } from './types.ts';
 /** Uy levellari: bo'yiga emas, hashamatga o'sadi (PLAN.md §1). Har level oldingisidan kuchli. */
 export const TIERS = [
   { id: 1, key: 'kichik', uz: 'Kichik uy', ru: 'Маленький дом' },
-  { id: 2, key: 'ayvonli', uz: 'Ayvonli uy', ru: 'Дом с айваном' },
-  { id: 3, key: 'hovli', uz: 'Hovli', ru: 'Двор' },
-  { id: 4, key: 'chiroyli', uz: 'Chiroyli hovli', ru: 'Красивый двор' },
-  { id: 5, key: 'katta', uz: 'Katta hovli', ru: 'Большой двор' },
-  { id: 6, key: 'boy', uz: 'Boy hovli', ru: 'Богатый двор' },
+  { id: 2, key: 'ayvonli', uz: 'Shinam uy', ru: 'Уютный дом' },
+  { id: 3, key: 'hovli', uz: 'Hovli uy', ru: 'Дом с двором' },
+  { id: 4, key: 'chiroyli', uz: 'Bezakli uy', ru: 'Нарядный дом' },
+  { id: 5, key: 'katta', uz: 'Katta uy', ru: 'Большой дом' },
+  { id: 6, key: 'boy', uz: 'Boy uy', ru: 'Богатый дом' },
   { id: 7, key: 'villa', uz: 'Villa', ru: 'Вилла' },
   { id: 8, key: 'lux_villa', uz: 'Hashamatli villa', ru: 'Роскошная вилла' },
-  { id: 9, key: 'qasr', uz: 'Qasr', ru: 'Дворец' },
-  { id: 10, key: 'saroy', uz: 'Shoh saroyi', ru: 'Царский дворец' },
+  { id: 9, key: 'qasr', uz: 'Qasr', ru: 'Особняк' },
+  { id: 10, key: 'saroy', uz: 'Saroy', ru: 'Дворец' },
 ] as const;
 export type TierId = (typeof TIERS)[number]['id'];
 export const MAX_TIER = TIERS.length;
@@ -37,8 +37,8 @@ export const plotPrice = (p: Pick<Plot, 'type' | 'value'>, base: number = DEFAUL
   Math.round((base * (1 + p.value / 50) * (1 - discountPct / 100)) / 1000) * 1000;
 
 /** Bir xil model — rang bilan farqlanadi. */
-export const WALL_COLORS = ['#e8d9c0', '#d9b99b', '#c98f6b', '#f1ece1', '#c9d3d6', '#b7c4a8', '#e3c07a', '#d7a9a0'] as const;
-export const ROOF_COLORS = ['#8a4b38', '#6b3a34', '#4d5a63', '#3f5d4c', '#7a6652', '#5b4a68'] as const;
+export const WALL_COLORS = ['#f7f2ea', '#fbe6cc', '#f6d3bd', '#ffffff', '#d9eaf2', '#e0efd4', '#fdecb0', '#f7d6d2'] as const;
+export const ROOF_COLORS = ['#d9604a', '#b5483a', '#5f7f95', '#4f9478', '#b98a5e', '#9486bd'] as const;
 
 /** Bezak turi (do'kon bo'limi). Qaysi nuqtaga qo'yilishi `spots` da. */
 export type DecorSlot = 'fence' | 'gate' | 'path' | 'tree' | 'yard' | 'water' | 'car' | 'light' | 'pet' | 'special' | 'sign' | 'roof';
@@ -125,8 +125,8 @@ export const DECOR: readonly DecorItem[] = [
 export const decorById = (id: string): DecorItem | undefined => DECOR.find((d) => d.id === id);
 
 /** Level bilan tekin keladigan hovli bezaklari: indeks = level. O'z joyida turadi, bezak joylari hisobiga kirmaydi. */
-const GARDEN = ['path_stone', 'tree_anor'] as const;
-const FLOWER_GARDEN = [...GARDEN, 'yard_flowers', 'yard_umbrella'] as const;
+const GARDEN = ['path_stone', 'tree_round', 'tree_wide', 'tree_tall', 'tree_slim'] as const;
+const FLOWER_GARDEN = [...GARDEN, 'tree_anor', 'yard_flowers', 'yard_umbrella'] as const;
 const RICH_GARDEN = [...FLOWER_GARDEN, 'light_lamps', 'tree_chinor'] as const;
 const LUXE_GARDEN = [...RICH_GARDEN, 'tree_archa', 'light_luxe'] as const;
 const LEVEL_YARD: readonly (readonly string[])[] = [
@@ -135,12 +135,12 @@ const LEVEL_YARD: readonly (readonly string[])[] = [
 ];
 /** Levelning o'z panjara va darvozasi (indeks = level): har biri oldingisidan yomon emas. Oltin darvoza faqat 9 dan. */
 export const FENCE_RANK = ['fence_low', 'fence_basic', 'fence_brick', 'fence_ornate'] as const;
-export const GATE_RANK = ['gate_basic', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_naqsh', 'gate_gold'] as const;
+export const GATE_RANK = ['gate_open', 'gate_basic', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_naqsh', 'gate_gold'] as const;
 export const LEVEL_FENCE: readonly (typeof FENCE_RANK)[number][] = [
   'fence_low', 'fence_low', 'fence_basic', 'fence_basic', 'fence_brick', 'fence_brick', 'fence_brick', 'fence_ornate', 'fence_ornate', 'fence_ornate', 'fence_ornate',
 ];
 export const LEVEL_GATE: readonly (typeof GATE_RANK)[number][] = [
-  'gate_basic', 'gate_basic', 'gate_wood', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_carved', 'gate_naqsh', 'gate_naqsh', 'gate_gold', 'gate_gold',
+  'gate_open', 'gate_open', 'gate_basic', 'gate_wood', 'gate_wood_carved', 'gate_carved', 'gate_carved', 'gate_naqsh', 'gate_naqsh', 'gate_gold', 'gate_gold',
 ];
 export const levelYard = (tier: number): readonly string[] => LEVEL_YARD[tier] ?? [];
 

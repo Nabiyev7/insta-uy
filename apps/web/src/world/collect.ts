@@ -6,8 +6,10 @@ import { distanceFrom, type View } from '../logic/view.ts';
 import type { LabelInfo } from './labels.ts';
 import type { SignInfo } from './signs.ts';
 
-const BIG = new Set(['crane', 'office', 'office_low', 'bank', 'agentlik', 'novostroyka', 'choyxona', 'maktab', 'stadium', 'bridge', 'hero_statue', 'plaza_fountain', 'billboard']);
-const TREES: Readonly<Record<string, string>> = { tree_chinor: 'tree_chinor_lod', tree_terak: 'tree_terak_lod', tree_archa: 'tree_archa' };
+const BIG = new Set(['crane', 'office', 'office_low', 'bank', 'agentlik', 'novostroyka', 'choyxona', 'maktab', 'stadium', 'bridge', 'hero_statue', 'plaza_fountain', 'billboard', 'kafe', 'sport']);
+const TREES: Readonly<Record<string, string>> = { tree_chinor: 'tree_chinor_lod', tree_round: 'tree_round_lod', tree_wide: 'tree_round_lod', tree_tall: 'tree_terak_lod', tree_terak: 'tree_terak_lod', tree_archa: 'tree_archa' };
+/** Uzoq shakli balandroq chizilgan daraxtlar shu nisbatda kichrayadi. */
+const TREE_FIT: Readonly<Record<string, number>> = { tree_tall: 0.72 };
 /** Yaqinda to'liq, uzoqda sodda shakl. */
 const CIVIC_LODS: Readonly<Record<string, string>> = Object.fromEntries(CIVIC.map((c) => [c.id, `${c.id}_lod`]));
 const FAR_LODS: Readonly<Record<string, string>> = { shop: 'shop_lod', office_low: 'office_low_lod' };
@@ -79,12 +81,22 @@ const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResul
   return { items, labels: labels.slice(0, maxLabels).map((l) => l.info), signs: signs.map((x) => x.info) };
 };
 
+/** Uzoq shakllar bir marta yasaladi: har kadrda minglab yangi obyekt yaratilmasin. */
+const lodCache = new WeakMap<Item, Item>();
+const asLod = (it: Item, model: string, k = 1): Item => {
+  const known = lodCache.get(it);
+  if (known) return known;
+  const made: Item = { ...it, model, sy: it.sy * k };
+  lodCache.set(it, made);
+  return made;
+};
 const staticItem = (v: View, it: Item, d: number): Item | null => {
   const civic = CIVIC_LODS[it.model];
-  if (civic) return d < v.near * CIVIC_NEAR ? it : { ...it, model: civic };
+  if (civic) return d < v.near * CIVIC_NEAR ? it : asLod(it, civic);
   if (d < v.near || BIG.has(it.model)) return it;
   const tree = TREES[it.model];
-  if (tree) return d < v.tree ? { ...it, model: tree } : null;
+  if (tree) return d < v.tree ? asLod(it, tree, TREE_FIT[it.model]) : null;
+  if (it.model === 'hedge' || it.model === 'flower_ring' || it.model === 'bolalar' || it.model.startsWith('car_') || it.model === 'foundation') return d < v.tree * 0.6 ? it : null;
   if (it.model === 'barrier') return d < Math.max(v.small, BARRIER_FAR) ? it : null;
   return it.model === 'street_lamp' && d < v.small ? it : null;
 };
@@ -97,7 +109,7 @@ const collectStatics = (v: View, list: readonly Item[]): Item[] => list.flatMap(
 const collectCommerce = (v: View, list: readonly Item[]): Item[] => list.flatMap((it) => {
   if (v.isHidden(it.x, it.z)) return [];
   const lod = FAR_LODS[it.model];
-  return [lod && distanceFrom(v, it.x, it.z) > v.near * 1.4 ? { ...it, model: lod } : it];
+  return [lod && distanceFrom(v, it.x, it.z) > v.near * 1.4 ? asLod(it, lod) : it];
 });
 const BUILDING_SLACK = 25;
 const collectBuildings = (v: View, list: readonly Building[]): Item[] => list.flatMap((b) => {

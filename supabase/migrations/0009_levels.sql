@@ -6,7 +6,7 @@ update public.plot_state set tier = tier * 2 - 1;
 alter table public.plot_state add constraint plot_state_tier_check check (tier between 1 and 10);
 update public.orders set payload = jsonb_set(payload, '{tier}', to_jsonb((payload ->> 'tier')::int * 2 - 1)) where kind = 'tier' and status = 'pending';
 update public.settings set value = jsonb_set(value, '{tierUp}', '{"2":15000,"3":25000,"4":30000,"5":40000,"6":60000,"7":90000,"8":130000,"9":200000,"10":300000}') where key = 'prices';
-update public.settings set value = value || '{"tierBase":250,"maxTier":5}' where key = 'coins';
+update public.settings set value = value || '{"tierBase":250,"maxTier":3}' where key = 'coins';
 
 create or replace function private.quote(me public.profiles, p_kind text, p jsonb) returns int language plpgsql security definer set search_path = '' as $$
 declare st public.plot_state; pl public.plots; c public.decor_catalog; v int; s public.streets; off numeric := 1 - private.num('discount_pct', 0) / 100;
@@ -95,7 +95,7 @@ declare st public.plot_state := private.own_plot(p_plot); bal int;
 begin
   if not private.flag('coins_enabled') then perform private.fail('coins_off'); end if;
   if (select type from public.plots where id = p_plot) = 'kvartira' then perform private.fail('no_yard'); end if;
-  if st.tier >= private.num('coins.maxTier', 5) then perform private.fail('max_tier'); end if;
+  if st.tier >= private.num('coins.maxTier', 3) then perform private.fail('max_tier'); end if;
   bal := private.coins(st.owner, -(private.num('coins.tierBase', 250) * st.tier)::int, 'tier:' || p_plot);
   update public.plot_state set tier = tier + 1 where plot_id = p_plot;
   return bal;

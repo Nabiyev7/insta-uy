@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { BufferAttribute, BufferGeometry, Points, PointsMaterial } from 'three';
-import { CELL, CITY_HALF, PLAZA_HALF, hash01, weatherOf } from '../../../../packages/shared/src/index.ts';
+import { CELL, CITY_HALF, RING, ZONES, hash01, weatherOf } from '../../../../packages/shared/src/index.ts';
 import type { Item } from '../logic/item.ts';
 import { QUALITY } from '../logic/quality.ts';
 import { PEOPLE_HEIGHT } from '../logic/view.ts';
@@ -12,21 +12,33 @@ import type { Kit } from './kit.ts';
 import { Pools } from './pools.ts';
 
 const BASE = { y: 0, sx: 1, sy: 1, sz: 1, wall: '#ffffff', roof: '#ffffff', glow: 0, seed: 0.5 } as const;
-const LINES = [-CELL, 0, CELL] as const;
+const LINES = [-CELL, CELL] as const;
+/** Har uchinchi mashina halqa yo'lda aylanadi. */
+const RING_LANE = 4.8;
+const BULVAR = ZONES.bulvar.rect[3] + 8;
+const BULVAR_SMALL = ZONES.bulvarKichik.rect[2] + 8;
+const ringCar = (i: number, t: number): Item => {
+  const dir = hash01(`rd${i}`) < 0.5 ? 1 : -1;
+  const r = RING.r - dir * RING_LANE;
+  const a = hash01(`ra${i}`) * Math.PI * 2 + (dir * t * (8 + hash01(`rs${i}`) * 4)) / r;
+  return { ...BASE, model: CAR_MODELS[i % 4] ?? 'car_van', x: Math.cos(a) * r, z: Math.sin(a) * r, yaw: -a + (dir > 0 ? 0 : Math.PI) };
+};
+const CAR_MODELS = ['car_van', 'car_sedan', 'car_van', 'car_sport'] as const;
 const SPAN = CITY_HALF;
 const CARS = 54;
 
 /** Mashinalar prospektlar bo'ylab deterministik yuradi — serversiz hamma joyda bir xil. */
 const carAt = (i: number, t: number): Item | null => {
-  const line = LINES[i % 3] ?? 0;
+  if (i % 3 === 0) return ringCar(i, t);
+  const line = LINES[i % 3 === 1 ? 0 : 1] ?? 0;
   const isX = i % 2 === 0;
   const dir = hash01(`cd${i}`) < 0.5 ? 1 : -1;
   const u = ((hash01(`cu${i}`) * 2 * SPAN + t * (7 + hash01(`cs${i}`) * 5)) % (2 * SPAN)) - SPAN;
   const along = u * dir;
-  if (line === 0 && Math.abs(along) < PLAZA_HALF + 4) return null;
+  if (Math.abs(along) < (isX ? BULVAR_SMALL : BULVAR)) return null;
   const lane = line + (isX ? dir : -dir) * 5.2;
   const yaw = isX ? (dir > 0 ? Math.PI / 2 : -Math.PI / 2) : dir > 0 ? 0 : Math.PI;
-  return { ...BASE, model: ['car_van', 'car_sedan', 'car_van', 'car_sport'][i % 4] ?? 'car_van', x: isX ? along : lane, z: isX ? lane : along, yaw };
+  return { ...BASE, model: CAR_MODELS[i % 4] ?? 'car_van', x: isX ? along : lane, z: isX ? lane : along, yaw };
 };
 
 const critters = (t: number): Item[] => {

@@ -17,7 +17,7 @@ await page.addStyleTag({ content: '.photo-bar{display:none!important}.og{positio
 await page.evaluate(() => {
   const d = document.createElement('div');
   d.className = 'og';
-  for (const [tag, text] of [['i', ''], ['b', 'Obunachilar shahri'], ['span', "3D o'zbek shahrida o'z uyingizni bepul oling"]]) d.append(Object.assign(document.createElement(tag), { textContent: text }));
+  for (const [tag, text] of [['i', ''], ['b', 'CityLand UZ'], ['span', "3D shaharda o'z uyingizni bepul oling"]]) d.append(Object.assign(document.createElement(tag), { textContent: text }));
   document.body.append(d);
 });
 await page.waitForTimeout(1500);

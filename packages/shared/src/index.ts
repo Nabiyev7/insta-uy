@@ -1,5 +1,7 @@
 export * from './types.ts';
 export * from './masterplan/geometry.ts';
+export * from './masterplan/zones.ts';
+export { riverStrips } from './masterplan/network.ts';
 export * from './masterplan/codec.ts';
 export * from './catalog.ts';
 export * from './anchors.ts';

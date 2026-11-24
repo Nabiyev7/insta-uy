@@ -1,4 +1,4 @@
-import { Color, DynamicDrawUsage, Euler, Group, InstancedBufferAttribute, InstancedMesh, Matrix4, Quaternion, Vector3 } from 'three';
+import { Color, DynamicDrawUsage, Group, InstancedBufferAttribute, InstancedMesh } from 'three';
 import type { Item } from '../logic/item.ts';
 import type { Kit } from './kit.ts';
 
@@ -13,11 +13,15 @@ const linear = (hex: string): Color => {
   return c;
 };
 
-const M = new Matrix4();
-const P = new Vector3();
-const Q = new Quaternion();
-const E = new Euler();
-const S = new Vector3();
+/** Faqat y o'qi atrofida burilgan obyektning matritsasi (umumiy hisobdan ancha tez). */
+const writeMatrix = (out: Float32Array, at: number, it: Item): void => {
+  const c = Math.cos(it.yaw);
+  const s = Math.sin(it.yaw);
+  out[at] = c * it.sx; out[at + 1] = 0; out[at + 2] = -s * it.sx; out[at + 3] = 0;
+  out[at + 4] = 0; out[at + 5] = it.sy; out[at + 6] = 0; out[at + 7] = 0;
+  out[at + 8] = s * it.sz; out[at + 9] = 0; out[at + 10] = c * it.sz; out[at + 11] = 0;
+  out[at + 12] = it.x; out[at + 13] = it.y; out[at + 14] = it.z; out[at + 15] = 1;
+};
 
 /** Har model uchun bitta InstancedMesh; sig'im kerak bo'lganda kengayadi. */
 export class Pools {
@@ -72,9 +76,9 @@ export class Pools {
     const wall = m.geometry.getAttribute('iWall') as InstancedBufferAttribute;
     const roof = m.geometry.getAttribute('iRoof') as InstancedBufferAttribute;
     const fx = m.geometry.getAttribute('iFx') as InstancedBufferAttribute;
+    const matrix = m.instanceMatrix.array as Float32Array;
     list.forEach((it, i) => {
-      Q.setFromEuler(E.set(0, it.yaw, 0));
-      m.setMatrixAt(i, M.compose(P.set(it.x, it.y, it.z), Q, S.set(it.sx, it.sy, it.sz)));
+      writeMatrix(matrix, i * 16, it);
       linear(it.wall).toArray(wall.array, i * 3);
       linear(it.roof).toArray(roof.array, i * 3);
       fx.setXYZW(i, it.glow, it.seed, it.mat ?? DEFAULT_MAT, it.door ?? 0);

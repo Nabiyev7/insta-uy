@@ -55,4 +55,4 @@ export const parseStreetName = (raw: string): Validated<string> => {
 };
 
 /** Login → Supabase Auth uchun ichki email (foydalanuvchiga ko'rinmaydi). */
-export const loginEmail = (login: string): string => `${login}@login.obunachilar-shahri.uz`;
+export const loginEmail = (login: string): string => `${login}@login.citylanduz.uz`;

@@ -14,10 +14,11 @@ const shoot = async (viewport, suffix) => {
   const page = await ctx.newPage();
   await page.goto(site);
   await page.locator('.nav5').waitFor({ timeout: 60_000 });
+  await page.evaluate(() => { window.__director.dayFraction = 0.45; });
   await page.waitForTimeout(3000);
   for (const [mode, name] of [['city', 'shahar'], ['walk', 'piyoda'], ['drive', 'mashina']]) {
     await page.evaluate((m) => {
-      if (m === 'walk') Object.assign(window.__city, { view: { x: -54, z: -168, yaw: 0.4, height: 40 }, flight: null });
+      if (m === 'walk') Object.assign(window.__city, { view: { x: -63, z: -330, yaw: 0.5, height: 40 }, flight: null });
       window.__setMode(m);
     }, mode);
     await page.waitForTimeout(2200);

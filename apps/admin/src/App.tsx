@@ -28,7 +28,7 @@ function Login({ onDone }: { readonly onDone: () => void }): React.JSX.Element {
   };
   return (
     <div className="login"><form onSubmit={submit}>
-      <h2>Shahar admin</h2>
+      <h2>CityLand UZ — admin</h2>
       <input className="input" value={login} onChange={(e) => setLogin(e.target.value)} placeholder="Login" aria-label="Login" autoComplete="username" required />
       <input className="input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Parol" aria-label="Parol" autoComplete="current-password" required />
       <Btn kind="main" type="submit" disabled={isBusy}>Kirish</Btn>
@@ -78,7 +78,7 @@ export function App(): React.JSX.Element {
       {me && current && View && (
         <div className="app">
           <nav className="side" aria-label="Bo'limlar">
-            <h1>Shahar admin</h1>
+            <h1>CityLand UZ — admin</h1>
             {allowed.map(([id, title]) => <button type="button" key={id} aria-current={id === current[0] ? 'page' : undefined} onClick={() => go(id)}>{title}</button>)}
             <button type="button" onClick={() => void supabase.auth.signOut().then(() => setMe(null))}>Chiqish ({me.login})</button>
           </nav>

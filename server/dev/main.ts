@@ -61,7 +61,7 @@ const http = createServer((req, res) => {
 attachRealtime(http, backend, ['*'], (e) => logError('realtime', e));
 
 if (isFresh) {
-  const user = await backend.createUser(`${ADMIN.login}@login.obunachilar-shahri.uz`, ADMIN.password);
+  const user = await backend.createUser(`${ADMIN.login}@login.citylanduz.uz`, ADMIN.password);
   await backend.rpc('svc_profile_create', { p_user: user.id, p_login: ADMIN.login });
   await db.query("update profiles set role = 'admin', coins = 50000 where user_id = $1", [user.id]);
   if (process.env.NO_DEMO !== '1') await seedDemo(db);

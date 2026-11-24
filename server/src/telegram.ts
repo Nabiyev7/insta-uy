@@ -32,7 +32,7 @@ type Update = z.infer<typeof updateSchema>;
 type Message = NonNullable<Update['message']>;
 
 const HELP = [
-  '🏘 Obunachilar shahri boti',
+  '🏘 CityLand UZ boti',
   '/parol — parolni tiklash kodi',
   '/yordam — savol yuborish: "/yordam matn"',
   'Вопрос в поддержку: /yordam ваш текст',

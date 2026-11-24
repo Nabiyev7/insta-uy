@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
-import { CITY_HALF, decodePlan, footprint, inLake, SpatialIndex, type EncodedPlan } from '../../../packages/shared/src/index.ts';
+import { CITY_HALF, decodePlan, footprint, inLake, inTilted, SpatialIndex, type EncodedPlan } from '../../../packages/shared/src/index.ts';
 import { MIN_HEIGHT, START_VIEW, cityPose, clampView, flightAt, framed, inWedge, metersPerPixel, pan, pitchOf, rotate, startFlight, viewOfPlot, wedgeOf, zoom } from '../src/logic/cityCamera.ts';
 import { ANIM_CAR, CARS, animOfCar, carById, carOfAnim, ownedCars, plotSolid, roadSpot, stepCar, treeSolid, type CarState } from '../src/logic/drive.ts';
-import { closedDistrictItems, commerceItem, type HouseState } from '../src/logic/placement.ts';
+import { commerceItem, type HouseState } from '../src/logic/placement.ts';
+import { closedDistrictItems } from '../src/logic/streets.ts';
 import { item } from '../src/logic/item.ts';
 import { QUALITY } from '../src/logic/quality.ts';
 import { cityView, distanceFrom, groundView } from '../src/logic/view.ts';
@@ -67,13 +68,13 @@ describe('nima chiziladi', () => {
   const houses = new Map(plan.plots.filter((p) => p.districtId <= 4).map((p): [string, HouseState] => [p.id, { plot: p.id, nick: 'ali', tier: 3, wall: 0, roof: 0, decor: [], material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false }]));
   const index = worldIndex(plan);
   const src = (): CollectSource => ({
-    plots: index.plots, statics: index.statics, extras: new SpatialIndex(closedDistrictItems(plan.districts[6]!.rect, 7)), commerce: new SpatialIndex(plan.commerce.map(commerceItem)),
+    plots: index.plots, statics: index.statics, extras: new SpatialIndex(closedDistrictItems(plan, 7)), commerce: new SpatialIndex(plan.commerce.map(commerceItem)),
     plan, houses, open: new Set([1, 2, 3, 4]), full: new Map(), simple: new Map(),
   });
   const isFull = (m: string): boolean => /^house\d+$/.test(m);
 
   test('piyoda: yaqin uy to‘liq, uzoqdagi sodda, yorliqlar chegaralangan', () => {
-    const v = groundView({ x: -29, z: -175, yaw: Math.PI, quality: QUALITY.low, boost: 1, isVideo: false });
+    const v = groundView({ x: -70, z: -260, yaw: Math.PI, quality: QUALITY.low, boost: 1, isVideo: false });
     const { items, labels } = collect(v, src(), QUALITY.low.labels);
     expect(items.some((i) => isFull(i.model))).toBe(true);
     expect(items.some((i) => i.model === 'house3_lod')).toBe(true);
@@ -147,14 +148,14 @@ describe('mashina', () => {
     expect(treeSolid(item('tree_chinor', 1, 2))).toMatchObject({ x: 1, z: 2 });
     expect(treeSolid(item('bench', 1, 2))).toBeNull();
     expect(carSolids(plan, p.x, p.z).length).toBeGreaterThan(4);
-    expect(walkSolids(plan, new Map(), 0, 0, []).length).toBeGreaterThan(3);
-    const lake = drive({ x: 750, z: 900, yaw: 0, speed: 10 }, { gas: 1, steer: 0, isBraking: false }, 10);
+    expect(walkSolids(plan, new Map(), 0, 0, []).length).toBeGreaterThanOrEqual(1);
+    const lake = drive({ x: 1220, z: 1020, yaw: 0, speed: 10 }, { gas: 1, steer: 0, isBraking: false }, 10);
     expect(inLake(lake.x, lake.z)).toBe(false);
   });
   test('mashina eng yaqin yo‘lda paydo bo‘ladi', () => {
-    for (const [x, z] of [[-29, -145], [0, 0], [750, 1125], [1150, -1150]] as const) {
+    for (const [x, z] of [[-29, -145], [0, 0], [460, 460], [1220, 1030], [-1150, -1150]] as const) {
       const s = roadSpot(plan.roads, x, z);
-      expect(plan.roads.some((r) => Math.abs(s.x - r.x) <= r.w / 2 && Math.abs(s.z - r.z) <= r.d / 2)).toBe(true);
+      expect(plan.roads.some((r) => inTilted(r, s.x, s.z))).toBe(true);
     }
     expect(roadSpot([], 5, 6)).toEqual({ x: 5, z: 6, yaw: 0, speed: 0 });
   });

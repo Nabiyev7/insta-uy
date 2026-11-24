@@ -1,5 +1,5 @@
 /** Katta xarita: shahar bir marta chiziladi, ustiga nomlar va o'yinchilar qo'yiladi. */
-import { CITY_HALF, HILL, HILL_EDGE, LAKE, PLAZA_HALF, rotatedSize } from '../../../../packages/shared/src/index.ts';
+import { CENTER_BOXES, CITY_HALF, CIVIC, HILL, LAKE, PLAZA_R, RIVER, SITES, ZONES, civicRect, rotatedSize, type ZoneId } from '../../../../packages/shared/src/index.ts';
 import { here, remotes } from '../app/runtime.ts';
 import { getApp } from '../app/store.ts';
 
@@ -8,7 +8,8 @@ const SPAN = (CITY_HALF + 50) * 2;
 export const toMap = (v: number): number => ((v + SPAN / 2) / SPAN) * MAP_SIZE;
 export const fromMap = (v: number): number => (v / MAP_SIZE) * SPAN - SPAN / 2;
 
-const TIER_COLORS = ['#a9763f', '#a9763f', '#ad6d38', '#b5632f', '#b5562f', '#b5452f', '#a2394a', '#8f3fa0', '#7a35b0', '#d39b1f', '#f0b90b'];
+const TIER_COLORS = ['#e08a6d', '#e08a6d', '#de7c5e', '#d9604a', '#b5562f', '#b5452f', '#a2394a', '#8f3fa0', '#7a35b0', '#d39b1f', '#f0b90b'];
+const ZONE_COLORS: readonly (readonly [ZoneId, string])[] = [['bulvar', '#7fc25a'], ['bulvarKichik', '#7fc25a'], ['mamuriy', '#f7c6bd'], ['biznes', '#bcd6f2'], ['savdo', '#e4c8ee'], ['dam', '#93d06f']];
 let cache: { key: unknown; canvas: HTMLCanvasElement } | null = null;
 
 const paint = (): HTMLCanvasElement => {
@@ -20,26 +21,40 @@ const paint = (): HTMLCanvasElement => {
   if (!g || !s.plan) return c;
   const k = MAP_SIZE / SPAN;
   const rect = (x: number, z: number, w: number, d: number): void => g.fillRect(toMap(x - w / 2), toMap(z - d / 2), w * k, d * k);
-  g.fillStyle = '#b9cf9c';
+  g.fillStyle = '#a5d283';
   g.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+  const box = ([x0, z0, x1, z1]: readonly [number, number, number, number]): void => g.fillRect(toMap(x0), toMap(z0), (x1 - x0) * k, (z1 - z0) * k);
+  const disc = (x: number, z: number, r: number): void => { g.beginPath(); g.arc(toMap(x), toMap(z), r * k, 0, Math.PI * 2); g.fill(); };
   const open = new Set(s.boot?.districts.filter((d) => d.open).map((d) => d.id));
   for (const d of s.plan.districts) {
-    g.fillStyle = open.has(d.id) ? '#dfe6bd' : '#d3c3a3';
-    g.fillRect(toMap(d.rect[0]), toMap(d.rect[1]), (d.rect[2] - d.rect[0]) * k, (d.rect[3] - d.rect[1]) * k);
+    g.fillStyle = open.has(d.id) ? '#d7edbf' : '#c3dfa8';
+    d.rects.forEach(box);
   }
   const hill = g.createRadialGradient(toMap(HILL.x), toMap(HILL.z), 4, toMap(HILL.x), toMap(HILL.z), HILL.sigma * 1.65 * k);
-  hill.addColorStop(0, 'rgba(120,100,60,0.55)');
+  hill.addColorStop(0, 'rgba(120,100,60,0.45)');
   hill.addColorStop(1, 'rgba(120,100,60,0)');
   g.fillStyle = hill;
-  g.fillRect(toMap(HILL_EDGE), toMap(-CITY_HALF), (CITY_HALF - HILL_EDGE) * k, (CITY_HALF - HILL_EDGE) * k);
-  g.fillStyle = '#efe4cf';
-  rect(0, 0, PLAZA_HALF * 2, PLAZA_HALF * 2);
-  g.fillStyle = '#7f8488';
-  for (const r of s.plan.roads) rect(r.x, r.z, r.w, r.d);
-  g.fillStyle = '#4fa9c2';
+  box(ZONES.tepalik.rect);
+  for (const [id, color] of ZONE_COLORS) { g.fillStyle = color; box(ZONES[id].rect); }
+  g.fillStyle = '#f6d67a';
+  [...Object.values(SITES), ...CENTER_BOXES].forEach(box);
+  g.strokeStyle = '#b9dfa0';
+  g.lineWidth = RIVER.half * 2 * k;
   g.beginPath();
-  g.ellipse(toMap(LAKE.x), toMap(LAKE.z), LAKE.rx * k, LAKE.rz * k, 0, 0, Math.PI * 2);
-  g.fill();
+  RIVER.points.forEach(([x, z], i) => { if (i) g.lineTo(toMap(x), toMap(z)); else g.moveTo(toMap(x), toMap(z)); });
+  g.stroke();
+  g.fillStyle = '#f6efe0';
+  disc(0, 0, PLAZA_R);
+  for (const r of s.plan.roads) {
+    g.save();
+    g.translate(toMap(r.x), toMap(r.z));
+    g.rotate(r.angle ?? 0);
+    g.fillStyle = r.kind === 'kocha' ? '#ffffff' : '#8b8f97';
+    g.fillRect((-r.w / 2) * k, (-r.d / 2) * k, r.w * k, r.d * k);
+    g.restore();
+  }
+  g.fillStyle = '#6dbfe6';
+  disc(LAKE.x, LAKE.z, LAKE.rx);
   for (const p of s.plan.plots) {
     const h = s.houses.get(p.id);
     if (!h || p.type === 'kvartira') continue;
@@ -51,6 +66,8 @@ const paint = (): HTMLCanvasElement => {
   for (const b of s.plan.buildings) rect(b.x, b.z, 44, 16);
   g.fillStyle = '#14545f';
   for (const q of s.plan.commerce) if (q.type !== 'bilbord') rect(q.x, q.z, q.w * 0.7, q.d * 0.7);
+  g.fillStyle = '#b5483a';
+  for (const q of CIVIC) { const r = civicRect(q); rect(r.x, r.z, r.hx * 2, r.hz * 2); }
   g.fillStyle = '#2f9fb5';
   g.beginPath();
   g.arc(toMap(0), toMap(0), 6, 0, Math.PI * 2);
@@ -85,11 +102,11 @@ export const drawBigMap = (canvas: HTMLCanvasElement): void => {
   g.font = '600 25px "Unbounded Variable", system-ui';
   g.textAlign = 'center';
   for (const d of s.boot?.districts ?? []) {
-    const r = s.plan?.districts.find((x) => x.id === d.id)?.rect;
-    if (!r) continue;
+    const at = s.plan?.districts.find((x) => x.id === d.id)?.label;
+    if (!at) continue;
     const name = (s.lang === 'uz' ? d.name_uz : d.name_ru).replace(/ mahallasi|Махалля /, '');
-    const x = toMap((r[0] + r[2]) / 2);
-    const y = toMap((r[1] + r[3]) / 2);
+    const x = toMap(at[0]);
+    const y = toMap(at[1]);
     g.lineWidth = 6;
     g.strokeStyle = 'rgba(255,252,244,0.9)';
     g.strokeText(d.open ? name : `🚧 ${name}`, x, y);

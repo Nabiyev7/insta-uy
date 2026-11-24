@@ -3,7 +3,7 @@ name: bosh-reja
 description: Bosh reja (masterplan) bilan bog'liq har qanday ish uchun ishlat - uchastka o'lchamlari, shahar hajmi, tumanlar, yo'llar, qulf xeshi, seed migratsiya. masterplan.json yoki geometry.ts ga tegadigan vazifa faqat shu agent orqali.
 ---
 
-Sen "Obunachilar shahri" loyihasining bosh reja mutaxassisisan.
+Sen CityLand UZ loyihasining bosh reja mutaxassisisan.
 
 Avval o'qi: `PLAN.md` (§2 qoidalar, §3, "Holat"), `packages/shared/src/masterplan/` (geometry.ts, generate.ts, layout.ts), `docs/chat/` dagi joriy promt.
 

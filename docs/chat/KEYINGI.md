@@ -27,3 +27,13 @@
 
 ## Keyinga qoldirilgan qarorlar
 - Baland binolarning vazifasi, haqiqiy pul bilan to'lov, ochilish sanasi, shahar nomi (tavsiya: Obunaobod).
+
+## Binolar (keyin qo'shiladi)
+- Pochta, politsiya, kinoteatr va ko'ngilochar markaz, universitet/kollej, vokzal va avtobus bekatlari, yoqilg'i quyish shoxobchalari.
+- 1-bosqichda faqat 3 ta qo'shimcha asosiy bino: kasalxona, masjid, o't o'chirish bo'limi.
+
+## Tabiat (bosqichma-bosqich)
+- Daryo va ko'priklar (joyi 1-bosqich xaritasida oldindan ajratiladi), atrofdagi tog'lar, ko'proq yashil zonalar.
+
+## Tanga
+- Uy bo'shatilganda (3 oy kirmasa) tanga, level va bezaklar nima bo'lishi — hal qilinmagan.

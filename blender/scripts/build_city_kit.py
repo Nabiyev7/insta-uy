@@ -8,12 +8,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
 
 from kit_center import all_center  # noqa: E402
+from kit_city import city_models, new_buildings  # noqa: E402
 from kit_decor import all_decor  # noqa: E402
 from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
 from kit_props import all_props  # noqa: E402
 
-# Hovli 25x34 m, uy markazi orqaga 7.5 m surilgan: 1–6 level o'z o'lchamida, 7–10 esa 1.2 baravar turadi.
+# Hovli 24x34 m, uy markazi orqaga 7.5 m surilgan: 1–6 level o'z o'lchamida, 7–10 esa 1.2 baravar turadi.
 LOW_SIZE = {'x': 10.5, 'front': 11.0, 'back': 8.5}
 HIGH_SIZE = {'x': 7.7, 'front': 8.0, 'back': 6.7}
 LOW_LEVELS = 6
@@ -57,10 +58,15 @@ def main():
     center = all_center()
     for model in center:
         check_center(model)
+    city = city_models()
+    limited = {b.name for b in new_buildings()}
+    for model in city:
+        if model.name in limited:
+            check_center(model)
     decor = all_decor()
     for model in decor:
         check_decor(model)
-    for model in levels + all_buildings() + center + all_props() + decor:
+    for model in levels + all_buildings() + center + city + all_props() + decor:
         obj = model.build()
         tris = sum(len(p.vertices) - 2 for p in obj.data.polygons)
         total += tris

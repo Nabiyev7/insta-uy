@@ -93,7 +93,7 @@ describe('bepul uy', () => {
     await expect(as(u2, 'my_claim', { p_plot: plot, p_instagram: 'vali_1' })).rejects.toThrow('not_free');
     await expect(as(u2, 'my_claim', { p_plot: await freePlot(), p_instagram: 'ALI_01' })).rejects.toThrow('nick_taken');
     await expect(as(u2, 'my_claim', { p_plot: await freePlot(5), p_instagram: 'vali_1' })).rejects.toThrow('district_closed');
-    await expect(as(u2, 'my_claim', { p_plot: await freePlot(11, 'villa'), p_instagram: 'vali_1' })).rejects.toThrow('paid_only');
+    await expect(as(u2, 'my_claim', { p_plot: await freePlot(10, 'villa'), p_instagram: 'vali_1' })).rejects.toThrow('paid_only');
     await expect(as(u2, 'my_claim', { p_plot: await freePlot(), p_instagram: 'suka_1' })).rejects.toThrow('banned_word');
     await expect(as(u2, 'my_claim', { p_plot: await freePlot(), p_instagram: 'vali_1', p_bio: 'www.spam.uz' })).rejects.toThrow('bad_format');
     await expect(as(u2, 'my_claim', { p_plot: 'P9999', p_instagram: 'vali_1' })).rejects.toThrow('not_found');
@@ -228,6 +228,8 @@ describe('buyurtma va to‘lov', () => {
     expect(await anon('api_boot')).toMatchObject({ streets: { 1: "Bog'ishamol" } });
     expect(((await as(a, 'admin_videos')) as Row[])[0]).toMatchObject({ kind: 'street', status: 'queued' });
     const bb = (await sql("select id from commerce where type = 'bilbord' limit 1"))[0]!.id as string;
+    await expect(as(uid, 'my_order', { p_kind: 'commerce', p_payload: { id: bb } })).rejects.toThrow('not_for_sale');
+    await set('commerce_closed', []);
     expect(await pay('commerce', { id: bb })).toBe('paid');
     await expect(as(uid, 'my_commerce_edit', { p_id: bb, p_title: 'Reklama', p_link: 'javascript:alert(1)', p_image: '' })).rejects.toThrow('bad_format');
     await expect(as(uid, 'my_commerce_edit', { p_id: bb, p_title: 'Reklama', p_link: '', p_image: `ads/${randomUUID()}/aaaaaaaa.webp` })).rejects.toThrow('bad_format');

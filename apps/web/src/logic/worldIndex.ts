@@ -1,9 +1,10 @@
 /** Bosh rejaning fazoviy indekslari va to'siqlar — bir marta quriladi, hamma qatlam ishlatadi. */
-import { PLAZA_HALF, SpatialIndex, type Commerce, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
+import { SpatialIndex, type Commerce, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
 import { plotSolid, treeSolid } from './drive.ts';
 import type { Item, Solid } from './item.ts';
-import { buildingSolid, commerceSolid, houseSolid, staticItems, type HouseState } from './placement.ts';
-import { PLAZA_SOLIDS } from './plaza.ts';
+import { PUBLIC_SOLIDS } from './landscape.ts';
+import { buildingSolid, commerceSolid, houseSolid, type HouseState } from './placement.ts';
+import { staticItems } from './streets.ts';
 
 export interface WorldIndex { readonly plots: SpatialIndex<Plot>; readonly commerce: SpatialIndex<Commerce>; readonly statics: SpatialIndex<Item> }
 const cache = new WeakMap<MasterPlan, WorldIndex>();
@@ -21,13 +22,14 @@ export const worldIndex = (plan: MasterPlan): WorldIndex => {
 };
 
 const BUILDING_REACH = 40;
-const PLAZA_REACH = PLAZA_HALF + 6;
+const PUBLIC_REACH = 70;
+const publicIndex = new SpatialIndex(PUBLIC_SOLIDS);
 const isSolid = (s: Solid | null): s is Solid => s !== null;
 
 const sharedSolids = (plan: MasterPlan, x: number, z: number): Solid[] => [
   ...plan.buildings.filter((b) => Math.abs(b.x - x) < BUILDING_REACH && Math.abs(b.z - z) < BUILDING_REACH).map(buildingSolid),
   ...worldIndex(plan).commerce.query(x, z, BUILDING_REACH).map(commerceSolid).filter(isSolid),
-  ...(Math.abs(x) < PLAZA_REACH && Math.abs(z) < PLAZA_REACH ? PLAZA_SOLIDS : []),
+  ...publicIndex.query(x, z, PUBLIC_REACH),
 ];
 /** Piyoda uchun: uylar, binolar, maydon. */
 export const walkSolids = (plan: MasterPlan, houses: ReadonlyMap<string, HouseState>, x: number, z: number, near: readonly Plot[]): Solid[] => [

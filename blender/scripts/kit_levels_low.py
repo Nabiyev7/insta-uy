@@ -1,11 +1,12 @@
-"""1–6 levellar: 25×34 m hovliga mo'ljallangan, bo'yiga o'smaydigan bir qavatli uylar. Oltin rang yo'q (u 7-leveldan)."""
+"""4–6 levellar (1–3 — kit_first.py): 25×34 m hovliga mo'ljallangan, bo'yiga o'smaydigan bir qavatli uylar. Oltin rang yo'q (u 7-leveldan)."""
 from kit_core import BRICK, M_GLOW, M_ROOF, M_WALL, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model
-from kit_houses import TRIM, ayvon, house1, house2, house3, moulding, walls
+from kit_first import first_levels
+from kit_houses import TRIM, house2, house3, moulding, walls
 
 COPPER = '#b0623a'
 LAMP = '#ffe2a0'
-SHUTTER = '#2f6f72'
-SHUTTER_RED = '#7a3b2a'
+SHUTTER = '#5e8fa8'
+SHUTTER_RED = '#5e8fa8'
 SCALE = 1.2  # eski uylardan shuncha keng
 
 
@@ -63,48 +64,6 @@ def hood(m: Model, y: float, lo: float, hi: float, z: float) -> None:
     m.box(lo - 0.18, y - 0.18, z, hi + 0.18, y, z + 0.18, WOOD, '#b98a5c', bottom=True)
 
 
-def small_house(name: str) -> Model:
-    """1- va 2-level asosi: nishab tomli uy, ayvoni bilan."""
-    m = house1(name)
-    m.stretch(SCALE, SCALE)
-    side_windows(m, 4.8, (2.0,), 1.3, 1.1, 2.4)
-    for x in (-3.7, 2.1):
-        m.window('b', 4.08, x, x + 1.4, 1.1, 2.4)
-    steps(m, -3.7, -2.1, -5.28, 0.35, 2)
-    shutters(m, -3.12, 1.8, 3.72, 1.1, 2.4)
-    return m
-
-
-def level1() -> Model:
-    m = small_house('house1')
-    lantern(m, -1.9, -3.12, 2.1)
-    # o'tin uyumi va suv bochkasi
-    for i, z in ((0, 0), (1, 0), (2, 0), (0.5, 0.26), (1.5, 0.26)):
-        m.box(4.9, 0.2 + i * 0.3, z, 5.7, 0.46 + i * 0.3, z + 0.26, WOOD, '#8a6238')
-    m.cyl(4.2, -3.7, 0, 0.9, 0.36, 0.36, 8, WOOD, '#5f7f8a')
-    return m
-
-
-def level2() -> Model:
-    m = small_house('house2')
-    # old qanot: tepadan qaraganda L shakl
-    walls(m, 1.1, -6.4, 4.8, -3.0, 3.05)
-    m.hip(1.1, -6.4, 4.8, -2.0, 3.07, 2.0, 0.5)
-    m.window('f', -6.4, 2.1, 3.8, 1.0, 2.45)
-    shutters(m, -6.4, 2.1, 3.8, 1.0, 2.45)
-    hood(m, -6.4, 2.1, 3.8, 2.5)
-    m.window('r', 4.8, -5.6, -4.2, 1.1, 2.4)
-    side_room(m, 1, 4.8, -0.9, 3.4, 1.1)
-    side_room(m, -1, 4.8, -0.2, 3.4, 1.0)
-    moulding(m, -4.8, 1.1, -5.32, 3.0, 0.3)
-    m.cbox(-2.6, 1.8, 3.7, 0.7, 0.7, 1.6, BRICK)
-    for x in (-4.2, 0.2):
-        planter(m, x, -5.75, 0, 0.9)
-    lantern(m, -1.9, -3.12, 2.1)
-    lantern(m, 1.5, -6.4, 2.2)
-    return m
-
-
 def courtyard_house(name: str) -> Model:
     """3- va 4-level asosi: katta qanotli, to'rt nishab tomli uy."""
     m = house2(name)
@@ -114,15 +73,6 @@ def courtyard_house(name: str) -> Model:
     steps(m, -2.5, -0.9, -4.32, 0.35, 2)
     shutters(m, -6.0, 3.24, 5.52, 1.0, 2.6)
     m.cbox(4.6, 2.6, 4.2, 0.7, 0.7, 1.6, BRICK)
-    return m
-
-
-def level3() -> Model:
-    m = courtyard_house('house3')
-    hood(m, -6.0, 3.24, 5.52, 2.64)
-    for x in (-5.2, 0.8):
-        planter(m, x, -4.75, 0, 0.9)
-    lantern(m, -0.6, -1.8, 2.2)
     return m
 
 
@@ -207,4 +157,4 @@ def level6() -> Model:
 
 
 def low_levels() -> list[Model]:
-    return [level1(), level2(), level3(), level4(), level5(), level6()]
+    return [*first_levels(), level4(), level5(), level6()]

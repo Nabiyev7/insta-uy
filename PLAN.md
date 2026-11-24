@@ -1,4 +1,4 @@
-# PLAN.md — "Obunachilar shahri" (vaqtinchalik nom)
+# PLAN.md — CityLand UZ
 
 > Bu fayl AI agent (Claude Code, Antigravity, Gemini va h.k.) uchun asosiy yo'riqnoma.
 > Ishni boshlashdan oldin to'liq o'qi. Har bir bosqich tugagach, "Holat" bo'limini yangila.
@@ -8,7 +8,7 @@
 
 ## 1. G'oya
 
-Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o'zbek shahri** (veb-sayt).
+Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual shahar** (veb-sayt).
 - Boshida uylar obunachilarga **bepul** tarqatiladi → sahifa o'sadi.
 - Keyin uylar, bezaklar, ko'cha nomlari, bilbordlar **sotiladi**.
 - Ko'proq pul sarflagan odam **bo'yiga emas, hashamat, joy va sifat** bilan ajralib turadi (uyni tepaga qavat qilib qurish YO'Q).
@@ -16,7 +16,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 
 ## 2. Asosiy qoidalar (buzilmasin!)
 
-1. **Bosh reja (master plan) qulflangan.** Butun shahar 5 000 uchastkaga boshidan chiziladi. Uchastka ID, koordinata, ko'cha, tuman — o'zgarmas (DB'da immutable). *(2026-11-24 da, hali hech kim uy olmagan paytda, egasining ruxsati bilan bosh reja bir marta qayta chizildi — v2. Bu bir martalik ruxsat edi.)*
+1. **Bosh reja (master plan) qulflangan.** Butun shahar 5 000 uchastkaga boshidan chiziladi. Uchastka ID, koordinata, ko'cha, tuman — o'zgarmas (DB'da immutable). *(2026-11-24 da, hali hech kim uy olmagan paytda, egasining ruxsati bilan ikki marta qayta chizildi: v2 va v3 (to'rt markaz + yashil bulvar). Har biri bir martalik ruxsat edi; hozir v3 qulflangan.)*
 2. Yangilanishlarda faqat **ko'rinish** o'zgaradi (model, bezak), **joy hech qachon** o'zgarmaydi.
 3. Tumanlar **markazdan tashqariga** ochiladi → birinchi kelganlar doim markazga yaqin qoladi.
 4. Majburiy ko'chirish faqat favqulodda: rozilik + teng/yaxshiroq joy + bonus.
@@ -26,13 +26,13 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 
 ## 3. Shahar (bosh reja)
 
-- Hajm: ~3×3 km, **5 000 uchastka** (hovli 25×34 m, villa 32×44 m, qasr 42×60 m):
+- Hajm: ~3×3 km, **5 000 uchastka** (hovli 24×34 m, villa 30×42 m, qasr 40×56 m):
   - 3 500 oddiy hovli uy, 1 000 ko'p qavatli kvartira, 400 villa, 100 qasr/maxsus
   - + 100–200 do'kon, ofis, bilbord
 - 10–12 tuman (har biri 400–500 uchastka). Start: 1–2 tuman (300–500 uy).
-- Zonalar: markaziy maydon (favvora, baland binolar), mahallalar, ko'p qavatli uylar tumani, ko'l/kanal bo'yida villalar, tepalikda qasrlar, biznes ko'chasi, qurilish maydonlari (yopiq tumanlar — kran, to'siq).
+- Zonalar: o'rtada kichik maydon, undan to'rt tomonga yashil bulvarlar; to'rt markaz — ma'muriy (shimol), biznes (sharq), savdo (janub), dam olish bog'i (g'arb); 8 mahalla markazi, halqa yo'l, 4 diagonal prospekt, ko'l bo'yida villalar, tepalikda qasrlar, kvartiralar, daryo uchun bo'sh yo'lak, qurilish maydonlari (yopiq tumanlar — kran, to'siq). Batafsil: `packages/shared/src/masterplan/zones.ts`, `docs/chat/shahar-reja.png`.
 - Manzil tizimi: "<Ko'cha nomi>, <raqam>-uy". Nomlanmagan ko'cha — "1-ko'cha".
-- Uslub: **real teksturali low-poly, umumiy va universal** (2026-11-24 dan; hech bir hududga bog'lanmaydi) — zamonaviy va klassik uylar, ochiq ranglar, toza shakllar, bog'lar; uzoqda tog'lar. Milliy narsalar (so'ri, tandir, tok) faqat do'kondagi ixtiyoriy bezaklarning bir qismi.
+- Uslub: **yorug', toza, stilize** (2026-11-24, 1-bosqich): deyarli teksturasiz tekis ranglar, qirralari yumaloqroq, yumaloq daraxtlar; kunduzi oq-iliq quyosh, tun qisqa va ochiq. Umumiy va universal — hech bir hududga bog'lanmaydi; uzoqda tog'lar. Milliy narsalar (so'ri, tandir, tok) faqat do'kondagi ixtiyoriy bezaklarning bir qismi.
 - Kun/tun sikli. Tunda hashamatli uylar yoritiladi.
 
 ## 4. Funksiyalar — versiyalar bo'yicha
@@ -59,7 +59,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 ### v2 — +4–6 hafta
 - Pullik uylar va uchastkalar (joy qiymati: markaz, ko'l bo'yi, tepalik qimmat)
 - To'lov tizimi (§8)
-- Uy levellari (10 ta, har biri oldingisidan kuchli): 1 kichik uy → 2 ayvonli uy → 3 hovli → 4 naqshli hovli → 5 katta hovli → 6 boy hovli → 7 villa → 8 hashamatli villa → 9 qasr → 10 shoh saroyi. Level bilan panjara, darvoza, bog' va tungi yoritish ham kuchayadi; villa uchastkasi 7 dan, qasr 9 dan boshlanadi; tangaga 5 gacha
+- Uy levellari (10 ta, har biri oldingisidan kuchli): 1 kichik uy → 2 shinam uy → 3 hovli uy → 4 bezakli uy → 5 katta uy → 6 boy uy → 7 villa → 8 hashamatli villa → 9 qasr → 10 saroy. Level bilan panjara, darvoza, bog' va tungi yoritish ham kuchayadi; villa uchastkasi 7 dan, qasr 9 dan boshlanadi; tangaga hozircha 3 gacha
 - Bezaklar: bog', daraxt, hovuz, so'ri, darvoza, panjara, yo'lak, mashina/garaj, tungi yoritish, uy hayvoni
 - Nik yorlig'i: oddiy / kumush / oltin; nishonlar ("Shahar asoschisi", "Homiy", "Investor")
 - Qo'shni bo'sh uchastkani olib hovlini kengaytirish (faqat oldindan belgilangan joylarda)
@@ -185,15 +185,15 @@ Texnologiya: **Remotion** yoki headless brauzer (Playwright) bilan 3D sahnani yo
 
 ## 14. Hali hal qilinmagan
 
-- [ ] Shahar nomi (variantlar: Obunachiobod, Hovli, Mahalla.uz, Yangi Shahar, Phantom City, Do'stlar shahri, Orzu shahar)
-- [ ] Yakuniy vizual uslub tasdig'i
+- [x] Shahar nomi: **CityLand UZ** (Telegram va Instagram: `citylanduz`)
+- [ ] Yakuniy vizual uslub tasdig'i (1-bosqich uslubi tayyor, egasi ko'rib chiqadi)
 - [ ] To'lov usuli (A yoki B)
 - [ ] Horizo Tour binosi kerakmi (keyin ko'riladi)
 
 ## 15. Papka tuzilishi (taklif)
 
 ```
-obunachilar-shahri/
+cityland-uz/
 ├─ PLAN.md
 ├─ apps/
 │  ├─ web/          # 3D sayt (React + R3F)
@@ -241,12 +241,13 @@ obunachilar-shahri/
 - [x] v1 kodi (lokal sinovdan o'tgan)
 - [x] v2 kodi (lokal sinovdan o'tgan; to'lov sukut bo'yicha o'chiq)
 - [x] v3 kodi (lokal sinovdan o'tgan; saylov sukut bo'yicha o'chiq)
-- [x] Bosh reja v2 (2026-11-24): katta hovlilar, shahar 3×3 km, uylar o'z uchastkasida 1–10 level; `0010_masterplan_v2.sql`
-- [x] Markaz, 1-bosqich (2026-11-24): prezident saroyi, hokimiyat, sud, 12 burchak minorasi (sotilmaydi); `packages/shared/src/center.ts`, `apps/web/src/logic/plaza.ts`, `0012_center.sql`
+- [x] Bosh reja v2 (2026-11-24): katta hovlilar, shahar 3×3 km, uylar o'z uchastkasida 1–10 level; keyin v3 bilan almashdi
+- [x] Davlat binolari va 12 minora (2026-11-24); v3 dan keyin joylari: `packages/shared/src/center.ts`, jamoat joylari `apps/web/src/logic/landscape.ts`, `0012_center.sql`
 - [x] Harakat va ekran (2026-11-24): Shahar / Piyoda / Mashina rejimlari, pastki panel, uch bo'limli chat (`0013_chat.sql`); `npm run screens`
 - [x] Bezaklar tizimi (2026-11-24): katalog bazada va adminda, 24 joy nuqtasi, level bo'yicha 3–20 joy, devor materiali/ramka/eshik rangi, nik lavhasi; `0014_decor.sql`, `packages/shared/src/anchors.ts`
 - [x] Umumiy uslub (2026-11-24): uylar, saroylar, davlat binolari klassik/zamonaviy; ekranni tozalash, akkauntni o'chirish
 - [x] Yangi bezaklar va sotuv (2026-11-24): 26 model (`kit_decor.py`), noyob raqamlar, to'plamlar, sinab ko'rish, sovg'a, yangilik xabari, haftaning hovlisi; `0015_shop.sql`
+- [x] **1-bosqich: shaharni qurish, CityLand UZ (2026-11-24)** — egasi "Qulfni ochishga ruxsat beraman" dedi; bosh reja v3 chizildi va yana qulflandi (to'rt markaz + yashil bulvar, halqa va diagonal yo'llar, daryo yo'lagi bo'sh, 8 mahalla markazi); `0010_masterplan_v3.sql`. Yorug' uslub, 1–3-level yangi uylar (`kit_first.py`), kasalxona, masjid, o't o'chirish, teatr, univermag, bozor (`kit_city.py`). Tijorat joylarining hammasi sotuvdan olingan
 - [x] 10 level tizimi (2026-11-23): modellar `blender/scripts/kit_levels.py`, baza `0009_levels.sql`, ko'rish `npm run showcase`
 - [ ] Internetga chiqarish (Supabase, Cloudflare, Telegram bot akkauntlari kerak)
 - [ ] Haqiqiy xizmatlar bilan sinash: Telegram bot, Payme/Click sandbox, bank xabari, ElevenLabs, Meta API, Turnstile, Sentry
@@ -254,7 +255,7 @@ obunachilar-shahri/
 
 Rejadan farqlar (sababi bilan):
 - Video: Remotion o'rniga Playwright + ffmpeg (§7 ikkalasiga ruxsat bergan).
-- KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~1 MB, Pages'ning o'zi yetadi.
+- KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~1,8 MB, Pages'ning o'zi yetadi.
 - Ko'p o'yinchi: Socket.io. Musiqa va tabiat ovozi sintez qilinadi (litsenziya masalasi yo'q).
 - Ko'cha/panjara kabi protsedural qismlar koddan, modellar Blender skriptidan (`npm run models`); Blender MCP kerak bo'lmadi.
 - `TURNSTILE_SECRET` ishlab chiqarishda majburiy (soxta akkauntlarga qarshi).

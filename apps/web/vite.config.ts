@@ -27,7 +27,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Obunachilar shahri', short_name: 'Shahar', lang: 'uz', display: 'fullscreen', orientation: 'any', background_color: '#14545f', theme_color: '#14545f',
+        name: 'CityLand UZ', short_name: 'CityLand UZ', lang: 'uz', display: 'fullscreen', orientation: 'any', background_color: '#14545f', theme_color: '#14545f',
         icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }],
       },
       // Faqat xeshli fayllar (nom-XXXXXXXX.js) qayta tekshirilmaydi; glb/webp/json har nashrda yangilanadi.

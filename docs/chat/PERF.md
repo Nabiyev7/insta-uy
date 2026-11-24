@@ -34,3 +34,9 @@ shahar: bezaksiz 351 FPS / 67 call / 74 ming → 20 bezak 265 FPS / 71 call / 69
 ## 5-qadamdan keyin: 50 ta 10-level uy (past sifat, CPU 6 baravar sekin)
 piyoda: bezaksiz 333 FPS / 43 call → 20 bezak 293 FPS / 54 call / 37 ming; shahar: bezaksiz 302 / 64 call → 20 bezak 311 / 81 call / 62 ming
 Modellar fayli: 954 KB (boshida) → 983 (1-qadam) → 1121 (2-qadam) → 1293 KB (5-qadam).
+
+## 8-qadamdan keyin: yangi shahar va uslub (bir kompyuterda ketma-ket, CPU ÷6; oldin → keyin)
+low: piyoda 361 → 362 FPS (14,8 → 22,3 ming uchburchak), shahar eng baland 176–385 → 387, mashina 149–299 → 338
+mid: piyoda 290 → 291, shahar 152 → 145 (48 → 39 call), mashina 105 → 118
+high: piyoda 165 → 182, shahar 133 → 127, mashina 72 → 69
+O'lchov xatosi ±10%. Draw call kamaydi (mid piyoda 88 → 57). Teksturalar 109 → 4 KB, modellar 1293 → 1822 KB (yumaloq daraxtlar, yangi binolar). Birinchi yuklanish ~2,7 MB (chegara 3–5 MB).
