@@ -1,92 +1,142 @@
-/** Do'kon (bezaklar) va mashina tanlash. */
-import { useEffect } from 'react';
-import type { DecorSlot } from '../../../../packages/shared/src/index.ts';
+/** Do'kon: tablar, rasmli kartochkalar, pastda "Sinab ko'rish" va "Olish". Mashina tanlash oynasi ham shu yerda. */
+import { useEffect, useState } from 'react';
+import { BUZZ, buzz, tryDecor } from '../app/actions.ts';
 import { rpc } from '../app/api.ts';
 import { money, useT, type Key } from '../app/i18n.ts';
 import { car } from '../app/runtime.ts';
-import { tryDecor } from '../app/actions.ts';
-import { openPanel, refreshCatalog, refreshProfile, setting, toast, useApp, write } from '../app/store.ts';
+import { openAuth, openPanel, openRoot, refreshCatalog, refreshProfile, setting, toast, useApp, write } from '../app/store.ts';
 import type { CatalogRow, SetRow } from '../logic/decorCatalog.ts';
 import { CARS, ownedCars } from '../logic/drive.ts';
+import { goodState, shopTabs, type ShopTab } from '../logic/shopTabs.ts';
 import { createOrder } from './OrderPanels.tsx';
-import { Section, Sheet, useAction } from './kit.tsx';
+import { Icon } from './icons.tsx';
+import { DecorImage, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
 
-const SECTIONS: readonly (readonly [Key, readonly DecorSlot[]])[] = [
-  ['sGate', ['fence', 'gate', 'path', 'sign']], ['sGarden', ['tree', 'yard', 'water']], ['sCars', ['car']], ['sLight', ['light', 'roof']], ['sPets', ['pet']], ['sSpecial', ['special']],
-];
+const TAB_NAMES: Readonly<Record<ShopTab, Key>> = { new: 'tabNew', yard: 'tabYard', garden: 'tabGarden', car: 'tabCar', luxe: 'tabLuxe', gate: 'tabGate', pet: 'tabPet', set: 'tabSet', special: 'tabSpecial' };
 
-const useBestLevel = (): number => {
+interface BestPlot { readonly level: number; readonly id: string | null }
+/** Eng yuqori levelli hovlim (kvartira hisobga olinmaydi). */
+const useBestPlot = (): BestPlot => {
   const profile = useApp((x) => x.profile);
   const plotById = useApp((x) => x.plotById);
-  return Math.max(0, ...(profile?.plots ?? []).filter((p) => plotById.get(p.plot)?.type !== 'kvartira').map((p) => p.tier));
+  return (profile?.plots ?? []).filter((p) => plotById.get(p.plot)?.type !== 'kvartira').reduce<BestPlot>((best, p) => (p.tier > best.level ? { level: p.tier, id: p.plot } : best), { level: 0, id: null });
 };
+const refreshShop = async (): Promise<void> => { await Promise.all([refreshProfile(), refreshCatalog()]); };
 
-interface GoodsProps { readonly row: CatalogRow; readonly level: number }
-function Goods({ row, level }: GoodsProps): React.JSX.Element {
+function Price({ coins }: { readonly coins: number }): React.JSX.Element {
+  return <span className="cost"><Icon name="coin" />{money(coins)}</span>;
+}
+
+interface GoodProps { readonly row: CatalogRow; readonly level: number; readonly isPicked: boolean; readonly onPick: () => void }
+function Good({ row, level, isPicked, onPick }: GoodProps): React.JSX.Element {
+  const t = useT();
+  const lang = useApp((s) => s.lang);
+  const qty = useApp((s) => s.profile?.decor[row.id] ?? 0);
+  const state = goodState(row, level);
+  const note = { free: '', locked: `${row.min}-${t('atLevel')}`, soldOut: t('soldOut'), seasonOver: t('seasonOver') }[state];
+  return (
+    <button type="button" className={`good ${state}`} aria-label={row[lang]} aria-pressed={isPicked} data-id={row.id} onClick={onPick}>
+      <span className="frame"><DecorImage model={row.model} />{note && <em>{state === 'locked' && <Icon name="lock" />}{note}</em>}</span>
+      {row.isNew && <i className="flag">{t('isNew')}</i>}
+      {qty > 0 && <i className="flag mine">{t('have')}{qty > 1 ? `: ${qty}` : ''}</i>}
+      <b>{row[lang]}</b>
+      <span className="row between"><Price coins={row.coins} />{row.left !== null && row.left > 0 ? <small>{row.left} {t('left')}</small> : row.from && <small>{t('seasonal')}</small>}</span>
+    </button>
+  );
+}
+
+interface SetProps { readonly set: SetRow; readonly rows: readonly CatalogRow[]; readonly level: number; readonly isPicked: boolean; readonly onPick: () => void }
+function SetCard({ set, rows, level, isPicked, onPick }: SetProps): React.JSX.Element {
+  const t = useT();
+  const lang = useApp((s) => s.lang);
+  const need = Math.max(...rows.map((c) => c.min));
+  const full = rows.reduce((n, c) => n + c.coins, 0);
+  const isLocked = need > 1 && level < need;
+  return (
+    <button type="button" className={`good set ${isLocked ? 'locked' : ''}`} aria-label={set[lang]} aria-pressed={isPicked} data-id={set.id} onClick={onPick}>
+      <span className="frame">{rows.map((c) => <DecorImage key={c.id} model={c.model} />)}{isLocked && <em><Icon name="lock" />{need}-{t('atLevel')}</em>}</span>
+      <i className="flag">−{set.discount}%</i>
+      <b>{set[lang]}</b>
+      <small>{rows.map((c) => c[lang]).join(', ')}</small>
+      <span className="row"><s>{money(full)}</s><Price coins={set.coins} /></span>
+    </button>
+  );
+}
+
+/** Tanlangan tovar tugmalari. Kirmagan odam "Olish" ni bossa — kirish oynasi, keyin shu yerga qaytadi. */
+function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPlot }): React.JSX.Element {
   const t = useT();
   const lang = useApp((s) => s.lang);
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
-  const isPaid = setting('payments_enabled', false);
-  const isCoins = setting('coins_enabled', true);
   const qty = profile?.decor[row.id] ?? 0;
-  const isSoldOut = row.left === 0;
-  const isLocked = row.min > 1 && level < row.min;
+  const state = goodState(row, best.level);
+  const yard = best.id;
   const buy = (): void => {
-    if (!profile) { openPanel({ kind: 'auth' }); return; }
-    void run(async () => { await rpc('my_buy_decor_coins', { p_id: row.id }); await Promise.all([refreshProfile(), refreshCatalog()]); }, t('bought'));
+    if (!profile) { openAuth(); return; }
+    void run(async () => {
+      await rpc('my_buy_decor_coins', { p_id: row.id });
+      buzz(BUZZ.coin);
+      await refreshShop();
+    }, t('bought'));
   };
+  const offer = `${t(qty > 0 ? 'getMore' : 'get')} · ${money(row.coins)}`;
+  const label = { free: offer, locked: profile ? `${row.min}-${t('opensAt')}` : offer, soldOut: t('soldOut'), seasonOver: t('seasonOver') }[state];
+  const isClosed = isBusy || state === 'soldOut' || state === 'seasonOver' || (state === 'locked' && profile !== null);
   return (
-    <li className={isLocked ? 'locked' : ''}>
-      <span className="grow"><b>{row[lang]}</b>{row.isNew && <span className="tag clay">{t('isNew')}</span>}{row.from && <span className="tag">{t('seasonal')}</span>}{row.left !== null && <span className="tag gold">{row.left} {t('left')}</span>}<br />
-        <span className="muted">{isLocked ? `🔒 ${row.min}-${t('opensAt')}` : `${isCoins ? `💰 ${row.coins}` : ''}${isPaid ? ` · ${money(row.uzs)} ${t('som')}` : ''}${qty > 0 ? ` · ${t('owned2')}: ${qty}` : ''}`}</span></span>
-      {profile && profile.plots.length > 0 && <button type="button" className="btn small soft" title={t('tryIt')} aria-label={`${row[lang]}: ${t('tryIt')}`} onClick={() => { if (!tryDecor(row)) toast(t('noHouse'), true); }}>👁</button>}
-      {!isLocked && isCoins && <button type="button" className="btn small" disabled={isBusy || isSoldOut} aria-label={`${row[lang]}: ${t('buy')}`} onClick={buy}>{isSoldOut ? t('e_sold_out') : '💰'}</button>}
-      {!isLocked && isPaid && <button type="button" className="btn small clay" disabled={isBusy || isSoldOut} onClick={() => run(() => createOrder('decor', { id: row.id }))}>{t('buy')}</button>}
-    </li>
+    <div className="row two">
+      {qty > 0 && yard
+        ? <button type="button" className="btn soft" onClick={() => openPanel({ kind: 'yard', id: yard })}><Icon name="plus" />{t('putYard')}</button>
+        : <button type="button" className="btn soft" aria-label={`${row[lang]}: ${t('tryIt')}`} onClick={() => { if (!tryDecor(row)) toast(t('noHouse'), true); }}>{t('tryIt')}</button>}
+      {setting('coins_enabled', true) && <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}</button>}
+      {setting('payments_enabled', false) && profile && <button type="button" className="btn gold" disabled={isClosed} onClick={() => run(() => createOrder('decor', { id: row.id }))}>{money(row.uzs)} {t('som')}</button>}
+    </div>
   );
 }
-
-function SetCard({ set, rows, level }: { readonly set: SetRow; readonly rows: readonly CatalogRow[]; readonly level: number }): React.JSX.Element | null {
+function BuySetBar({ set, level, need }: { readonly set: SetRow; readonly level: number; readonly need: number }): React.JSX.Element {
   const t = useT();
   const lang = useApp((s) => s.lang);
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
-  const items = set.items.flatMap((id) => rows.find((c) => c.id === id) ?? []);
-  if (items.length < set.items.length) return null;
-  const full = items.reduce((n, c) => n + c.coins, 0);
-  const need = Math.max(...items.map((c) => c.min));
+  const isLocked = need > 1 && level < need;
   const buy = (): void => {
-    if (!profile) { openPanel({ kind: 'auth' }); return; }
-    void run(async () => { await rpc('my_buy_set_coins', { p_set: set.id }); await Promise.all([refreshProfile(), refreshCatalog()]); }, t('bought'));
+    if (!profile) { openAuth(); return; }
+    void run(async () => { await rpc('my_buy_set_coins', { p_set: set.id }); buzz(BUZZ.coin); await refreshShop(); }, t('bought'));
   };
-  return (
-    <li className={need > 1 && level < need ? 'locked' : ''}>
-      <span className="grow"><b>{set[lang]}</b><span className="tag gold">−{set.discount}%</span><br /><span className="muted">{items.map((c) => c[lang]).join(' + ')}</span><br />{need > 1 && level < need ? <span className="muted">🔒 {need}-{t('opensAt')}</span> : <span className="muted"><s>{full}</s> 💰 {set.coins}</span>}</span>
-      {level >= need && <button type="button" className="btn small" disabled={isBusy} aria-label={`${set[lang]}: ${t('buy')}`} onClick={buy}>💰</button>}
-    </li>
-  );
+  const label = isLocked && profile ? `${need}-${t('opensAt')}` : `${t('get')} · ${money(set.coins)}`;
+  return <button type="button" className="btn block" disabled={isBusy || (isLocked && profile !== null)} aria-label={`${set[lang]}: ${label}`} onClick={buy}>{label}</button>;
 }
+
+/** Kirish yoki boshqa oynadan qaytganda do'kon o'sha joyida ochiladi. */
+const memory: { tab: ShopTab | null; picked: string | null } = { tab: null, picked: null };
 
 export function ShopPanel(): React.JSX.Element {
   const t = useT();
-  const profile = useApp((s) => s.profile);
+  const coins = useApp((s) => s.profile?.coins);
   const catalog = useApp((s) => s.catalog);
-  const level = useBestLevel();
-  useEffect(() => { void refreshCatalog().catch(() => undefined); }, []);
   const sets = useApp((s) => s.sets);
-  const rows = catalog.filter((c) => c.onSale);
-  const fresh = rows.filter((c) => c.isNew);
+  const best = useBestPlot();
+  const [tab, setTab] = useState(memory.tab);
+  const [picked, setPicked] = useState(memory.picked);
+  useEffect(() => { Object.assign(memory, { tab, picked }); }, [tab, picked]);
+  const loaded = useLoad(refreshCatalog, 'catalog');
+  const tabs = shopTabs(catalog, sets);
+  const current = tabs.find((x) => x.tab === tab) ?? tabs[0];
+  const row = current?.rows.find((c) => c.id === picked) ?? current?.rows[0];
+  const set = current?.sets.find((x) => x.id === picked) ?? current?.sets[0];
+  const rowsOf = (x: SetRow): readonly CatalogRow[] => x.items.flatMap((id) => catalog.find((c) => c.id === id) ?? []);
+  const footer = set ? <BuySetBar set={set} level={best.level} need={Math.max(...rowsOf(set).map((c) => c.min))} /> : row && <BuyBar row={row} best={best} />;
+  const wallet = coins !== undefined && <button type="button" className="pill coins flat" aria-label={`${t('coins')}: ${coins}`} onClick={() => openPanel({ kind: 'coins' })}><Icon name="coin" /><b>{money(coins)}</b></button>;
   return (
-    <Sheet title={t('shop')}>
-      {profile && <p className="muted">💰 {profile.coins}</p>}
-      {fresh.length > 0 && <Section title={`✨ ${t('newGoods')}`}><ul className="list">{fresh.map((c) => <Goods key={c.id} row={c} level={level} />)}</ul></Section>}
-      {sets.length > 0 && <Section title={t('sets')}><ul className="list">{sets.map((x) => <SetCard key={x.id} set={x} rows={rows} level={level} />)}</ul></Section>}
-      {SECTIONS.map(([key, slots]) => {
-        const list = rows.filter((c) => slots.includes(c.slot) && !c.isNew);
-        return list.length > 0 && <Section key={key} title={t(key)}><ul className="list">{list.map((c) => <Goods key={c.id} row={c} level={level} />)}</ul></Section>;
-      })}
-      {profile && profile.plots.length > 0 && <button type="button" className="btn soft" onClick={() => openPanel({ kind: 'me' })}>{t('decor')} → {t('myHouse')}</button>}
+    <Sheet title={t('shop')} variant="full" extra={wallet} footer={footer}>
+      <div className="tabs" role="tablist" aria-label={t('shop')}>
+        {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{t(TAB_NAMES[x.tab])}</button>)}
+      </div>
+      {(loaded.hasError || !current) && <LoadState of={loaded} isEmpty={!current} empty={t('shopEmpty')} />}
+      <div className="goods">
+        {current?.rows.map((c) => <Good key={c.id} row={c} level={best.level} isPicked={c.id === row?.id} onPick={() => setPicked(c.id)} />)}
+        {current?.sets.map((x) => <SetCard key={x.id} set={x} rows={rowsOf(x)} level={best.level} isPicked={x.id === set?.id} onPick={() => setPicked(x.id)} />)}
+      </div>
     </Sheet>
   );
 }
@@ -97,20 +147,22 @@ export function CarsPanel(): React.JSX.Element {
   const lang = useApp((s) => s.lang);
   const decor = useApp((s) => s.profile?.decor);
   const mine = new Set(ownedCars(decor).map((c) => c.id));
+  const onSale = new Set(useApp((s) => s.catalog).filter((c) => c.onSale).map((c) => c.id));
   const pick = (id: string): void => {
     car.id = id;
     write('car', id);
-    openPanel(null);
+    openRoot(null);
   };
   return (
-    <Sheet title={t('cars')}>
+    <Sheet title={t('myCars')} variant="half">
       <ul className="list">
-        {CARS.map((c) => (
+        {CARS.filter((c) => mine.has(c.id) || (c.decor !== null && onSale.has(c.decor))).map((c) => (
           <li key={c.id}>
-            <span className="grow"><b>{c[lang]}</b><br /><span className="muted">{Math.round(c.top * KMH)} km/h</span></span>
+            <DecorImage model={c.model} />
+            <span className="grow"><b>{c[lang]}</b><br /><span className="muted">{Math.round(c.top * KMH)} {t('kmh')}</span></span>
             {mine.has(c.id)
-              ? <button type="button" className={`btn small ${car.id === c.id ? '' : 'soft'}`} onClick={() => pick(c.id)}>{car.id === c.id ? `✓ ${t('chosen')}` : t('choose')}</button>
-              : <button type="button" className="btn small clay" onClick={() => openPanel({ kind: 'shop' })}>{t('buy')}</button>}
+              ? <button type="button" className={`btn small ${car.id === c.id ? '' : 'soft'}`} onClick={() => pick(c.id)}>{car.id === c.id && <Icon name="check" />}{t(car.id === c.id ? 'chosen' : 'choose')}</button>
+              : <button type="button" className="btn small gold" onClick={() => openPanel({ kind: 'shop' })}>{t('buy')}</button>}
           </li>
         ))}
       </ul>

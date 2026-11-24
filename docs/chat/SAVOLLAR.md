@@ -94,3 +94,16 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 5. **Garaj oldi nuqtasi** 5 → 5,6 m uzaytirildi (limuzin sig'ishi uchun), avtomobil yo'lidan chiqmaydi.
 6. "YANGI" belgisi endi faqat lyuks bezaklarda; 9-qadamdagilardan olindi.
 7. **Topilgan eski xato (9-qadamdan):** yangi mashinalarni haydaganda boshqalar ko'rmas edi (server kodi 13 gacha ruxsat berardi). Tuzatildi, endi har mashina testdan o'tadi.
+
+## 11-qadam: yangi interfeys (INTERFEYS-PROMT)
+1. **Bezak joylari soni.** Promtdagi qoida bo'yicha 1–4-levelda 0. 9–10-levelda 16–17 edi, lekin nik lavhasidan boshqa 16 ta nuqta bor — shuning uchun 15 va 16 qilindi. Admin o'zgartiradi.
+2. **Tun rejimi** faqat panellarga tegishli (avto — telefon mavzusi bo'yicha). Shahardagi kun-tun o'zicha aylanaveradi.
+3. **Telegram kirish** "Tez kunda" turibdi (bot nomi yo'q), shu oynada login+parol ishlaydi. "Telegram orqali 10 soniyada" yozuvi bot yozilgach chiqadi.
+4. **Telegram kanal** menyuda @citylanduz (promtda berilgan). Sozlamada boshqa kanal yozilsa — o'shanisi.
+5. **♥ yurak** saytda yo'q — o'rniga bor "Haftaning hovlisi" ovozi turibdi (promt: "bor bo'lsa").
+6. **Mehmon do'konida** hamma 5+ bezak qulf belgisi bilan turadi; "Olish" bosilsa kirish oynasi ochiladi va kirgach o'sha tovarga qaytadi.
+7. **Kartalar** Piyoda va Mashina rejimida chiqmaydi (joystikka joy kerak) — faqat tabrik va xazina chiqadi.
+8. **"N qo'shni"** — 60 m atrofidagi egali uylar soni.
+9. **Pastki panelda 5 ta bo'lim** promtdagidek; qidiruv xarita ichida (nik va manzil).
+10. **Oynalar (pastdan chiqadigan)** namunadagidek shaffof emas, oq (tunda to'q) — matn yaxshi o'qilishi uchun; shaffof "oyna" faqat ekrandagi tugma va panellarda. Istasangiz ularni ham shaffof qilamiz.
+11. **Uy tepasidagi yorliqda** yulduzcha o'rniga "L5" yoziladi; nishonlar emoji emas, belgi.

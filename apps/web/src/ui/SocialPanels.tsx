@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { goToPlot } from '../app/actions.ts';
+import { BUZZ, buzz, goToPlot } from '../app/actions.ts';
 import { rpc } from '../app/api.ts';
-import { useT, type Key } from '../app/i18n.ts';
+import { money, useT, type Key } from '../app/i18n.ts';
 import { player } from '../app/runtime.ts';
-import { openPanel, refreshBoot, refreshProfile, toast, useApp } from '../app/store.ts';
-import { Section, Sheet, useAction, useLoad } from './kit.tsx';
+import { openAuth, refreshBoot, refreshProfile, setApp, setting, toast, useApp } from '../app/store.ts';
+import { Icon } from './icons.tsx';
+import { LoadState, Section, Sheet, useAction, useLoad } from './kit.tsx';
 
 const useDistrictName = (): ((id: number) => string) => {
   const boot = useApp((s) => s.boot);
   const lang = useApp((s) => s.lang);
   return (id) => { const d = boot?.districts.find((x) => x.id === id); return d ? (lang === 'uz' ? d.name_uz : d.name_ru) : String(id); };
 };
-const back = (): void => openPanel({ kind: 'menu' });
 
 interface Rankings {
   readonly houses: readonly { readonly plot: string; readonly instagram: string; readonly tier: number; readonly score: number }[];
@@ -21,49 +21,60 @@ interface Yards { readonly leaders: readonly { readonly plot: string; readonly i
 export function RankPanel(): React.JSX.Element {
   const t = useT();
   const name = useDistrictName();
-  const { data } = useLoad(() => rpc<Rankings>('api_rankings'), 'rank');
-  const { data: yards } = useLoad(() => rpc<Yards>('api_yards'), 'yards');
+  const loaded = useLoad(() => rpc<Rankings>('api_rankings'), 'rank');
+  const { data } = loaded;
+  const yardsLoaded = useLoad(() => rpc<Yards>('api_yards'), 'yards');
+  const yards = yardsLoaded.data;
   return (
-    <Sheet title={t('rank')} onBack={back}>
-      {yards && <Section title={`🌷 ${t('yardWeek')}`}>
+    <Sheet title={t('rank')}>
+      <LoadState of={loaded} />
+      {!loaded.hasError && yardsLoaded.hasError && <LoadState of={yardsLoaded} />}
+      {yards && <Section title={t('yardWeek')} icon="flower">
         {yards.winner && <p>{t('lastWinner')}: <button type="button" className="link" onClick={() => yards.winner && goToPlot(yards.winner.plot)}>@{yards.winner.instagram}</button> · {yards.winner.votes} {t('votes')}</p>}
         <ul className="list">{yards.leaders.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="muted">{h.votes} {t('votes')}</span></li>)}</ul>
         {yards.leaders.length === 0 && <p className="muted">{t('yardHow')}</p>}
       </Section>}
-      <Section title={t('rankHouses')}><ul className="list">{data?.houses.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold">{h.score}</span></li>)}</ul></Section>
+      <Section title={t('rankHouses')}>{data?.houses.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.houses.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold">{h.score}</span></li>)}</ul></Section>
       <Section title={t('rankDistricts')}><ul className="list">{data?.districts.map((d, i) => <li key={d.id}><span className="n">{i + 1}</span><span className="grow">{name(d.id)}</span><span className="muted">{d.active}</span></li>)}</ul></Section>
-      <Section title={t('rankInviters')}><ul className="list">{data?.inviters.map((d, i) => <li key={d.nick}><span className="n">{i + 1}</span><span className="grow">{d.nick}</span><span className="muted">{d.n}</span></li>)}</ul></Section>
+      <Section title={t('rankInviters')}>{data?.inviters.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.inviters.map((d, i) => <li key={d.nick}><span className="n">{i + 1}</span><span className="grow">{d.nick}</span><span className="muted">{d.n}</span></li>)}</ul></Section>
     </Sheet>
   );
 }
 
 interface Quest { readonly id: string; readonly daily: boolean; readonly reward: number; readonly ready: boolean; readonly done: boolean }
 interface Treasure { readonly state: 'hunt' | 'found' | 'done' | 'empty'; readonly district?: number; readonly heat?: 'hot' | 'warm' | 'cold' }
+/** Sozlama kelmasa xazina mukofoti. */
+const TREASURE_GAIN = 100;
 export function CoinsPanel(): React.JSX.Element {
   const t = useT();
   const name = useDistrictName();
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
-  const { data, reload } = useLoad(() => (profile ? rpc<readonly Quest[]>('my_quests') : Promise.resolve([])), profile?.id ?? '');
+  const loaded = useLoad(() => (profile ? rpc<readonly Quest[]>('my_quests') : Promise.resolve([])), profile?.id ?? '');
+  const { data, reload } = loaded;
   const isWalking = useApp((s) => s.mode !== 'city');
-  if (!profile) return <Sheet title={t('coins')} onBack={back}><button type="button" className="btn" onClick={() => openPanel({ kind: 'auth' })}>{t('login')}</button></Sheet>;
+  if (!profile) return <Sheet title={t('coins')}><button type="button" className="btn" onClick={() => openAuth()}>{t('login')}</button></Sheet>;
   const dig = (): void => {
     void run(async () => {
       const r = await rpc<Treasure>('my_treasure', { p_x: Math.round(player.x * 10) / 10, p_z: Math.round(player.z * 10) / 10 });
       if (r.state === 'hunt') toast(r.heat === 'cold' ? `${t('heat_cold')} ${name(r.district ?? 0)}` : t(`heat_${r.heat ?? 'cold'}`));
       else toast(t(`tr_${r.state}`));
-      if (r.state === 'found') await refreshProfile();
+      if (r.state !== 'found') return;
+      buzz(BUZZ.coin);
+      setApp({ treasure: setting<{ readonly treasure?: number }>('coins', {}).treasure ?? TREASURE_GAIN });
+      await refreshProfile();
     });
   };
   return (
-    <Sheet title={t('coins')} onBack={back}>
-      <p className="big-coins">💰 {profile.coins}</p>
-      <button type="button" className="btn clay" disabled={isBusy || profile.daily_done} onClick={() => run(async () => { const r = await rpc<{ gain: number }>('my_daily'); await refreshProfile(); toast(`+${r.gain} 💰`); })}>{profile.daily_done ? t('dailyDone') : `${t('daily')} · 🔥 ${profile.streak}`}</button>
-      <Section title={t('treasure')}><button type="button" className="btn" disabled={isBusy || !isWalking} onClick={dig}>🔎 {t('treasureCheck')}</button>{!isWalking && <p className="muted">{t('walkFirst')}</p>}</Section>
+    <Sheet title={t('coins')}>
+      <p className="big-coins"><Icon name="coin" />{money(profile.coins)}</p>
+      <button type="button" className="btn gold" disabled={isBusy || profile.daily_done} onClick={() => run(async () => { const r = await rpc<{ gain: number }>('my_daily'); buzz(BUZZ.coin); await refreshProfile(); toast(`+${r.gain}`); })}><Icon name="gift" />{profile.daily_done ? t('dailyDone') : `${t('daily')} · ${profile.daily_next}-${t('dayRow')}`}</button>
+      <Section title={t('treasure')}><button type="button" className="btn" disabled={isBusy || !isWalking} onClick={dig}><Icon name="dig" />{t('treasureCheck')}</button>{!isWalking && <p className="muted">{t('walkFirst')}</p>}</Section>
       <Section title={t('quests')}>
+        <LoadState of={loaded} isEmpty={data?.length === 0} />
         <ul className="list">{data?.map((q) => (
           <li key={q.id}><span className="grow">{t(`q_${q.id}` as Key)}</span><span className="tag gold">+{q.reward}</span>
-            {q.done ? <span className="tag free">✓</span> : <button type="button" className="btn small" disabled={isBusy || !q.ready} onClick={() => run(async () => { await rpc('my_quest_claim', { p_quest: q.id }); await refreshProfile(); reload(); }, t('saved'))}>{t('take')}</button>}
+            {q.done ? <span className="tag free"><Icon name="check" /></span> : <button type="button" className="btn small" disabled={isBusy || !q.ready} onClick={() => run(async () => { await rpc('my_quest_claim', { p_quest: q.id }); await refreshProfile(); reload(); }, t('saved'))}>{t('take')}</button>}
           </li>))}</ul>
       </Section>
     </Sheet>
@@ -96,21 +107,24 @@ export function CityPanel(): React.JSX.Element {
   const lang = useApp((s) => s.lang);
   const boot = useApp((s) => s.boot);
   const { isBusy, run } = useAction();
-  const { data, reload } = useLoad(() => rpc<readonly Election[]>('api_elections'), 'elections');
+  const loaded = useLoad(() => rpc<readonly Election[]>('api_elections'), 'elections');
+  const { data, reload } = loaded;
+  const isGuest = useApp((s) => s.profile === null);
   return (
-    <Sheet title={t('city')} onBack={back}>
+    <Sheet title={t('cityWorks')}>
       <Section title={t('projects')}>
+        {boot?.projects.length === 0 && <p className="muted">{t('listEmpty')}</p>}
         {boot?.projects.map((p) => (
           <div key={p.id} className="field">
-            <div className="row between"><b>{lang === 'uz' ? p.uz : p.ru}</b><span className="muted">{p.raised} / {p.goal} 💰</span></div>
+            <div className="row between"><b>{lang === 'uz' ? p.uz : p.ru}</b><span className="muted">{p.raised} / {p.goal}</span></div>
             <div className="bar"><i style={{ width: `${Math.min(100, (p.raised / p.goal) * 100)}%` }} /></div>
-            {p.status === 'done' ? <span className="tag free">{t('projDone')}</span> : <div className="row">{[10, 50, 200].map((n) => <button type="button" key={n} className="btn small soft" disabled={isBusy} onClick={() => run(async () => { await rpc('my_contribute', { p_project: p.id, p_amount: n }); await Promise.all([refreshBoot(), refreshProfile()]); }, t('saved'))}>+{n} 💰</button>)}</div>}
+            {p.status === 'done' ? <span className="tag free">{t('projDone')}</span> : <div className="row">{[10, 50, 200].map((n) => <button type="button" key={n} className="btn small soft" disabled={isBusy} onClick={() => (isGuest ? openAuth() : void run(async () => { await rpc('my_contribute', { p_project: p.id, p_amount: n }); await Promise.all([refreshBoot(), refreshProfile()]); }, t('saved')))}><Icon name="coin" />+{n}</button>)}</div>}
           </div>
         ))}
-        {boot?.hero && <p>🏆 {boot.hero.nick} — {boot.hero.total} 💰</p>}
+        {boot?.hero && <p className="with-icon"><Icon name="rank" />{boot.hero.nick} — {boot.hero.total}</p>}
       </Section>
       <Section title={t('elections')}>
-        {data?.length === 0 && <p className="muted">{t('noElections')}</p>}
+        <LoadState of={loaded} isEmpty={data?.length === 0} empty={t('noElections')} />
         {data?.map((e) => <ElectionCard key={e.id} e={e} onChange={reload} />)}
       </Section>
     </Sheet>
@@ -120,10 +134,11 @@ export function CityPanel(): React.JSX.Element {
 interface Issue { readonly week: string; readonly content: { readonly new_count: number; readonly new: readonly string[]; readonly top: { readonly plot: string; readonly instagram: string } | null; readonly streets: readonly string[]; readonly total: number } }
 export function GazettePanel(): React.JSX.Element {
   const t = useT();
-  const { data } = useLoad(() => rpc<readonly Issue[]>('api_gazette'), 'gazette');
+  const loaded = useLoad(() => rpc<readonly Issue[]>('api_gazette'), 'gazette');
+  const { data } = loaded;
   return (
-    <Sheet title={t('gazette')} onBack={back}>
-      {data?.length === 0 && <p className="muted">{t('nothing')}</p>}
+    <Sheet title={t('gazette')}>
+      <LoadState of={loaded} isEmpty={data?.length === 0} />
       {data?.map(({ week, content: c }) => (
         <Section key={week} title={new Date(week).toLocaleDateString('ru-RU')}>
           <p><b>{t('gNew')}:</b> {c.new_count} — {c.new.map((n) => `@${n}`).join(', ')}</p>

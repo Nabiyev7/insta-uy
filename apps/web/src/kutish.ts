@@ -18,7 +18,7 @@ form?.addEventListener('submit', (e) => {
   fetch(`${API}/waitlist`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ instagram: data.instagram, contact: data.contact || undefined }) })
     .then(async (res) => {
       const body = (await res.json()) as { error?: string };
-      out.textContent = res.ok ? "✅ Yozildingiz! Ochilganda birinchilardan bo'lasiz. / Вы записаны!" : MESSAGES[body.error ?? ''] ?? 'Xatolik / Ошибка';
+      out.textContent = res.ok ? "Yozildingiz! Ochilganda birinchilardan bo'lasiz. / Вы записаны!" : MESSAGES[body.error ?? ''] ?? 'Xatolik / Ошибка';
       if (res.ok) form.reset();
     })
     .catch(() => { out.textContent = 'Internet bilan muammo / Проблема с интернетом'; })

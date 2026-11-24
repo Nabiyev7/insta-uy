@@ -45,13 +45,13 @@ export const PRIVACY: Doc = {
   uz: [
     ['Nimani saqlaymiz', ['Login, shifrlangan parol (Supabase Auth), Instagram niki, uy yozuvi, avatar.', 'Telegram ulansa — Telegram ID. To‘lovda — summa va tranzaksiya raqami (karta ma’lumoti saqlanmaydi).', 'Spamga qarshi — IP manzilning kalitlangan xeshi, qisqa muddat.']],
     ['Nima ochiq', ['Nik, uy yozuvi, uy ko‘rinishi, nishonlar hammaga ko‘rinadi. Ko‘p o‘yinchida joylashuvingiz (shahar ichida) va mahalla chati ko‘rinadi.']],
-    ['O‘chirish', ['Uyim → Sozlamalar → Akkauntni o‘chirish. Profil, chat xabarlari, Telegram bog‘lanishi va shaxsiy ma’lumot darhol o‘chadi, uy bo‘shaydi; moliyaviy yozuvlar shaxssiz qoladi.', 'Zaxira nusxalarda qolgan ma’lumot ko‘pi bilan 90 kundan keyin butunlay yo‘qoladi.', 'Saytda shaxsiy (yopiq) xabar yo‘q — faqat ochiq chat.']],
+    ['O‘chirish', ['Uyim → Akkauntni o‘chirish. Profil, chat xabarlari, Telegram bog‘lanishi va shaxsiy ma’lumot darhol o‘chadi, uy bo‘shaydi; moliyaviy yozuvlar shaxssiz qoladi.', 'Zaxira nusxalarda qolgan ma’lumot ko‘pi bilan 90 kundan keyin butunlay yo‘qoladi.', 'Saytda shaxsiy (yopiq) xabar yo‘q — faqat ochiq chat.']],
     ['Uchinchi tomonlar', ['Supabase (baza), Cloudflare (hosting), Telegram (bot), xatolar monitoringi. Ma’lumot sotilmaydi.']],
   ],
   ru: [
     ['Что храним', ['Логин, зашифрованный пароль (Supabase Auth), ник Instagram, подпись дома, аватар.', 'При подключении Telegram — Telegram ID. При оплате — сумма и номер транзакции (данные карты не хранятся).', 'Против спама — хеш IP-адреса, недолго.']],
     ['Что видно всем', ['Ник, подпись, вид дома, значки. В мультиплеере — положение в городе и чат махалли.']],
-    ['Удаление', ['Мой дом → Настройки → Удалить аккаунт. Профиль, сообщения чата, связь с Telegram и личные данные удаляются сразу, дом освобождается; финансовые записи обезличиваются.', 'Данные в резервных копиях полностью исчезают не позднее чем через 90 дней.', 'Личных (закрытых) сообщений на сайте нет — только открытый чат.']],
+    ['Удаление', ['Мой дом → Удалить аккаунт. Профиль, сообщения чата, связь с Telegram и личные данные удаляются сразу, дом освобождается; финансовые записи обезличиваются.', 'Данные в резервных копиях полностью исчезают не позднее чем через 90 дней.', 'Личных (закрытых) сообщений на сайте нет — только открытый чат.']],
     ['Третьи стороны', ['Supabase (база), Cloudflare (хостинг), Telegram (бот), мониторинг ошибок. Данные не продаются.']],
   ],
 };

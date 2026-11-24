@@ -2,6 +2,7 @@
 import { CENTER_BOXES, CITY_HALF, CIVIC, HILL, LAKE, PLAZA_R, RIVER, SITES, ZONES, civicRect, rotatedSize, type ZoneId } from '../../../../packages/shared/src/index.ts';
 import { here, remotes } from '../app/runtime.ts';
 import { getApp } from '../app/store.ts';
+import { ICONS, type IconName } from './icons.tsx';
 
 export const MAP_SIZE = 1100;
 const SPAN = (CITY_HALF + 50) * 2;
@@ -94,6 +95,21 @@ const arrow = (g: CanvasRenderingContext2D, x: number, y: number, angle: number,
   g.restore();
 };
 
+/** Xaritadagi belgi (markazi x, y). */
+const icon = (g: CanvasRenderingContext2D, name: IconName, x: number, y: number, size: number, color: string): void => {
+  g.save();
+  g.translate(x - size / 2, y - size / 2);
+  g.scale(size / 24, size / 24);
+  g.lineCap = g.lineJoin = 'round';
+  const path = new Path2D(ICONS[name]);
+  for (const [width, stroke] of [[6, 'rgba(255,252,244,0.95)'], [2.6, color]] as const) {
+    g.lineWidth = width;
+    g.strokeStyle = stroke;
+    g.stroke(path);
+  }
+  g.restore();
+};
+
 export const drawBigMap = (canvas: HTMLCanvasElement): void => {
   const g = canvas.getContext('2d');
   if (!g) return;
@@ -109,13 +125,14 @@ export const drawBigMap = (canvas: HTMLCanvasElement): void => {
     const y = toMap(at[1]);
     g.lineWidth = 6;
     g.strokeStyle = 'rgba(255,252,244,0.9)';
-    g.strokeText(d.open ? name : `🚧 ${name}`, x, y);
-    g.fillStyle = d.open ? '#14545f' : '#7a5a3a';
-    g.fillText(d.open ? name : `🚧 ${name}`, x, y);
+    g.strokeText(name, x, y);
+    g.fillStyle = d.open ? '#1d5a63' : '#7a5a3a';
+    g.fillText(name, x, y);
+    if (!d.open) icon(g, 'lock', x, y - 40, 30, '#7a5a3a');
   }
   for (const p of s.profile?.plots ?? []) {
     const plot = s.plotById.get(p.plot);
-    if (plot) g.fillText('🏠', toMap(plot.x), toMap(plot.z));
+    if (plot) icon(g, 'home', toMap(plot.x), toMap(plot.z), 44, '#d9604a');
   }
   g.fillStyle = '#1f4fd0';
   for (const r of remotes.values()) {

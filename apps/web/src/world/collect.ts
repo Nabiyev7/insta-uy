@@ -1,5 +1,5 @@
 /** Ko'rinishga qarab chiziladigan narsalar ro'yxati: uylar, daraxtlar, binolar, yorliqlar. */
-import { CIVIC, LUXE_MODELS, type Building, type MasterPlan, type Plot, type SpatialIndex } from '../../../../packages/shared/src/index.ts';
+import { CIVIC, LUXE_MODELS, isFreeType, type Building, type MasterPlan, type Plot, type SpatialIndex } from '../../../../packages/shared/src/index.ts';
 import type { Item } from '../logic/item.ts';
 import { BOARD, buildingItem, houseItem, houseTop, plotItems, shellSize, type HouseState } from '../logic/placement.ts';
 import { distanceFrom, type View } from '../logic/view.ts';
@@ -16,6 +16,8 @@ const FAR_LODS: Readonly<Record<string, string>> = { shop: 'shop_lod', office_lo
 const LUXE_LODS: Readonly<Record<string, string>> = Object.fromEntries([...LUXE_MODELS].map((m) => [m, `${m}_lod`]));
 /** Lyuks bezak shu masofadan (mayda bezaklar ko'rinadigan masofaning ulushi) sodda shaklda. */
 const LUXE_NEAR = 0.6;
+/** "+" belgisi yorliqlar ko'rinadigan masofaning shuncha baravarigacha (baland ko'rinishda yo'q). */
+const MARKER_RANGE = 1.8;
 const CIVIC_NEAR = 2.2;
 const CIVIC_SLACK = 25;
 const BARRIER_FAR = 150;
@@ -39,7 +41,7 @@ const LABEL_GAP = 2;
 const labelOf = (p: Plot, s: HouseState): LabelInfo => {
   const top = houseTop(p, s);
   const size = p.type === 'qasr' ? 1.5 : p.type === 'villa' ? 1.2 : 1;
-  return { key: p.id, text: `@${s.nick} · ${s.tier}★`, kind: s.label, badge: s.badge, x: top.x, y: top.y + LABEL_GAP * size, z: top.z, size };
+  return { key: p.id, text: `@${s.nick} · L${s.tier}`, kind: s.label, badge: s.badge, x: top.x, y: top.y + LABEL_GAP * size, z: top.z, size };
 };
 
 const fullItems = (src: CollectSource, p: Plot, s: HouseState | undefined): readonly Item[] => {
@@ -57,7 +59,7 @@ const simpleItem = (src: CollectSource, p: Plot, s: HouseState, isSimple: boolea
   return made;
 };
 
-interface PlotResult { readonly items: Item[]; readonly labels: readonly LabelInfo[]; readonly signs: readonly SignInfo[]; /** Ko'rinayotgan "Bo'sh joy" taxtachalari. */ readonly boards: readonly Item[] }
+interface PlotResult { readonly items: Item[]; readonly labels: readonly LabelInfo[]; readonly signs: readonly SignInfo[]; /** Ko'rinayotgan "Bo'sh joy" taxtachalari. */ readonly boards: readonly Item[]; /** "+" belgisi chiqadigan bo'sh joylar, yaqinidan. */ readonly free: readonly Plot[] }
 
 /** Lavhali uylar: yozuv modelning old yuzasida turadi. */
 const SIGN_MODEL = 'sign_nick';
@@ -101,12 +103,15 @@ const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResul
   const labels: { readonly d: number; readonly info: LabelInfo }[] = [];
   const signs: { readonly d: number; readonly info: SignInfo }[] = [];
   const boards: Item[] = [];
+  const free: { readonly d: number; readonly p: Plot }[] = [];
   for (const p of src.plots.query(v.x, v.z, v.radius)) {
     if (v.isHidden(p.x, p.z)) continue;
     const s = src.houses.get(p.id);
     const d = distanceFrom(v, p.x, p.z);
     if (!s) {
-      if (d < (src.open.has(p.districtId) ? v.tree : v.near)) collectEmpty(v, src, p, d, items, boards);
+      const isOpen = src.open.has(p.districtId);
+      if (d < (isOpen ? v.tree : v.near)) collectEmpty(v, src, p, d, items, boards);
+      if (isOpen && isFreeType(p.type) && d < Math.min(v.near, v.label * MARKER_RANGE) && src.building !== p.id) free.push({ d, p });
       continue;
     }
     if (d < v.near) {
@@ -120,7 +125,7 @@ const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResul
   }
   labels.sort((a, b) => a.d - b.d);
   signs.sort((a, b) => a.d - b.d);
-  return { items, labels: labels.slice(0, maxLabels).map((l) => l.info), signs: signs.map((x) => x.info), boards };
+  return { items, labels: labels.slice(0, maxLabels).map((l) => l.info), signs: signs.map((x) => x.info), boards, free: free.sort((a, b) => a.d - b.d).map((x) => x.p) };
 };
 
 const staticItem = (v: View, it: Item, d: number): Item | null => {
@@ -154,7 +159,7 @@ const collectBuildings = (v: View, list: readonly Building[]): Item[] => list.fl
 export const collect = (v: View, src: CollectSource, maxLabels: number): PlotResult => {
   const plots = collectPlots(v, src, maxLabels);
   return {
-    labels: plots.labels, signs: plots.signs, boards: plots.boards,
+    labels: plots.labels, signs: plots.signs, boards: plots.boards, free: plots.free,
     items: [
       ...plots.items, ...collectStatics(v, src.statics.query(v.x, v.z, v.far)), ...collectStatics({ ...v, near: v.near * 1.6 }, src.extras.query(v.x, v.z, v.far)),
       ...collectCommerce(v, src.commerce.query(v.x, v.z, v.far)), ...collectBuildings(v, src.plan.buildings),

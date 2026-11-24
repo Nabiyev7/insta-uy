@@ -1,10 +1,13 @@
 /** Uy tepasidagi nik yorliqlari: oddiy / kumush / oltin + nishon. Teksturalar keshlanadi. */
 import { CanvasTexture, Group, LinearFilter, SRGBColorSpace, Sprite, SpriteMaterial } from 'three';
-import { BADGES, type BadgeId, type LabelKind } from '../../../../packages/shared/src/index.ts';
+import type { BadgeId, LabelKind } from '../../../../packages/shared/src/index.ts';
+import { BADGE_ICONS } from '../ui/badges.ts';
+import { ICONS, type IconName } from '../ui/icons.tsx';
 
-export interface LabelInfo { readonly key: string; readonly text: string; readonly kind: LabelKind; readonly badge: string | null; readonly x: number; readonly y: number; readonly z: number; readonly size?: number }
+export interface LabelInfo { readonly key: string; readonly text: string; readonly kind: LabelKind; readonly badge: string | null; /** Nishondan boshqa belgi. */ readonly icon?: IconName; readonly x: number; readonly y: number; readonly z: number; readonly size?: number }
 
 const CACHE_MAX = 90;
+const ICON_SIZE = 36;
 const STYLES: Readonly<Record<LabelKind, readonly [bg: string, fg: string, border: string]>> = {
   plain: ['rgba(255,252,244,0.94)', '#2a241c', 'rgba(90,70,40,0.35)'], silver: ['#dfe5ea', '#25303a', '#8f9ba6'], gold: ['#f3cd68', '#3d2a05', '#a87814'],
 };
@@ -14,10 +17,11 @@ const drawLabel = (info: LabelInfo): { texture: CanvasTexture; aspect: number } 
   const g = canvas.getContext('2d');
   if (!g) throw new Error('2D kontekst yo‘q');
   const font = '600 40px system-ui, "Segoe UI", Roboto, sans-serif';
-  const badge = info.badge && info.badge in BADGES ? `${BADGES[info.badge as BadgeId].icon} ` : '';
-  const text = badge + info.text;
+  const icon = info.icon ?? (info.badge && info.badge in BADGE_ICONS ? BADGE_ICONS[info.badge as BadgeId] : null);
+  const left = icon ? ICON_SIZE + 10 : 0;
+  const { text } = info;
   g.font = font;
-  const w = Math.min(640, Math.ceil(g.measureText(text).width) + 48);
+  const w = Math.min(640, Math.ceil(g.measureText(text).width) + 48 + left);
   canvas.width = w;
   canvas.height = 68;
   const [bg, fg, border] = STYLES[info.kind];
@@ -38,7 +42,15 @@ const drawLabel = (info: LabelInfo): { texture: CanvasTexture; aspect: number } 
   g.fillStyle = fg;
   g.textBaseline = 'middle';
   g.textAlign = 'center';
-  g.fillText(text, w / 2, 35, w - 36);
+  g.fillText(text, (w + left) / 2, 35, w - 36 - left);
+  if (icon) {
+    g.strokeStyle = fg;
+    g.lineWidth = 2.2;
+    g.lineCap = g.lineJoin = 'round';
+    g.translate(22, 34 - ICON_SIZE / 2);
+    g.scale(ICON_SIZE / 24, ICON_SIZE / 24);
+    g.stroke(new Path2D(ICONS[icon]));
+  }
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.minFilter = LinearFilter;
@@ -52,7 +64,7 @@ export class Labels {
   private readonly cache = new Map<string, { texture: CanvasTexture; aspect: number }>();
 
   private entry(info: LabelInfo): { texture: CanvasTexture; aspect: number } {
-    const id = `${info.key}|${info.text}|${info.kind}|${info.badge ?? ''}`;
+    const id = `${info.key}|${info.text}|${info.kind}|${info.badge ?? ''}|${info.icon ?? ''}`;
     const known = this.cache.get(id);
     if (known) {
       this.cache.delete(id);

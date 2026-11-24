@@ -1,11 +1,12 @@
 /** Hovlini bezash: reja ustidagi nuqtani bosing → bezak tanlang, ko'chiring yoki olib qo'ying. */
 import { useState, type FormEvent } from 'react';
-import { ANCHORS, DECOR_LEVEL, REF_YARD, anchorById, decorSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
+import { ANCHORS, DECOR_LEVEL, REF_YARD, anchorById, decorSlots, usedSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
 import { rpc, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
-import { openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
+import { refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
-import { Section, useAction } from './kit.tsx';
+import { Icon } from './icons.tsx';
+import { DecorImage, askConfirm, useAction } from './kit.tsx';
 
 type Places = Readonly<Record<string, string>>;
 const without = (places: Places, anchor: string): Places => Object.fromEntries(Object.entries(places).filter(([a]) => a !== anchor));
@@ -13,9 +14,14 @@ const countOf = (places: Places, decor: string): number => Object.values(places)
 
 const HOUSE = { x: -9.8, z: -13.4, w: 21, d: 13.6 } as const;
 const DRIVE = { x: 5.1, z: 0.2, w: 5.8, d: 16.8 } as const;
-const DOT = 1.15;
-/** Butun hovliga tegishli nuqtalar rejada chetda ko'rsatiladi. */
-const MARKS: Readonly<Record<string, readonly [number, number]>> = { fence: [-12, 0], gate: [0, 16.8], path: [0, 6.6], lamps: [0, 11.4], luxe: [-6.4, -1], roof: [0, -7], sign: [-2.7, 16.8] };
+const DOT = 1.3;
+/** Barmoq uchun: 360 px ekranda ham kamida 44 px. */
+const HIT = 1.95;
+/** Rejadagi o'rni: barmoq adashmasligi uchun nuqtalar bir-biridan kamida 2 × HIT uzoqda (haqiqiy joyidan sal surilgan). */
+const MARKS: Readonly<Record<string, readonly [number, number]>> = {
+  fence: [-11.6, 0.4], gate: [0.4, 16.7], path: [0, 6.2], lamps: [0, 10.6], luxe: [-6.4, -1.6], roof: [0, -7], sign: [-3.6, 16.7], garaj_oldi: [8.4, 5.8], old_hovli_chap: [-6.4, 9], old_hovli_ong: [4.4, 8.4], darvoza_yoni: [-7.6, 15.4],
+  burchak_1: [-11, 13], burchak_2: [4.6, 13.4], burchak_3: [-10.4, -14.9], burchak_4: [10.4, -14.9], p1: [-4.2, 3.2], p2: [4.2, 3.2],
+};
 const markOf = (a: Anchor): readonly [number, number] => MARKS[a.id] ?? [a.x, a.z];
 
 interface YardMapProps { readonly level: number; readonly places: Places; readonly selected: string | null; readonly onPick: (id: string) => void }
@@ -39,8 +45,9 @@ function YardMap({ level, places, selected, onPick }: YardMapProps): React.JSX.E
           <g key={a.id} className={`spot ${state}`} tabIndex={isLocked ? -1 : 0} role="button" aria-label={label} aria-pressed={selected === a.id} aria-disabled={isLocked}
             onClick={() => { if (!isLocked) onPick(a.id); }} onKeyDown={(e) => { if (!isLocked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onPick(a.id); } }}>
             <title>{label}</title>
-            <circle cx={x} cy={z} r={DOT} />
-            <text x={x} y={z + 0.42} textAnchor="middle">{isLocked ? a.minLevel : places[a.id] ? '✓' : '+'}</text>
+            <circle className="hit" cx={x} cy={z} r={HIT} />
+            <circle className="point" cx={x} cy={z} r={DOT} />
+            {state === 'full' ? <path d="M-0.5 0l0.38 0.4l0.65 -0.75" transform={`translate(${x} ${z})`} /> : <text x={x} y={z + 0.42} textAnchor="middle">{isLocked ? a.minLevel : '+'}</text>}
           </g>
         );
       })}
@@ -48,33 +55,33 @@ function YardMap({ level, places, selected, onPick }: YardMapProps): React.JSX.E
   );
 }
 
+interface GiftProps { /** Kimga — uy oynasidan ochilsa tayyor turadi. */ readonly to?: string }
 /** Qo'lda bo'sh turgan bezakni nik bo'yicha sovg'a qilish. */
-function GiftDecor({ freeQty }: { readonly freeQty: (id: string) => number }): React.JSX.Element | null {
+export function GiftDecor({ to: preset = '' }: GiftProps): React.JSX.Element {
   const t = useT();
   const lang = useApp((s) => s.lang);
   const catalog = useApp((s) => s.catalog);
-  const serials = useApp((s) => s.profile?.serials) ?? {};
+  const profile = useApp((s) => s.profile);
+  const serials = profile?.serials ?? {};
   const { isBusy, run } = useAction();
   const [id, setId] = useState('');
-  const [to, setTo] = useState('');
+  const [to, setTo] = useState(preset ? `@${preset}` : '');
   const [message, setMessage] = useState('');
+  const freeQty = (d: string): number => (profile?.decor[d] ?? 0) - (profile?.plots ?? []).reduce((n, p) => n + countOf(p.places, d), 0);
   const mine = catalog.filter((c) => freeQty(c.id) > 0);
-  if (mine.length === 0) return null;
-  const submit = (e: FormEvent): void => {
+  if (mine.length === 0) return <p className="muted">{t('noGifts')}</p>;
+  const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!confirm(`${mine.find((c) => c.id === id)?.[lang] ?? ''} → ${to}?`)) return;
-    void run(async () => { await rpc('my_gift_decor', { p_id: id, p_to: to, p_message: message }); await refreshProfile(); setId(''); setTo(''); setMessage(''); }, t('sent'));
+    if (!(await askConfirm(`${mine.find((c) => c.id === id)?.[lang] ?? ''} — ${to}`))) return;
+    await run(async () => { await rpc('my_gift_decor', { p_id: id, p_to: to, p_message: message }); await refreshProfile(); setId(''); setMessage(''); }, t('sent'));
   };
   return (
-    <details className="section">
-      <summary>🎁 {t('giftDecor')}</summary>
-      <form className="section" onSubmit={submit}>
-        <label className="field"><span>{t('decor')}</span><select className="input" value={id} onChange={(e) => setId(e.target.value)} required><option value="" disabled>{t('choose')}…</option>{mine.map((c) => <option key={c.id} value={c.id}>{c[lang]}{serials[c.id]?.length ? ` №${serials[c.id]?.at(-1)}` : ''} ×{freeQty(c.id)}</option>)}</select></label>
-        <label className="field"><span>{t('giftToNick')}</span><input value={to} onChange={(e) => setTo(e.target.value)} placeholder="@nik" required autoCapitalize="none" maxLength={40} /></label>
-        <label className="field"><span>{t('giftMsg')}</span><input value={message} onChange={(e) => setMessage(e.target.value)} maxLength={100} /></label>
-        <button type="submit" className="btn small" disabled={isBusy}>{t('giftDecor')}</button>
-      </form>
-    </details>
+    <form className="stack" onSubmit={(e) => void submit(e)}>
+      <label className="field"><span>{t('decor')}</span><select className="input" value={id} onChange={(e) => setId(e.target.value)} required><option value="" disabled>{t('choose')}…</option>{mine.map((c) => <option key={c.id} value={c.id}>{c[lang]}{serials[c.id]?.length ? ` №${serials[c.id]?.at(-1)}` : ''} ×{freeQty(c.id)}</option>)}</select></label>
+      <label className="field"><span>{t('giftToNick')}</span><input value={to} onChange={(e) => setTo(e.target.value)} placeholder="@nik" required autoCapitalize="none" maxLength={40} /></label>
+      <label className="field"><span>{t('giftMsg')}</span><input value={message} onChange={(e) => setMessage(e.target.value)} maxLength={100} /></label>
+      <button type="submit" className="btn" disabled={isBusy}><Icon name="gift" />{t('giftDecor')}</button>
+    </form>
   );
 }
 
@@ -89,7 +96,7 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
   const byId = new Map(catalog.map((c) => [c.id, c]));
   const { places } = plot;
   const max = decorSlots(plot.tier, setting<readonly number[] | undefined>('decor_slots', undefined));
-  const used = Object.keys(places).length;
+  const used = usedSlots(places);
   const anchor = selected ? anchorById(selected) : undefined;
   const current = selected ? places[selected] : undefined;
 
@@ -113,27 +120,26 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
     save({ ...without(places, selected), [to]: current });
     setSelected(to);
   };
-  const isFull = used >= max && !current;
+  const isFull = used >= max && !current && anchor?.kind !== 'sign';
   return (
-    <Section title={`${t('decor')} · ${used}/${max}`}>
+    <>
+      <p className="row between"><b>{t('decor')}</b><span className="tag">{used}/{max}</span></p>
       <YardMap level={plot.tier} places={places} selected={selected} onPick={setSelected} />
-      <p className="muted">{plot.tier < DECOR_LEVEL ? `🔒 ${t('decor')}: ${DECOR_LEVEL}-${t('opensAt')}` : t('yardHint')}</p>
+      <p className="muted">{plot.tier < DECOR_LEVEL ? `${t('decor')}: ${DECOR_LEVEL}-${t('opensAt')}` : t('yardHint')}</p>
       {anchor && (
         <div className="spot-panel">
           <b>{anchor[lang]}</b>
-          {current && <div className="row between"><span>{byId.get(current)?.[lang] ?? current}</span><button type="button" className="btn small soft" disabled={isBusy} onClick={() => save(without(places, anchor.id))}>{t('remove')}</button></div>}
+          {current && <div className="row between"><DecorImage model={byId.get(current)?.model ?? current} /><span className="grow">{byId.get(current)?.[lang] ?? current}</span><button type="button" className="btn small soft" disabled={isBusy} onClick={() => save(without(places, anchor.id))}>{t('remove')}</button></div>}
           {moves.length > 0 && (
             <label className="field"><span>{t('moveTo')}</span>
               <select className="input" value="" disabled={isBusy} onChange={(e) => moveTo(e.target.value)}><option value="" disabled>{t('choose')}…</option>{moves.map((a) => <option key={a.id} value={a.id}>{a[lang]}</option>)}</select>
             </label>
           )}
           {isFull && <p className="muted">{t('e_no_slots')}</p>}
-          {!isFull && anchor.minLevel <= plot.tier && choices.map((c) => <div className="row between" key={c.id}><span>{c[lang]} <span className="muted">×{freeQty(c.id)}</span></span><button type="button" className="btn small" disabled={isBusy} onClick={() => place(c.id)}>{t('place')}</button></div>)}
+          {!isFull && anchor.minLevel <= plot.tier && choices.map((c) => <div className="row between" key={c.id}><DecorImage model={c.model} /><span className="grow">{c[lang]} <span className="muted">×{freeQty(c.id)}</span></span><button type="button" className="btn small" disabled={isBusy} onClick={() => place(c.id)}>{t('place')}</button></div>)}
           {!isFull && choices.length === 0 && !current && <p className="muted">{t('noFit')}</p>}
         </div>
       )}
-      <GiftDecor freeQty={freeQty} />
-      <button type="button" className="btn small clay" onClick={() => openPanel({ kind: 'shop' })}>{t('shop')} →</button>
-    </Section>
+    </>
   );
 }

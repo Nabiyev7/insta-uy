@@ -11,78 +11,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
 
 from kit_core import rgb  # noqa: E402
-from kit_center import all_center  # noqa: E402
-from kit_city import city_models  # noqa: E402
-from kit_decor import all_decor  # noqa: E402
-from kit_houses import all_buildings  # noqa: E402
-from kit_levels import all_levels  # noqa: E402
-from kit_lux import lux_decor  # noqa: E402
-from kit_props import all_props  # noqa: E402
-from kit_yard import yard_decor  # noqa: E402
+from kit_show import assign, build_kit, principled  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index('--') + 1:]
 DIR, OUT = ARGS[0], ARGS[1]
-LAYERS = ['tekis', 'suvoq', 'gisht', 'tom', 'yogoch', 'asfalt', 'maysa', 'beton', 'barg', 'deraza', 'naqsh', 'oyma', 'fasad', 'shisha', 'tuproq', 'tosh']
-TINT = {1: 'wall', 2: 'roof'}
 ORDER_STEP = 0.03
-
-
-def principled(m):
-    m.use_nodes = True
-    return next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-
-
-def material(layer, mask):
-    """Har (tekstura, rang turi) uchun bitta material: tekstura x AO rangi x uyning tanlangan rangi."""
-    tint = 'frame' if LAYERS[layer] == 'deraza' and mask == 0 else TINT.get(mask)
-    name = LAYERS[layer] + (f'_{tint}' if tint else '')
-    m = bpy.data.materials.get(name)
-    if m:
-        return m
-    m = bpy.data.materials.new(name)
-    bsdf = principled(m)
-    nt = m.node_tree
-    bsdf.inputs['Roughness'].default_value = 0.35 if LAYERS[layer] in ('deraza', 'shisha') else 0.9
-    tex = nt.nodes.new('ShaderNodeTexImage')
-    tex.image = bpy.data.images.load(os.path.join(DIR, f't{layer}.png'), check_existing=True)
-    tex.image.pack()
-    uv = nt.nodes.new('ShaderNodeUVMap')
-    uv.uv_map = 'uv0'
-    nt.links.new(uv.outputs['UV'], tex.inputs['Vector'])
-    out = tex.outputs['Color']
-    factors = [('GEOMETRY', 'Col')] + ([('OBJECT', tint)] if tint else [])
-    for kind, attr in factors:
-        a = nt.nodes.new('ShaderNodeAttribute')
-        a.attribute_type, a.attribute_name = kind, attr
-        mul = nt.nodes.new('ShaderNodeVectorMath')
-        mul.operation = 'MULTIPLY'
-        nt.links.new(out, mul.inputs[0])
-        nt.links.new(a.outputs['Vector' if kind == 'OBJECT' else 'Color'], mul.inputs[1])
-        out = mul.outputs['Vector']
-    nt.links.new(out, bsdf.inputs['Base Color'])
-    return m
-
-
-def assign(mesh, keys):
-    """keys[i] = i-poligon (layer, mask)."""
-    mesh.materials.clear()
-    slots = {}
-    for key in keys:
-        if key not in slots:
-            slots[key] = len(slots)
-            mesh.materials.append(material(*key))
-    mesh.polygons.foreach_set('material_index', [slots[k] for k in keys])
-    mesh.update()
-
-
-def build_kit():
-    kit = {}
-    for model in all_levels() + all_buildings() + all_center() + city_models() + all_props() + all_decor() + yard_decor() + lux_decor():
-        obj = model.build()
-        assign(obj.data, [(p[2], round(p[3] * 4)) for p in model.polys])
-        kit[model.name] = obj.data
-        bpy.data.objects.remove(obj)
-    return kit
 
 
 def to_blender(x, y, z):
@@ -122,7 +55,7 @@ def add_ground(col, chunks, clip, step):
         mesh.from_pydata([(pos[i * 3], -pos[i * 3 + 2], pos[i * 3 + 1] + lift) for i in idx], [], [(i, i + 1, i + 2) for i in range(0, len(idx), 3)])
         mesh.uv_layers.new(name='uv0').data.foreach_set('uv', [v for i in idx for v in (uv[i * 2], uv[i * 2 + 1])])
         mesh.color_attributes.new('Col', 'FLOAT_COLOR', 'CORNER').data.foreach_set('color', [v for i in idx for v in (*rgbs[i * 3:i * 3 + 3], 1)])
-        assign(mesh, [(int(uv1[t * 6] * 16), 0) for t in tris])
+        assign(mesh, [(int(uv1[t * 6] * 16), 0) for t in tris], DIR)
         col.objects.link(bpy.data.objects.new(mesh.name, mesh))
 
 
@@ -225,7 +158,7 @@ def main():
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o)
     first = bpy.context.scene
-    kit = build_kit()
+    kit = build_kit(DIR)
     for i, spec in enumerate(data['scenes']):
         scene = first if i == 0 else bpy.data.scenes.new(spec['name'])
         scene.name = spec['name']

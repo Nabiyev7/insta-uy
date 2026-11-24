@@ -13,7 +13,7 @@ const page = await (await browser.newContext({ viewport: { width: 1000, height: 
 page.on('console', (m) => { if (m.type() === 'error') process.stdout.write(`XATO: ${m.text()}\n`); });
 await page.addInitScript(() => { localStorage.setItem('quality', 'high'); localStorage.setItem('intro', '1'); });
 await page.goto(site);
-await page.locator('.nav5').waitFor({ timeout: 60_000 });
+await page.locator('.nav5').waitFor({ state: 'attached', timeout: 60_000 });
 await page.evaluate(() => { window.__director.dayFraction = 0.45; });
 // 1-tuman o'rtasidagi bo'sh hovli
 const plot = await page.evaluate(() => {
@@ -27,7 +27,7 @@ await page.evaluate(({ x, z }) => { Object.assign(window.__city, { view: { x, z:
 await page.waitForTimeout(3500);
 await shot(page, 'bosh-uchastka');
 // ro'yxatdan o'tib, shu joyga uy qurish
-await page.locator('.nav5').getByRole('button', { name: 'Kirish' }).click();
+await page.locator('.nav5').getByRole('button', { name: 'Kirish', exact: true }).click();
 await page.getByRole('button', { name: "Ro'yxatdan o'tish" }).first().click();
 const login = `sinov_${Date.now().toString(36)}`;
 await page.getByLabel('Login').fill(login);
@@ -35,9 +35,9 @@ await page.getByLabel('Parol').fill('parol12345');
 await page.locator('form button[type=submit]').click();
 await page.getByRole('button', { name: /Bo'sh joy topish/ }).waitFor();
 await page.goto(`${site}/?uy=${plot.id}`);
-await page.locator('.nav5').waitFor({ timeout: 60_000 });
+await page.locator('.nav5').waitFor({ state: 'attached', timeout: 60_000 });
 await page.evaluate(() => { window.__director.dayFraction = 0.45; });
-await page.getByRole('button', { name: /Shu yerda uy qurish/ }).click();
+await page.getByRole('button', { name: 'Shu yerda bepul uy qurish' }).click();
 await page.getByLabel('Instagram nikingiz').fill(`@${login}`);
 await page.locator('.sheet form button[type=submit]').click();
 await page.waitForFunction(() => window.__app.getState().building !== null);

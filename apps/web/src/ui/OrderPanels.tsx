@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { rpc, uploadAd } from '../app/api.ts';
 import { hasKey, money, useT, type Key } from '../app/i18n.ts';
 import { openPanel, refreshHouses, useApp } from '../app/store.ts';
-import { Field, Sheet, useAction, useLoad } from './kit.tsx';
+import { Field, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
 
 interface Order { readonly id: string; readonly kind: string; readonly payload: Readonly<Record<string, unknown>>; readonly amount: number; readonly status: string; readonly expires: string; readonly provider: string; readonly card: string | null; readonly at: string }
 
@@ -25,10 +25,11 @@ const checkoutUrl = (o: Order): string | null => {
 export function OrdersPanel(): React.JSX.Element {
   const t = useT();
   const { isBusy, run } = useAction();
-  const { data, reload } = useLoad(() => rpc<readonly Order[]>('my_orders'), 'orders');
+  const loaded = useLoad(() => rpc<readonly Order[]>('my_orders'), 'orders');
+  const { data, reload } = loaded;
   const open = data?.filter((o) => o.status === 'pending' && Date.parse(o.expires) > Date.now()) ?? [];
   return (
-    <Sheet title={t('orders')} onBack={() => openPanel({ kind: 'me' })}>
+    <Sheet title={t('myOrders')}>
       {open.map((o) => {
         const url = checkoutUrl(o);
         return (
@@ -48,7 +49,7 @@ export function OrdersPanel(): React.JSX.Element {
           return <li key={o.id}><span className="grow">{o.kind}<br /><span className="muted">{new Date(o.at).toLocaleString('ru-RU')}</span></span><b>{money(o.amount)}</b><span className="tag">{hasKey(key) ? t(key as Key) : o.status}</span></li>;
         })}
       </ul>
-      {data?.length === 0 && <p className="muted">{t('nothing')}</p>}
+      <LoadState of={loaded} isEmpty={data?.length === 0} />
     </Sheet>
   );
 }
@@ -93,10 +94,11 @@ function AdForm({ ad, onDone }: { readonly ad: MyAd; readonly onDone: () => void
 }
 export function AdsPanel(): React.JSX.Element {
   const t = useT();
-  const { data, reload } = useLoad(() => rpc<readonly MyAd[]>('my_commerce'), 'ads');
+  const loaded = useLoad(() => rpc<readonly MyAd[]>('my_commerce'), 'ads');
+  const { data, reload } = loaded;
   return (
-    <Sheet title={t('myAds')} onBack={() => openPanel({ kind: 'me' })}>
-      {data?.length === 0 && <p className="muted">{t('nothing')}</p>}
+    <Sheet title={t('myAds2')}>
+      <LoadState of={loaded} isEmpty={data?.length === 0} />
       {data?.map((ad) => <AdForm key={ad.commerce_id} ad={ad} onDone={reload} />)}
     </Sheet>
   );

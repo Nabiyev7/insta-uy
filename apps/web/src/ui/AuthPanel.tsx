@@ -3,8 +3,9 @@ import { parseLogin, parsePassword } from '../../../../packages/shared/src/index
 import { post, signIn, signInWithToken } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { errorText, translate } from '../app/i18n.ts';
-import { getApp, openPanel, setting, toast } from '../app/store.ts';
+import { finishAuth, getApp, openPanel, setting, toast } from '../app/store.ts';
 import { Captcha } from './Captcha.tsx';
+import { Icon } from './icons.tsx';
 import { Field, Seg, Sheet, useAction } from './kit.tsx';
 
 type Mode = 'login' | 'register' | 'reset';
@@ -37,7 +38,7 @@ function TelegramLogin(): React.JSX.Element {
         setPending(null);
         if (r.state === 'ok' && r.token_hash) {
           await signInWithToken(r.token_hash);
-          openPanel({ kind: 'me' });
+          finishAuth();
         } else toast(translate('e_expired', getApp().lang), true);
       }).catch((error: unknown) => {
         // Tarmoq uzilsa keyingi urinishda davom etadi; boshqa xato ko'rsatiladi.
@@ -47,7 +48,7 @@ function TelegramLogin(): React.JSX.Element {
     return () => clearInterval(id);
   }, [pending]);
   if (pending) return <div className="section"><p>{t('tgWait')}</p><a className="btn" href={pending.url} target="_blank" rel="noopener noreferrer">{t('openTg')}</a></div>;
-  return <button type="button" className="btn block" disabled={isBusy} onClick={() => run(async () => setPending(await post<{ token: string; url: string }>('/auth/telegram/start', {})))}>✈️ {t('viaTelegram')}</button>;
+  return <button type="button" className="btn gold block big" disabled={isBusy} onClick={() => run(async () => setPending(await post<{ token: string; url: string }>('/auth/telegram/start', {})))}><Icon name="telegram" />{t('viaTelegram')}</button>;
 }
 
 function ResetForm({ onDone }: { readonly onDone: () => void }): React.JSX.Element {
@@ -77,14 +78,21 @@ function ResetForm({ onDone }: { readonly onDone: () => void }): React.JSX.Eleme
   );
 }
 
+/** Qoidalarni o'qib qaytganda yozilgan login va bo'lim yo'qolmasin (parol saqlanmaydi). */
+const memory: { mode: Mode; login: string } = { mode: 'login', login: '' };
+
 export function AuthPanel(): React.JSX.Element {
   const t = useT();
   const { isBusy, run } = useAction();
-  const [mode, setMode] = useState<Mode>('login');
-  const [login, setLogin] = useState('');
+  const [mode, setMode] = useState<Mode>(memory.mode);
+  const [login, setLogin] = useState(memory.login);
+  useEffect(() => { Object.assign(memory, { mode, login }); }, [mode, login]);
   const [password, setPassword] = useState('');
   const [captcha, setCaptcha] = useState('');
-  const done = (): void => openPanel({ kind: 'me' });
+  const done = (): void => {
+    Object.assign(memory, { mode: 'login', login: '' });
+    finishAuth();
+  };
   const submit = (e: FormEvent): void => {
     e.preventDefault();
     void run(async () => {
@@ -100,14 +108,14 @@ export function AuthPanel(): React.JSX.Element {
   };
   return (
     <Sheet title={t(mode === 'register' ? 'register' : 'login')}>
-      {setting('telegram_bot', '') ? <TelegramLogin /> : <button type="button" className="btn block" disabled>✈️ {t('viaTelegram')} · {t('soon')}</button>}
+      {setting('telegram_bot', '') ? <TelegramLogin /> : <button type="button" className="btn gold block big" disabled><Icon name="telegram" />{t('viaTelegram')} · {t('soon')}</button>}
       <Seg label={t('login')} value={mode} onPick={setMode} options={[['login', t('login')], ['register', t('register')]]} />
       {mode === 'reset' ? <ResetForm onDone={done} /> : (
         <form className="section" onSubmit={submit}>
           <Field label={t('loginField')}><input value={login} onChange={(e) => setLogin(e.target.value)} autoCapitalize="none" autoComplete="username" required maxLength={24} /></Field>
           <Field label={t('password')}><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={8} /></Field>
           {mode === 'register' && <Captcha onToken={setCaptcha} />}
-          <button type="submit" className="btn clay block" disabled={isBusy}>{t(mode === 'register' ? 'register' : 'login')}</button>
+          <button type="submit" className="btn block" disabled={isBusy}>{t(mode === 'register' ? 'register' : 'login')}</button>
           {mode === 'login' && <button type="button" className="link" onClick={() => setMode('reset')}>{t('forgot')}</button>}
           {mode === 'register' && <button type="button" className="link" onClick={() => openPanel({ kind: 'rules' })}>{t('rulesAgree')}</button>}
         </form>

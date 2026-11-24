@@ -62,6 +62,8 @@ export const uploadAd = async (userId: string, blob: Blob): Promise<string> => {
 
 export interface Boot {
   readonly settings: Readonly<Record<string, unknown>>;
+  /** Birinchi uy olganlar: nechtasi band, nechta joy. */
+  readonly founders: { readonly taken: number; readonly limit: number };
   readonly districts: readonly { readonly id: number; readonly open: boolean; readonly name_uz: string; readonly name_ru: string; readonly taken: number }[];
   readonly streets: Readonly<Record<string, string>>;
   readonly commerce: readonly { readonly id: string; readonly title: string; readonly image: string | null; readonly link: string | null }[];
@@ -75,7 +77,7 @@ export interface MyPlot {
 }
 export interface Profile {
   readonly id: string; readonly login: string; readonly instagram: string | null; readonly role: string; readonly perms: readonly string[]; readonly badges: readonly string[]; readonly avatar: unknown; readonly telegram: boolean; readonly coins: number;
-  readonly ref: string; readonly free_used: boolean; readonly wants_news: boolean; readonly serials: Readonly<Record<string, readonly number[]>>; readonly streak: number; readonly daily_done: boolean; readonly invited: number; readonly plots: readonly MyPlot[]; readonly decor: Readonly<Record<string, number>>;
+  readonly ref: string; readonly free_used: boolean; readonly wants_news: boolean; readonly serials: Readonly<Record<string, readonly number[]>>; readonly streak: number; readonly daily_done: boolean; /** Bugun olinsa ketma-ket nechanchi kun bo'ladi (1–7). */ readonly daily_next: number; readonly invited: number; readonly plots: readonly MyPlot[]; readonly decor: Readonly<Record<string, number>>;
   readonly transfers: readonly { readonly id: string; readonly plot: string; readonly from: string; readonly message: string }[];
   readonly notes: readonly { readonly id: number; readonly kind: string; readonly data: Readonly<Record<string, unknown>>; readonly at: string }[];
 }

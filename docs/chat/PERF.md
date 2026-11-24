@@ -52,3 +52,9 @@ piyoda: bezaksiz 380 FPS / 41 call → 17 bezak 365 / 48 → lyuks bezaklar bila
 shahar: bezaksiz 393 FPS / 56 call → 17 bezak 343 / 76 → lyuks bezaklar bilan 365 / 62
 `perf.mjs` (bo'sh shahar): low 397 / 196 / 162 FPS, mid 370 / 177 / 143, high 223 / 155 / 93 (piyoda / shahar / mashina) — 9-qadamdagidan yomon emas.
 Modellar fayli 2086 → 2276 KB (9 ta lyuks bezak va ularning uzoq shakllari). Lyuks model 220–568 uchburchak, uzoqda 56–150.
+
+## 11-qadamdan keyin: yangi interfeys (10- va 11-qadam kodi navbatma-navbat 2 martadan, bo'sh baza, CPU ÷6; FPS 10-qadam → 11-qadam)
+low: piyoda 395 → 406, shahar 426 → 421, mashina 344 → 355
+mid: piyoda 319 → 338, shahar 191 → 169, mashina 161 → 151
+high: piyoda 214 → 212, shahar 174 → 153, mashina 104 → 98
+O'lchov xatosi ±15%. Birinchi o'lchovda xiralashtirish (blur) sabab piyoda mid/high 9–13% sekin edi — endi blur faqat yuqori sifatda (past va o'rtada shaffof fon). Sariq "+" belgilari — bitta chizish. Bezak rasmlari 76 ta, 260 KB, faqat do'kon ochilganda yuklanadi (PWA keshiga oldindan olinmaydi).

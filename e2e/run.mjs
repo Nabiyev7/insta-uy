@@ -1,34 +1,13 @@
 /** Uchdan-uchgacha sinov: haqiqiy Chrome + lokal server. `npm run e2e` (o'z portlarida, o'z bazasida). */
 import assert from 'node:assert/strict';
-import { execFileSync, spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
+import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import ffmpeg from 'ffmpeg-static';
-import { chromium } from 'playwright-core';
+import { helpers, launch, root, startServers, waitFor } from './harness.mjs';
+import { runUi } from './ui.mjs';
 
-const root = fileURLToPath(new URL('..', import.meta.url));
-const data = mkdtempSync(path.join(tmpdir(), 'shahar-e2e-'));
 const shots = process.env.E2E_SHOTS;
-const API = 'http://127.0.0.1:8797';
-const SITE = 'http://localhost:5183';
-const ADMIN = 'http://localhost:5184';
-const children = [];
-const run = (args, cwd, env) => {
-  const c = spawn(process.execPath, args, { cwd, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'inherit'] });
-  children.push(c);
-  return c;
-};
-const waitFor = async (fn, what, ms = 30_000) => {
-  const end = Date.now() + ms;
-  for (;;) {
-    const v = await fn().catch(() => false);
-    if (v) return v;
-    if (Date.now() > end) throw new Error(`Kutildi: ${what}`);
-    await new Promise((r) => { setTimeout(r, 200); });
-  }
-};
 const step = async (name, fn) => {
   const t = Date.now();
   await fn();
@@ -36,20 +15,12 @@ const step = async (name, fn) => {
 };
 
 let browser;
+let server;
 try {
-  let log = '';
-  const api = run(['server/dev/main.ts'], root, { PORT: '8797', DEMO: '1', DEV_DATA: data, SITE_URL: SITE, ALLOWED_ORIGINS: `${SITE},${ADMIN}` });
-  api.stdout.on('data', (d) => { log += d; });
-  await waitFor(async () => log.includes('Admin:'), 'API', 60_000);
-  const anon = /ANON=(\S+)/.exec(log)[1];
-  const service = /SERVICE=(\S+)/.exec(log)[1];
-  const env = { VITE_SUPABASE_ANON_KEY: anon, DEV_API: API, VITE_SITE_URL: SITE };
-  const vite = path.join(root, 'node_modules/vite/bin/vite.js');
-  run([vite, '--port', '5183', '--strictPort'], path.join(root, 'apps/web'), env);
-  run([vite, '--port', '5184', '--strictPort'], path.join(root, 'apps/admin'), env);
-  await waitFor(async () => (await fetch(SITE)).ok && (await fetch(ADMIN)).ok, 'vite');
-
-  browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] });
+  server = await startServers();
+  const { API, SITE, ADMIN, data, service, call, tokenOf, adminToken } = server;
+  const { enter } = helpers(server);
+  browser = await launch();
   const errors = [];
   const open = async (options) => {
     const context = await browser.newContext(options);
@@ -58,18 +29,11 @@ try {
     page.on('console', (m) => { if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text())) errors.push(m.text()); });
     return page;
   };
-  const enter = async (page, url = SITE) => {
-    await page.goto(url);
-    await page.getByRole('button', { name: /Shaharga kirish/ }).click({ timeout: 60_000 });
-    await page.locator('.nav5').waitFor();
-    await page.waitForFunction(() => Boolean(window.__scene));
-    await page.waitForTimeout(600);
-  };
   const pos = (page) => page.evaluate(() => ({ x: window.__player.x, z: window.__player.z }));
   const view = (page) => page.evaluate(() => ({ ...window.__city.view }));
   const mode = async (page, name) => {
     const t = Date.now();
-    await page.getByRole('button', { name, exact: true }).click();
+    await page.locator('.modes').getByRole('button', { name, exact: true }).click();
     await page.locator(`.hud.mode-${{ Shahar: 'city', Piyoda: 'walk', Mashina: 'drive' }[name]}`).waitFor();
     assert.ok(Date.now() - t < 1000, `${name} rejimiga o'tish sekin`);
     await page.waitForTimeout(700);
@@ -129,8 +93,8 @@ try {
     assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > 1.5, 'odam siljimadi');
   });
   await step('til almashadi', async () => {
-    await desk.getByRole('button', { name: 'Menyu' }).click();
-    await desk.getByRole('button', { name: 'Sozlamalar' }).click();
+    await desk.locator('.topbar').getByRole('button', { name: 'Menyu', exact: true }).click();
+    await desk.locator('.sheet').getByRole('button', { name: 'Sozlamalar', exact: true }).click();
     await desk.getByRole('button', { name: 'Русский' }).click();
     await desk.getByRole('heading', { name: 'Настройки' }).waitFor();
     await desk.getByRole('button', { name: "O'zbekcha" }).click();
@@ -143,7 +107,7 @@ try {
     await desk.getByLabel('Parol').fill('parol12345');
     await desk.locator('form button[type=submit]').click();
     await desk.getByRole('button', { name: /Bo'sh joy topish/ }).click();
-    await desk.getByRole('button', { name: /Shu yerda uy qurish/ }).click();
+    await desk.getByRole('button', { name: 'Shu yerda bepul uy qurish' }).click();
     await desk.getByLabel('Instagram nikingiz').fill('@Sinov.Nik');
     await desk.locator('.sheet form button[type=submit]').click();
     await desk.waitForFunction(() => window.__app.getState().building !== null);
@@ -179,7 +143,7 @@ try {
     await desk.keyboard.press('Escape');
     await mode(desk, 'Shahar');
     await desk.locator('.nav5').getByRole('button', { name: 'Xarita' }).click();
-    await desk.getByPlaceholder('Instagram niki…').fill('demo_0001');
+    await desk.getByPlaceholder('Nik yoki manzil…').fill('demo_0001');
     const before = await view(desk);
     await desk.getByRole('button', { name: /demo_0001/ }).click();
     await desk.locator('.nick', { hasText: '@demo_0001' }).waitFor();
@@ -192,25 +156,27 @@ try {
   await step('mening uyim: rang saqlanadi, tanga bonusi', async () => {
     await desk.keyboard.press('Escape');
     await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
+    await desk.getByRole('button', { name: 'Ranglar va material' }).click();
     await desk.getByRole('button', { name: 'Devor rangi 5' }).click();
     await desk.getByRole('button', { name: 'Saqlash' }).click();
     await desk.getByText('Saqlandi').first().waitFor();
     await desk.keyboard.press('Escape');
-    await desk.getByRole('button', { name: /^Tangalar/ }).click();
-    await desk.getByRole('button', { name: /Kunlik bonus/ }).click();
+    await desk.locator('.pill.coins').click();
+    await desk.locator('.sheet').getByRole('button', { name: /Kunlik bonus/ }).click();
     await desk.getByText('Bugun olingan').waitFor();
   });
 
-  const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(args) }).then((r) => r.json());
-  const tokenOf = async (login, password) => (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: `${login}@login.citylanduz.uz`, password }) }).then((r) => r.json())).access_token;
-  const adminToken = () => tokenOf('admin', 'admin12345');
+  const shop = async (tab, id) => {
+    await desk.keyboard.press('Escape');
+    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
+    await desk.getByRole('tab', { name: tab, exact: true }).click();
+    if (id) await desk.locator(`.good[data-id="${id}"]`).click();
+  };
   await step("bezak: 1-levelda yopiq; 5-levelda do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
     const token = await adminToken();
     const me = (await call('admin_users', { p_q: 'sinov_odam' }, token))[0];
-    await desk.keyboard.press('Escape');
-    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
-    await desk.getByText('5-levelda ochiladi').first().waitFor();
-    assert.equal(await desk.getByRole('button', { name: 'Olma daraxti: Sotib olish' }).count(), 0, '1-levelda bezak sotilmasin');
+    await shop('Bog‘', 'daraxt_olma');
+    assert.ok(await desk.getByRole('button', { name: /^Olma daraxti: 5-levelda/ }).isDisabled(), '1-levelda bezak sotilmasin');
     const plot = await desk.evaluate(() => window.__app.getState().profile.plots[0].plot);
     const coins = await desk.evaluate(() => window.__app.getState().boot.settings.coins);
     await call('admin_setting', { p_key: 'coins', p_value: { ...coins, tierBase: 1, maxTier: 5 } }, token);
@@ -220,17 +186,18 @@ try {
     await desk.locator('.nav5').waitFor();
     await desk.waitForFunction(() => window.__app.getState().profile?.plots[0]?.tier === 5);
     await call('admin_user', { p_id: me.id, p_action: 'coins', p_data: { delta: 1000 } }, token);
-    await desk.keyboard.press('Escape');
-    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
-    await desk.getByText('7-levelda ochiladi').first().waitFor();
-    await desk.getByRole('button', { name: 'Olma daraxti: Sotib olish' }).click();
+    await shop('Bog‘', 'daraxt_olma');
+    await desk.getByRole('button', { name: /^Olma daraxti: Olish/ }).click();
     await desk.getByText(/Sotib olindi/).first().waitFor();
-    await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
+    await desk.getByRole('button', { name: 'Hovliga qo‘yish' }).click();
     await desk.getByRole('button', { name: 'Old burchak, chapda' }).click();
-    await desk.getByRole('button', { name: "Qo'yish" }).click();
+    await desk.locator('.spot-panel').getByRole('button', { name: "Qo'yish" }).click();
     await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('burchak_1:daraxt_olma'))), 'bezak qo‘yildi');
     await desk.locator('.spot-panel select').selectOption('burchak_2');
     await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('burchak_2:daraxt_olma'))), 'bezak ko‘chdi');
+    await desk.keyboard.press('Escape');
+    await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
+    await desk.getByRole('button', { name: 'Ranglar va material' }).click();
     await desk.getByRole('button', { name: "G'isht" }).click();
     await desk.getByRole('button', { name: 'Eshik rangi 4' }).click();
     await desk.getByRole('button', { name: 'Saqlash' }).click();
@@ -239,28 +206,30 @@ try {
     await desk.keyboard.press('Escape');
   });
   await step("sinab ko'rish, sovg'a, haftaning hovlisiga ovoz, ekranni tozalash", async () => {
-    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
+    await shop('Hovli', 'yard_bike');
     await desk.getByRole('button', { name: "Velosiped: Sinab ko'rish" }).click();
     await desk.locator('.preview').waitFor();
     assert.ok(await desk.evaluate(() => window.__app.getState().preview.decor === 'yard_bike' && ![...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.some((d) => d.includes('yard_bike')))), 'sinov saqlanib qolmasin');
     await desk.waitForTimeout(1500);
     await shot(desk, 'preview');
     await desk.locator('.preview').getByRole('button', { name: 'Yopish' }).click();
-    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
-    await desk.getByRole('button', { name: 'Gulzor: Sotib olish' }).click();
+    await shop('Bog‘', 'gul_zor');
+    await desk.getByRole('button', { name: /^Gulzor: Olish/ }).click();
     await desk.getByText(/Sotib olindi/).first().waitFor();
+    await desk.keyboard.press('Escape');
     await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
-    await desk.getByText("Bezakni sovg'a qilish").first().click();
-    await desk.locator('details[open] select').selectOption('gul_zor');
+    await desk.getByRole('button', { name: 'Sovg‘alar va o‘tkazmalar' }).click();
+    await desk.locator('.sheet select').selectOption('gul_zor');
     await desk.getByPlaceholder('@nik').fill('@demo_0001');
-    desk.once('dialog', (d) => d.accept());
-    await desk.locator('details[open] button[type=submit]').click();
+    await desk.locator('.sheet form').first().locator('button[type=submit]').click();
+    await desk.locator('.modal').getByRole('button', { name: 'Ha', exact: true }).click();
     await desk.getByText('Yuborildi').first().waitFor();
     await desk.keyboard.press('Escape');
     await desk.goto(`${SITE}/?uy=P0001`);
     await desk.locator('.sheet').getByRole('button', { name: 'Ovoz berish' }).click();
     await desk.getByText(/Haftaning hovlisi: 1/).waitFor();
     await desk.keyboard.press('Escape');
+    await desk.locator('.topbar').getByRole('button', { name: 'Menyu', exact: true }).click();
     await desk.getByRole('button', { name: 'Ekranni tozalash' }).click();
     assert.equal(await desk.locator('.nav5').count(), 0);
     await desk.waitForTimeout(500);
@@ -286,7 +255,7 @@ try {
     assert.equal(await phone.locator('.joystick').count(), 0, 'shahar rejimida joystick bo‘lmasin');
     await phone.touchscreen.tap(195, 290);
     await phone.locator('.sheet').waitFor();
-    await phone.getByRole('button', { name: 'Yopish' }).click();
+    await phone.locator('.sheet').getByRole('button', { name: 'Yopish' }).click();
     await mode(phone, 'Piyoda');
     const box = await phone.locator('.joystick').boundingBox();
     const a = await pos(phone);
@@ -313,29 +282,8 @@ try {
     await phone.getByRole('button', { name: 'Yozish uchun kiring' }).waitFor();
     await phone.getByRole('button', { name: /^Onlayn/ }).click();
     await phone.getByText('sinov.nik').waitFor();
-    await phone.getByRole('button', { name: 'Yopish' }).click();
+    await phone.locator('.sheet').getByRole('button', { name: 'Yopish' }).click();
     await shot(phone, 'phone');
-  });
-  await step('eng kichik ekran: elementlar bir-biriga tegmaydi', async () => {
-    for (const viewport of [{ width: 360, height: 640 }, { width: 640, height: 360 }]) {
-      const small = await open({ viewport, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
-      await enter(small);
-      for (const name of ['Shahar', 'Piyoda', 'Mashina']) {
-        if (name !== 'Shahar') await mode(small, name);
-        const boxes = await small.evaluate(() => ['.plate', '.chip.coins', '.modes', '.nav5', '.joystick', '.actions'].flatMap((s) => {
-          const el = document.querySelector(s);
-          if (!el) return [];
-          const r = el.getBoundingClientRect();
-          return [{ s, x: r.x, y: r.y, r: r.right, b: r.bottom }];
-        }));
-        for (const a of boxes) {
-          assert.ok(a.x >= 0 && a.y >= 0 && a.r <= viewport.width && a.b <= viewport.height, `${a.s} ekrandan chiqdi (${name})`);
-          assert.ok(!(a.x < viewport.width / 2 && a.r > viewport.width / 2 && a.y < viewport.height / 2 && a.b > viewport.height / 2), `${a.s} ekran o'rtasini to'sdi`);
-          for (const b of boxes) if (a.s < b.s) assert.ok(a.r <= b.x || b.r <= a.x || a.b <= b.y || b.b <= a.y, `${a.s} va ${b.s} ustma-ust (${name} ${viewport.width}×${viewport.height})`);
-        }
-      }
-      await small.context().close();
-    }
   });
   await step('video: navbat → render → MP4', async () => {
     const token = await adminToken();
@@ -358,14 +306,19 @@ try {
     await p.getByPlaceholder('@nik').fill('@kutuvchi_1');
     await p.getByRole('button', { name: /Navbatga/ }).click();
     await p.getByText('Yozildingiz').waitFor();
+    // Matn fondan aniq ajralib turadi (interfeys ranglari o'zgarganda sahifa buzilmasin).
+    const colors = await p.evaluate(() => ['.wait', '.wait .invite p'].map((s) => getComputedStyle(document.querySelector(s))).map((c, i) => (i ? c.color : c.backgroundColor)));
+    assert.deepEqual(colors, ['rgb(255, 253, 248)', 'rgb(154, 106, 8)']);
     await shot(p, 'kutish');
     await p.context().close();
   });
   assert.deepEqual(errors, [], 'konsolda xatolar');
+  await server.stop();
+  server = undefined;
+  // Yangi interfeysning hamma oqimi: 3 ekran o'lchami × 2 til.
+  if (!process.env.E2E_SKIP_UI) await runUi(step);
   process.stdout.write('E2E: hammasi o‘tdi\n');
 } finally {
   await browser?.close();
-  for (const c of children) c.kill();
-  await new Promise((r) => { setTimeout(r, 500); });
-  rmSync(data, { recursive: true, force: true, maxRetries: 5 });
+  await server?.stop();
 }

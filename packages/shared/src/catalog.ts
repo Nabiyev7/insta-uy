@@ -192,12 +192,12 @@ export const LEVEL_GATE: readonly (typeof GATE_RANK)[number][] = [
 export const levelYard = (tier: number): readonly string[] => LEVEL_YARD[tier] ?? [];
 
 export const BADGES = {
-  asoschi: { uz: 'Shahar asoschisi', ru: 'Основатель города', icon: '🏛️' },
-  homiy: { uz: 'Homiy', ru: 'Спонсор', icon: '💎' },
-  investor: { uz: 'Investor', ru: 'Инвестор', icon: '📈' },
-  hokim: { uz: 'Shahar hokimi', ru: 'Хоким города', icon: '👑' },
-  hovli: { uz: 'Haftaning hovlisi', ru: 'Двор недели', icon: '🌷' },
-  rais: { uz: 'Mahalla raisi', ru: 'Председатель махалли', icon: '⭐' },
+  asoschi: { uz: 'Shahar asoschisi', ru: 'Основатель города' },
+  homiy: { uz: 'Homiy', ru: 'Спонсор' },
+  investor: { uz: 'Investor', ru: 'Инвестор' },
+  hokim: { uz: 'Shahar hokimi', ru: 'Хоким города' },
+  hovli: { uz: 'Haftaning hovlisi', ru: 'Двор недели' },
+  rais: { uz: 'Mahalla raisi', ru: 'Председатель махалли' },
 } as const;
 export type BadgeId = keyof typeof BADGES;
 export type LabelKind = 'plain' | 'silver' | 'gold';

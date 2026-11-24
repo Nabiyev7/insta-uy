@@ -14,4 +14,10 @@ To'rt markaz, yashil bulvarlar, halqa va diagonal yo'llar; yangi yorug' uslub; k
 - 9 ta lyuks bezak: pavilyon, gril oshxona, lyuks basseyn + jakuzi, marmar favvora, fransuz bog'i, limuzin, superkar, lyuks jip, tuvakdagi daraxt. Faqat 7-leveldan; 5–6-levelda qulf.
 - Uchta mashina haydaladi. Kechasi chiroqlar va suv yonadi. Uyga va bir-biriga tegmasligi testda.
 
-Hal qilinmagan savollar: `SAVOLLAR.md` (8-, 9- va 10-qadam bo'limlari). Haqiqiy Redmi A telefonda hali sinalmagan.
+## 11-qadam — yangi interfeys
+- Namunadagi ko'rinish: yengil oq panellar, o'ng ustunda rejimlar, o'rtada sariq tugma, pastda bitta karta.
+- Hamma eski funksiya joyini topdi: menyu 3 guruhda, Uyim bo'limlari, qo'ng'iroqda xabarlar, do'konda 9 tab va haqiqiy 3D rasmlar.
+- Orqaga tugmasi ishlaydi; kirgandan keyin o'sha joyga qaytadi; tun rejimi, chap qo'l, internet yo'q xabari.
+- Sinov: 3 ekran o'lchami × 2 til, har tugma va har oyna (60 oqim).
+
+Hal qilinmagan savollar: `SAVOLLAR.md` (8–11-qadam bo'limlari). Haqiqiy Redmi A telefonda hali sinalmagan.

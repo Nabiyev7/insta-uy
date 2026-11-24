@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
-  ANCHORS, DECOR, DECOR_LEVEL, DEFAULT_DECOR_SLOTS, FREE_ANCHOR, LEVEL_DRIVE, LUXE_LEVEL, LUXE_MODELS, MAX_DECOR_SLOTS, MAX_TIER, REF_YARD, TIERS, anchorById, decodePlan, decorSlots, footprint, levelYard, openAnchors, parsePlaced, type Anchor, type EncodedPlan, type Plot,
+  ANCHORS, DECOR, DECOR_LEVEL, DEFAULT_DECOR_SLOTS, FREE_ANCHOR, LEVEL_DRIVE, LUXE_LEVEL, LUXE_MODELS, MAX_DECOR_SLOTS, MAX_TIER, REF_YARD, TIERS, anchorById, decodePlan, decorSlots, footprint, levelYard, openAnchors, parsePlaced, usedSlots, type Anchor, type EncodedPlan, type Plot,
 } from '../../../packages/shared/src/index.ts';
 import { decorOf, setCatalog, type CatalogRow } from '../src/logic/decorCatalog.ts';
 import type { Item } from '../src/logic/item.ts';
@@ -70,13 +70,14 @@ describe('joy nuqtalari', () => {
     const prompt = ['garaj_oldi', 'old_hovli_chap', 'old_hovli_ong', 'darvoza_yoni', 'burchak_1', 'burchak_2', 'burchak_3', 'burchak_4'];
     for (let level = DECOR_LEVEL; level <= MAX_TIER; level++) expect(openAnchors(level).map((a) => a.id)).toEqual(expect.arrayContaining(prompt));
     for (let level = 1; level <= MAX_TIER; level++) {
-      expect(openAnchors(level).length, `level ${level}`).toBeGreaterThanOrEqual(decorSlots(level));
+      expect(openAnchors(level).filter((a) => a.kind !== 'sign').length, `level ${level}`).toBeGreaterThanOrEqual(decorSlots(level));
       if (level >= DECOR_LEVEL) expect(decorSlots(level)).toBeGreaterThan(decorSlots(level - 1));
     }
-    expect([...DEFAULT_DECOR_SLOTS]).toEqual([1, 1, 1, 1, 8, 10, 12, 14, 16, 17]);
+    expect([...DEFAULT_DECOR_SLOTS]).toEqual([0, 0, 0, 0, 8, 10, 12, 14, 15, 16]);
     expect(decorSlots(10, [1, 1, 1, 1, 1, 1, 1, 1, 1, 99])).toBe(MAX_DECOR_SLOTS);
-    expect(decorSlots(99)).toBe(17);
-    expect(decorSlots(0)).toBe(1);
+    expect(decorSlots(99)).toBe(16);
+    expect(decorSlots(0)).toBe(0);
+    expect(usedSlots({ sign: 'sign_nick', burchak_1: 'daraxt_olma', yoq: 'x' })).toBe(2);
   });
   test('har nuqtaga kamida bitta bezak sig‘adi, har bezakning joyi bor', () => {
     const kinds = new Set(ANCHORS.map((a) => a.kind));
@@ -206,12 +207,12 @@ describe('lyuks bezaklar', () => {
 
 describe('katalog', () => {
   test('admin yaratgan tovar: boshqa nom va rang, o‘sha model', () => {
-    const row: CatalogRow = { id: 'oltin_anor', slot: 'tree', model: 'tree_anor', uz: 'Oltin anor', ru: 'Золотой', uzs: 1, coins: 2, left: 3, spots: ['corner'], min: 5, from: null, to: null, set: null, isNew: true, tint: '#ffcc00', onSale: true };
+    const row: CatalogRow = { id: 'oltin_anor', slot: 'tree', model: 'tree_anor', uz: 'Oltin anor', ru: 'Золотой', uzs: 1, coins: 2, left: 3, spots: ['corner'], min: 5, from: null, to: null, set: null, isNew: true, tint: '#ffcc00', onSale: true, active: true };
     setCatalog([row]);
     expect(decorOf('oltin_anor')).toMatchObject({ model: 'tree_anor', tint: '#ffcc00', priceCoins: 2 });
     const own = plotItems(sample('hovli'), state({ decor: ['burchak_1:oltin_anor', 'burchak_2:yoqolgan'] }), true).at(-1)!;
     expect(own).toMatchObject({ model: 'tree_anor', tint: '#ffcc00' });
-    setCatalog(DECOR.map((d): CatalogRow => ({ id: d.id, slot: d.slot, model: d.model, uz: d.uz, ru: d.ru, uzs: d.priceUzs, coins: d.priceCoins, left: d.stock, spots: d.spots, min: d.minLevel, from: null, to: null, set: null, isNew: false, tint: null, onSale: true })));
+    setCatalog(DECOR.map((d): CatalogRow => ({ id: d.id, slot: d.slot, model: d.model, uz: d.uz, ru: d.ru, uzs: d.priceUzs, coins: d.priceCoins, left: d.stock, spots: d.spots, min: d.minLevel, from: null, to: null, set: null, isNew: false, tint: null, onSale: true, active: true })));
   });
   test('devor materiali, ramka va eshik rangi modelga uzatiladi', () => {
     const i = houseItem(sample('hovli'), state({ material: 1, frame: 3, door: 5 }), false);

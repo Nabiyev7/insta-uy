@@ -4,8 +4,9 @@ import { setMuted } from '../app/chat.ts';
 import { useT } from '../app/i18n.ts';
 import { goToPoint } from '../app/modes.ts';
 import { loadOnline, moderateMessage, reportMessage, sendChat, type OnlinePerson } from '../app/multiplayer.ts';
-import { openPanel, setApp, toast, useApp, type ChatLine } from '../app/store.ts';
-import { Seg, Sheet } from './kit.tsx';
+import { openAuth, setApp, toast, useApp, type ChatLine } from '../app/store.ts';
+import { Icon } from './icons.tsx';
+import { Seg, Sheet, askConfirm } from './kit.tsx';
 
 type Tab = 'all' | 'district' | 'online';
 const MAX_TEXT = 200;
@@ -29,10 +30,10 @@ function MessageTools({ line, onClose }: { readonly line: ChatLine; readonly onC
   };
   return (
     <div className="row tools">
-      {!isMine && <button type="button" className="btn small soft" onClick={act(() => reportMessage(line.id))}>⚑ {t('report')}</button>}
-      {!isMine && <button type="button" className="btn small soft" onClick={act(() => { setMuted(line, true); toast(t('mutedDone')); })}>🔇 {t('mute')}</button>}
-      {canModerate && <button type="button" className="btn small soft" onClick={act(() => moderateMessage(line.id, false))}>🗑 {t('chatDelete')}</button>}
-      {canModerate && !isMine && <button type="button" className="btn small clay" onClick={act(() => { if (confirm(t('chatBanSure'))) moderateMessage(line.id, true); })}>⛔ {t('chatBan')}</button>}
+      {!isMine && <button type="button" className="btn small soft" onClick={act(() => reportMessage(line.id))}><Icon name="flag" />{t('report')}</button>}
+      {!isMine && <button type="button" className="btn small soft" onClick={act(() => { setMuted(line, true); toast(t('mutedDone')); })}><Icon name="mute" />{t('mute')}</button>}
+      {canModerate && <button type="button" className="btn small soft" onClick={act(() => moderateMessage(line.id, false))}><Icon name="trash" />{t('chatDelete')}</button>}
+      {canModerate && !isMine && <button type="button" className="btn small danger" onClick={act(() => { void askConfirm(t('chatBanSure'), true).then((ok) => { if (ok) moderateMessage(line.id, true); }); })}><Icon name="ban" />{t('chatBan')}</button>}
     </div>
   );
 }
@@ -64,7 +65,7 @@ function Composer({ channel, canWrite }: { readonly channel: number; readonly ca
   const t = useT();
   const profile = useApp((s) => s.profile);
   const [text, setText] = useState('');
-  if (!profile) return <button type="button" className="btn clay block" onClick={() => openPanel({ kind: 'auth' })}>{t('chatLogin')}</button>;
+  if (!profile) return <button type="button" className="btn gold block" onClick={() => openAuth()}>{t('chatLogin')}</button>;
   if (!canWrite) return <p className="muted">{t('chatResidents')}</p>;
   const submit = (e: FormEvent): void => {
     e.preventDefault();
@@ -74,7 +75,7 @@ function Composer({ channel, canWrite }: { readonly channel: number; readonly ca
   return (
     <form className="composer" onSubmit={submit}>
       <input className="input grow" value={text} onChange={(e) => setText(e.target.value)} maxLength={MAX_TEXT} placeholder={t('chatHint')} aria-label={t('chatHint')} autoComplete="off" />
-      <button type="submit" className="btn" aria-label={t('send')}>➤</button>
+      <button type="submit" className="btn" aria-label={t('send')}><Icon name="send" /></button>
     </form>
   );
 }
@@ -103,11 +104,12 @@ function OnlineList(): React.JSX.Element {
       {people.map((p) => (
         <li key={p.author}>
           <button type="button" className="plain" onClick={() => goToPoint(p.x, p.z)}><b>{p.nick}</b><br /><span className="muted">{districtName(p.district)}</span></button>
-          <span aria-hidden="true">→</span>
+          <Icon name="next" className="chev" />
         </li>
       ))}
+      {people.length === 0 && guests === 0 && <li className="muted">{t('listEmpty')}</li>}
       {guests > 0 && <li className="muted">+{guests} {t('guests')}</li>}
-      {muted.map((m) => <li key={`jim-${m.author}`}><span className="grow muted">🔇 {m.nick}</span><button type="button" className="btn small soft" onClick={() => setMuted(m, false)}>{t('unmute')}</button></li>)}
+      {muted.map((m) => <li key={`jim-${m.author}`}><span className="grow muted with-icon"><Icon name="mute" />{m.nick}</span><button type="button" className="btn small soft" onClick={() => setMuted(m, false)}>{t('unmute')}</button></li>)}
     </ul>
   );
 }
@@ -123,7 +125,7 @@ function DistrictTab(): React.JSX.Element {
   return (
     <>
       <select className="input" value={picked} aria-label={t('chatDistrict')} onChange={(e) => setPicked(Number(e.target.value))}>
-        {boot?.districts.map((d) => <option key={d.id} value={d.id}>{homes.includes(d.id) ? '🏠 ' : ''}{lang === 'uz' ? d.name_uz : d.name_ru}</option>)}
+        {boot?.districts.map((d) => <option key={d.id} value={d.id}>{homes.includes(d.id) ? '• ' : ''}{lang === 'uz' ? d.name_uz : d.name_ru}</option>)}
       </select>
       <Messages channel={picked} />
       <Composer channel={picked} canWrite={homes.includes(picked) || canModerate} />

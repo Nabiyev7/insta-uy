@@ -16,7 +16,7 @@ for (const mode of ['walk', 'city']) {
     const page = await ctx.newPage();
     const cdp = await ctx.newCDPSession(page);
     await page.goto(`${site}/?uy=P0030`);
-    await page.locator('.nav5').waitFor({ timeout: 60_000 });
+    await page.locator('.nav5').waitFor({ state: 'attached', timeout: 60_000 });
     await page.evaluate((list) => {
       const s = window.__app.getState();
       const near = s.plan.plots.filter((p) => p.type === 'hovli').sort((a, b) => Math.hypot(a.x - s.plotById.get('P0030').x, a.z - s.plotById.get('P0030').z) - Math.hypot(b.x - s.plotById.get('P0030').x, b.z - s.plotById.get('P0030').z)).slice(0, 50);

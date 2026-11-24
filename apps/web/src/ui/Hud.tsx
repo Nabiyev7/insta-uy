@@ -1,12 +1,14 @@
-/** Ekran: yuqori qator, rejim tugmalari, pastki panel. Elementlar faqat chetda, o'rta ochiq (telefon birinchi). */
+/** Ekran: yuqori qator, o'ng ustun (rejimlar), pastdagi karta va panel. Elementlar faqat chetda, o'rta ochiq (telefon birinchi). */
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { inPlaza, streetLabel, zoneAt } from '../../../../packages/shared/src/index.ts';
-import { shareImage } from '../app/actions.ts';
-import { useT, type Key } from '../app/i18n.ts';
+import { BUZZ, buzz, shareImage } from '../app/actions.ts';
+import { money, useT, type Key } from '../app/i18n.ts';
 import { setMode } from '../app/modes.ts';
 import { here, input, player, snapshotters, type Mode } from '../app/runtime.ts';
-import { openPanel, setApp, useApp, type Panel } from '../app/store.ts';
-import { ICONS, Icon } from './icons.tsx';
+import { backPanel, openAuth, openPanel, openRoot, setApp, useApp, type Panel } from '../app/store.ts';
+import { BottomCard, PreviewBar } from './BottomCard.tsx';
+import { CoinFly } from './CoinFly.tsx';
+import { Icon, type IconName } from './icons.tsx';
 import { useAction } from './kit.tsx';
 
 function Joystick(): React.JSX.Element {
@@ -34,7 +36,7 @@ function Joystick(): React.JSX.Element {
   );
 }
 
-const EMOTES = [['👋', 3, 'wave'], ['💃', 4, 'dance'], ['🧘', 5, 'sit']] as const;
+const EMOTES: readonly (readonly [IconName, number, Key])[] = [['wave', 3, 'wave'], ['dance', 4, 'dance'], ['sit', 5, 'sit']];
 const TAP = 8;
 const SIT = 5;
 const SIT_MS = 60_000;
@@ -50,9 +52,9 @@ function WalkActions(): React.JSX.Element {
   };
   return (
     <div className="actions">
-      {isOpen && <div className="emotes" role="group" aria-label={t('emotes')}>{EMOTES.map(([icon, anim, key]) => <button type="button" key={key} aria-label={t(key)} title={t(key)} onClick={() => play(anim)}>{icon}</button>)}</div>}
-      <button type="button" className="chip" aria-label={t('emotes')} aria-expanded={isOpen} onClick={() => setOpen(!isOpen)}>🙂</button>
-      <button type="button" className="chip" aria-label={t('photo')} onClick={() => setApp({ isPhoto: true, panel: null })}><Icon d={ICONS.photo} /></button>
+      {isOpen && <div className="emotes glass" role="group" aria-label={t('emotes')}>{EMOTES.map(([icon, anim, key]) => <button type="button" key={key} aria-label={t(key)} title={t(key)} onClick={() => play(anim)}><Icon name={icon} /></button>)}</div>}
+      <button type="button" className="round glass" aria-label={t('emotes')} aria-expanded={isOpen} onClick={() => setOpen(!isOpen)}><Icon name="emote" /></button>
+      <button type="button" className="round glass" aria-label={t('photo')} onClick={() => { openRoot(null); setApp({ isPhoto: true }); }}><Icon name="photo" /></button>
     </div>
   );
 }
@@ -63,7 +65,7 @@ function DriveActions(): React.JSX.Element {
   useEffect(() => () => { input.isBraking = false; }, []);
   return (
     <div className="actions">
-      <button type="button" className="chip" aria-label={t('cars')} onClick={() => openPanel({ kind: 'cars' })}><Icon d={ICONS.drive} /></button>
+      <button type="button" className="round glass" aria-label={t('pickCar')} onClick={() => openPanel({ kind: 'cars' })}><Icon name="drive" /></button>
       <button type="button" className="brake" aria-label={t('brake')} onPointerDown={brake(true)} onPointerUp={brake(false)} onPointerCancel={brake(false)} onPointerLeave={brake(false)} onContextMenu={(e) => e.preventDefault()}>{t('brake')}</button>
     </div>
   );
@@ -75,59 +77,59 @@ function PhotoBar(): React.JSX.Element {
   return (
     <div className="hud"><div className="photo-bar">
       <button type="button" className="btn soft" onClick={() => setApp({ isPhoto: false })}>{t('close')}</button>
-      <button type="button" className="btn clay" disabled={isBusy} onClick={() => run(async () => { const c = snapshotters.capture?.(); if (c) await shareImage(c, 'shahar'); })}>📸 {t('shoot')}</button>
+      <button type="button" className="btn gold" disabled={isBusy} onClick={() => run(async () => { const c = snapshotters.capture?.(); if (c) await shareImage(c, 'shahar'); })}><Icon name="photo" />{t('shoot')}</button>
+      <button type="button" className="round glass" aria-label={t('hideUi')} title={t('hideUi')} onClick={() => setApp({ isPhoto: false, isClean: true })}><Icon name="eyeOff" /></button>
     </div></div>
   );
 }
 
-function TopRow(): React.JSX.Element {
+const PLACE_PANELS: readonly Panel['kind'][] = ['plot', 'civic', 'building', 'commerce', 'street'];
+function PlacePill(): React.JSX.Element {
   const t = useT();
-  const { district, street, lang, boot, profile } = useApp();
+  const { district, street, lang, boot, panel } = useApp();
+  if (panel && PLACE_PANELS.includes(panel.kind)) return <button type="button" className="pill place glass" onClick={backPanel}><Icon name="back" /><b>{t('back')}</b></button>;
   const d = boot?.districts.find((x) => x.id === district);
   const at = here();
   const isPlaza = inPlaza(at.x, at.z);
-  const zone = zoneAt(at.x, at.z);
   const districtName = d ? (lang === 'uz' ? d.name_uz : d.name_ru) : t('outskirts');
-  const place = isPlaza ? t('plaza') : zone?.[lang] ?? districtName;
-  const hasBonus = profile !== null && !profile.daily_done;
+  const streetName = street ? streetLabel(street, boot?.streets[String(street)], lang) : '';
+  const place = isPlaza ? t('plaza') : zoneAt(at.x, at.z)?.[lang] ?? (streetName || districtName);
+  const open = (): void => openRoot(street ? { kind: 'street', id: street } : { kind: 'map' });
+  return <button type="button" className="pill place glass" aria-label={`${place}, ${districtName}`} title={districtName} onClick={open}><Icon name="pin" /><b>{place}</b></button>;
+}
+
+function TopRow(): React.JSX.Element {
+  const t = useT();
+  const { profile } = useApp();
+  const notes = (profile?.notes.length ?? 0) + (profile?.transfers.length ?? 0);
   return (
     <header className="topbar">
-      <button type="button" className="plate" onClick={() => street && openPanel({ kind: 'street', id: street })}>
-        <b>{place}</b>
-        <small>{street && !isPlaza ? streetLabel(street, boot?.streets[String(street)], lang) : t('cityName')}</small>
-      </button>
-      <button type="button" className="chip" aria-label={t('hideUi')} title={t('hideUi')} onClick={() => setApp({ isClean: true, panel: null })}><Icon d={ICONS.eye} /></button>
-      <button type="button" className="chip coins" aria-label={`${t('coins')}${profile ? `: ${profile.coins}` : ''}`} onClick={() => openPanel({ kind: 'coins' })}>
-        <span aria-hidden="true">💰</span>{profile && <b>{profile.coins}</b>}{hasBonus && <i className="dot small" />}
-      </button>
-      <button type="button" className="chip" aria-label={t('menu')} onClick={() => openPanel({ kind: 'menu' })}><Icon d={ICONS.menu} /></button>
+      <PlacePill />
+      {profile && <>
+        <button type="button" className="pill coins glass" aria-label={`${t('coins')}: ${profile.coins}`} title={t('addCoins')} onClick={() => openRoot({ kind: 'coins' })}><Icon name="coin" /><b>{money(profile.coins)}</b><Icon name="plus" className="add" /></button>
+        <button type="button" className="round glass bell" aria-label={`${t('notes')}${notes > 0 ? `: ${notes}` : ''}`} onClick={() => openRoot({ kind: 'notes' })}><Icon name="bell" />{notes > 0 && <i className="dot">{notes > 99 ? '99+' : notes}</i>}</button>
+      </>}
+      <button type="button" className="round glass" aria-label={t('menu')} onClick={() => openRoot({ kind: 'menu' })}><Icon name="menu" /></button>
     </header>
   );
 }
 
-const MODES: readonly (readonly [Mode, Key, keyof typeof ICONS])[] = [['city', 'modeCity', 'city'], ['walk', 'modeWalk', 'walk'], ['drive', 'modeDrive', 'drive']];
-
-function ModeBar(): React.JSX.Element {
+const MODES: readonly (readonly [Mode, Key, IconName])[] = [['city', 'modeCity', 'city'], ['walk', 'modeWalk', 'walk'], ['drive', 'modeDrive', 'drive']];
+function Rail(): React.JSX.Element {
   const t = useT();
   const mode = useApp((s) => s.mode);
+  const pick = (id: Mode): void => {
+    buzz(BUZZ.tap);
+    openRoot(null);
+    setMode(id);
+  };
   return (
-    <div className="modes" role="group" aria-label={t('modes')}>
-      {MODES.map(([id, key, icon]) => <button type="button" key={id} aria-pressed={mode === id} onClick={() => { openPanel(null); setMode(id); }}><Icon d={ICONS[icon]} />{t(key)}</button>)}
-    </div>
-  );
-}
-
-function PreviewBar(): React.JSX.Element | null {
-  const t = useT();
-  const lang = useApp((s) => s.lang);
-  const preview = useApp((s) => s.preview);
-  const row = useApp((s) => s.catalog.find((c) => c.id === s.preview?.decor));
-  if (!preview || !row) return null;
-  return (
-    <div className="preview" role="status">
-      <span>👁 {row[lang]}</span>
-      <button type="button" className="btn small clay" onClick={() => { setApp({ preview: null }); openPanel({ kind: 'shop' }); }}>{t('shop')}</button>
-      <button type="button" className="btn small soft" onClick={() => setApp({ preview: null })}>{t('close')}</button>
+    <div className="rail">
+      <div className="modes glass" role="group" aria-label={t('modes')}>
+        {MODES.map(([id, key, icon]) => <button type="button" key={id} aria-label={t(key)} title={t(key)} aria-pressed={mode === id} onClick={() => pick(id)}><Icon name={icon} /></button>)}
+      </div>
+      {mode === 'walk' && <WalkActions />}
+      {mode === 'drive' && <DriveActions />}
     </div>
   );
 }
@@ -135,18 +137,24 @@ function PreviewBar(): React.JSX.Element | null {
 function BottomBar(): React.JSX.Element {
   const t = useT();
   const { panel, profile, online, unread } = useApp();
-  const notes = (profile?.notes.length ?? 0) + (profile?.transfers.length ?? 0);
-  const toggle = (p: Panel) => (): void => openPanel(panel?.kind === p.kind ? null : p);
-  const item = (p: Panel, icon: keyof typeof ICONS, label: string, extra?: React.ReactNode): React.JSX.Element => (
-    <button type="button" aria-current={panel?.kind === p.kind ? 'page' : undefined} onClick={toggle(p)}><Icon d={ICONS[icon]} /><span>{label}</span>{extra}</button>
+  const toggle = (p: Panel) => (): void => openRoot(panel?.kind === p.kind ? null : p);
+  const item = (p: Panel, icon: IconName, label: string, extra?: React.ReactNode): React.JSX.Element => (
+    <button type="button" aria-current={panel?.kind === p.kind ? 'page' : undefined} onClick={toggle(p)}><Icon name={icon} /><span>{label}</span>{extra}</button>
   );
+  const isMe = panel?.kind === 'me' || panel?.kind === 'auth';
+  const openMe = (): void => {
+    buzz(BUZZ.tap);
+    if (isMe) openRoot(null);
+    else if (profile) openRoot({ kind: 'me' });
+    else openAuth();
+  };
   return (
-    <nav className="nav5" aria-label={t('menu')}>
+    <nav className="nav5 glass" aria-label={t('menu')}>
       {item({ kind: 'map' }, 'map', t('map'))}
       {item({ kind: 'chat' }, 'chat', t('chatShort'), <>{online > 0 && <i className="online"><em aria-hidden="true" />{online}</i>}{unread > 0 && <i className="dot">{unread > 99 ? '99+' : unread}</i>}</>)}
+      <button type="button" className="main" aria-label={t(profile ? 'myHouse' : 'login')} aria-current={isMe ? 'page' : undefined} onClick={openMe}><i><Icon name={profile ? 'home' : 'telegram'} /></i><span>{t(profile ? 'myHouse' : 'login')}</span></button>
       {item({ kind: 'shop' }, 'shop', t('shop'))}
-      {item({ kind: 'rank' }, 'rank', t('rank'))}
-      {item({ kind: profile ? 'me' : 'auth' }, 'home', profile ? t('myHouse') : t('login'), notes > 0 && <i className="dot">{notes}</i>)}
+      {item({ kind: 'rank' }, 'rank', t('rankShort'))}
     </nav>
   );
 }
@@ -169,7 +177,7 @@ function CleanScreen(): React.JSX.Element {
       removeEventListener('pointerup', up);
     };
   }, []);
-  return <div className="hud"><button type="button" className="eye" aria-label={t('showUi')} onClick={() => setApp({ isClean: false })}><Icon d={ICONS.eye} /></button></div>;
+  return <div className="hud"><button type="button" className="eye" aria-label={t('showUi')} onClick={() => setApp({ isClean: false })}><Icon name="eye" /></button></div>;
 }
 
 export function Hud(): React.JSX.Element {
@@ -177,17 +185,18 @@ export function Hud(): React.JSX.Element {
   const isPhoto = useApp((s) => s.isPhoto);
   const isClean = useApp((s) => s.isClean);
   const mode = useApp((s) => s.mode);
+  const isOffline = useApp((s) => s.isOffline);
+  const hasPanel = useApp((s) => s.panel !== null);
   const isMaintenance = useApp((s) => Boolean(s.boot?.settings.maintenance));
   if (isClean) return <CleanScreen />;
   if (isPhoto) return <PhotoBar />;
   return (
-    <div className={`hud mode-${mode}`}>
+    <div className={`hud mode-${mode} ${hasPanel ? 'has-panel' : ''}`}>
       <TopRow />
-      {isMaintenance && <p className="banner">{t('maintenance')}</p>}
+      {(isOffline || isMaintenance) && <p className="banner" role="alert">{t(isOffline ? 'offline' : 'maintenance')}</p>}
       {mode !== 'city' && <Joystick />}
-      {mode === 'walk' && <WalkActions />}
-      {mode === 'drive' && <DriveActions />}
-      <div className="dock"><PreviewBar /><ModeBar /><BottomBar /></div>
+      <div className="dock"><Rail /><PreviewBar /><BottomCard /><BottomBar /></div>
+      <CoinFly />
       {location.search.includes('fps') && <FpsMeter />}
     </div>
   );

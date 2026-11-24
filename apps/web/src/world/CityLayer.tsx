@@ -12,12 +12,13 @@ import { closedDistrictItems } from '../logic/streets.ts';
 import { HIGH_ALTITUDE, cityView, groundView, type View } from '../logic/view.ts';
 import { worldIndex } from '../logic/worldIndex.ts';
 import { camera as cam, city, director, here, session } from '../app/runtime.ts';
-import { setting, useApp, type Preview } from '../app/store.ts';
+import { getApp, setting, useApp, type Preview } from '../app/store.ts';
 import { Ads } from './Ads.tsx';
 import { collect, type CollectSource } from './collect.ts';
 import { FAR_CHUNK, Ground } from './ground.ts';
 import { kitUniforms, type Kit } from './kit.ts';
 import { Labels, type LabelInfo } from './labels.ts';
+import { Markers, Selection, activeMarkers } from './markers.ts';
 import { Pools } from './pools.ts';
 import { Boards, Signs } from './signs.ts';
 import { Lake, Sky } from './sky.ts';
@@ -77,7 +78,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const index = useMemo(() => worldIndex(plan), [plan]);
 
   const world = useMemo(() => ({
-    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(), boards: new Boards(), works: new Pools(kit),
+    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(), boards: new Boards(), markers: new Markers(), selection: new Selection(), works: new Pools(kit),
   }), [kit, plan]);
   const sun = useMemo(() => new DirectionalLight('#fff', 2), []);
   const hemi = useMemo(() => new HemisphereLight('#fff', '#c9d6b4', 1), []);
@@ -103,11 +104,15 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.farGround.setState({ openDistricts: open });
   }, [houses, open, extras, world, level, catalog]);
   useEffect(() => { world.boards.setLang(lang); }, [lang, world]);
+  /** Oynasi ochiq bo'sh joy sariq ramkada. */
+  const chosen = useApp((s) => (s.panel?.kind === 'plot' && !s.houses.has(s.panel.id) ? s.panel.id : null));
+  useEffect(() => { world.selection.set((chosen && index.plots ? getApp().plotById.get(chosen) : null) ?? null); }, [chosen, world, index]);
 
   useEffect(() => {
     scene.fog = fog;
-    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, world.boards.mesh, world.works.group, sun, sun.target, hemi];
+    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, world.boards.mesh, world.markers.points, world.selection.group, world.works.group, sun, sun.target, hemi];
     scene.add(...parts);
+    activeMarkers.current = world.markers;
     return () => {
       scene.remove(...parts);
       world.pools.dispose();
@@ -116,6 +121,9 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       world.labels.dispose();
       world.signs.dispose();
       world.boards.dispose();
+      activeMarkers.current = null;
+      world.markers.dispose();
+      world.selection.dispose();
       world.works.dispose();
       world.lake.mesh.geometry.dispose();
       world.lake.mesh.material.dispose();
@@ -148,12 +156,13 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
 
   const refresh = (v: View): void => {
     const src: CollectSource = { plots: index.plots, statics: index.statics, extras, commerce, plan, houses, open, building: building?.plot ?? null, ...caches.current };
-    const { items, labels, signs, boards } = collect(v, src, q.labels);
+    const { items, labels, signs, boards, free } = collect(v, src, q.labels);
     world.pools.set(items);
     world.signs.set(signs);
     world.boards.set(boards);
+    world.markers.set(free);
     const hero = boot?.hero;
-    const heroLabel: LabelInfo[] = hero && Math.hypot(v.x - HERO_SPOT.x, v.z - HERO_SPOT.z) < HERO_RANGE ? [{ key: 'hero', text: `🏆 ${hero.nick}`, kind: 'gold', badge: null, x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
+    const heroLabel: LabelInfo[] = hero && Math.hypot(v.x - HERO_SPOT.x, v.z - HERO_SPOT.z) < HERO_RANGE ? [{ key: 'hero', text: hero.nick, kind: 'gold', badge: null, icon: 'rank', x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
     world.labels.set([...heroLabel, ...labels]);
   };
 
@@ -206,6 +215,8 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     fog.far = v.fogFar;
     updateGround(v, isHigh);
     updateWorks();
+    const app = getApp();
+    world.markers.setVisible(s.mode === 'city' && !isHigh && !app.isPhoto && !app.isClean);
     if (!isStale(last.current, s)) return;
     last.current = s;
     refresh(v);

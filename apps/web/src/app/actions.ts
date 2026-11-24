@@ -6,13 +6,13 @@ import { BUILD_MS, FLIGHT_MS } from '../logic/construction.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { flyTo, goToHouse, setMode } from './modes.ts';
 import { director, here, session, snapshotters } from './runtime.ts';
-import { getApp, openPanel, setApp } from './store.ts';
+import { getApp, openPanel, openRoot, setApp } from './store.ts';
 
 export const goToPlot = (id: string, isInstant = false): void => {
   const p = getApp().plotById.get(id);
   if (!p) return;
   goToHouse(p, isInstant);
-  openPanel({ kind: 'plot', id });
+  openRoot({ kind: 'plot', id });
 };
 
 export const addressOf = (p: Plot): string => {
@@ -53,7 +53,33 @@ export const startConstruction = (p: Plot): void => {
   setApp({ building: { plot: p.id, at: performance.now() + FLIGHT_MS }, panel: null });
   if (session.mode !== 'city') setMode('city');
   flyTo(viewOfPlot(p));
-  setTimeout(() => setApp({ building: null, panel: { kind: 'congrats', id: p.id } }), FLIGHT_MS + BUILD_MS);
+  setTimeout(() => {
+    buzz(BUZZ.big);
+    setApp({ building: null, cheer: { plot: p.id, tier: 1, isBuilt: true }, panel: { kind: 'congrats', id: p.id }, trail: [] });
+  }, FLIGHT_MS + BUILD_MS);
+};
+
+/** Telefon tebranishi (qo'llasa). */
+export const BUZZ = { tap: 10, coin: [12, 40, 12], big: [20, 60, 20, 60, 40] } as const;
+export const buzz = (pattern: number | readonly number[]): void => {
+  // Foydalanuvchi hali tegmagan bo'lsa brauzer rad etadi va konsolga yozadi.
+  if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(typeof pattern === 'number' ? pattern : [...pattern]);
+};
+
+/** Level oshdi: tabrik oynasi va karta. */
+export const cheerLevel = (plot: string, tier: number): void => {
+  buzz(BUZZ.big);
+  setApp({ cheer: { plot, tier, isBuilt: false } });
+  openPanel({ kind: 'congrats', id: plot, tier });
+};
+
+/** Uyni yaqindan ko'rish: piyoda eshik oldida. */
+export const walkTo = (id: string): void => {
+  const p = getApp().plotById.get(id);
+  if (!p) return;
+  openRoot(null);
+  if (session.mode !== 'walk') setMode('walk');
+  goToHouse(p);
 };
 
 export const inviteUrl = (ref: string): string => `${location.origin}/?ref=${ref}`;
@@ -137,4 +163,14 @@ export const storyImage = async (plot: Plot, nick: string): Promise<HTMLCanvasEl
     director.pose = null;
     director.dayFraction = null;
   }
+};
+
+/** Stories rasmi: oyna bir lahza yashirinadi, rasm olinadi, so'ng oyna (orqaga yo'li bilan) qaytadi. */
+export const shareStory = async (id: string, nick: string): Promise<void> => {
+  const { panel, trail, plotById } = getApp();
+  const plot = plotById.get(id);
+  if (!plot) return;
+  setApp({ panel: null });
+  const canvas = await storyImage(plot, nick).finally(() => setApp({ panel, trail }));
+  await shareImage(canvas, `uy-${nick || id}`);
 };

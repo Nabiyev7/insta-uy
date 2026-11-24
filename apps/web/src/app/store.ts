@@ -9,8 +9,9 @@ import type { Kit } from '../world/kit.ts';
 import { rpc, type Boot, type CityRow, type Profile } from './api.ts';
 
 export type Panel =
-  | { readonly kind: 'plot' | 'congrats'; readonly id: string } | { readonly kind: 'building'; readonly id: number } | { readonly kind: 'commerce'; readonly id: string } | { readonly kind: 'street'; readonly id: number }
-  | { readonly kind: 'auth' | 'me' | 'map' | 'rank' | 'coins' | 'city' | 'gazette' | 'settings' | 'help' | 'rules' | 'avatar' | 'orders' | 'menu' | 'ads' | 'privacy' | 'chat' | 'shop' | 'cars' };
+  | { readonly kind: 'plot' | 'looks' | 'yard'; readonly id: string } | { readonly kind: 'congrats'; readonly id: string; /** Bor bo'lsa — level oshdi, aks holda uy qurildi. */ readonly tier?: number }
+  | { readonly kind: 'civic'; readonly id: string } | { readonly kind: 'gifts'; readonly to?: string } | { readonly kind: 'building'; readonly id: number } | { readonly kind: 'commerce'; readonly id: string } | { readonly kind: 'street'; readonly id: number }
+  | { readonly kind: 'auth' | 'me' | 'map' | 'rank' | 'coins' | 'notes' | 'city' | 'gazette' | 'settings' | 'help' | 'rules' | 'avatar' | 'orders' | 'menu' | 'ads' | 'privacy' | 'chat' | 'shop' | 'cars' };
 export type Stage = 'loading' | 'intro' | 'play' | 'error';
 export interface Toast { readonly id: number; readonly text: string; readonly isError: boolean }
 /** channel: 0 — umumiy, 1..12 — mahalla. */
@@ -40,6 +41,9 @@ const detectQuality = (): QualityLevel => {
   return initialQuality({ cores: nav.hardwareConcurrency || 4, memoryGb: nav.deviceMemory ?? 8, isTouch: matchMedia('(pointer: coarse)').matches });
 };
 
+export type Theme = 'auto' | 'light' | 'dark';
+const readTheme = (): Theme => { const v = read('theme'); return v === 'light' || v === 'dark' ? v : 'auto'; };
+
 const isMuted = (x: unknown): x is Muted => typeof x === 'object' && x !== null && typeof (x as Muted).author === 'string' && typeof (x as Muted).nick === 'string';
 const readMuted = (): readonly Muted[] => {
   try {
@@ -64,11 +68,24 @@ export interface AppState {
   readonly houses: ReadonlyMap<string, HouseState>;
   readonly profile: Profile | null;
   readonly panel: Panel | null;
+  /** Orqaga qaytish yo'li: ochiq oynadan oldingilari. */
+  readonly trail: readonly Panel[];
   readonly toasts: readonly Toast[];
   readonly lang: Lang;
   readonly quality: QualityLevel;
   readonly isAutoQuality: boolean;
   readonly isSound: boolean;
+  readonly theme: Theme;
+  readonly isLeftHand: boolean;
+  readonly isOffline: boolean;
+  /** Pastdagi karta: hozir qurilgan uy yoki oshgan level. */
+  readonly cheer: { readonly plot: string; readonly tier: number; readonly isBuilt: boolean } | null;
+  /** Hozir topilgan xazina (tanga). */
+  readonly treasure: number | null;
+  /** Tasdiq oynasi (askConfirm). */
+  readonly ask: { readonly text: string; readonly isDanger: boolean; readonly resolve: (isYes: boolean) => void } | null;
+  /** Ko'rib bo'lingan yangi bezaklar. */
+  readonly seenNew: readonly string[];
   readonly isPhoto: boolean;
   /** Ekranni tozalash: hamma tugmalar yashirin, faqat shahar. */
   readonly isClean: boolean;
@@ -89,8 +106,8 @@ export interface AppState {
 }
 
 export const useApp = create<AppState>(() => ({
-  stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, trail: [], toasts: [],
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', theme: readTheme(), isLeftHand: read('hand') === 'left', isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;
@@ -101,7 +118,34 @@ export const toast = (text: string, isError = false): void => {
   setApp((s) => ({ toasts: [...s.toasts.slice(-2), { id, text, isError }] }));
   setTimeout(() => setApp((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 4200);
 };
-export const openPanel = (panel: Panel | null): void => setApp({ panel });
+const sameAs = (a: Panel, b: Panel): boolean => JSON.stringify(a) === JSON.stringify(b);
+const MAX_TRAIL = 12;
+/** Oyna ochish: ustiga ochilsa oldingisi eslab qolinadi; null — hammasi yopiladi. */
+export const openPanel = (panel: Panel | null): void => setApp((s) => {
+  if (!panel) return { panel: null, trail: [] };
+  if (!s.panel || sameAs(s.panel, panel)) return { panel, trail: s.panel ? s.trail : [] };
+  // Yo'lda shu oyna bor bo'lsa, o'shangacha qaytiladi (aylanib qolmasin).
+  const at = s.trail.findIndex((p) => sameAs(p, panel));
+  return { panel, trail: at >= 0 ? s.trail.slice(0, at) : [...s.trail, s.panel].slice(-MAX_TRAIL) };
+});
+/** Pastki panel va shahardan bosilganda: yo'l boshidan boshlanadi. */
+export const openRoot = (panel: Panel | null): void => setApp({ panel, trail: [] });
+export const backPanel = (): void => setApp((s) => ({ panel: s.trail.at(-1) ?? null, trail: s.trail.slice(0, -1) }));
+/** Kirish kerak bo'lgan joydan: kirgach o'sha oynaga qaytadi. */
+export const openAuth = (next?: Panel): void => setApp((s) => {
+  if (s.panel?.kind === 'auth') return {};
+  const before = next ?? s.panel;
+  return { panel: { kind: 'auth' }, trail: before ? [...s.trail, before].slice(-MAX_TRAIL) : [] };
+});
+export const finishAuth = (): void => setApp((s) => {
+  if (s.panel?.kind !== 'auth') return {};
+  return { panel: s.trail.at(-1) ?? { kind: 'me' }, trail: s.trail.slice(0, -1) };
+});
+export const markNewSeen = (ids: readonly string[]): void => setApp((s) => {
+  const seenNew = [...new Set([...s.seenNew, ...ids])];
+  write('seenNew', seenNew.join(','));
+  return { seenNew };
+});
 
 const toHouse = (r: CityRow): HouseState => ({ plot: r[0], nick: r[1], tier: r[2], wall: r[3], roof: r[4], decor: r[5], label: r[6], badge: r[7], status: r[8], expanded: r[9], material: r[10], frame: r[11], door: r[12] });
 

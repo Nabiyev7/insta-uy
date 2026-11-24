@@ -40,7 +40,8 @@ describe('katalog bazada', () => {
   });
   test('api_catalog ochiq, to‘liq', async () => {
     const list = await anon<Row[]>('api_catalog');
-    expect(list.find((c) => c.id === 'gate_gold')).toMatchObject({ model: 'gate_gold', min: 7, onSale: true, spots: ['gate'], uz: 'Oltin darvoza', ru: 'Золотые ворота' });
+    expect(list.find((c) => c.id === 'water_pool')).toMatchObject({ onSale: false, active: false });
+    expect(list.find((c) => c.id === 'gate_gold')).toMatchObject({ model: 'gate_gold', min: 7, onSale: true, active: true, spots: ['gate'], uz: 'Oltin darvoza', ru: 'Золотые ворота' });
   });
 });
 
@@ -115,21 +116,25 @@ describe('joylash', () => {
     for (const bad of [{ yoq: 'tree_anor' }, { burchak_1: 'yoq' }, { burchak_1: 5 }, ['burchak_1'], 'x', null]) await expect(put(bad)).rejects.toThrow('bad_format');
     await give(uid, 'gate_gold');
     await expect(put({ gate: 'gate_gold' })).rejects.toThrow('level_low');
-    const full = { fence: 'fence_wood', gate: 'gate_wood', path: 'path_stone', sign: 'sign_nick', old_hovli_chap: 'dam_basseyn', old_hovli_ong: 'dam_stol', garaj_oldi: 'avto_sport', darvoza_yoni: 'gul_kamar' };
-    for (const id of [...Object.values(full), 'daraxt_gilos']) await give(uid, id);
+    const full = { fence: 'fence_wood', gate: 'gate_wood', path: 'path_stone', lamps: 'light_lamps', old_hovli_chap: 'dam_basseyn', old_hovli_ong: 'dam_stol', garaj_oldi: 'avto_sport', darvoza_yoni: 'gul_kamar' };
+    for (const id of [...Object.values(full), 'daraxt_gilos', 'sign_nick']) await give(uid, id);
     await expect(put({ ...full, burchak_1: 'daraxt_gilos' })).rejects.toThrow('no_slots');
     await put(full);
+    // Nik lavhasi joy hisobiga kirmaydi.
+    await put({ ...full, sign: 'sign_nick' });
     const kv = (await sql("select id from plots where type = 'kvartira' limit 1"))[0]!.id as string;
     await sql("insert into plot_state (plot_id, status, owner) values ($1, 'owned', $2)", [kv, uid]);
     await expect(as(uid, 'my_place_decor', { p_plot: kv, p_places: {} })).rejects.toThrow('no_yard');
   });
-  test('level bo‘yicha joy soni: 1,1,1,1,8,10,12,14,16,17; admin 20 dan oshira olmaydi', async () => {
+  test('level bo‘yicha joy soni: 0,0,0,0,8,10,12,14,15,16; admin 20 dan oshira olmaydi', async () => {
     const at = async (tier: number): Promise<number> => (await sql('select private.decor_slots($1) v', [tier]))[0]!.v as number;
+    // Bitta manba: baza sozlamasi va koddagi ro'yxat bir xil.
+    expect((await sql("select value from settings where key = 'decor_slots'"))[0]!.value).toEqual([...DEFAULT_DECOR_SLOTS]);
     for (const [i, v] of DEFAULT_DECOR_SLOTS.entries()) expect(await at(i + 1)).toBe(v);
-    await sql("update settings set value = '[1,1,1,1,8,10,12,14,16,99]' where key = 'decor_slots'");
+    await sql("update settings set value = '[0,0,0,0,8,10,12,14,15,99]' where key = 'decor_slots'");
     expect(await at(10)).toBe(20);
     await sql(`update settings set value = '["a", 1]' where key = 'decor_slots'`);
-    expect([await at(1), await at(2), await at(5)]).toEqual([1, 1, 1]);
+    expect([await at(1), await at(2), await at(5)]).toEqual([0, 1, 0]);
     await sql("update settings set value = $1::jsonb where key = 'decor_slots'", [JSON.stringify(DEFAULT_DECOR_SLOTS)]);
   });
   test('bitta bezak ikki uyda bo‘lolmaydi', async () => {
@@ -150,6 +155,24 @@ describe('joylash', () => {
     const { path: _path, ...fewer } = places as Record<string, string>;
     await as(uid, 'my_place_decor', { p_plot: plot, p_places: fewer });
     await sql("update settings set value = $1::jsonb where key = 'decor_slots'", [JSON.stringify(DEFAULT_DECOR_SLOTS)]);
+  });
+});
+
+describe('ekran uchun ma’lumot', () => {
+  test('asoschilar soni va kunlik bonus kuni', async () => {
+    const before = (await anon<{ founders: { taken: number; limit: number } }>('api_boot')).founders;
+    expect(before.limit).toBe(100);
+    const uid = await user();
+    await sql("update profiles set badges = array['asoschi'] where user_id = $1", [uid]);
+    expect((await anon<{ founders: { taken: number } }>('api_boot')).founders.taken).toBe(before.taken + 1);
+    const next = async (): Promise<number> => (await as<{ daily_next: number }>(uid, 'my_profile')).daily_next;
+    expect(await next()).toBe(1);
+    await sql('update profiles set last_daily = current_date - 1, streak = 3 where user_id = $1', [uid]);
+    expect(await next()).toBe(4);
+    await sql('update profiles set streak = 7 where user_id = $1', [uid]);
+    expect(await next()).toBe(7);
+    await sql('update profiles set last_daily = current_date - 3 where user_id = $1', [uid]);
+    expect(await next()).toBe(1);
   });
 });
 
@@ -202,7 +225,7 @@ describe('sotuv va tashqi ko‘rinish', () => {
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_yurt' })).rejects.toThrow('out_of_season');
     await give(uid, 'special_yurt');
     await as(uid, 'my_place_decor', { p_plot: plot, p_places: { old_hovli_chap: 'special_yurt' } });
-    expect((await anon<Row[]>('api_catalog')).find((c) => c.id === 'special_yurt')).toMatchObject({ onSale: false });
+    expect((await anon<Row[]>('api_catalog')).find((c) => c.id === 'special_yurt')).toMatchObject({ onSale: false, active: true });
     await sql("update decor_catalog set season_from = null, season_to = null where id = 'special_yurt'");
   });
   test('material, ramka, eshik', async () => {

@@ -2,12 +2,13 @@
 import { Vector3, type Camera } from 'three';
 import { CIVIC, civicById, civicRect, footprint, padHeight, type MasterPlan } from '../../../../packages/shared/src/index.ts';
 import { here, session } from '../app/runtime.ts';
-import { getApp, openPanel, toast } from '../app/store.ts';
+import { getApp, openRoot } from '../app/store.ts';
 import { flyTo, goToHouse } from '../app/modes.ts';
 import { viewOfPoint } from '../logic/cityCamera.ts';
 import { pickNearest, type PickBox, type Ray } from '../logic/motion.ts';
 import { commerceSolid, pickHeight } from '../logic/placement.ts';
 import { worldIndex } from '../logic/worldIndex.ts';
+import { activeMarkers } from './markers.ts';
 
 const TAP_MOVE = 8;
 const TAP_MS = 400;
@@ -35,16 +36,15 @@ const openPicked = (id: string): void => {
   const civic = civicById(id);
   if (civic) {
     if (isCity) flyTo(viewOfPoint(civic.x, civic.z, (civic.rot * Math.PI) / 2, CIVIC_VIEW_HEIGHT));
-    toast(s.lang === 'uz' ? civic.uz : civic.ru);
-    if (civic.panel) openPanel({ kind: civic.panel });
+    openRoot({ kind: 'civic', id });
     return;
   }
   if (id.startsWith('P')) {
     const plot = s.plotById.get(id);
     if (plot && isCity) goToHouse(plot);
-    openPanel({ kind: 'plot', id });
-  } else if (id.startsWith('B')) openPanel({ kind: 'commerce', id });
-  else if (id.startsWith('#')) openPanel({ kind: 'building', id: Number(id.slice(1)) });
+    openRoot({ kind: 'plot', id });
+  } else if (id.startsWith('B')) openRoot({ kind: 'commerce', id });
+  else if (id.startsWith('#')) openRoot({ kind: 'building', id: Number(id.slice(1)) });
 };
 
 /** Sudrash emas, qisqa teginish. */
@@ -60,7 +60,7 @@ export const attachPicking = (el: HTMLCanvasElement, camera: Camera, plan: Maste
     const r = el.getBoundingClientRect();
     const dir = new Vector3(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
     const ray: Ray = { ox: camera.position.x, oy: camera.position.y, oz: camera.position.z, dx: dir.x, dy: dir.y, dz: dir.z };
-    const id = pickNearest(ray, boxes(plan));
+    const id = activeMarkers.current?.hit(e.clientX - r.left, e.clientY - r.top, r, camera) ?? pickNearest(ray, boxes(plan));
     if (id) openPicked(id);
   };
   el.addEventListener('pointerdown', down);

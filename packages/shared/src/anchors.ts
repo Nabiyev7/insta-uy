@@ -43,11 +43,14 @@ export const REF_YARD = { w: 25, d: 34 } as const;
 export const anchorById = (id: string): Anchor | undefined => ANCHORS.find((a) => a.id === id);
 export const openAnchors = (level: number): readonly Anchor[] => ANCHORS.filter((a) => a.minLevel <= level);
 
-/** Level bo'yicha qo'yish mumkin bo'lgan bezak soni (indeks = level − 1). Amaldagi qiymat bazada (`decor_slots`). */
-export const DEFAULT_DECOR_SLOTS = [1, 1, 1, 1, 8, 10, 12, 14, 16, 17] as const;
+/** Level bo'yicha hovli bezaklari soni (indeks = level − 1), nik lavhasisiz. Amaldagi qiymat bazada (`decor_slots`); ikkalasi bir xilligini test tekshiradi. */
+export const DEFAULT_DECOR_SLOTS = [0, 0, 0, 0, 8, 10, 12, 14, 15, 16] as const;
 export const MAX_DECOR_SLOTS = 20;
 export const decorSlots = (level: number, custom: readonly number[] = DEFAULT_DECOR_SLOTS): number =>
   Math.min(MAX_DECOR_SLOTS, custom[Math.max(1, Math.min(MAX_TIER, level)) - 1] ?? DEFAULT_DECOR_SLOTS[0]);
+
+/** Joy hisobiga kiradigan bezaklar soni: nik lavhasi bundan mustasno. */
+export const usedSlots = (places: Readonly<Record<string, string>>): number => Object.keys(places).filter((id) => anchorById(id)?.kind !== 'sign').length;
 
 /** Qo'yilgan bezak: "nuqta:bezak". */
 export interface Placed { readonly anchor: string; readonly decor: string }
