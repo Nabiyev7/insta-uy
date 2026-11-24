@@ -12,6 +12,7 @@ sys.dont_write_bytecode = True
 
 from kit_core import rgb  # noqa: E402
 from kit_center import all_center  # noqa: E402
+from kit_decor import all_decor  # noqa: E402
 from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
 from kit_props import all_props  # noqa: E402
@@ -73,7 +74,7 @@ def assign(mesh, keys):
 
 def build_kit():
     kit = {}
-    for model in all_levels() + all_buildings() + all_center() + all_props():
+    for model in all_levels() + all_buildings() + all_center() + all_props() + all_decor():
         obj = model.build()
         assign(obj.data, [(p[2], round(p[3] * 4)) for p in model.polys])
         kit[model.name] = obj.data

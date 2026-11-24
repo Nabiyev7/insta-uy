@@ -175,6 +175,7 @@ export function MePanel(): React.JSX.Element {
         {!profile.telegram && <p className="muted">{t('linkTgWhy')}</p>}
         <div className="row">
           <button type="button" className="btn small soft" onClick={() => openPanel({ kind: 'avatar' })}>{t('avatar')}</button>
+          <button type="button" className="btn small soft" onClick={() => openPanel({ kind: 'settings' })}>⚙️ {t('settings')}</button>
           <button type="button" className="btn small soft" onClick={() => openPanel({ kind: 'orders' })}>{t('orders')}</button>
           <button type="button" className="btn small soft" onClick={() => openPanel({ kind: 'ads' })}>{t('myAds')}</button>
           <button type="button" className="btn small soft" onClick={() => run(async () => { await signOut(); openPanel(null); })}>{t('logout')}</button>

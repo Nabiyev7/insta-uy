@@ -20,7 +20,7 @@ Instagram obunachilari uchun veb-saytdagi 3D o'zbek shahri. Odam avatar bilan ko
 - Shahar 3×3 km, 12 tuman, 5 000 uchastka: 3 500 hovli, 1 000 kvartira, 400 villa, 100 qasr. Qo'shimcha 170 tijorat joyi: 100 do'kon, 30 ofis, 40 bilbord.
 - Uylar 10 level: kichik uydan shoh saroyigacha.
 - Kun/tun, fasl, ob-havo, yuradigan odamlar va mashinalar, chat, tanga, hokim saylovi, gazeta bor.
-- Uslub: **real teksturali low-poly, Farg'ona vodiysi ruhi** — g'isht, suvoq, naqsh, o'yma yog'och, ayvon, chinor, ariq.
+- Uslub: **real teksturali low-poly, umumiy va universal** (hech bir hududga bog'lanmaydi) — zamonaviy va klassik uylar, ochiq ranglar, toza shakllar. Milliy narsalar faqat do'kondagi ixtiyoriy bezaklarda.
 - Holat: kod tayyor, egasining kompyuterida ishlaydi. Internetga hali chiqmagan, **hali hech kim uy olmagan**.
 
 ## 2. Egasi nima xohlaydi

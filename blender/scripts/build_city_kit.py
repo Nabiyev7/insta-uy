@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
 
 from kit_center import all_center  # noqa: E402
+from kit_decor import all_decor  # noqa: E402
 from kit_houses import all_buildings  # noqa: E402
 from kit_levels import all_levels  # noqa: E402
 from kit_props import all_props  # noqa: E402
@@ -16,7 +17,7 @@ from kit_props import all_props  # noqa: E402
 LOW_SIZE = {'x': 10.5, 'front': 11.0, 'back': 8.5}
 HIGH_SIZE = {'x': 7.7, 'front': 8.0, 'back': 6.7}
 LOW_LEVELS = 6
-MAX_TRIS = {'level': 2500, 'palace': 3500, 'civic': 2500, 'tower': 1000}
+MAX_TRIS = {'level': 2500, 'palace': 3500, 'civic': 2500, 'tower': 1000, 'decor': 300}
 TOWERS = ('bank', 'agentlik', 'novostroyka')
 PALACE_FROM = 9
 
@@ -40,6 +41,12 @@ def check_center(model):
         raise ValueError(f'{model.name}: {tris} uchburchak > {limit}')
 
 
+def check_decor(model):
+    tris = sum(len(poly[0]) - 2 for poly in model.polys)
+    if tris > MAX_TRIS['decor']:
+        raise ValueError(f'{model.name}: {tris} uchburchak > {MAX_TRIS["decor"]}')
+
+
 def main():
     out = sys.argv[sys.argv.index('--') + 1]
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -50,7 +57,10 @@ def main():
     center = all_center()
     for model in center:
         check_center(model)
-    for model in levels + all_buildings() + center + all_props():
+    decor = all_decor()
+    for model in decor:
+        check_decor(model)
+    for model in levels + all_buildings() + center + all_props() + decor:
         obj = model.build()
         tris = sum(len(p.vertices) - 2 for p in obj.data.polygons)
         total += tris

@@ -35,6 +35,7 @@ function Joystick(): React.JSX.Element {
 }
 
 const EMOTES = [['👋', 3, 'wave'], ['💃', 4, 'dance'], ['🧘', 5, 'sit']] as const;
+const TAP = 8;
 const SIT = 5;
 const SIT_MS = 60_000;
 const EMOTE_MS = 5000;
@@ -93,6 +94,7 @@ function TopRow(): React.JSX.Element {
         <b>{place}</b>
         <small>{street && !isPlaza ? streetLabel(street, boot?.streets[String(street)], lang) : t('cityName')}</small>
       </button>
+      <button type="button" className="chip" aria-label={t('hideUi')} title={t('hideUi')} onClick={() => setApp({ isClean: true, panel: null })}><Icon d={ICONS.eye} /></button>
       <button type="button" className="chip coins" aria-label={`${t('coins')}${profile ? `: ${profile.coins}` : ''}`} onClick={() => openPanel({ kind: 'coins' })}>
         <span aria-hidden="true">💰</span>{profile && <b>{profile.coins}</b>}{hasBonus && <i className="dot small" />}
       </button>
@@ -132,11 +134,34 @@ function BottomBar(): React.JSX.Element {
   );
 }
 
+/** Faqat shahar: istalgan joyga (sudrash emas) yoki ko'z tugmasiga bosilsa tugmalar qaytadi. */
+function CleanScreen(): React.JSX.Element {
+  const t = useT();
+  useEffect(() => {
+    let start: { readonly x: number; readonly y: number } | null = null;
+    const down = (e: globalThis.PointerEvent): void => { start = { x: e.clientX, y: e.clientY }; };
+    const up = (e: globalThis.PointerEvent): void => {
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < TAP) setApp({ isClean: false });
+      start = null;
+    };
+    // Yashirgan bosishning o'zi darhol qaytarib yubormasin.
+    const id = setTimeout(() => { addEventListener('pointerdown', down); addEventListener('pointerup', up); }, 300);
+    return () => {
+      clearTimeout(id);
+      removeEventListener('pointerdown', down);
+      removeEventListener('pointerup', up);
+    };
+  }, []);
+  return <div className="hud"><button type="button" className="eye" aria-label={t('showUi')} onClick={() => setApp({ isClean: false })}><Icon d={ICONS.eye} /></button></div>;
+}
+
 export function Hud(): React.JSX.Element {
   const t = useT();
   const isPhoto = useApp((s) => s.isPhoto);
+  const isClean = useApp((s) => s.isClean);
   const mode = useApp((s) => s.mode);
   const isMaintenance = useApp((s) => Boolean(s.boot?.settings.maintenance));
+  if (isClean) return <CleanScreen />;
   if (isPhoto) return <PhotoBar />;
   return (
     <div className={`hud mode-${mode}`}>

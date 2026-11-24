@@ -92,7 +92,7 @@ def gate(name, post_layer, post, leaf_layer, leaf, h, crown=None):
             p = [(x0, y, 0.1), (x1, y, 0.1), (x1, y, h - 0.4), (x0, y, h - 0.4)]
             m.panel([p[1], p[0], p[3], p[2]] if flip else p, leaf_layer, leaf)
     if crown:
-        m.box(-GATE / 2, -0.35, h + 0.2, GATE / 2, 0.35, h + 0.65, NAQSH, WHITE, bottom=True)
+        m.box(-GATE / 2, -0.35, h + 0.2, GATE / 2, 0.35, h + 0.65, STONE, '#e6dcc8', bottom=True)
         m.box(-GATE / 2 - 0.2, -0.5, h + 0.65, GATE / 2 + 0.2, 0.5, h + 0.8, ROOF if crown != GOLD else PLAIN, crown, bottom=True)
         if crown == GOLD:
             m.dome(0, 0, h + 0.8, 0.6, 8, 3, PLAIN, GOLD)
@@ -200,7 +200,7 @@ def fountain(name, r, tiers):
     z = 0.6
     for i in range(tiers):
         k = r * 0.42 / (i + 1)
-        m.cyl(0, 0, z, z + r * 0.28, k * 0.25, k * 0.2, 8, NAQSH)
+        m.cyl(0, 0, z, z + r * 0.28, k * 0.25, k * 0.2, 8, STONE, '#e6dcc8')
         z += r * 0.28
         m.cyl(0, 0, z, z + r * 0.08, k * 0.5, k, n, STONE, '#efe6d4')
         m.cyl(0, 0, z + r * 0.08, z + r * 0.085, k * 0.9, k * 0.9, n, PLAIN, '#69cbe0')
@@ -309,7 +309,7 @@ def hero_statue():
     m = Model('hero_statue')
     for i in range(3):
         m.cbox(0, 0, i * 0.35, 5 - i, 5 - i, 0.35, STONE, '#e6dcc8')
-    m.cbox(0, 0, 1.05, 2, 2, 3, NAQSH, '#e8dcc0')
+    m.cbox(0, 0, 1.05, 2, 2, 3, STONE, '#e8dcc0')
     m.cbox(0, 0, 4.05, 2.3, 2.3, 0.3, PLAIN, GOLD)
     for s in (-1, 1):
         m.cbox(s * 0.22, 0, 4.35, 0.34, 0.4, 1.5, PLAIN, '#9c7a3a')
@@ -367,13 +367,13 @@ def choyxona():
     for x in (-8, -4, 0, 4, 8):
         for y in (-6, 6):
             m.column(x, y, 0.5, 4.3, 0.2)
-    m.box(-8.4, -6.4, 4.3, 8.4, -5.8, 4.8, CARVED, WHITE, bottom=True)
-    m.box(-8.4, 5.8, 4.3, 8.4, 6.4, 4.8, CARVED, WHITE, bottom=True)
+    m.box(-8.4, -6.4, 4.3, 8.4, -5.8, 4.8, WOOD, '#b98a5c', bottom=True)
+    m.box(-8.4, 5.8, 4.3, 8.4, 6.4, 4.8, WOOD, '#b98a5c', bottom=True)
     m.hip(-9, -7, 9, 7, 4.8, 3, 0.8, '#3f7f8c')
     m.box(-8, 2, 0.5, 8, 6, 4, PLASTER, '#efe6d4')
     for x in (-5, 0, 5):
         m.cbox(x, -2.5, 0.5, 2.6, 2.2, 0.5, WOOD, '#99683a')
-        m.cbox(x, -2.5, 1.0, 2.4, 2.0, 0.08, NAQSH, '#e5785f')
+        m.cbox(x, -2.5, 1.0, 2.4, 2.0, 0.08, PLAIN, '#e8dcc8')
     return m
 
 
@@ -386,7 +386,7 @@ def bozor_stall():
     for x in (-1.5, 1.5):
         for y in (-0.8, 0.8):
             m.cbox(x, y, 0, 0.08, 0.08, 2.4, WOOD, '#7a5a38')
-    m.poly([(-1.8, -1.2, 2.2), (1.8, -1.2, 2.2), (1.8, 1.2, 2.7), (-1.8, 1.2, 2.7)], NAQSH, '#f0d9b0')
+    m.poly([(-1.8, -1.2, 2.2), (1.8, -1.2, 2.2), (1.8, 1.2, 2.7), (-1.8, 1.2, 2.7)], PLAIN, '#d2573a')
     m.poly([(-1.8, 1.2, 2.69), (1.8, 1.2, 2.69), (1.8, -1.2, 2.19), (-1.8, -1.2, 2.19)], PLAIN, '#c9a878')
     return m
 
@@ -399,7 +399,7 @@ def maktab():
     m.box(-4, -10, 4.2, 4, -7, 4.6, CONCRETE, '#e6dcc8', bottom=True)
     for x in (-3.5, -1.2, 1.2, 3.5):
         m.column(x, -9.6, 0, 4.2, 0.24, '#f3ead8', PLASTER)
-    m.panel([(-3, -7.06, 4.9), (3, -7.06, 4.9), (3, -7.06, 6.6), (-3, -7.06, 6.6)], NAQSH)
+    m.panel([(-3, -7.06, 4.9), (3, -7.06, 4.9), (3, -7.06, 6.6), (-3, -7.06, 6.6)], STONE, '#e6dcc8')
     return m
 
 
@@ -461,7 +461,7 @@ def bridge():
     m = Model('bridge')
     m.box(-3.6, -108, 0.02, 3.6, 108, 0.1, STONE, '#e6dcc8')
     for s in (-1, 1):
-        m.box(s * 3.6 - 0.15, -108, 0.1, s * 3.6 + 0.15, 108, 1.0, NAQSH)
+        m.box(s * 3.6 - 0.15, -108, 0.1, s * 3.6 + 0.15, 108, 1.0, STONE, '#e6dcc8')
         for i in range(13):
             y = -108 + i * 18
             m.cyl(s * 3.6, y, 0, 3.4, 0.14, 0.1, 6, PLAIN, IRON, cap=False)
@@ -493,10 +493,10 @@ def all_props():
         fence_low(), fence_basic(), fence_wood(), fence_brick(), fence_ornate(),
         gate('gate_basic', PLASTER, '#e6dccb', PLAIN, '#4a6b7a', 1.9),
         gate('gate_wood', WOOD, '#7a4f2a', WOOD, '#a3764a', 2.1),
-        gate('gate_wood_carved', WOOD, '#7a4f2a', CARVED, '#e0b98a', 2.3),
-        gate('gate_naqsh', STONE, '#efe4cf', CARVED, WHITE, 2.6, '#2f6f72'),
-        gate('gate_carved', BRICK, WHITE, CARVED, WHITE, 2.4, '#8a4b38'),
-        gate('gate_gold', STONE, '#f0e6d2', CARVED, '#ffd27a', 2.8, GOLD),
+        gate('gate_wood_carved', WOOD, '#6b4423', WOOD, '#c79a6a', 2.3),
+        gate('gate_naqsh', STONE, '#efe4cf', PLAIN, '#33454f', 2.6, '#3d4a52'),
+        gate('gate_carved', BRICK, WHITE, WOOD, '#8a5a30', 2.4, '#8a4b38'),
+        gate('gate_gold', STONE, '#f0e6d2', PLAIN, '#e0b84f', 2.8, GOLD),
         path_stone(), tree_anor(), tree_chinor(), tree_chinor('tree_chinor_lod', True), tree_terak(), tree_terak('tree_terak_lod', True), tree_archa(),
         yard_sori(), yard_tok(), yard_flowers(), water_pool(), fountain('water_fountain', 1.4, 1), fountain('plaza_fountain', 11, 3),
         car('car_van', 3.4, 1.5, 0.95, (-1.65, 1.65, 1.85), '#eef0f0'), car('car_sedan', 4.4, 1.75, 0.85, (-1.1, 1.5, 1.45), '#c9ced2'),

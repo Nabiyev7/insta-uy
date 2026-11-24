@@ -8,9 +8,9 @@ alter table public.decor_catalog add column model_id text, add column name_uz te
 insert into public.decor_catalog as c (id, slot, model_id, name_uz, name_ru, price_uzs, price_coins, stock, spots, min_level, sort) values
 ('fence_wood','fence','fence_wood','Yog''och panjara','Деревянный забор',5000,100,null,array['fence'],1,0),
 ('fence_brick','fence','fence_brick','G''isht devor','Кирпичная стена',12000,260,null,array['fence'],3,10),
-('fence_ornate','fence','fence_ornate','Naqshli panjara','Кованый забор',25000,600,null,array['fence'],6,20),
+('fence_ornate','fence','fence_ornate','Temir panjara','Кованый забор',25000,600,null,array['fence'],6,20),
 ('gate_wood','gate','gate_wood','Yog''och darvoza','Деревянные ворота',6000,120,null,array['gate'],1,30),
-('gate_carved','gate','gate_carved','Naqshli darvoza','Резные ворота',20000,450,null,array['gate'],4,40),
+('gate_carved','gate','gate_carved','Soyabonli darvoza','Ворота с навесом',20000,450,null,array['gate'],4,40),
 ('gate_gold','gate','gate_gold','Oltin darvoza','Золотые ворота',60000,1500,null,array['gate'],7,50),
 ('path_stone','path','path_stone','Tosh yo''lak','Каменная дорожка',4000,80,null,array['path'],1,60),
 ('tree_anor','tree','tree_anor','Anor','Гранат',4000,80,null,array['small','medium','wall','back','big'],1,70),
@@ -72,7 +72,7 @@ $$;
 alter table public.plot_state add column places jsonb not null default '{}', add column wall_material int not null default 0 check (wall_material between 0 and 3),
   add column frame int not null default 0 check (frame between 0 and 7), add column door int not null default 0 check (door between 0 and 7);
 
-/* Nuqtasiz ro'yxatni (eski ma'lumot, demo) bo'sh nuqtalarga taqsimlaydi: hech bir bezak yo'qolmaydi. */
+/* Nuqtasiz ro'yxatni (eski ma'lumot, demo) bo'sh nuqtalarga taqsimlaydi. Sig'magani egasining qo'lida (owned_decor) qoladi. */
 create function private.default_places(p_decor text[]) returns jsonb language plpgsql stable set search_path = '' as $$
 declare d text; a text; res jsonb := '{}';
 begin

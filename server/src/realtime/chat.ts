@@ -68,7 +68,11 @@ export class ChatLog {
     return found;
   }
 
-  forget(userId: string): void {
+  /** Odamning barcha xabarlarini o'chiradi; o'chgan xabarlar ID lari. */
+  forget(userId: string): string[] {
+    const gone = this.history.filter((m) => m.userId === userId).map((m) => m.id);
+    this.history = this.history.filter((m) => m.userId !== userId);
     this.recent.delete(userId);
+    return gone;
   }
 }

@@ -58,7 +58,7 @@ export const setMode = (mode: Mode): void => {
   }
   player.anim = 0;
   session.mode = mode;
-  setApp({ mode, isPhoto: false });
+  setApp({ mode, isPhoto: false, isClean: false });
 };
 
 export const flyTo = (to: CityView, isInstant = false): void => {

@@ -6,7 +6,7 @@ export const TIERS = [
   { id: 1, key: 'kichik', uz: 'Kichik uy', ru: 'Маленький дом' },
   { id: 2, key: 'ayvonli', uz: 'Ayvonli uy', ru: 'Дом с айваном' },
   { id: 3, key: 'hovli', uz: 'Hovli', ru: 'Двор' },
-  { id: 4, key: 'naqshli', uz: 'Naqshli hovli', ru: 'Расписной двор' },
+  { id: 4, key: 'chiroyli', uz: 'Chiroyli hovli', ru: 'Красивый двор' },
   { id: 5, key: 'katta', uz: 'Katta hovli', ru: 'Большой двор' },
   { id: 6, key: 'boy', uz: 'Boy hovli', ru: 'Богатый двор' },
   { id: 7, key: 'villa', uz: 'Villa', ru: 'Вилла' },
@@ -71,9 +71,9 @@ const item = (id: string, slot: DecorSlot, uz: string, ru: string, priceUzs: num
 export const DECOR: readonly DecorItem[] = [
   item('fence_wood', 'fence', "Yog'och panjara", 'Деревянный забор', 5_000, 100),
   item('fence_brick', 'fence', "G'isht devor", 'Кирпичная стена', 12_000, 260, { minLevel: 3 }),
-  item('fence_ornate', 'fence', 'Naqshli panjara', 'Кованый забор', 25_000, 600, { minLevel: 6 }),
+  item('fence_ornate', 'fence', 'Temir panjara', 'Кованый забор', 25_000, 600, { minLevel: 6 }),
   item('gate_wood', 'gate', "Yog'och darvoza", 'Деревянные ворота', 6_000, 120),
-  item('gate_carved', 'gate', 'Naqshli darvoza', 'Резные ворота', 20_000, 450, { minLevel: 4 }),
+  item('gate_carved', 'gate', 'Soyabonli darvoza', 'Ворота с навесом', 20_000, 450, { minLevel: 4 }),
   item('gate_gold', 'gate', 'Oltin darvoza', 'Золотые ворота', 60_000, 1500, { minLevel: 7 }),
   item('path_stone', 'path', "Tosh yo'lak", 'Каменная дорожка', 4_000, 80),
   item('tree_anor', 'tree', 'Anor', 'Гранат', 4_000, 80),
@@ -100,7 +100,7 @@ export const decorById = (id: string): DecorItem | undefined => DECOR.find((d) =
 
 /** Level bilan tekin keladigan hovli bezaklari: indeks = level. O'z joyida turadi, bezak joylari hisobiga kirmaydi. */
 const GARDEN = ['path_stone', 'tree_anor'] as const;
-const FLOWER_GARDEN = [...GARDEN, 'yard_flowers', 'yard_sori'] as const;
+const FLOWER_GARDEN = [...GARDEN, 'yard_flowers', 'yard_umbrella'] as const;
 const RICH_GARDEN = [...FLOWER_GARDEN, 'light_lamps', 'tree_chinor'] as const;
 const LUXE_GARDEN = [...RICH_GARDEN, 'tree_archa', 'light_luxe'] as const;
 const LEVEL_YARD: readonly (readonly string[])[] = [
@@ -140,7 +140,7 @@ export interface AvatarLook {
   readonly skin: string; readonly hair: string; readonly top: string; readonly pants: string;
   readonly hat: string; readonly outfit: string;
 }
-export const DEFAULT_AVATAR: AvatarLook = { skin: '#e0ac7e', hair: '#1d1512', top: '#1f6f8b', pants: '#26303c', hat: 'doppi', outfit: 'oddiy' };
+export const DEFAULT_AVATAR: AvatarLook = { skin: '#e0ac7e', hair: '#1d1512', top: '#1f6f8b', pants: '#26303c', hat: 'none', outfit: 'oddiy' };
 
 export const sanitizeAvatar = (raw: unknown): AvatarLook => {
   const src = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;

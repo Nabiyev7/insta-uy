@@ -37,8 +37,28 @@ Hovli uchastkasi (16 × 24 m) kichik: uy 10-levelgacha o'sganda hovlida bezak uc
 - `npm run masterplan` → yangi `masterplan.json` + `masterplan.lock`; `npm run seed` → yangi seed migratsiya (eski `0007` ni o'zgartirish o'rniga yangi migratsiya ma'qul, agar migratsiya tarixi buzilmasa; lokal baza baribir noldan).
 
 ## 3. Uy modellari (levellar)
+> **Hozirgi e'tibor: 1–3-level.** Ular to'liq, chiroyli qilib ishlanadi. 4–10-level modellari keyin egasi bilan alohida ko'rib chiqiladi — hozir ularga faqat yangi uchastka o'lchamiga sig'ishi va oltin/panjara qoidasi uchun minimal tuzatish. Uyni ko'tarish chegarasi hozircha **3-level** (`maxTier = 3`).
+
+**Uslub: umumiy, universal** — Farg'onaga yoki bir hududga bog'lanmaydi. Uylar zamonaviy va klassik uy ko'rinishida: ikki/to'rt nishabli tom, veranda, balkon, katta derazalar, garaj o'rni, klassik ustunlar (yuqori levellarda). Mavjud modellardagi milliy detallar (ko'k naqsh tasma, o'yma ayvon, sharqona gumbazlar) uylardan olib tashlanadi yoki neytral variantga almashtiriladi; ular kerak bo'lsa keyin bezak sifatida do'konga chiqadi.
+
+**Level nomlari** (id/kalitlar o'zgarmaydi, faqat ko'rinadigan nom, uz/ru):
+| Level | Yangi nom (uz) | ru |
+|---|---|---|
+| 1 | Kichik uy | Маленький дом |
+| 2 | Shinam uy | Уютный дом |
+| 3 | Hovli uy | Дом с двором |
+| 4 | Bezakli uy | Нарядный дом |
+| 5 | Katta uy | Большой дом |
+| 6 | Boy uy | Богатый дом |
+| 7 | Villa | Вилла |
+| 8 | Hashamatli villa | Роскошная вилла |
+| 9 | Qasr | Особняк |
+| 10 | Saroy | Дворец |
+
+- 9–10-level: sharqona gumbazli saroy o'rniga **klassik saroy/qasr** (oq tosh, ustunlar, balyustrada, keng zinapoya, old hovlida favvora). Oltin detallar mumkin.
+
 **1–6-level (hovli):** uylar ~20–30% kattaroq va boyroq, lekin bo'yiga o'smaydi (qavat qo'shilmaydi, faqat 7+ da ikkinchi qavat bor bo'lsa, u qolaveradi).
-- Har bir levelda ko'proq detal: derazalar soni, mo'ri, tom shakli (ayvonga alohida tom, yon xona), eshik oldi zinapoyasi, deraza qopqalari.
+- Har bir levelda ko'proq detal: derazalar soni, mo'ri, tom shakli (veranda yoki ayvonga alohida tom, yon xona), eshik oldi zinapoyasi, deraza qopqalari.
 - **1 va 2-level farqi tepadan ham aniq ko'rinsin** (tom shakli/ hajmi bilan).
 - Uchastka kattalashgani sababli hovli juda bo'm-bo'sh ko'rinmasin: 1-leveldan 1 ta daraxt va tosh yo'lak.
 
@@ -47,10 +67,10 @@ Hovli uchastkasi (16 × 24 m) kichik: uy 10-levelgacha o'sganda hovlida bezak uc
 |---|---|---|
 | 1 | past yog'och panjara | oddiy temir |
 | 2–3 | suvoq devor | yog'och |
-| 4 | g'isht devor | yog'och naqshli |
-| 5–6 | g'isht devor | soyabonli naqshli |
-| 7–8 | naqshli panjara | naqshli |
-| 9–10 | naqshli panjara | oltin |
+| 4 | g'isht devor | bezakli yog'och |
+| 5–6 | g'isht devor | soyabonli bezakli |
+| 7–8 | bezakli temir panjara | bezakli temir |
+| 9–10 | bezakli temir panjara | oltin |
 
 - **Oltin rang** (qubba, darvoza, hoshiya) faqat **7-leveldan** boshlab. 4- va 6-leveldagi oltin qubbalar boshqa rangga (masalan mis/terrakota) almashtiriladi.
 

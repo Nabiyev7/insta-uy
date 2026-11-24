@@ -64,6 +64,6 @@ export const parsePlaced = (list: readonly string[]): Placed[] => list.flatMap((
 
 /** Leveldan tekin keladigan bezaklar joyi — nuqtalar bilan ustma-ust tushmaydi: [x, z, w, d]. */
 export const FREE_SPOTS: Readonly<Record<string, readonly [number, number, number, number]>> = {
-  path_stone: [0, 7.8, 1.8, 17.6], tree_anor: [-10.7, 14.8, 2, 2], yard_flowers: [-4.6, 14.9, 3.2, 1.3], yard_sori: [-9.4, 10.9, 3, 2.6], tree_chinor: [10.2, 14.7, 1.6, 1.6],
+  path_stone: [0, 7.8, 1.8, 17.6], tree_anor: [-10.7, 14.8, 2, 2], yard_flowers: [-4.6, 14.9, 3.2, 1.3], yard_umbrella: [-9.4, 10.9, 3, 2.6], tree_chinor: [10.2, 14.7, 1.6, 1.6],
   tree_archa: [11.2, 4.4, 1.4, 1.6], water_fountain: [10.7, 12.4, 2.8, 2.8], light_lamps: [0, 9.3, 0, 0], light_luxe: [0, -7.5, 0, 0],
 };

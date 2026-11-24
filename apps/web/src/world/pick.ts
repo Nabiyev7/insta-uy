@@ -57,7 +57,7 @@ export const attachPicking = (el: HTMLCanvasElement, camera: Camera, plan: Maste
   const up = (e: PointerEvent): void => {
     const s = start;
     start = null;
-    if (!s || Math.hypot(e.clientX - s.x, e.clientY - s.y) > TAP_MOVE || e.timeStamp - s.t > TAP_MS || getApp().isPhoto) return;
+    if (!s || Math.hypot(e.clientX - s.x, e.clientY - s.y) > TAP_MOVE || e.timeStamp - s.t > TAP_MS || getApp().isPhoto || getApp().isClean) return;
     const r = el.getBoundingClientRect();
     const dir = new Vector3(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
     const ray: Ray = { ox: camera.position.x, oy: camera.position.y, oz: camera.position.z, dx: dir.x, dy: dir.y, dz: dir.z };

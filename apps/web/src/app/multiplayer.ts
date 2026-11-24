@@ -85,6 +85,8 @@ export const disconnectMultiplayer = (): void => {
 };
 export const sendChat = (channel: number, text: string): void => { socket?.emit('chat', { channel, text }); };
 export const reportMessage = (id: string): void => { socket?.emit('chat_report', id); };
+/** Akkaunt o'chirilganda chatdagi xabarlar ham o'chadi. */
+export const forgetMe = (): void => { socket?.emit('forget_me'); };
 export interface OnlinePerson { readonly author: string; readonly nick: string; readonly district: number; readonly x: number; readonly z: number }
 /** Hozir saytdagilar. Server javob bermasa bo'sh ro'yxat. */
 export const loadOnline = (): Promise<readonly OnlinePerson[]> => new Promise((resolve) => {

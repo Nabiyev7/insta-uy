@@ -32,7 +32,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual o
 - 10–12 tuman (har biri 400–500 uchastka). Start: 1–2 tuman (300–500 uy).
 - Zonalar: markaziy maydon (favvora, baland binolar), mahallalar, ko'p qavatli uylar tumani, ko'l/kanal bo'yida villalar, tepalikda qasrlar, biznes ko'chasi, qurilish maydonlari (yopiq tumanlar — kran, to'siq).
 - Manzil tizimi: "<Ko'cha nomi>, <raqam>-uy". Nomlanmagan ko'cha — "1-ko'cha".
-- Uslub: **real teksturali low-poly, umumiy** (2026-11-23 dan: milliy narsalar qoladi, yonida zamonaviy va universal narsalar ham bo'ladi) — g'isht/suvoq devorlar, naqshli darvozalar, so'ri, tok, anor, chinor, ariq; Damas/Cobalt; uzoqda tog'lar.
+- Uslub: **real teksturali low-poly, umumiy va universal** (2026-11-24 dan; hech bir hududga bog'lanmaydi) — zamonaviy va klassik uylar, ochiq ranglar, toza shakllar, bog'lar; uzoqda tog'lar. Milliy narsalar (so'ri, tandir, tok) faqat do'kondagi ixtiyoriy bezaklarning bir qismi.
 - Kun/tun sikli. Tunda hashamatli uylar yoritiladi.
 
 ## 4. Funksiyalar — versiyalar bo'yicha

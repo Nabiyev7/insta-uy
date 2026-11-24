@@ -66,6 +66,8 @@ export interface AppState {
   readonly isAutoQuality: boolean;
   readonly isSound: boolean;
   readonly isPhoto: boolean;
+  /** Ekranni tozalash: hamma tugmalar yashirin, faqat shahar. */
+  readonly isClean: boolean;
   readonly district: number;
   readonly street: number;
   readonly online: number;
@@ -80,7 +82,7 @@ export interface AppState {
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, district: 0, street: 0, online: 0, catalog: [], chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;

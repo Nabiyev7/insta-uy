@@ -86,6 +86,7 @@ export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly 
       if (r.ok) io.emit('chat', r.message);
       else socket.emit('chat_error', r.code);
     }));
+    socket.on('forget_me', () => { if (who.userId) for (const id of room.chatLog.forget(who.userId)) io.emit('chat_deleted', id); });
     socket.on('chat_report', (messageId: unknown) => {
       const m = room.reported(socket.id, messageId);
       if (!m || !who.userId) return;

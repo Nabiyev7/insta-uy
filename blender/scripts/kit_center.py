@@ -1,15 +1,16 @@
-"""Markaz binolari: 3 davlat binosi (milliy uslub) va 12 burchak minorasining yangi ko'rinishlari (zamonaviy).
+"""Markaz binolari: 3 davlat binosi (klassik uslub) va 12 burchak minorasining yangi ko'rinishlari (zamonaviy).
 
 Old tomoni -Y. Minoralar 1 masshtabda BASE_HEIGHT balandlikda, instance `sy` bilan cho'ziladi.
 """
 import math
 
-from kit_core import (CARVED, COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_NONE, M_SOFT, M_WALL, NAQSH, PLAIN, PLASTER, STONE, WHITE, Model)
+from kit_core import COARSE, CONCRETE, FACADE, GLASS, M_GLOW, M_NONE, M_SOFT, M_WALL, PLAIN, PLASTER, STONE, WHITE, WOOD, Model
 from kit_houses import TRIM
 
 IVORY = '#f7f1e3'
 SAND = '#e2c08e'  # och qumrang: qizil g'isht teksturasi to'q qilib yuborgani uchun suvoq ustida
-BLUE = '#2a8fb0'
+DOME = '#f1ece0'
+COPPER = '#b0704a'
 GOLD = '#d9a93f'
 LAMP = '#ffe2a0'
 WOOD_DARK = '#9a6a3c'
@@ -30,16 +31,28 @@ def stairs(m: Model, half: float, y: float, z: float, n: int, depth: float = 0.7
 
 
 def band(m: Model, x0: float, y0: float, x1: float, y1: float, z: float, h: float) -> None:
-    """Bino atrofidagi ko'k naqsh tasma."""
-    step = h * 2
-    for a, b, fixed, axis in ((x0, x1, y0 - 0.06, 'f'), (x1, x0, y1 + 0.06, 'b'), (y1, y0, x0 - 0.06, 'l'), (y0, y1, x1 + 0.06, 'r')):
-        n = max(1, round(abs(b - a) / step / 2))
-        for i in range(n):
-            u0, u1 = a + (b - a) * i / n, a + (b - a) * (i + 1) / n
-            p = [(u, fixed) if axis in 'fb' else (fixed, u) for u in (u0, u1)]
-            (ax, ay), (bx, by) = p
-            q = [(ax, ay, z), (bx, by, z), (bx, by, z + h), (ax, ay, z + h)]
-            m.panel(q, NAQSH)
+    """Bino atrofidagi bo'rtma karniz."""
+    m.box(x0 - 0.25, y0 - 0.25, z, x1 + 0.25, y1 + 0.25, z + h, STONE, TRIM, bottom=True)
+
+
+def gable_front(m: Model, x0: float, x1: float, y0: float, y1: float, z: float, h: float) -> None:
+    """Klassik uchburchak fronton."""
+    xm = (x0 + x1) / 2
+    m.poly([(x0, y0, z), (x1, y0, z), (xm, y0, z + h)], PLASTER, IVORY)
+    for a, b, sign in ((x0 - 0.5, xm, -1), (xm, x1 + 0.5, 1)):
+        za, zb = (z - 0.1, z + h + 0.15) if sign < 0 else (z + h + 0.15, z - 0.1)
+        m.poly([(a, y0 - 0.5, za), (b, y0 - 0.5, zb), (b, y1, zb), (a, y1, za)], STONE, '#cfc5b3')
+        m.poly([(a, y0 - 0.5, za - 0.35), (b, y0 - 0.5, zb - 0.35), (b, y0 - 0.5, zb), (a, y0 - 0.5, za)], STONE, TRIM)
+    m.cyl(xm, y0 - 0.02, z + h * 0.35, z + h * 0.36, 0, 0, 3)
+
+
+def drum(m: Model, x: float, y: float, z0: float, z1: float, r: float, n: int) -> None:
+    """Ustunli baraban."""
+    m.cyl(x, y, z0, z1, r * 0.86, r * 0.86, 12, PLASTER, IVORY, cap=False)
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        m.cyl(x + math.cos(a) * r, y + math.sin(a) * r, z0, z1, 0.32, 0.28, 5, PLASTER, WHITE, cap=False)
+    m.cyl(x, y, z1, z1 + 0.6, r * 1.12, r * 1.12, 16, STONE, TRIM)
 
 
 def rows(m: Model, axis: str, at: float, centres: list[float], half: float, floors: list[tuple[float, float]]) -> None:
@@ -54,7 +67,7 @@ def spire(m: Model, x: float, y: float, z: float, h: float) -> None:
 
 
 def prezident() -> Model:
-    """50×36 m, 3 qavat, 8 ustunli ayvon, katta ko'k gumbaz (uchi 34 m)."""
+    """50×36 m, 3 qavat, 8 ustunli portik va fronton, ustunli baraban ustida katta oq gumbaz (uchi 34 m)."""
     m = Model('prezident', FACE)
     m.box(-25, -14.2, 0, 25, 18, 1.6, STONE, '#e6dcc8')
     stairs(m, 15, -14.2, 1.6, 5)
@@ -67,16 +80,13 @@ def prezident() -> Model:
     for i in range(8):
         pillar(m, -14 + i * 4, -12.8, 1.6, 15.4, 0.75)
     m.box(-16, -14, 15.4, 16, -9, 17.2, PLASTER, IVORY, bottom=True)
-    for i in range(10):
-        a = -15.6 + i * 3.12
-        m.panel([(a, -14.06, 15.6), (a + 3.12, -14.06, 15.6), (a + 3.12, -14.06, 17.0), (a, -14.06, 17.0)], NAQSH)
     m.box(-16.5, -14.4, 17.2, 16.5, -8.8, 18.0, STONE, TRIM, bottom=True)
-    # peshtoq darvozasi
-    m.box(-4.4, -9.6, 1.6, 4.4, -9, 13.6, PLASTER, TRIM)
-    m.panel([(-3.8, -9.66, 9.0), (3.8, -9.66, 9.0), (3.8, -9.66, 13.0), (-3.8, -9.66, 13.0)], NAQSH)
+    gable_front(m, -16, 16, -14.0, -6.0, 18.0, 4.2)
+    # kirish eshigi
+    m.box(-4.4, -9.6, 1.6, 4.4, -9, 10.2, PLASTER, TRIM)
     for s in (-1, 1):
         x0, x1 = sorted((s * 0.05, s * 2.4))
-        m.panel([(x0, -9.66, 1.6), (x1, -9.66, 1.6), (x1, -9.66, 8.4), (x0, -9.66, 8.4)], CARVED)
+        m.panel([(x0, -9.66, 1.6), (x1, -9.66, 1.6), (x1, -9.66, 8.4), (x0, -9.66, 8.4)], WOOD, '#a9743f')
         m.cbox(s * 3.2, -9.9, 6, 0.5, 0.5, 1.0, PLAIN, LAMP, M_GLOW)
     floors = [(3.6, 7.0), (8.6, 12.0), (13.2, 16.2)]
     rows(m, 'f', -9, [-21, -17.6, -12, -8, 8, 12, 17.6, 21], 1.1, floors)
@@ -85,14 +95,10 @@ def prezident() -> Model:
         rows(m, axis, at, [-6, -1, 4, 9, 14], 1.2, floors)
     # gumbaz
     m.cyl(0, 4, 20.6, 22.2, 9.4, 9.0, 16, PLASTER, IVORY, cap=False)
-    m.cyl(0, 4, 22.2, 24.6, 8.4, 8.4, 16, NAQSH, WHITE, cap=False)
-    m.cyl(0, 4, 24.6, 25.2, 8.9, 8.9, 16, PLAIN, LAMP, M_GLOW)
-    m.dome(0, 4, 25.0, 8.2, 16, 5, PLAIN, BLUE, M_SOFT, 0.98)
+    drum(m, 0, 4, 22.2, 24.4, 8.3, 14)
+    m.cyl(0, 4, 24.9, 25.2, 8.5, 8.5, 16, PLAIN, LAMP, M_GLOW)
+    m.dome(0, 4, 25.0, 8.2, 16, 5, PLAIN, DOME, M_SOFT, 0.98)
     spire(m, 0, 4, 33.0, 1.6)
-    for s in (-1, 1):
-        m.cyl(s * 18, 4, 20.6, 22.4, 3.2, 3.2, 10, NAQSH, WHITE, cap=False)
-        m.dome(s * 18, 4, 22.4, 3.2, 10, 3, PLAIN, BLUE, M_SOFT, 0.95)
-        spire(m, s * 18, 4, 25.3, 1.2)
     return m
 
 
@@ -103,9 +109,12 @@ def prezident_lod() -> Model:
     m.box(-16, -14, 15.4, 16, -9, 18, PLASTER, IVORY, bottom=True)
     for i in range(4):
         m.cyl(-14 + i * 9.3, -12.8, 1.6, 15.4, 0.8, 0.8, 4, PLASTER, IVORY, cap=False)
+    m.poly([(-16, -14, 18), (16, -14, 18), (0, -14, 22.2)], PLASTER, IVORY)
+    for a, b, za, zb in ((-16.5, 0, 17.9, 22.3), (0, 16.5, 22.3, 17.9)):
+        m.poly([(a, -14.4, za), (b, -14.4, zb), (b, -6, zb), (a, -6, za)], STONE, '#cfc5b3')
     m.window('f', -9, -22, 22, 4, 15)
-    m.cyl(0, 4, 20.6, 25, 8.4, 8.4, 8, NAQSH, WHITE, cap=False)
-    m.dome(0, 4, 25, 8.2, 8, 3, PLAIN, BLUE, M_SOFT, 0.98)
+    m.cyl(0, 4, 20.6, 25, 8.4, 8.4, 8, PLASTER, IVORY, cap=False)
+    m.dome(0, 4, 25, 8.2, 8, 3, PLAIN, DOME, M_SOFT, 0.98)
     return m
 
 
@@ -142,13 +151,10 @@ def hokimiyat() -> Model:
     for i in range(6):
         pillar(m, -10 + i * 4, -11.4, 1.2, 10.6, 0.6, TRIM)
     m.box(-12, -12.4, 10.6, 12, -8, 12.0, PLASTER, TRIM, bottom=True)
-    for i in range(8):
-        a = -11.6 + i * 2.9
-        m.panel([(a, -12.46, 10.75), (a + 2.9, -12.46, 10.75), (a + 2.9, -12.46, 11.85), (a, -12.46, 11.85)], NAQSH)
     m.box(-12.5, -12.8, 12.0, 12.5, -7.8, 12.5, STONE, '#cbbfa9', bottom=True)
     for s in (-1, 1):
         x0, x1 = sorted((s * 0.05, s * 1.8))
-        m.panel([(x0, -8.1, 1.2), (x1, -8.1, 1.2), (x1, -8.1, 6.2), (x0, -8.1, 6.2)], CARVED)
+        m.panel([(x0, -8.1, 1.2), (x1, -8.1, 1.2), (x1, -8.1, 6.2), (x0, -8.1, 6.2)], WOOD, '#8a5a30')
         m.cbox(s * 2.6, -8.4, 4.4, 0.4, 0.4, 0.8, PLAIN, LAMP, M_GLOW)
     floors = [(2.9, 5.9), (7.7, 10.6), (12.2, 14.8)]
     rows(m, 'f', -8, [-19.5, -16, -8, -5, 5, 8, 16, 19.5], 1.0, floors)
@@ -156,10 +162,10 @@ def hokimiyat() -> Model:
     rows(m, 'b', 15, [-18, -12, -6, 0, 6, 12, 18], 1.2, floors)
     for axis, at in (('l', -22), ('r', 22)):
         rows(m, axis, at, [-4.5, 0, 4.5, 9, 13], 1.0, floors)
-    # deraza ustidagi naqsh
+    # deraza ustidagi oddiy karniz
     for c in (-19.5, -16, 16, 19.5):
         for z in (6.0, 10.7):
-            m.panel([(c - 1.2, -8.08, z), (c + 1.2, -8.08, z), (c + 1.2, -8.08, z + 0.6), (c - 1.2, -8.08, z + 0.6)], NAQSH)
+            m.box(c - 1.3, -8.2, z, c + 1.3, -8.0, z + 0.35, STONE, TRIM, bottom=True)
     # soat minorasi
     m.box(-4.2, -0.2, 18.0, 4.2, 8.2, 26.2, PLASTER, SAND, top=False)
     for x in (-4.2, 4.2):
@@ -168,9 +174,8 @@ def hokimiyat() -> Model:
     m.box(-4.8, -0.8, 26.2, 4.8, 8.8, 26.9, STONE, TRIM, bottom=True)
     for axis, at in (('f', -0.2), ('b', 8.2), ('l', -4.2), ('r', 4.2)):
         clock(m, axis, at, 22.6, 2.4)
-    m.cyl(0, 4, 26.9, 27.5, 3.4, 3.4, 12, NAQSH, WHITE, cap=False)
-    m.dome(0, 4, 27.4, 3.2, 12, 3, PLAIN, BLUE, M_SOFT, 0.75)
-    spire(m, 0, 4, 29.7, 1.2)
+    m.cyl(0, 4, 26.9, 30.0, 3.6, 0.0, 8, PLAIN, COPPER, M_SOFT)
+    spire(m, 0, 4, 29.6, 1.3)
     return m
 
 
@@ -182,12 +187,12 @@ def hokimiyat_lod() -> Model:
     m.window('f', -8, -20, 20, 3, 14.5)
     m.window('b', 15, -20, 20, 3, 14.5)
     m.box(-4.2, -0.2, 18, 4.2, 8.2, 26.9, PLASTER, SAND)
-    m.dome(0, 4, 26.9, 3.2, 6, 2, PLAIN, BLUE, M_SOFT, 0.9)
+    m.cyl(0, 4, 26.9, 30.0, 3.6, 0.0, 6, PLAIN, COPPER, M_SOFT)
     return m
 
 
 def sud() -> Model:
-    """44×30 m, 2 qavat, oq tosh, oldida 10 ustun, tekis tom ustida naqsh friz."""
+    """44×30 m, 2 qavat, oq tosh, oldida 10 ustun, fronton va karniz."""
     m = Model('sud', FACE)
     white = '#f2efe8'
     m.box(-22, -12.4, 0, 22, 15, 1.8, STONE, '#e6e1d6')
@@ -199,10 +204,10 @@ def sud() -> Model:
     band(m, -21.2, -12.0, 21.2, 14.2, 13.4, 1.5)
     m.box(-21.2, -12.0, 13.4, 21.2, 14.2, 14.9, STONE, white, top=False)
     m.box(-21.7, -12.4, 14.9, 21.7, 14.7, 15.5, STONE, TRIM, bottom=True, top_layer=CONCRETE)
-    m.box(-8, -12.2, 15.5, 8, -10.8, 16.0, STONE, white)
+    gable_front(m, -9, 9, -12.2, -6.0, 13.6, 2.2)
     for s in (-1, 1):
         x0, x1 = sorted((s * 0.05, s * 1.7))
-        m.panel([(x0, -6.7, 1.8), (x1, -6.7, 1.8), (x1, -6.7, 7.0), (x0, -6.7, 7.0)], CARVED)
+        m.panel([(x0, -6.7, 1.8), (x1, -6.7, 1.8), (x1, -6.7, 7.0), (x0, -6.7, 7.0)], WOOD, '#7a4f2a')
         m.cbox(s * 2.6, -7.0, 5, 0.4, 0.4, 0.8, PLAIN, LAMP, M_GLOW)
     floors = [(3.2, 6.6), (8.2, 11.6)]
     rows(m, 'f', -6.6, [-18.9, -14.7, -10.5, -6.3, 6.3, 10.5, 14.7, 18.9], 1.1, floors)

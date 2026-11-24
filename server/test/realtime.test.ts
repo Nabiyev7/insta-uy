@@ -91,6 +91,8 @@ describe('Room', () => {
     const [x, y] = [r.chat('a', { channel: 0, text: 'bir' }, 1), r.chat('b', { channel: 0, text: 'ikki' }, 2)];
     expect(x.ok && y.ok && x.message.author !== y.message.author).toBe(true);
     expect(new Set(r.online().map((p) => p.author)).size).toBe(2);
+    expect(r.chatLog.forget('u-2')).toHaveLength(1);
+    expect(r.chatLog.messages().map((m) => m.text)).toEqual(['bir']);
     r.join('g', who(null));
     expect(r.reported('b', x.ok ? x.message.id : '')).toMatchObject({ userId: 'u-1', text: 'bir' });
     expect(r.reported('g', x.ok ? x.message.id : '')).toBeNull();

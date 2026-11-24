@@ -1,4 +1,5 @@
 import type { Lang } from '../../../../packages/shared/src/index.ts';
+import { forgetMe } from '../app/multiplayer.ts';
 import { post, signOut } from '../app/api.ts';
 import { startAudio, stopAudio } from '../app/audio.ts';
 import { useT } from '../app/i18n.ts';
@@ -49,6 +50,7 @@ export function SettingsPanel(): React.JSX.Element {
   const remove = (): void => {
     if (!confirm(t('deleteSure'))) return;
     void run(async () => {
+      forgetMe();
       await post('/auth/delete', {}, true);
       await signOut();
       openPanel(null);
@@ -59,7 +61,7 @@ export function SettingsPanel(): React.JSX.Element {
       <Section title={t('language')}><Seg label={t('language')} value={lang} onPick={pickLang} options={LANGS} /></Section>
       <Section title={t('quality')}><Seg<QualityLevel | 'auto'> label={t('quality')} value={isAutoQuality ? 'auto' : quality} onPick={setQuality} options={[['auto', t('auto')], ['low', t('low')], ['mid', t('mid')], ['high', t('high')]]} /></Section>
       <Section title={t('sound')}><Seg<'on' | 'off'> label={t('sound')} value={isSound ? 'on' : 'off'} onPick={setSound} options={[['on', t('on')], ['off', t('off')]]} /></Section>
-      {profile && <Section title={profile.login}><button type="button" className="btn small clay" disabled={isBusy} onClick={remove}>{t('deleteAcc')}</button></Section>}
+      {profile && <Section title={t('deleteAcc')}><p className="muted">{t('deleteWhat')}</p><button type="button" className="btn small clay" disabled={isBusy} onClick={remove}>{t('deleteAcc')}</button></Section>}
     </Sheet>
   );
 }

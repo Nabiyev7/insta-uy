@@ -26,7 +26,7 @@
 
 ## 2. Tanga narxlari
 - Hozirgi so'm narxlaridan tanga narxi chiqariladi: **tanga = so'm / 50** (mavjud bezak narxlari shu nisbatda). Masalan: level 2 → 300, level 10 → 6 000, villa uchastkasi → 3 000, qasr → 8 000 tanga.
-- Hozirgi "tanga bilan faqat 5-levelgacha" cheklovi olib tashlanadi: tanga bilan 10-levelgacha.
+- **Hozircha uyni faqat 3-levelgacha ko'tarish mumkin** (admin sozlamasi `maxTier = 3`, tanga bilan ham). 4–10-level modellari keyin qayta ko'rib chiqiladi, so'ng chegara admin paneldan oshiriladi. Saytda 4+ level "Tez kunda" deb ko'rinadi.
 - Hamma narx admin panelda o'zgartiriladi.
 
 ## 3. Tanga topish
@@ -57,6 +57,14 @@
 - Yuborish muvaffaqiyatsiz bo'lsa — Sentry'ga xato va keyingi cron'da qayta urinish.
 - Admin panelda "Zaxiradan tiklash" bo'yicha qisqa yo'riqnoma (README'ga ham): Telegram'dagi fayldan bazani qanday tiklash.
 - Sinov: zaxira yaratiladi, siqiladi, (sinov rejimida) Telegram API chaqiruvi to'g'ri yuboriladi.
+
+## 7. Boshqa qarorlar
+- **Tashlab ketilgan uylar:** egasi **3 oy** kirmasa, bepul uy bo'shatiladi (admin sozlamasi, mavjud mexanizm). Bo'shatishdan **2 hafta oldin** Telegram bot orqali ogohlantirish ("Uyingiz 14 kundan keyin bo'shatiladi — saytga kiring"). Nishonlar (masalan "Shahar asoschisi") odamda qoladi, uy esa yangi egaga beriladi.
+- **Ko'cha nomlari:** oddiy ko'chalar — mavjud ovoz berish tizimi (PLAN §5). **Markaziy ko'chalar** (maydonga tutashgan va prospektlar) nomi **tangaga** sotiladi, admin tasdig'idan keyin. Narxi admin sozlamasida (boshlang'ich: 4 000 tanga). Pul bilan sotish o'chiq.
+- **Kvartiralar** hozircha o'zgarmaydi.
+- **Moderatsiya:** hozircha admin o'zi. Mavjud moderator roli ishlaydigan holatda qolsin (keyin yordamchiga beriladi) — tekshirib qo'y.
+- **Kutish ro'yxati Telegram orqali:** `kutish.html` sahifasida asosiy tugma — "Ochilganda xabar ber" → botga o'tadi, bot odamni ro'yxatga yozadi. Admin panelda ro'yxat soni va "Ochildi — hammaga xabar yuborish" tugmasi (navbat bilan, Telegram limitlariga mos).
+- **Qoidalar va maxfiylik matni** (`apps/web/src/ui/legal.ts`, uz + ru) yangilansin: haqiqiy pul hozircha yo'q, tanga — virtual, pulga almashtirilmaydi; Telegram orqali kirish va qanday ma'lumot saqlanadi (Telegram ID, nik, Instagram nik); 3 oylik qoida; akkauntni o'chirish; shaxsiy xabar yo'qligi; ma'lumot qayerda saqlanadi (Supabase, server mintaqasi). Matn sodda bo'lsin; oxirida "huquqshunos ko'rib chiqishi kerak" degan izoh faqat kodda (saytda emas).
 
 ## Qabul
 - 100 ta bir vaqtdagi ro'yxatdan o'tishni simulyatsiya qiluvchi sinov: aynan 100 kishi asoschi bo'ladi, hech qaysi uy ikki kishiga berilmaydi.

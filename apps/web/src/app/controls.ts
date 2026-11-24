@@ -23,7 +23,8 @@ export const attachControls = (): (() => void) => {
   };
   const down = (e: KeyboardEvent): void => {
     if (e.code === 'Escape') {
-      if (getApp().isPhoto) setApp({ isPhoto: false });
+      if (getApp().isClean) setApp({ isClean: false });
+      else if (getApp().isPhoto) setApp({ isPhoto: false });
       else openPanel(null);
       return;
     }

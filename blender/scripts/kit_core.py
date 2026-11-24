@@ -161,12 +161,12 @@ class Model:
         self.polys.append(([Vector(q) for q in p], [(0, 0), (1, 0), (1, 1), (0, 1)], layer, mask, rgb(color)))
 
     def door(self, cx, at, w=1.2, h=2.3, color=WHITE):
-        self.panel([(cx - w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, h + 0.15), (cx - w / 2, at - 0.05, h + 0.15)], CARVED, color, M_DOOR)
+        self.panel([(cx - w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, 0.15), (cx + w / 2, at - 0.05, h + 0.15), (cx - w / 2, at - 0.05, h + 0.15)], WOOD, color, M_DOOR)
 
     def column(self, cx, cy, z0, z1, r=0.14, color='#8a5a30', layer=WOOD):
         self.cbox(cx, cy, z0, r * 3.2, r * 3.2, 0.25, STONE, '#cbbfa9')
         self.cyl(cx, cy, z0 + 0.25, z1 - 0.25, r * 1.15, r * 0.8, 6, layer, color, cap=False)
-        self.cbox(cx, cy, z1 - 0.28, r * 3.4, r * 3.4, 0.28, CARVED, WHITE)
+        self.cbox(cx, cy, z1 - 0.28, r * 3.4, r * 3.4, 0.28, WOOD, '#b98a5c')
 
     def stretch(self, fx, fy):
         """Hozirgacha chizilgan qismni eniga va chuqurligiga kengaytiradi (bo'yi o'zgarmaydi)."""

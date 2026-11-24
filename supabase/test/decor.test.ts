@@ -54,10 +54,13 @@ describe('joylash', () => {
     await sql("update plot_state set decor = '{}' where plot_id = $1", [plot]);
     expect(await placesOf(plot)).toEqual({ places: {}, decor: [] });
   });
-  test('joyi kam bezaklar oldin joylashadi: hech biri tushib qolmaydi', async () => {
+  test('joyi kam bezaklar oldin joylashadi (sig‘magani qo‘lda qoladi)', async () => {
     const { plot } = await house(10);
     await sql("update plot_state set decor = array['tree_chinor','yard_sori','yard_tok','yard_flowers','water_pool'] where plot_id = $1", [plot]);
-    expect([...((await placesOf(plot)).decor as string[])].sort()).toEqual(['tree_chinor', 'water_pool', 'yard_flowers', 'yard_sori', 'yard_tok']);
+    // 2 ta katta va 2 ta o'rta nuqta bor: hovuz va tok o'z joyini oladi, beshinchisi egasining qo'lida qoladi.
+    const kept = (await placesOf(plot)).decor as string[];
+    expect(kept).toHaveLength(4);
+    expect(kept).toEqual(expect.arrayContaining(['water_pool', 'yard_tok', 'tree_chinor']));
   });
   test('yopiq nuqtadagi eski bezakni ko‘chirish va olish mumkin', async () => {
     const { uid, plot } = await house(1);

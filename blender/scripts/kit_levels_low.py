@@ -1,6 +1,6 @@
 """1–6 levellar: 25×34 m hovliga mo'ljallangan, bo'yiga o'smaydigan bir qavatli uylar. Oltin rang yo'q (u 7-leveldan)."""
-from kit_core import BRICK, CARVED, M_GLOW, M_ROOF, M_WALL, NAQSH, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model
-from kit_houses import ayvon, frieze, house1, house2, house3, walls
+from kit_core import BRICK, M_GLOW, M_ROOF, M_WALL, PLAIN, PLASTER, ROOF, SOIL, STONE, WHITE, WOOD, Model
+from kit_houses import TRIM, ayvon, house1, house2, house3, moulding, walls
 
 COPPER = '#b0623a'
 LAMP = '#ffe2a0'
@@ -60,7 +60,7 @@ def side_room(m: Model, side: int, half: float, y0: float, y1: float, depth: flo
 
 def hood(m: Model, y: float, lo: float, hi: float, z: float) -> None:
     """Deraza ustidagi o'yma peshtoqcha."""
-    m.box(lo - 0.18, y - 0.18, z, hi + 0.18, y, z + 0.18, CARVED, WHITE, bottom=True)
+    m.box(lo - 0.18, y - 0.18, z, hi + 0.18, y, z + 0.18, WOOD, '#b98a5c', bottom=True)
 
 
 def small_house(name: str) -> Model:
@@ -96,7 +96,7 @@ def level2() -> Model:
     m.window('r', 4.8, -5.6, -4.2, 1.1, 2.4)
     side_room(m, 1, 4.8, -0.9, 3.4, 1.1)
     side_room(m, -1, 4.8, -0.2, 3.4, 1.0)
-    frieze(m, -4.8, 1.1, -5.32, 3.0, 0.3)
+    moulding(m, -4.8, 1.1, -5.32, 3.0, 0.3)
     m.cbox(-2.6, 1.8, 3.7, 0.7, 0.7, 1.6, BRICK)
     for x in (-4.2, 0.2):
         planter(m, x, -5.75, 0, 0.9)
@@ -128,7 +128,7 @@ def level3() -> Model:
 
 def level4() -> Model:
     m = courtyard_house('house4')
-    frieze(m, 2.16, 6.6, -6.0, 2.78)
+    moulding(m, 2.16, 6.6, -6.0, 2.78)
     for x in (2.1, 6.36):
         m.box(x - 0.08, -6.14, 0, x + 0.34, -5.76, 3.2, BRICK)
     for a, b in ((-5.76, -3.84), (0, 1.68)):
@@ -138,8 +138,8 @@ def level4() -> Model:
     m.box(-6.7, -6.3, 0, -3.1, -4.32, 0.35, STONE, '#d8cbb5', top_layer=WOOD)
     for x in (-6.4, -3.4):
         m.column(x, -6.0, 0.35, 2.9)
-    m.box(-6.7, -6.2, 2.9, -3.1, -5.85, 3.2, CARVED, WHITE, bottom=True)
-    frieze(m, -6.7, -3.1, -6.2, 3.2, 0.3)
+    m.box(-6.7, -6.2, 2.9, -3.1, -5.85, 3.2, WOOD, '#b98a5c', bottom=True)
+    moulding(m, -6.7, -3.1, -6.2, 3.2, 0.3)
     m.hip(-6.7, -6.3, -3.1, -4.1, 3.46, 1.0, 0.35)
     finial(m, -4.9, -5.2, 4.7, 0.7)
     finial(m, -3.0, 1.8, 5.6)
@@ -177,22 +177,22 @@ def level5() -> Model:
 
 def level6() -> Model:
     m = big_house('house6')
-    # peshtoq: naqshli kirish darvozasi
+    # ustunli kirish portiki va fronton
+    for x in (-2.7, -1.1, 1.1, 2.7):
+        m.cbox(x, -5.7, 0, 0.6, 0.6, 0.35, STONE, '#e6dcc8')
+        m.cyl(x, -5.7, 0.35, 3.8, 0.26, 0.22, 8, PLASTER, '#f6eeda', cap=False)
+        m.cbox(x, -5.7, 3.8, 0.6, 0.6, 0.25, STONE, TRIM, bottom=True)
+    m.box(-3.2, -6.1, 4.05, 3.2, -4.9, 4.45, STONE, TRIM, bottom=True)
+    m.poly([(-3.2, -6.1, 4.45), (3.2, -6.1, 4.45), (0, -6.1, 5.5)], PLASTER, '#f6eeda')
+    for a in (-3.4, 3.4):
+        p = [(a, -6.25, 4.4), (a, -3.4, 4.4), (0, -3.4, 5.6), (0, -6.25, 5.6)]
+        m.poly(p if a > 0 else p[::-1], ROOF, WHITE, M_ROOF)
     for s in (-1, 1):
-        x0, x1 = sorted((s * 1.8, s * 3.0))
-        m.box(x0, -6.1, 0, x1, -4.9, 5.0, STONE, '#efe4cf')
-        for z0, z1 in ((0.7, 2.4), (2.5, 4.2)):
-            m.panel([(x0 + 0.15, -6.15, z0), (x1 - 0.15, -6.15, z0), (x1 - 0.15, -6.15, z1), (x0 + 0.15, -6.15, z1)], NAQSH)
-        lantern(m, s * 2.4, -6.1, 4.35)
-    m.box(-3.0, -6.1, 3.7, 3.0, -4.9, 5.0, STONE, '#efe4cf', bottom=True)
-    frieze(m, -1.8, 1.8, -6.1, 3.85, 0.95)
-    m.box(-3.3, -6.3, 5.0, 3.3, -4.7, 5.3, CARVED, WHITE, bottom=True)
-    for x in (-2.9, 0, 2.9):
-        finial(m, x, -5.5, 5.3, 0.75 if x else 1.1)
+        lantern(m, s * 1.9, -1.68, 2.4)
     for s in (-1, 1):
         mid = s * 5.58
         hood(m, -6.72, mid - 1.5, mid + 1.5, 2.84)
-        frieze(m, mid - 2.1, mid + 2.1, -6.72, 0.6, 0.3)
+        moulding(m, mid - 2.1, mid + 2.1, -6.72, 0.6, 0.3)
         planter(m, mid, -7.1, 0, 2.4, '#e5785f')
         finial(m, mid, -3.6, 5.2)
         finial(m, s * 3.8, 2.2, 6.0)

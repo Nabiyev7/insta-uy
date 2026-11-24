@@ -6,8 +6,8 @@ import { createKitMaterial } from './kit.ts';
 const CHUNK = 375;
 /** Baland kameradan ko'riladigan yer: kattaroq bo'laklar, mayda chiziqlarsiz (draw call kam). */
 export const FAR_CHUNK = 750;
-const L = { plain: 0, asphalt: 5, grass: 6, stone: 15, naqsh: 10, soil: 14 } as const;
-const TILE: Readonly<Record<number, number>> = { 0: 4, 5: 5, 6: 6, 10: 4, 14: 7, 15: 3 };
+const L = { plain: 0, asphalt: 5, grass: 6, stone: 15, soil: 14 } as const;
+const TILE: Readonly<Record<number, number>> = { 0: 4, 5: 5, 6: 6, 14: 7, 15: 3 };
 const HILL_REACH = 3.2 * HILL.sigma;
 
 class GeoBuilder {
@@ -62,7 +62,7 @@ class GeoBuilder {
 
 const C = {
   white: new Color('#ffffff'), grass: new Color('#a5c283'), yard: new Color('#d2d0a2'), asphalt: new Color('#c9c9cc'), walk: new Color('#e2d8c4'), water: new Color('#4fb4cc'),
-  plaza: new Color('#efe4cf'), soil: new Color('#c9b493'), line: new Color('#f4f1e6'), plinth: new Color('#cdbfa6'),
+  plaza: new Color('#efe4cf'), ring: new Color('#b9ad98'), soil: new Color('#c9b493'), line: new Color('#f4f1e6'), plinth: new Color('#cdbfa6'),
 };
 
 /** Chizilish tartibi: yer → hovli/tuproq → yo'lka → asfalt → chiziqlar (polygonOffset bilan). */
@@ -116,7 +116,7 @@ const addPlaza = (out: Layers, chunk: Rect): void => {
     const at = (t: number, r: number): readonly [number, number, number] => [Math.cos(t) * r, 0, Math.sin(t) * r];
     const mid = at((a + b) / 2, 14);
     if (mid[0] < chunk[0] || mid[0] >= chunk[2] || mid[2] < chunk[1] || mid[2] >= chunk[3]) continue;
-    out.top.quad(at(a, 15.5), at(a, 12.5), at(b, 12.5), at(b, 15.5), L.naqsh, C.white);
+    out.top.quad(at(a, 15.5), at(a, 12.5), at(b, 12.5), at(b, 15.5), L.stone, C.ring);
   }
 };
 
