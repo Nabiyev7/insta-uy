@@ -1,5 +1,5 @@
 /** Hovlini bezash: reja ustidagi nuqtani bosing → bezak tanlang, ko'chiring yoki olib qo'ying. */
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { ANCHORS, REF_YARD, anchorById, decorSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
 import { rpc, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
@@ -43,6 +43,36 @@ function YardMap({ level, places, selected, onPick }: YardMapProps): React.JSX.E
         );
       })}
     </svg>
+  );
+}
+
+/** Qo'lda bo'sh turgan bezakni nik bo'yicha sovg'a qilish. */
+function GiftDecor({ freeQty }: { readonly freeQty: (id: string) => number }): React.JSX.Element | null {
+  const t = useT();
+  const lang = useApp((s) => s.lang);
+  const catalog = useApp((s) => s.catalog);
+  const serials = useApp((s) => s.profile?.serials) ?? {};
+  const { isBusy, run } = useAction();
+  const [id, setId] = useState('');
+  const [to, setTo] = useState('');
+  const [message, setMessage] = useState('');
+  const mine = catalog.filter((c) => freeQty(c.id) > 0);
+  if (mine.length === 0) return null;
+  const submit = (e: FormEvent): void => {
+    e.preventDefault();
+    if (!confirm(`${mine.find((c) => c.id === id)?.[lang] ?? ''} → ${to}?`)) return;
+    void run(async () => { await rpc('my_gift_decor', { p_id: id, p_to: to, p_message: message }); await refreshProfile(); setId(''); setTo(''); setMessage(''); }, t('sent'));
+  };
+  return (
+    <details className="section">
+      <summary>🎁 {t('giftDecor')}</summary>
+      <form className="section" onSubmit={submit}>
+        <label className="field"><span>{t('decor')}</span><select className="input" value={id} onChange={(e) => setId(e.target.value)} required><option value="" disabled>{t('choose')}…</option>{mine.map((c) => <option key={c.id} value={c.id}>{c[lang]}{serials[c.id]?.length ? ` №${serials[c.id]?.at(-1)}` : ''} ×{freeQty(c.id)}</option>)}</select></label>
+        <label className="field"><span>{t('giftToNick')}</span><input value={to} onChange={(e) => setTo(e.target.value)} placeholder="@nik" required autoCapitalize="none" maxLength={40} /></label>
+        <label className="field"><span>{t('giftMsg')}</span><input value={message} onChange={(e) => setMessage(e.target.value)} maxLength={100} /></label>
+        <button type="submit" className="btn small" disabled={isBusy}>{t('giftDecor')}</button>
+      </form>
+    </details>
   );
 }
 
@@ -100,6 +130,7 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
           {!isFull && choices.length === 0 && !current && <p className="muted">{t('noFit')}</p>}
         </div>
       )}
+      <GiftDecor freeQty={freeQty} />
       <button type="button" className="btn small clay" onClick={() => openPanel({ kind: 'shop' })}>{t('shop')} →</button>
     </Section>
   );

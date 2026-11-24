@@ -115,6 +115,21 @@ function ModeBar(): React.JSX.Element {
   );
 }
 
+function PreviewBar(): React.JSX.Element | null {
+  const t = useT();
+  const lang = useApp((s) => s.lang);
+  const preview = useApp((s) => s.preview);
+  const row = useApp((s) => s.catalog.find((c) => c.id === s.preview?.decor));
+  if (!preview || !row) return null;
+  return (
+    <div className="preview" role="status">
+      <span>👁 {row[lang]}</span>
+      <button type="button" className="btn small clay" onClick={() => { setApp({ preview: null }); openPanel({ kind: 'shop' }); }}>{t('shop')}</button>
+      <button type="button" className="btn small soft" onClick={() => setApp({ preview: null })}>{t('close')}</button>
+    </div>
+  );
+}
+
 function BottomBar(): React.JSX.Element {
   const t = useT();
   const { panel, profile, online, unread } = useApp();
@@ -170,7 +185,7 @@ export function Hud(): React.JSX.Element {
       {mode !== 'city' && <Joystick />}
       {mode === 'walk' && <WalkActions />}
       {mode === 'drive' && <DriveActions />}
-      <div className="dock"><ModeBar /><BottomBar /></div>
+      <div className="dock"><PreviewBar /><ModeBar /><BottomBar /></div>
       {location.search.includes('fps') && <FpsMeter />}
     </div>
   );

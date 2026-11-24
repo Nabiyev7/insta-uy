@@ -17,12 +17,19 @@ interface Rankings {
   readonly houses: readonly { readonly plot: string; readonly instagram: string; readonly tier: number; readonly score: number }[];
   readonly districts: readonly { readonly id: number; readonly active: number }[]; readonly inviters: readonly { readonly nick: string; readonly n: number }[];
 }
+interface Yards { readonly leaders: readonly { readonly plot: string; readonly instagram: string; readonly votes: number }[]; readonly winner: { readonly plot: string; readonly instagram: string; readonly votes: number } | null }
 export function RankPanel(): React.JSX.Element {
   const t = useT();
   const name = useDistrictName();
   const { data } = useLoad(() => rpc<Rankings>('api_rankings'), 'rank');
+  const { data: yards } = useLoad(() => rpc<Yards>('api_yards'), 'yards');
   return (
     <Sheet title={t('rank')} onBack={back}>
+      {yards && <Section title={`🌷 ${t('yardWeek')}`}>
+        {yards.winner && <p>{t('lastWinner')}: <button type="button" className="link" onClick={() => yards.winner && goToPlot(yards.winner.plot)}>@{yards.winner.instagram}</button> · {yards.winner.votes} {t('votes')}</p>}
+        <ul className="list">{yards.leaders.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="muted">{h.votes} {t('votes')}</span></li>)}</ul>
+        {yards.leaders.length === 0 && <p className="muted">{t('yardHow')}</p>}
+      </Section>}
       <Section title={t('rankHouses')}><ul className="list">{data?.houses.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold">{h.score}</span></li>)}</ul></Section>
       <Section title={t('rankDistricts')}><ul className="list">{data?.districts.map((d, i) => <li key={d.id}><span className="n">{i + 1}</span><span className="grow">{name(d.id)}</span><span className="muted">{d.active}</span></li>)}</ul></Section>
       <Section title={t('rankInviters')}><ul className="list">{data?.inviters.map((d, i) => <li key={d.nick}><span className="n">{i + 1}</span><span className="grow">{d.nick}</span><span className="muted">{d.n}</span></li>)}</ul></Section>

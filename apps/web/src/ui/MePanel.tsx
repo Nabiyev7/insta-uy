@@ -5,6 +5,7 @@ import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareImage, story
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { hasKey, money, useT } from '../app/i18n.ts';
 import { getApp, openPanel, refreshHouses, refreshProfile, setting, toast, useApp } from '../app/store.ts';
+import { decorOf } from '../logic/decorCatalog.ts';
 import { createOrder } from './OrderPanels.tsx';
 import { YardEditor } from './YardEditor.tsx';
 import { Field, Section, Seg, Sheet, Swatches, useAction } from './kit.tsx';
@@ -134,6 +135,7 @@ function HouseSection({ plot }: PlotProps): React.JSX.Element {
 function Inbox(): React.JSX.Element | null {
   const t = useT();
   const profile = useApp((s) => s.profile);
+  const lang = useApp((s) => s.lang);
   const { isBusy, run } = useAction();
   if (!profile || (profile.notes.length === 0 && profile.transfers.length === 0)) return null;
   const answer = (id: string, isYes: boolean): void => { void run(async () => { await rpc('my_transfer_answer', { p_id: id, p_accept: isYes, p_instagram: profile.instagram }); await refresh(); }); };
@@ -144,7 +146,7 @@ function Inbox(): React.JSX.Element | null {
           <div className="row"><button type="button" className="btn small" disabled={isBusy} onClick={() => answer(tr.id, true)}>{t('accept')}</button><button type="button" className="btn small soft" disabled={isBusy} onClick={() => answer(tr.id, false)}>{t('decline')}</button></div>
         </div>
       ))}
-      <ul className="list">{profile.notes.map((n) => { const key = `n_${n.kind}`; return <li key={n.id}>{hasKey(key) ? t(key) : n.kind}</li>; })}</ul>
+      <ul className="list">{profile.notes.map((n) => { const key = `n_${n.kind}`; return <li key={n.id}>{hasKey(key) ? t(key) : n.kind}{n.kind === 'decor_gift' && `: ${decorOf(String(n.data.decor))?.[lang] ?? ''} — ${String(n.data.from ?? '')}${n.data.message ? ` «${String(n.data.message)}»` : ''}`}</li>; })}</ul>
       {profile.notes.length > 0 && <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(async () => { await rpc('my_notes_read'); await refreshProfile(); })}>✓ {t('done')}</button>}
     </Section>
   );

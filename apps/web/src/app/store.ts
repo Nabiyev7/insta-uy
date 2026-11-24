@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { decodePlan, type EncodedPlan, type Lang, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
-import { setCatalog, type CatalogRow } from '../logic/decorCatalog.ts';
+import { setCatalog, type CatalogRow, type SetRow } from '../logic/decorCatalog.ts';
 import type { HouseState } from '../logic/placement.ts';
 import type { Mode } from './runtime.ts';
 import { initialQuality, type QualityLevel } from '../logic/quality.ts';
@@ -49,6 +49,9 @@ const readMuted = (): readonly Muted[] => {
   }
 };
 
+/** Sotib olishdan oldin sinab ko'rish: faqat shu odamda, saqlanmaydi. */
+export interface Preview { readonly plot: string; readonly decor: string; readonly anchor: string }
+
 export interface AppState {
   readonly stage: Stage;
   readonly progress: number;
@@ -72,6 +75,8 @@ export interface AppState {
   readonly street: number;
   readonly online: number;
   readonly catalog: readonly CatalogRow[];
+  readonly sets: readonly SetRow[];
+  readonly preview: Preview | null;
   readonly chat: readonly ChatLine[];
   readonly unread: number;
   readonly muted: readonly Muted[];
@@ -82,7 +87,7 @@ export interface AppState {
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;
@@ -110,9 +115,9 @@ export const refreshBoot = async (): Promise<Boot> => {
   return getApp().boot ?? boot;
 };
 export const refreshCatalog = async (): Promise<void> => {
-  const catalog = await rpc<readonly CatalogRow[]>('api_catalog');
+  const [catalog, sets] = await Promise.all([rpc<readonly CatalogRow[]>('api_catalog'), rpc<readonly SetRow[]>('api_sets')]);
   setCatalog(catalog);
-  setApp({ catalog });
+  setApp({ catalog, sets });
 };
 let lastRows = '';
 export const refreshHouses = async (): Promise<void> => {

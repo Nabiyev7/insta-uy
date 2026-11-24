@@ -1,9 +1,11 @@
 /** Umumiy foydalanuvchi amallari: borish, ulashish, stories rasmi. */
-import { plotAddress, type Plot } from '../../../../packages/shared/src/index.ts';
+import { ANCHORS, plotAddress, type Plot } from '../../../../packages/shared/src/index.ts';
 import { padHeight } from '../../../../packages/shared/src/city.ts';
-import { goToHouse } from './modes.ts';
-import { director, here, snapshotters } from './runtime.ts';
-import { getApp, openPanel } from './store.ts';
+import { viewOfPlot } from '../logic/cityCamera.ts';
+import type { CatalogRow } from '../logic/decorCatalog.ts';
+import { flyTo, goToHouse, setMode } from './modes.ts';
+import { director, here, session, snapshotters } from './runtime.ts';
+import { getApp, openPanel, setApp } from './store.ts';
 
 export const goToPlot = (id: string, isInstant = false): void => {
   const p = getApp().plotById.get(id);
@@ -27,6 +29,22 @@ export const nearestFree = (): string | null => {
     const d = Math.hypot(p.x - at.x, p.z - at.z);
     return best && best.d <= d ? best : { id: p.id, d };
   }, null)?.id ?? null;
+};
+
+/** Bezakni o'z hovlisidagi mos (imkon bo'lsa bo'sh) nuqtada ko'rsatadi; kamera uyga uchadi. */
+export const tryDecor = (row: CatalogRow): boolean => {
+  const s = getApp();
+  const mine = (s.profile?.plots ?? []).filter((p) => s.plotById.get(p.plot)?.type !== 'kvartira').sort((a, b) => b.tier - a.tier)[0];
+  if (!mine) return false;
+  const fit = ANCHORS.filter((a) => row.spots.includes(a.kind));
+  const open = fit.filter((a) => a.minLevel <= mine.tier);
+  const anchor = open.find((a) => !mine.places[a.id]) ?? open[0] ?? fit[0];
+  const plot = s.plotById.get(mine.plot);
+  if (!anchor || !plot) return false;
+  setApp({ preview: { plot: mine.plot, decor: row.id, anchor: anchor.id }, panel: null });
+  if (session.mode !== 'city') setMode('city');
+  flyTo(viewOfPlot(plot));
+  return true;
 };
 
 export const inviteUrl = (ref: string): string => `${location.origin}/?ref=${ref}`;

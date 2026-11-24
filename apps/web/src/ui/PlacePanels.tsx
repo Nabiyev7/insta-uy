@@ -89,10 +89,24 @@ function BuyPlot({ plot }: { readonly plot: PlotInfo }): React.JSX.Element {
   );
 }
 
+/** Haftaning eng chiroyli hovlisi: haftada bitta ovoz, o'ziga emas. */
+function YardVote({ id, votes, onDone }: { readonly id: string; readonly votes: number; readonly onDone: () => void }): React.JSX.Element {
+  const t = useT();
+  const profile = useApp((s) => s.profile);
+  const isMine = profile?.plots.some((p) => p.plot === id) ?? false;
+  const { isBusy, run } = useAction();
+  const vote = (): void => {
+    if (!profile) { openPanel({ kind: 'auth' }); return; }
+    void run(() => rpc('my_yard_vote', { p_plot: id }), t('voted')).then((ok) => { if (ok) onDone(); });
+  };
+  return <div className="row between"><span className="muted">🌷 {t('yardWeek')}: {votes} {t('votes')}</span>{!isMine && <button type="button" className="btn small soft" disabled={isBusy} onClick={vote}>{t('vote')}</button>}</div>;
+}
+
 export function PlotPanel({ id }: IdProps): React.JSX.Element | null {
   const t = useT();
   const lang = useApp((s) => s.lang);
   const plot = useApp((s) => s.plotById.get(id));
+  const catalog = useApp((s) => s.catalog);
   const { data, reload } = useLoad(() => rpc<PlotInfo>('api_plot', { p_plot: id }), id);
   if (!plot) return null;
   const statusTag = data && (!data.open && data.status === 'free' ? <span className="tag clay">{t('closed')}</span> : <span className={`tag ${data.status === 'free' ? 'free' : ''}`}>{t(data.status)}</span>);
@@ -110,6 +124,8 @@ export function PlotPanel({ id }: IdProps): React.JSX.Element | null {
         <a className="btn" href={instagramUrl(data.instagram)} target="_blank" rel="noopener noreferrer">{t('visitIg')}</a>
         {data.since && <p className="muted">{t('sinceDate')}: {new Date(data.since).toLocaleDateString('ru-RU')}</p>}
       </>}
+      {data && data.rare.length > 0 && <div className="row">{data.rare.map((r) => <span className="tag gold" key={`${r.id}${r.serial}`}>💎 {catalog.find((c) => c.id === r.id)?.[lang].replace(/ \(.*\)$/, '') ?? r.id} №{r.serial} / {r.stock}</span>)}</div>}
+      {data?.status === 'owned' && plot.type !== 'kvartira' && <YardVote id={id} votes={data.votes} onDone={reload} />}
       {data?.status === 'free' && data.open && isFreeType(plot.type) && <ClaimForm plot={data} onDone={reload} />}
       {data?.status === 'free' && data.open && (!isFreeType(plot.type) || setting('payments_enabled', false)) && <BuyPlot plot={data} />}
       <button type="button" className="btn soft" onClick={() => goToPlot(id)}>{t('goThere')}</button>

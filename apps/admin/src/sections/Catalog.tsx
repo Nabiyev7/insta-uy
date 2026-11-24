@@ -57,7 +57,36 @@ export function Catalog(): React.JSX.Element {
         { head: "So'm", cell: (c) => c.price_uzs }, { head: 'Tanga', cell: (c) => c.price_coins }, { head: 'Level', cell: (c) => `${c.min_level}+` },
         { head: 'Zaxira', cell: (c) => (c.stock === null ? '∞' : `${c.stock - c.sold} / ${c.stock}`) }, { head: 'Sotilgan', cell: (c) => c.sold },
         { head: 'Mavsum', cell: (c) => (c.season_from && c.season_to ? `${c.season_from.slice(5)} – ${c.season_to.slice(5)}` : '') },
-        { head: '', cell: (c) => <><Btn disabled={isBusy} onClick={() => setEditing({ draft: c, isNew: false })}>Tahrirlash</Btn><Btn disabled={isBusy} kind={c.is_active ? 'danger' : 'main'} onClick={() => toggle(c)}>{c.is_active ? 'Yashirish' : "Ko'rsatish"}</Btn></> },
+        { head: '', cell: (c) => <><Btn disabled={isBusy} onClick={() => setEditing({ draft: c, isNew: false })}>Tahrirlash</Btn><Btn disabled={isBusy || !c.is_active} onClick={() => { if (confirm(`«${c.name_uz}» haqida Telegram xabari yuborilsinmi?`)) void run(() => rpc('admin_decor_announce', { p_id: c.id }), 'Navbatga qo‘yildi'); }}>📣</Btn><Btn disabled={isBusy} kind={c.is_active ? 'danger' : 'main'} onClick={() => toggle(c)}>{c.is_active ? 'Yashirish' : "Ko'rsatish"}</Btn></> },
+      ]} />
+      <Sets />
+    </>
+  );
+}
+
+interface SetRow { readonly id: string; readonly name_uz: string; readonly name_ru: string; readonly discount_pct: number; readonly is_active: boolean }
+/** To'plam tarkibi bezakning «To'plam ID» maydonida belgilanadi. */
+function Sets(): React.JSX.Element {
+  const { data, error, reload } = useLoad(() => rpc<readonly SetRow[]>('admin_sets'));
+  const { isBusy, run } = useAction();
+  const save = (s: SetRow): void => { void run(() => rpc('admin_set_save', { p_id: s.id, p_uz: s.name_uz, p_ru: s.name_ru, p_discount: s.discount_pct, p_active: s.is_active })).then(reload); };
+  const edit = (s: SetRow): void => {
+    const discount = Number(prompt('Chegirma, %', String(s.discount_pct)));
+    if (Number.isInteger(discount) && discount >= 0 && discount <= 80) save({ ...s, discount_pct: discount });
+  };
+  const create = (): void => {
+    const id = prompt('To‘plam ID (lotin harf, raqam, _)')?.trim();
+    const uz = id && prompt('Nomi (uz)');
+    const ru = uz && prompt('Nomi (ru)');
+    if (id && uz && ru) save({ id, name_uz: uz, name_ru: ru, discount_pct: 15, is_active: true });
+  };
+  return (
+    <>
+      <h3>To‘plamlar</h3>
+      <p><Btn onClick={create}>+ Yangi to‘plam</Btn></p>
+      <Table rows={data} error={error} rowKey={(s) => s.id} columns={[
+        { head: 'To‘plam', cell: (s) => <><b>{s.name_uz}</b><br /><span className="muted">{s.id}</span></> }, { head: 'Chegirma', cell: (s) => <Btn disabled={isBusy} onClick={() => edit(s)}>{s.discount_pct}%</Btn> },
+        { head: '', cell: (s) => <Btn disabled={isBusy} kind={s.is_active ? 'danger' : 'main'} onClick={() => save({ ...s, is_active: !s.is_active })}>{s.is_active ? 'Yashirish' : 'Ko‘rsatish'}</Btn> },
       ]} />
     </>
   );

@@ -30,3 +30,7 @@ high piyoda: 176 FPS, 172 call, 150 ming; high shahar: 135 FPS, 53 call, 27 ming
 ## 4-qadamdan keyin: 50 ta 10-level uy (past sifat, CPU 6 baravar sekin, `node e2e/perf-decor.mjs`)
 piyoda: bezaksiz 382 FPS / 46 call / 34 ming → 20 bezak 278 FPS / 51 call / 39 ming
 shahar: bezaksiz 351 FPS / 67 call / 74 ming → 20 bezak 265 FPS / 71 call / 69 ming
+
+## 5-qadamdan keyin: 50 ta 10-level uy (past sifat, CPU 6 baravar sekin)
+piyoda: bezaksiz 333 FPS / 43 call → 20 bezak 293 FPS / 54 call / 37 ming; shahar: bezaksiz 302 / 64 call → 20 bezak 311 / 81 call / 62 ming
+Modellar fayli: 954 KB (boshida) → 983 (1-qadam) → 1121 (2-qadam) → 1293 KB (5-qadam).

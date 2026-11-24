@@ -34,6 +34,8 @@ const houseScale = (p: Plot, tier: number): number => (p.type === 'hovli' && tie
 const freeSpot = (id: string): readonly [number, number] => { const s = FREE_SPOTS[id]; return s ? [s[0], s[1]] : [0, 6]; };
 export const REF_PLOT = REF_YARD;
 /** Hovliga sig'ishi uchun kichraytiriladigan daraxtlar. */
+/** Uy bo'yiga deyarli o'smaydi; hovlida umuman o'smaydi. */
+const houseGrow = (p: Plot, scale: number): number => (p.type === 'hovli' ? 1 : 1 + (scale - 1) * 0.6);
 const YARD_SCALE: Readonly<Record<string, number>> = { tree_chinor: 0.62, tree_archa: 0.8 };
 const PALACE_GROW = 1.5;
 
@@ -54,7 +56,18 @@ const luxeItem = (p: Plot, model: string, y: number): Item => {
 const LUXE = 'light_luxe';
 /** Darvoza soyaboni ham uchastka ichida qolsin. */
 const GATE_INSET = 0.65;
-const anchorItem = (p: Plot, anchor: Anchor, d: DecorItem, y: number): Item | null => {
+/** Tomdagi joy (indeks = level): model o'lchamida x, balandlik, z (old +). */
+const ROOF_MOUNT: readonly (readonly [number, number, number])[] = [
+  [0, 4, 1.2], [0, 3.85, 1.6], [-2.2, 3.85, 1.6], [-2.2, 4.25, 0.5], [-0.6, 4.25, 0.5], [0, 4.75, 0.2], [0, 4.75, 0.2], [0.25, 7.3, 0.6], [0.25, 7.3, 0.6], [0, 8.1, 1.6], [0, 8.1, 1.6],
+];
+const roofItem = (p: Plot, tier: number, model: string, y: number, tint: string | null): Item => {
+  const [rx, ry, rz] = ROOF_MOUNT[tier] ?? [0, 4, 0];
+  const scale = houseScale(p, tier);
+  const [x, z] = toWorld(p, rx * scale, rz * scale - HOUSE[p.type].back);
+  return item(model, x, z, { y: y + ry * houseGrow(p, scale), yaw: yawOf(p.rot), tint });
+};
+const anchorItem = (p: Plot, anchor: Anchor, d: DecorItem, y: number, tier: number): Item | null => {
+  if (anchor.kind === 'roof') return roofItem(p, tier, d.model, y, d.tint);
   if (anchor.kind === 'fence' || anchor.kind === 'gate') return null;
   if (anchor.kind === 'luxe') return luxeItem(p, d.model, y);
   return yardItem(p, d.model, [anchor.x, anchor.z], y, d.tint);
@@ -71,7 +84,7 @@ export const houseItem = (p: Plot, s: HouseState, isFar: boolean, isSimple = fal
   const scale = houseScale(p, s.tier);
   const [x, z] = toWorld(p, 0, -HOUSE[p.type].back);
   return item(isFar ? lodOf(s.tier, isSimple) : `house${s.tier}`, x, z, {
-    y: padHeight(p), yaw: yawOf(p.rot), sx: scale, sy: p.type === 'hovli' ? 1 : 1 + (scale - 1) * 0.6, sz: scale,
+    y: padHeight(p), yaw: yawOf(p.rot), sx: scale, sy: houseGrow(p, scale), sz: scale,
     wall: WALL_COLORS[s.wall] ?? WALL_COLORS[0], roof: ROOF_COLORS[s.roof] ?? ROOF_COLORS[0], glow: Math.min(1, houseGlow(s)), seed: hash01(p.id), mat: (WALL_MATERIALS[s.material]?.layer ?? 1) + FRAME_STRIDE * s.frame, door: s.door,
   });
 };
@@ -99,7 +112,7 @@ export const plotItems = (p: Plot, s: HouseState | undefined, isOpen: boolean): 
     houseItem(p, s, false),
     item(fence?.model ?? LEVEL_FENCE[s.tier] ?? 'fence_basic', p.x, p.z, { y, yaw, sx: fx, sz: p.d / REF_PLOT.d, wall, tint: fence?.tint ?? null }),
     item(gate?.model ?? LEVEL_GATE[s.tier] ?? 'gate_basic', gx, gz, { y, yaw, sx: fx, tint: gate?.tint ?? null }),
-    ...free, ...placed.map(({ a, d }) => anchorItem(p, a, d, y)).filter((i): i is Item => i !== null),
+    ...free, ...placed.map(({ a, d }) => anchorItem(p, a, d, y, s.tier)).filter((i): i is Item => i !== null),
   ];
 };
 /** plotItems boshidagi uy, panjara, darvoza — qolgani mayda bezak (faqat yaqindan ko'rinadi). */

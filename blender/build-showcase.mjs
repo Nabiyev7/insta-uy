@@ -93,17 +93,20 @@ const WIDE = new Set(['fence_low', 'fence_basic', 'fence_wood', 'fence_brick', '
 const decorScene = () => {
   const items = [];
   const labels = [];
-  const all = [...DECOR.map((d) => [d.id, d.uz]), ...EXTRA].map(([model, label], i) => ({ model, label: `B${i + 1}. ${label}` }));
+  const all = [...DECOR.map((d) => [d.model, d.uz]), ...EXTRA].map(([model, label], i) => ({ model, label: `B${i + 1}. ${label}` }));
+  const fresh = all.slice(DECOR.findIndex((d) => d.id === 'yard_tandir'), DECOR.length);
+  const isFresh = new Set(fresh);
   const put = (list, columns, dx, dz, z0, size, gap) => list.forEach(({ model, label }, i) => {
     const x = (i % columns) * dx;
     const z = z0 - Math.floor(i / columns) * dz;
     items.push(plain(model, x, z));
     labels.push([label, x, 0.1, z + gap, 0, size]);
   });
-  put(all.filter((d) => !WIDE.has(d.model) && d.model !== 'stadium'), 8, 11, 13, 40, 0.8, 4);
-  put(all.filter((d) => WIDE.has(d.model)), 6, 36, 48, -30, 1.8, 20);
-  put(all.filter((d) => d.model === 'stadium'), 1, 0, 0, -260, 5, 80);
-  return { name: '2 Bezaklar', items: items.map(pack), labels, floor: [40, -80, 330], camera: [[42, 48, 96], [42, 0, 10]] };
+  put(fresh, 7, 12, 13, 60, 0.9, 5);
+  put(all.filter((d) => !isFresh.has(d) && !WIDE.has(d.model) && d.model !== 'stadium'), 8, 11, 13, 0, 0.8, 4);
+  put(all.filter((d) => !isFresh.has(d) && WIDE.has(d.model)), 6, 36, 48, -80, 1.8, 20);
+  put(all.filter((d) => d.model === 'stadium'), 1, 0, 0, -320, 5, 80);
+  return { name: '2 Bezaklar', items: items.map(pack), labels, floor: [40, -80, 400], camera: [[36, 58, 128], [36, 0, 38]] };
 };
 
 const LEVEL_RANGE = { mahalla: 'Level 1 dan', kol: 'Level 7 dan', tepalik: 'Level 1 dan / qasr 9 dan', kopqavatli: 'kvartiralar' };

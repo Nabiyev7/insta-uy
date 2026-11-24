@@ -4,13 +4,13 @@ import { Color, DirectionalLight, Fog, HemisphereLight } from 'three';
 import { SpatialIndex, dayFraction, holidayOf, seasonOf, weatherOf, type MasterPlan } from '../../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
 import type { Item } from '../logic/item.ts';
-import { closedDistrictItems, commerceItem, expansionItems, projectItems } from '../logic/placement.ts';
+import { closedDistrictItems, commerceItem, expansionItems, projectItems, type HouseState } from '../logic/placement.ts';
 import { HERO_SPOT, holidayItems } from '../logic/plaza.ts';
 import { QUALITY } from '../logic/quality.ts';
 import { HIGH_ALTITUDE, cityView, groundView, type View } from '../logic/view.ts';
 import { worldIndex } from '../logic/worldIndex.ts';
 import { camera as cam, city, director, here, session } from '../app/runtime.ts';
-import { setting, useApp } from '../app/store.ts';
+import { setting, useApp, type Preview } from '../app/store.ts';
 import { Ads } from './Ads.tsx';
 import { collect, type CollectSource } from './collect.ts';
 import { FAR_CHUNK, Ground } from './ground.ts';
@@ -47,12 +47,22 @@ const isStale = (a: Last, b: Last): boolean => {
   return moved > Math.max(STEP.city.move, b.height * STEP.city.perHeight) || turned > STEP.city.turn || Math.abs(a.height - b.height) > b.height * STEP.city.height;
 };
 
+/** Sinab ko'rilayotgan bezak faqat shu ekranda ko'rinadi. */
+const withPreview = (houses: ReadonlyMap<string, HouseState>, preview: Preview | null): ReadonlyMap<string, HouseState> => {
+  const h = preview ? houses.get(preview.plot) : undefined;
+  if (!preview || !h) return houses;
+  const decor = [...h.decor.filter((x) => !x.startsWith(`${preview.anchor}:`)), `${preview.anchor}:${preview.decor}`];
+  return new Map(houses).set(preview.plot, { ...h, decor });
+};
+
 interface CityLayerProps { readonly kit: Kit; readonly plan: MasterPlan }
 
 export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const { scene, gl, size } = useThree();
   const level = useApp((s) => s.quality);
-  const houses = useApp((s) => s.houses);
+  const saved = useApp((s) => s.houses);
+  const preview = useApp((s) => s.preview);
+  const houses = useMemo(() => withPreview(saved, preview), [saved, preview]);
   const boot = useApp((s) => s.boot);
   const catalog = useApp((s) => s.catalog);
   const q = QUALITY[level];

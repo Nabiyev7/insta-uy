@@ -111,16 +111,23 @@ const NOTES: Readonly<Record<string, readonly [string, string]>> = {
   ad_live: ['📢 Reklamangiz chiqdi!', '📢 Ваша реклама размещена!'],
   ad_rejected: ['Reklama rad etildi. Tahrirlab qayta yuboring.', 'Реклама отклонена. Исправьте и отправьте снова.'],
   nick_rejected: ['Instagram niki tasdiqlanmadi. Uyingiz saqlanadi — saytda nikni qayta yozing.', 'Ник не подтверждён. Дом сохранён — укажите ник заново на сайте.'],
+  decor_gift: ['🎁 Sizga bezak sovg‘a qilindi! Hovlingizga qo‘ying.', '🎁 Вам подарили украшение! Поставьте во двор.'],
+  yard_winner: ['🌷 Tabriklaymiz! Hovlingiz haftaning eng chiroyli hovlisi bo‘ldi.', '🌷 Поздравляем! Ваш двор — лучший двор недели.'],
+  new_decor: ['✨ Do‘konda yangi bezak: {name}', '✨ Новое украшение в магазине: {name}'],
   elected: ['👑 Saylovda g‘olib bo‘ldingiz!', '👑 Вы победили на выборах!'],
   inactive_warning: ['⏳ Uzoq vaqt kirmadingiz. 14 kun ichida kirmasangiz, bepul uyingiz bo‘shatiladi.', '⏳ Вы давно не заходили. Если не зайдёте 14 дней, бесплатный дом освободится.'],
 };
 
-interface OutboxRow { readonly kind: string; readonly chat: number; readonly lang: string }
+interface OutboxRow { readonly kind: string; readonly chat: number; readonly lang: string; readonly data?: Readonly<Record<string, unknown>> }
+const noteText = (r: OutboxRow): string | undefined => {
+  const isRu = r.lang === 'ru';
+  return NOTES[r.kind]?.[isRu ? 1 : 0].replace('{name}', String(r.data?.[isRu ? 'ru' : 'uz'] ?? ''));
+};
 export const flushOutbox = async (ctx: Ctx): Promise<number> => {
   if (!ctx.tg) return 0;
   const rows = await ctx.db.rpc<readonly OutboxRow[]>('svc_outbox', {});
   const results = await Promise.allSettled(rows.map((r) => {
-    const text = NOTES[r.kind]?.[r.lang === 'ru' ? 1 : 0];
+    const text = noteText(r);
     return text && ctx.tg ? ctx.tg.send(r.chat, text, [{ text: '🏙', url: ctx.env.SITE_URL }]) : Promise.resolve();
   }));
   return results.filter((r) => r.status === 'fulfilled').length;

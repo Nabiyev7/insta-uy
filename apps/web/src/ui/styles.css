@@ -69,6 +69,8 @@ p { margin: 0; }
 .modes button { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 10px 10px 10px 2px; background: none; color: var(--paper); font-weight: 600; font-size: 14px; cursor: pointer; }
 .modes svg { width: 18px; height: 18px; }
 .modes button[aria-pressed='true'] { background: var(--gold); color: var(--ink); }
+.preview { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 6px 8px 6px 14px; border-radius: 14px; background: var(--paper); box-shadow: 0 6px 22px oklch(20% 0.05 60 / 0.34); font-weight: 600; }
+.preview span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav5 { display: grid; grid-template-columns: repeat(5, 1fr); width: min(480px, 100%); padding: 4px; border-radius: 18px 18px 18px 5px; background: oklch(97% 0.02 85 / 0.96); box-shadow: 0 6px 22px oklch(20% 0.05 60 / 0.34); border-top: 3px solid var(--gold); }
 .nav5 button { position: relative; display: grid; justify-items: center; align-content: center; gap: 2px; min-width: 0; min-height: 50px; padding: 3px 2px; border: 0; border-radius: 13px 13px 13px 3px; background: none; color: var(--ink-2); font: 600 11px/1.1 var(--body); cursor: pointer; }
 .nav5 button > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

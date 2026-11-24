@@ -221,6 +221,35 @@ try {
     await shot(desk, 'yard');
     await desk.keyboard.press('Escape');
   });
+  await step("sinab ko'rish, sovg'a, haftaning hovlisiga ovoz, ekranni tozalash", async () => {
+    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
+    await desk.getByRole('button', { name: "Velosiped: Sinab ko'rish" }).click();
+    await desk.locator('.preview').waitFor();
+    assert.ok(await desk.evaluate(() => window.__app.getState().preview.decor === 'yard_bike' && ![...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.some((d) => d.includes('yard_bike')))), 'sinov saqlanib qolmasin');
+    await desk.waitForTimeout(1500);
+    await shot(desk, 'preview');
+    await desk.locator('.preview').getByRole('button', { name: 'Yopish' }).click();
+    await desk.locator('.nav5').getByRole('button', { name: "Do'kon" }).click();
+    await desk.getByRole('button', { name: 'Olma: Sotib olish' }).click();
+    await desk.getByText(/Sotib olindi/).first().waitFor();
+    await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
+    await desk.getByText("Bezakni sovg'a qilish").first().click();
+    await desk.locator('details[open] select').selectOption('tree_olma');
+    await desk.getByPlaceholder('@nik').fill('@demo_0001');
+    desk.once('dialog', (d) => d.accept());
+    await desk.locator('details[open] button[type=submit]').click();
+    await desk.getByText('Yuborildi').first().waitFor();
+    await desk.keyboard.press('Escape');
+    await desk.goto(`${SITE}/?uy=P0001`);
+    await desk.locator('.sheet').getByRole('button', { name: 'Ovoz berish' }).click();
+    await desk.getByText(/Haftaning hovlisi: 1/).waitFor();
+    await desk.keyboard.press('Escape');
+    await desk.getByRole('button', { name: 'Ekranni tozalash' }).click();
+    assert.equal(await desk.locator('.nav5').count(), 0);
+    await desk.waitForTimeout(500);
+    await desk.mouse.click(500, 400);
+    await desk.locator('.nav5').waitFor();
+  });
   await step('admin: mavjud modeldan yangi tovar', async () => {
     await admin.getByRole('button', { name: 'Bezaklar' }).click();
     await admin.getByRole('button', { name: '+ Yangi tovar' }).click();
