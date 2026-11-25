@@ -28,7 +28,13 @@ const tg: Telegram = {
   answer: async (_id, text) => { sent.push({ chat: 0, text }); },
   video: async (chat, url) => { sent.push({ chat, text: url }); },
   isMember: async (_channel, user) => members.has(user),
+  invoice: async (chat, title, _d, payload, stars) => { sent.push({ chat, text: `invoice:${payload}:${stars}:${title}` }); },
+  preCheckout: async (_id, isOk) => { sent.push({ chat: 0, text: `precheckout:${String(isOk)}` }); },
+  refundStars: async (user, charge) => { refunds.push(`${user}:${charge}`); },
+  document: async (chat, name, data) => { docs.push({ chat, name, size: data.length }); },
 };
+const docs: { chat: number; name: string; size: number }[] = [];
+const refunds: string[] = [];
 const emuFetch: typeof fetch = (input, init) => emu(new Request(input as string, init));
 let ipN = 0;
 const ctx = (over: Partial<Ctx> = {}): Ctx => ({ env: ENV, db: supabaseBackend(ENV, emuFetch), tg, ip: `10.0.0.${++ipN}`, fetch: emuFetch, ...over });
@@ -305,3 +311,57 @@ describe('kanalga obuna bonusi', () => {
     expect(sent.at(-1)!.text).toContain('+300');
   });
 });
+
+describe('Telegram Stars do‘koni', () => {
+  const pre = (from: number, order: string, stars: number): unknown => ({ update_id: 2, pre_checkout_query: { id: 'pq', from: { id: from, first_name: 'S' }, currency: 'XTR', total_amount: stars, invoice_payload: order } });
+  const paid = (from: number, order: string, stars: number, charge: string): unknown =>
+    message(from, '', { successful_payment: { currency: 'XTR', total_amount: stars, invoice_payload: order, telegram_payment_charge_id: charge } });
+  test('to‘lov o‘chiq bo‘lsa — "tez kunda"', async () => {
+    await db.query("update settings set value = 'false' where key = 'payments_enabled'");
+    await botUser(1500, 'yulduz_odam');
+    await webhook(message(1500, '/start buy_pack1'));
+    expect(sent.at(-1)!.text).toContain('tez kunda');
+  });
+  test('buy_pack1 → hisob (50⭐) → tekshiruv → to‘lov → tanga; qaytarish', async () => {
+    await db.query("update settings set value = 'true' where key = 'payments_enabled'");
+    await botUser(1501, 'yulduz_odam2');
+    await webhook(message(1501, '/start buy_pack1'));
+    const [, order, stars] = /^invoice:([0-9a-f-]{36}):(\d+):/.exec(sent.at(-1)!.text)!;
+    expect(stars).toBe('50');
+    await webhook(pre(1501, order!, 49));
+    expect(sent.at(-1)!.text).toBe('precheckout:false');
+    await webhook(pre(1501, order!, 50));
+    expect(sent.at(-1)!.text).toBe('precheckout:true');
+    await webhook(paid(1501, order!, 50, 'ch_1'));
+    await webhook(paid(1501, order!, 50, 'ch_1'));
+    const coins = async (): Promise<number> => (await db.query<{ coins: number }>('select coins from profiles where telegram_id = 1501')).rows[0]!.coins;
+    expect(await coins()).toBe(1000);
+    // Qaytarish: faqat admin; Stars — Telegram orqali.
+    const payment = (await db.query<{ id: number }>("select id from payments where provider = 'stars' and external_id = 'ch_1'")).rows[0]!.id;
+    const jwt = await botUser(1502, 'yulduz_admin');
+    expect((await call('/pay/refund', { payment }, { authorization: `Bearer ${jwt}` })).body).toMatchObject({ error: 'forbidden' });
+    await db.query("update profiles set role = 'admin' where telegram_id = 1502");
+    expect((await call('/pay/refund', { payment }, { authorization: `Bearer ${jwt}` })).body).toMatchObject({ ok: true, provider: 'stars' });
+    expect(refunds).toContain('1501:ch_1');
+    expect(await coins()).toBe(0);
+    await db.query("update settings set value = 'false' where key = 'payments_enabled'");
+  });
+  test('/dokon menyusi va salyut buyrug‘i', async () => {
+    await webhook(message(1501, '/dokon'));
+    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toContain('buy:pack4');
+    await webhook(message(1501, '/start buy_salute'));
+    expect(sent.at(-1)!.text).toContain('/salyut');
+  });
+});
+
+describe('zaxira Telegramga', () => {
+  test('siqilgan zaxira adminning Telegramiga; katta bo‘lsa bo‘laklab', async () => {
+    const { backup, chunks, gzip } = await import('../src/cron.ts');
+    await backup(ctx(), new Date('2026-11-25T22:10:00Z'));
+    expect(docs.at(-1)).toMatchObject({ chat: 1, name: 'cityland-2026-11-25.json.gz' });
+    const packed = await gzip('salom '.repeat(1000));
+    expect(packed[0]).toBe(0x1f);
+    expect(chunks(new Uint8Array(10), 4).map((c) => c.length)).toEqual([4, 4, 2]);
+  });
+});
+

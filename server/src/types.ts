@@ -45,6 +45,12 @@ export interface Telegram {
   video(chat: number, url: string, caption: string): Promise<void>;
   /** Kanal a'zosimi (bot kanalda admin bo'lishi kerak). */
   isMember(channel: string, user: number): Promise<boolean>;
+  /** Telegram Stars hisob-fakturasi (valyuta XTR). */
+  invoice(chat: number, title: string, description: string, payload: string, stars: number): Promise<void>;
+  preCheckout(id: string, isOk: boolean, error?: string): Promise<void>;
+  refundStars(user: number, chargeId: string): Promise<void>;
+  /** Fayl yuborish (zaxira). */
+  document(chat: number, name: string, data: Uint8Array, caption: string): Promise<void>;
 }
 export interface TgButton { readonly text: string; readonly data?: string; readonly url?: string }
 

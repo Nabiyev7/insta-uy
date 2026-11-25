@@ -375,3 +375,11 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .toasts p.error { background: #b23d28; }
 @media (max-height: 460px) { .guide p { min-height: 0; } .cover .guide { gap: 8px; padding: 14px 18px; } .step-pic { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+
+/* 6-qadam E: pul tugmalari, tanga paketlari, salyut */
+.row.pay { flex-wrap: wrap; gap: 8px; }
+.row.pay .btn { flex: 1 1 auto; }
+.btn.pay-soon { opacity: .75; }
+.list.packs li { flex-wrap: wrap; gap: 8px; }
+.list.packs li .tag { margin-left: 6px; }
+.banner.salute { background: var(--main); color: var(--on-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }

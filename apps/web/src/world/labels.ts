@@ -4,7 +4,7 @@ import type { BadgeId, LabelKind } from '../../../../packages/shared/src/index.t
 import { BADGE_ICONS } from '../ui/badges.ts';
 import { ICONS, type IconName } from '../ui/icons.tsx';
 
-export interface LabelInfo { readonly key: string; readonly text: string; readonly kind: LabelKind; readonly badge: string | null; /** Nishondan boshqa belgi. */ readonly icon?: IconName; readonly x: number; readonly y: number; readonly z: number; readonly size?: number }
+export interface LabelInfo { readonly key: string; readonly text: string; readonly kind: LabelKind; readonly badge: string | null; /** Nishondan boshqa belgi. */ readonly icon?: IconName; /** Yuraklar soni (0 — ko'rsatilmaydi). */ readonly hearts?: number; readonly x: number; readonly y: number; readonly z: number; readonly size?: number }
 
 const CACHE_MAX = 90;
 const ICON_SIZE = 36;
@@ -21,7 +21,9 @@ const drawLabel = (info: LabelInfo): { texture: CanvasTexture; aspect: number } 
   const left = icon ? ICON_SIZE + 10 : 0;
   const { text } = info;
   g.font = font;
-  const w = Math.min(640, Math.ceil(g.measureText(text).width) + 48 + left);
+  const hearts = info.hearts && info.hearts > 0 ? String(info.hearts) : '';
+  const right = hearts ? Math.ceil(g.measureText(hearts).width) + ICON_SIZE + 14 : 0;
+  const w = Math.min(700, Math.ceil(g.measureText(text).width) + 48 + left + right);
   canvas.width = w;
   canvas.height = 68;
   const [bg, fg, border] = STYLES[info.kind];
@@ -42,7 +44,17 @@ const drawLabel = (info: LabelInfo): { texture: CanvasTexture; aspect: number } 
   g.fillStyle = fg;
   g.textBaseline = 'middle';
   g.textAlign = 'center';
-  g.fillText(text, (w + left) / 2, 35, w - 36 - left);
+  g.fillText(text, (w + left - right) / 2, 35, w - 36 - left - right);
+  if (hearts) {
+    g.textAlign = 'right';
+    g.fillText(hearts, w - 22, 35);
+    g.save();
+    g.fillStyle = '#e0465a';
+    g.translate(w - 26 - g.measureText(hearts).width - ICON_SIZE, 34 - ICON_SIZE / 2);
+    g.scale(ICON_SIZE / 24, ICON_SIZE / 24);
+    g.fill(new Path2D(ICONS.heart));
+    g.restore();
+  }
   if (icon) {
     g.strokeStyle = fg;
     g.lineWidth = 2.2;
@@ -64,7 +76,7 @@ export class Labels {
   private readonly cache = new Map<string, { texture: CanvasTexture; aspect: number }>();
 
   private entry(info: LabelInfo): { texture: CanvasTexture; aspect: number } {
-    const id = `${info.key}|${info.text}|${info.kind}|${info.badge ?? ''}|${info.icon ?? ''}`;
+    const id = `${info.key}|${info.text}|${info.kind}|${info.badge ?? ''}|${info.icon ?? ''}|${info.hearts ?? 0}`;
     const known = this.cache.get(id);
     if (known) {
       this.cache.delete(id);

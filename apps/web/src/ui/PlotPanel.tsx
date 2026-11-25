@@ -3,10 +3,10 @@ import { useState, type FormEvent } from 'react';
 import { BADGES, TIERS, instagramUrl, isFreeType, parseBio, parseInstagram, type BadgeId, type Plot } from '../../../../packages/shared/src/index.ts';
 import { addressOf, copyText, goToPlot, houseUrl, shareStory, startConstruction, walkTo } from '../app/actions.ts';
 import { rpc, type MyPlot, type PlotInfo } from '../app/api.ts';
-import { money, useT } from '../app/i18n.ts';
+import { useT } from '../app/i18n.ts';
 import { getApp, openAuth, openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
 import { UpgradeButton } from './HousePanels.tsx';
-import { createOrder } from './OrderPanels.tsx';
+import { PayButtons } from './PayButtons.tsx';
 import { BADGE_ICONS } from './badges.ts';
 import { Icon } from './icons.tsx';
 import { Field, LoadState, RowLink, Sheet, useAction, useLoad } from './kit.tsx';
@@ -49,30 +49,23 @@ function ClaimForm({ plot }: InfoProps): React.JSX.Element {
   );
 }
 
+interface HousePrices { readonly house?: Readonly<Record<string, number>>; readonly typeAdd?: Readonly<Record<string, number>> }
+const HOUSE: Readonly<Record<string, number>> = { 1: 10000, 2: 20000, 3: 30000, 4: 45000, 5: 60000 };
+const TYPE_ADD: Readonly<Record<string, number>> = { hovli: 0, villa: 40000, qasr: 100000 };
+/** Premium uy: yangi uchastka + darhol tanlangan level (1–5); bir nechta olish mumkin. */
 function BuyPlot({ plot }: InfoProps): React.JSX.Element {
   const t = useT();
+  const lang = useApp((s) => s.lang);
   const profile = useApp((s) => s.profile);
-  const { isBusy, run } = useAction();
-  const [nick, setNick] = useState(profile?.instagram ?? '');
-  const isPaid = setting('payments_enabled', false);
-  const submit = (e: FormEvent): void => {
-    e.preventDefault();
-    void run(async () => {
-      const ig = parseInstagram(profile?.instagram ?? nick);
-      if (!ig.ok) throw new Error(ig.code);
-      await createOrder('plot', { plot: plot.id, instagram: ig.value });
-    });
-  };
+  const prices = setting<HousePrices>('premium', {});
+  const [tier, setTier] = useState(plot.type === 'hovli' ? 3 : 5);
+  const uzs = (prices.house?.[tier] ?? HOUSE[tier] ?? 0) + (prices.typeAdd?.[plot.type] ?? TYPE_ADD[plot.type] ?? 0);
   return (
-    <form className="section" onSubmit={submit}>
-      <div className="row between"><span className="muted">{t('price')}</span><b>{money(plot.price)} {t('som')}</b></div>
-      {!isPaid && <p className="muted">{t('paidSoon')}</p>}
-      {isPaid && profile && <>
-        {!profile.instagram && <Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} required maxLength={80} /></Field>}
-        <button type="submit" className="btn block" disabled={isBusy}>{t('buy')}</button>
-      </>}
-      {isPaid && !profile && <button type="button" className="btn block" onClick={() => openAuth()}>{t('login')}</button>}
-    </form>
+    <div className="section">
+      <p className="muted">{t('premiumHouse')}</p>
+      <div className="seg" role="group" aria-label={t('levelWord')}>{TIERS.map((x) => <button type="button" key={x.id} aria-pressed={x.id === tier} title={x[lang]} onClick={() => setTier(x.id)}>{x.id}</button>)}</div>
+      <PayButtons kind="plot" payload={{ plot: plot.id, tier, instagram: profile?.instagram ?? undefined }} uzs={uzs} code={`h_${plot.id}_${tier}`} label={`${tier}-${t('levelWord')}`} />
+    </div>
   );
 }
 
@@ -107,6 +100,23 @@ function FreePlot({ plot, full }: InfoProps & { readonly full: Plot }): React.JS
 }
 
 /** Haftaning eng chiroyli hovlisi: haftada bitta ovoz, o'ziga emas. */
+/** Yurak: boshqaning uyiga bir marta. */
+function Heart({ id, count, isDone, isMine, onDone }: { readonly id: string; readonly count: number; readonly isDone: boolean; readonly isMine: boolean; readonly onDone: () => void }): React.JSX.Element {
+  const t = useT();
+  const profile = useApp((s) => s.profile);
+  const { isBusy, run } = useAction();
+  const press = (): void => {
+    if (!profile) { openAuth(); return; }
+    void run(() => rpc('my_heart', { p_plot: id })).then((ok) => { if (ok) onDone(); });
+  };
+  return (
+    <div className="row between heart">
+      <span className="with-icon"><Icon name="heart" />{count}</span>
+      {!isMine && <button type="button" className={`btn small ${isDone ? 'soft' : 'gold'}`} disabled={isBusy || isDone} aria-pressed={isDone} onClick={press}><Icon name="heart" />{t(isDone ? 'hearted' : 'heartIt')}</button>}
+    </div>
+  );
+}
+
 function YardVote({ id, votes, isMine, onDone }: { readonly id: string; readonly votes: number; readonly isMine: boolean; readonly onDone: () => void }): React.JSX.Element {
   const t = useT();
   const profile = useApp((s) => s.profile);
@@ -189,6 +199,7 @@ export function PlotPanel({ id }: PlotPanelProps): React.JSX.Element | null {
       <LoadState of={loaded} />
       {info && isFree && <FreePlot plot={info} full={full} />}
       {info && !isFree && <Owner info={info} isMine={mine !== undefined} />}
+      {info?.status === 'owned' && <Heart id={id} count={info.hearts} isDone={info.hearted} isMine={mine !== undefined} onDone={loaded.reload} />}
       {info?.status === 'owned' && full.type !== 'kvartira' && <YardVote id={id} votes={info.votes} isMine={mine !== undefined} onDone={loaded.reload} />}
       {info && mine && <MineActions mine={mine} full={full} />}
       {info && !isFree && !mine && <VisitorActions info={info} />}

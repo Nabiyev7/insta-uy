@@ -8,7 +8,7 @@ import { openAuth, openPanel, openRoot, refreshCatalog, refreshProfile, setting,
 import type { CatalogRow, SetRow } from '../logic/decorCatalog.ts';
 import { CARS, ownedCars } from '../logic/drive.ts';
 import { goodState, shopTabs, type ShopTab } from '../logic/shopTabs.ts';
-import { createOrder } from './OrderPanels.tsx';
+import { PayButtons } from './PayButtons.tsx';
 import { Icon } from './icons.tsx';
 import { DecorImage, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
 
@@ -89,7 +89,7 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
         ? <button type="button" className="btn soft" onClick={() => openPanel({ kind: 'yard', id: yard })}><Icon name="plus" />{t('putYard')}</button>
         : <button type="button" className="btn soft" aria-label={`${row[lang]}: ${t('tryIt')}`} onClick={() => { if (!tryDecor(row)) toast(t('noHouse'), true); }}>{t('tryIt')}</button>}
       {setting('coins_enabled', true) && <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}</button>}
-      {setting('payments_enabled', false) && profile && <button type="button" className="btn gold" disabled={isClosed} onClick={() => run(() => createOrder('decor', { id: row.id }))}>{money(row.uzs)} {t('som')}</button>}
+      {row.uzs > 0 && <PayButtons kind="decor" payload={{ id: row.id }} uzs={row.uzs} code={`d_${row.id}`} isDisabled={state === 'soldOut' || state === 'seasonOver'} />}
     </div>
   );
 }

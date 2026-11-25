@@ -13,10 +13,14 @@ export interface Anchor {
   readonly w: number;
   readonly d: number;
   readonly minLevel: number;
+  /** Pulga olingan bezak qaysi leveldan qo'yiladi (1–4-level uylarda ham pulli bezak nuqtalari). */
+  readonly paidLevel: number;
   readonly uz: string;
   readonly ru: string;
 }
-const anchor = (id: string, kind: SpotKind, minLevel: number, x: number, z: number, w: number, d: number, uz: string, ru: string): Anchor => ({ id, kind, x, z, w, d, minLevel, uz, ru });
+/** Pulli bezak 1-leveldan qo'yiladigan nuqtalar (bazada `decor_anchors.paid_level`). */
+export const PAID_SPOTS: ReadonlySet<string> = new Set(['garaj_oldi', 'old_hovli_chap', 'old_hovli_ong', 'darvoza_yoni', 'burchak_1', 'burchak_2', 'burchak_3', 'burchak_4']);
+const anchor = (id: string, kind: SpotKind, minLevel: number, x: number, z: number, w: number, d: number, uz: string, ru: string): Anchor => ({ id, kind, x, z, w, d, minLevel, paidLevel: PAID_SPOTS.has(id) ? 1 : minLevel, uz, ru });
 
 /** 5-level (va villa, qasr) uchun nuqtalar; koordinatalari uyga, yo'lakka va avtomobil yo'liga tegmaydi. */
 export const ANCHORS: readonly Anchor[] = [

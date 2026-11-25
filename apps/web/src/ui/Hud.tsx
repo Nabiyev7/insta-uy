@@ -6,6 +6,7 @@ import { money, useT, type Key } from '../app/i18n.ts';
 import { setMode } from '../app/modes.ts';
 import { here, input, player, snapshotters, type Mode } from '../app/runtime.ts';
 import { backPanel, openAuth, openPanel, openRoot, setApp, useApp, type Panel } from '../app/store.ts';
+import { rpc } from '../app/api.ts';
 import { BottomCard, PreviewBar } from './BottomCard.tsx';
 import { CoinFly } from './CoinFly.tsx';
 import { Icon, type IconName } from './icons.tsx';
@@ -194,12 +195,29 @@ export function Hud(): React.JSX.Element {
     <div className={`hud mode-${mode} ${hasPanel ? 'has-panel' : ''}`}>
       <TopRow />
       {(isOffline || isMaintenance) && <p className="banner" role="alert">{t(isOffline ? 'offline' : 'maintenance')}</p>}
+      {!isOffline && !isMaintenance && <SaluteBanner />}
       {mode !== 'city' && <Joystick />}
       <div className="dock"><Rail /><PreviewBar /><BottomCard /><BottomBar /></div>
       <CoinFly />
       {location.search.includes('fps') && <FpsMeter />}
     </div>
   );
+}
+
+interface SaluteRow { readonly nick: string | null; readonly text: string }
+const SALUTE_POLL_MS = 5 * 60_000;
+/** Shahar ustidagi salyut xabari (pulga yoki tangaga, 24 soat). */
+function SaluteBanner(): React.JSX.Element | null {
+  const [row, setRow] = useState<SaluteRow | null>(null);
+  useEffect(() => {
+    let isAlive = true;
+    const load = (): void => { void rpc<SaluteRow | null>('api_salute').then((r) => { if (isAlive) setRow(r); }).catch(() => undefined); };
+    load();
+    const id = setInterval(load, SALUTE_POLL_MS);
+    return () => { isAlive = false; clearInterval(id); };
+  }, []);
+  if (!row) return null;
+  return <p className="banner salute"><Icon name="star" /> {row.nick ? `@${row.nick}: ` : ''}{row.text}</p>;
 }
 
 function FpsMeter(): React.JSX.Element {

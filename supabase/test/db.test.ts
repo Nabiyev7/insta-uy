@@ -188,7 +188,7 @@ describe('buyurtma va to‘lov', () => {
     await expect(as(u, 'my_order', { p_kind: 'plot', p_payload: { plot, instagram: 'boy_1' } })).rejects.toThrow('payments_off');
     await set('payments_enabled', true);
     const o = (await as(u, 'my_order', { p_kind: 'plot', p_payload: { plot, instagram: 'boy_1', amount: 1 } })) as { id: string; amount: number };
-    const price = (await sql('select private.plot_price($1) p', [plot]))[0]!.p as number;
+    const price = (await sql("select private.house_price(type, 1) p from plots where id = $1", [plot]))[0]!.p as number;
     expect(o.amount).toBeGreaterThan(price);
     expect(o.amount).toBeLessThan(price + 1000);
     const u2 = await user();
@@ -230,7 +230,8 @@ describe('buyurtma va to‘lov', () => {
     expect(await pay('tier', { plot, tier: 3 })).toBe('paid');
     await expect(as(uid, 'my_order', { p_kind: 'tier', p_payload: { plot, tier: 2 } })).rejects.toThrow('bad_format');
     expect(await pay('label', { plot, label: 'gold' })).toBe('paid');
-    await expect(as(uid, 'my_quote', { p_kind: 'decor', p_payload: { id: 'avto_sedan' } })).rejects.toThrow('level_low');
+    // Pulga — level cheklovisiz (E qism).
+    expect(await as(uid, 'my_quote', { p_kind: 'decor', p_payload: { id: 'avto_sedan' } })).toBe(20000);
     expect(await pay('tier', { plot, tier: 5 })).toBe('paid');
     expect(await pay('decor', { id: 'avto_sedan' })).toBe('paid');
     expect(await pay('street_name', { street: 1, name: "Bog'ishamol" })).toBe('paid');

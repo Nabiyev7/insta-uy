@@ -30,4 +30,12 @@ export const signInFromLink = async (): Promise<boolean> => {
   if (error) throw new Error('Havola eskirgan yoki ishlatilgan — botga qaytadan /admin yozing');
   return true;
 };
+/** Server yo'li (masalan Stars qaytarish) — admin sessiyasi bilan. */
+export const serverPost = async (path: string, body: unknown): Promise<unknown> => {
+  const { data } = await supabase.auth.getSession();
+  const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${data.session?.access_token ?? ''}` }, body: JSON.stringify(body) });
+  const out = (await res.json().catch(() => ({}))) as { error?: string };
+  if (!res.ok) throw new Error(out.error ?? `HTTP ${res.status}`);
+  return out;
+};
 export interface Me { readonly login: string; readonly role: 'moderator' | 'admin'; readonly perms: readonly string[] }

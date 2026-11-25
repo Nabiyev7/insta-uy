@@ -84,6 +84,6 @@ export interface Profile {
 export interface PlotInfo {
   readonly id: string; readonly district: number; readonly type: 'hovli' | 'kvartira' | 'villa' | 'qasr'; readonly value: number; readonly address: string; readonly open: boolean; readonly status: 'free' | 'reserved' | 'pending' | 'owned';
   readonly instagram: string | null; readonly bio: string | null; readonly tier: number | null; readonly decor: readonly string[] | null; readonly label: string | null; readonly badges: readonly string[]; readonly since: string | null; readonly price: number;
-  readonly rare: readonly { readonly id: string; readonly serial: number; readonly stock: number }[]; readonly votes: number;
+  readonly rare: readonly { readonly id: string; readonly serial: number; readonly stock: number }[]; readonly votes: number; readonly hearts: number; readonly hearted: boolean;
 }
-export type CityRow = readonly [string, string | null, number, number, number, readonly string[], 'plain' | 'silver' | 'gold', string | null, 'pending' | 'owned', boolean, number, number, number];
+export type CityRow = readonly [string, string | null, number, number, number, readonly string[], 'plain' | 'silver' | 'gold', string | null, 'pending' | 'owned', boolean, number, number, number, number?];

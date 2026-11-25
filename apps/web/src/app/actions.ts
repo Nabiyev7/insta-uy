@@ -6,7 +6,8 @@ import { BUILD_MS, FLIGHT_MS } from '../logic/construction.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { flyTo, goToHouse, setMode } from './modes.ts';
 import { director, here, session, snapshotters } from './runtime.ts';
-import { getApp, openRoot, setApp } from './store.ts';
+import { translate } from './i18n.ts';
+import { getApp, openRoot, setApp, toast } from './store.ts';
 
 export const goToPlot = (id: string, isInstant = false): void => {
   const p = getApp().plotById.get(id);
@@ -150,9 +151,18 @@ export const storyImage = async (plot: Plot, nick: string): Promise<HTMLCanvasEl
     g.fillText(`@${nick}`, 90, 1560);
     g.font = '500 46px "Golos Text Variable", system-ui';
     g.fillText(addressOf(plot), 90, 1640, 900);
-    g.fillStyle = 'rgba(253,246,230,0.75)';
+    // Logo (yuqorida) va shaxsiy taklif havolasi (pastda; Instagram "Havola" stikeri uchun nusxalanadi).
+    g.fillStyle = 'rgba(10,45,52,0.72)';
+    g.beginPath();
+    g.roundRect(70, 90, 520, 110, 55);
+    g.fill();
+    g.fillStyle = '#f3cd68';
+    g.font = '700 54px "Unbounded Variable", system-ui';
+    g.fillText('CityLand UZ', 112, 165, 450);
+    const ref = getApp().profile?.ref;
+    g.fillStyle = 'rgba(253,246,230,0.8)';
     g.font = '500 40px "Golos Text Variable", system-ui';
-    g.fillText(location.host, 90, 1780, 900);
+    g.fillText(ref ? inviteUrl(ref).replace(/^https?:\/\//, '') : location.host, 90, 1780, 900);
     return c;
   } finally {
     director.pose = null;
@@ -167,5 +177,7 @@ export const shareStory = async (id: string, nick: string): Promise<void> => {
   if (!plot) return;
   setApp({ panel: null });
   const canvas = await storyImage(plot, nick).finally(() => setApp({ panel, trail }));
+  const ref = getApp().profile?.ref;
+  if (ref) await copyText(inviteUrl(ref)).then(() => toast(translate('storyLinkCopied', getApp().lang))).catch(() => undefined);
   await shareImage(canvas, `uy-${nick || id}`);
 };

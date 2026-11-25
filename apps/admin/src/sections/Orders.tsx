@@ -1,4 +1,4 @@
-import { rpc } from '../api.ts';
+import { rpc, serverPost } from '../api.ts';
 import { Btn, Table, money, useAction, useLoad, when } from '../ui.tsx';
 
 interface OrderRow { readonly id: string; readonly kind: string; readonly payload: unknown; readonly amount: number; readonly status: string; readonly note: string | null; readonly created_at: string; readonly login: string }
@@ -13,13 +13,17 @@ export function Orders(): React.JSX.Element {
     const id = prompt("Buyurtma ID (to'liq):");
     if (id) act('admin_payment', { p_id: p.id, p_action: 'link', p_order: id.trim() });
   };
+  const refund = (p: PaymentRow): void => {
+    if (p.provider === 'stars') { if (confirm('Yulduzlar Telegram orqali qaytarilsinmi?')) void run(() => serverPost('/pay/refund', { payment: p.id }), 'Qaytarildi').then(reload); return; }
+    if (confirm('Pul kartaga qaytarildimi? (o‘zingiz o‘tkazasiz, bu yerda belgilanadi)')) act('admin_payment', { p_id: p.id, p_action: 'refunded' });
+  };
   return (
     <>
-      <h3>Mos kelmagan to'lovlar</h3>
+      <h3>To'lovlar (avval mos kelmaganlari)</h3>
       <Table rows={data?.payments ?? null} error={error} rowKey={(p) => p.id} columns={[
         { head: 'Summa', cell: (p) => <b>{money(p.amount)}</b> }, { head: 'Manba', cell: (p) => p.provider }, { head: 'Holat', cell: (p) => <span className={`tag ${p.status}`}>{p.status}</span> },
         { head: 'Buyurtma', cell: (p) => p.order_id?.slice(0, 8) ?? '—' }, { head: 'Vaqt', cell: (p) => when(p.at) },
-        { head: '', cell: (p) => <>{p.status === 'unmatched' && <Btn kind="main" disabled={isBusy} onClick={() => link(p)}>Bog'lash</Btn>}<Btn disabled={isBusy} onClick={() => { if (confirm('Pul qaytarildi deb belgilansinmi?')) act('admin_payment', { p_id: p.id, p_action: 'refunded' }); }}>Qaytarildi</Btn></> },
+        { head: '', cell: (p) => <>{p.status === 'unmatched' && <Btn kind="main" disabled={isBusy} onClick={() => link(p)}>Bog'lash</Btn>}{p.status !== 'refunded' && <Btn disabled={isBusy} onClick={() => refund(p)}>{p.provider === 'stars' ? 'Qaytarish (Stars)' : 'Qaytarildi'}</Btn>}</> },
       ]} />
       <h3>Buyurtmalar</h3>
       <Table rows={data?.orders ?? null} error={error} rowKey={(o) => o.id} columns={[

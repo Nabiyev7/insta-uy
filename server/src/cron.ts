@@ -25,10 +25,27 @@ export const sendVideos = async (ctx: Ctx): Promise<number> => {
   return list.length;
 };
 
+/** Telegram bot fayl chegarasi 50 MB — 45 MB lik bo'laklar. */
+export const BACKUP_PART = 45 * 1024 * 1024;
+export const gzip = async (text: string): Promise<Uint8Array> =>
+  new Uint8Array(await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+export const chunks = (data: Uint8Array, size = BACKUP_PART): readonly Uint8Array[] =>
+  Array.from({ length: Math.max(1, Math.ceil(data.length / size)) }, (_, i) => data.subarray(i * size, (i + 1) * size));
+
+/** Kunlik zaxira: omborga JSON, adminning shaxsiy Telegramiga siqilgan (.json.gz, kerak bo'lsa bo'laklab). */
 export const backup = async (ctx: Ctx, now = new Date()): Promise<string> => {
-  const data = await ctx.db.rpc('svc_backup', {});
-  const path = `${now.toISOString().slice(0, 10)}.json`;
-  await ctx.db.putFile('backups', path, JSON.stringify(data), 'application/json');
+  const text = JSON.stringify(await ctx.db.rpc('svc_backup', {}));
+  const day = now.toISOString().slice(0, 10);
+  const path = `${day}.json`;
+  await ctx.db.putFile('backups', path, text, 'application/json');
+  const admin = Number(ctx.env.ADMIN_TELEGRAM_ID);
+  if (ctx.tg && admin) {
+    const parts = chunks(await gzip(text));
+    for (const [i, part] of parts.entries()) {
+      const name = parts.length === 1 ? `cityland-${day}.json.gz` : `cityland-${day}.json.gz.part${i + 1}`;
+      await ctx.tg.document(admin, name, part, `🗄 Zaxira ${day}${parts.length > 1 ? ` (${i + 1}/${parts.length}; birlashtirish: cat *.part* > zaxira.json.gz)` : ''}`);
+    }
+  }
   return path;
 };
 

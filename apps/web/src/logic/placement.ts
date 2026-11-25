@@ -23,6 +23,8 @@ export interface HouseState {
   readonly badge: string | null;
   readonly status: 'pending' | 'owned';
   readonly expanded: boolean;
+  /** Yuraklar soni (yorliqda). */
+  readonly hearts?: number;
 }
 /** Uy modellari 25×34 m hovliga chizilgan: villa va qasrda uchastka o'lchamiga qarab kattalashadi. */
 const HOUSE_BACK = 7.5;

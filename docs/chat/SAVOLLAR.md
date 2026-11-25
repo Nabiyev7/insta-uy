@@ -132,3 +132,20 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 4. **Xazina**: har kim kuniga 3 ta topadi (birinchisi topilgach keyingisi boshqa joyda paydo bo'ladi). Bitta joyni necha kishi topishi chegarasi yo'q.
 5. **Narxlar**: lyuks bezaklar (3 000–15 000) va tovus (4 000) avvalgi promtdagi narxida qoldi — "Noyob 5 000–10 000" toifasidan biroz chetda. Markaziy ko'cha nomi (10 000 tanga) hozircha so'mda sotiladi — tanga bilan keyin.
 6. **Uy bo'shatilganda tanga/level/bezaklar** — TANGA-NARXLAR bo'yicha keyin hal qilinadi (hozir bezaklar egasida qoladi).
+
+### E qismi (premium)
+1. **To'lov o'chiq** (`payments_enabled=false`): hamma pul tugmalari "Tez kunda". Yoqish — admin → Sozlamalar.
+2. **Stars uchun** BotFather'da qo'shimcha sozlash shart emas (XTR valyuta). Yulduz kursi 1⭐ = 200 so'm (admin → Sozlamalar → `premium.starsRate`).
+3. **Premium uy narxi** 1, 2, 4-level uchun promtda yo'q edi — taxminan qo'ydim: 10 000 / 20 000 / 45 000 so'm (3 va 5 — promtdagidek 30 000 / 60 000). Admin o'zgartiradi.
+4. **Qaytarish**: Stars — tugma bilan Telegram orqali avtomatik; karta — pulni admin o'zi qaytaradi, keyin "Qaytarildi" bosadi. Tanga paketi qaytarilsa, tangalar (qolgani) olib qo'yiladi; boshqa narsalar (uy, bezak) avtomatik olinmaydi — admin qo'lda.
+5. **Salyut** navbat bilan: bittasi 24 soat, keyingisi undan keyin boshlanadi. Matnda havola va @nik bo'lmaydi.
+6. **Noyob nik joylari** — faqat jadval va `api_nick_spots` (skelet); joylar va sotuv keyin.
+7. **Bank xabari bilan karta to'lovi** (A variant) avvalgidek: admin bank botining xabarini botga forward qiladi. Payme/Click (B variant) — kod bor, kalitlar kerak.
+
+### F qismi
+1. **Yurak** soni uy ustidagi yorliqda (qizil yurak belgisi) va uy oynasida ko'rinadi.
+2. **Referal sovg'asi** pulga olingandek hisoblanadi — 1-level uyning pulli nuqtasiga ham qo'yiladi.
+3. **Zaxira** faqat `ADMIN_TELEGRAM_ID` ga yuboriladi; bir nechta admin kerak bo'lsa — keyin.
+4. **Bezaklarning so'mdagi narxi** promtga moslab qayta hisoblandi: oddiy — 5 000–20 000 so'm (tanga × 25), lyuks — 15 000–60 000 so'm (tanga × 5). Avvalgi so'm narxlari (masalan lyuks 750 000) bekor.
+5. **Pul qaytarilganda** faqat tanga paketining tangasi avtomatik olinadi; uy, bezak, level, salyut odamda qoladi (admin kerak bo'lsa Uylar/Foydalanuvchilar bo'limidan qo'lda oladi).
+6. **Saytdagi salyut + Stars**: Telegram havolasi matnni olib o'tolmaydi — bot "/salyut matn" deb yozishni so'raydi. Karta yoki tanga bilan to'lashda matn saytdan olinadi.

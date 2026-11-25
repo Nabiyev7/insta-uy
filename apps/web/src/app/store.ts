@@ -148,7 +148,7 @@ export const markNewSeen = (ids: readonly string[]): void => setApp((s) => {
 });
 
 /** Uy ranglari tanlanmaydi: har level o'z standart rangida (bazadagi eski qiymatlar e'tiborsiz). */
-const toHouse = (r: CityRow): HouseState => ({ plot: r[0], nick: r[1], tier: r[2], wall: 0, roof: 0, decor: r[5], label: r[6], badge: r[7], status: r[8], expanded: r[9], material: 0, frame: 0, door: 0 });
+const toHouse = (r: CityRow): HouseState => ({ plot: r[0], nick: r[1], tier: r[2], wall: 0, roof: 0, decor: r[5], label: r[6], badge: r[7], status: r[8], expanded: r[9], material: 0, frame: 0, door: 0, hearts: r[13] ?? 0 });
 
 export const loadPlan = async (): Promise<void> => {
   const res = await fetch('/assets/masterplan.json');

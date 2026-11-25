@@ -220,7 +220,8 @@ describe('sotuv va tashqi ko‘rinish', () => {
   test('level yetmasa sotilmaydi (tanga va buyurtma)', async () => {
     const { uid } = await house(4);
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'gate_gold' })).rejects.toThrow('level_low');
-    await expect(sql("select private.quote(p, 'decor', '{\"id\":\"gate_gold\"}') from profiles p where user_id = $1", [uid])).rejects.toThrow('level_low');
+    // Pulga esa level cheklovisiz (E qism).
+    expect((await sql("select private.quote(p, 'decor', '{\"id\":\"gate_gold\"}') q from profiles p where user_id = $1", [uid]))[0]!.q).toBe(20000);
     await sql('update plot_state set tier = 5 where owner = $1', [uid]);
     expect(await as(uid, 'my_buy_decor_coins', { p_id: 'gate_gold' })).toBe(48_500);
     await expect(as(await user(), 'my_buy_decor_coins', { p_id: 'avto_sedan' })).rejects.toThrow('level_low');
@@ -244,7 +245,7 @@ describe('sotuv va tashqi ko‘rinish', () => {
     const { uid, plot } = await house(1);
     expect(await sql("select 1 from pg_proc where proname = 'my_edit_house'")).toEqual([]);
     const row = (await anon<unknown[][]>('api_city', { p_districts: [1] })).find((r) => r[0] === plot)!;
-    expect([row[3], row[4], ...row.slice(10)]).toEqual([0, 0, 0, 0, 0]);
+    expect([row[3], row[4], ...row.slice(10, 13)]).toEqual([0, 0, 0, 0, 0]);
     await as(uid, 'my_avatar', { p_avatar: { hat: 'doppi', outfit: 'chopon', skin: '#000000', top: '#ff0000' } });
     const look = (await sql('select avatar from profiles where user_id = $1', [uid]))[0]!.avatar as Row;
     expect(look).toMatchObject({ hat: 'doppi', outfit: 'chopon' });

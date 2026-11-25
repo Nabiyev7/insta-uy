@@ -189,6 +189,9 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
         for (const name of [T.closeLook, T.giftTitle, T.vote]) await sheet.getByRole('button', { name, exact: true }).waitFor();
         await sheet.getByRole('link', { name: 'Instagram' }).waitFor();
         assert.equal(await sheet.getByText(T.claimBtn).count(), 0);
+        const heart = sheet.locator('.heart').getByRole('button', { name: T.heartIt });
+        if (await heart.count()) await heart.click();
+        await sheet.locator('.heart').getByRole('button', { name: T.hearted }).waitFor();
       }],
     ]) {
       const real = panel.kind === 'commerce' ? { ...panel, id: await app(() => window.__app.getState().plan.commerce.find((c) => c.type === 'dokon').id) } : panel;
@@ -246,7 +249,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await goods('dam_basseyn').getByText(`5-${T.atLevel}`).waitFor();
     await goods('lux_pavilyon').getByText(`5-${T.atLevel}`).waitFor();
     await goods('dam_basseyn').click();
-    assert.ok(await sheet.locator('footer .btn').last().isDisabled(), '1-levelda bezak sotilmasin');
+    assert.ok(await sheet.locator('footer .btn:not(.pay-soon)').last().isDisabled(), '1-levelda bezak sotilmasin');
     await raise(page, tgId, 5, ENOUGH + 10);
     await reload(5);
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
@@ -256,7 +259,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await openTab('tabGarden');
     await goods('daraxt_olma').click();
     const before = await app(() => window.__app.getState().profile.coins);
-    await sheet.locator('footer .btn').last().click();
+    await sheet.locator('footer .btn:not(.pay-soon)').last().click();
     await waitFor(() => app((n) => window.__app.getState().profile.coins === n, before - 200), 'tanga kamayishi');
     await goods('daraxt_olma').getByText(T.have).waitFor();
     await sheet.getByRole('button', { name: T.putYard }).click();
@@ -316,6 +319,8 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await page.locator('.pill.coins').click();
     await heading(T.coins);
     await sheet.getByText(T.r_founder).waitFor();
+    assert.match(await sheet.locator('.packs .pay-soon').first().innerText(), new RegExp(T.soon), 'to‘lov o‘chiq — pul tugmasi "Tez kunda"');
+    assert.ok(await sheet.locator('.packs .pay-soon').first().isDisabled());
     assert.equal(await sheet.getByText(T.quests ?? 'Topshiriqlar', { exact: true }).count(), 0, 'topshiriqlar yo‘q');
     await sheet.getByLabel(T.sendTo).fill('yoq_odam_xyz');
     await sheet.getByLabel(T.amount).fill('5');
@@ -384,7 +389,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
     await openTab('tabCar');
     await goods('avto_sedan').click();
-    await sheet.locator('footer .btn').last().click();
+    await sheet.locator('footer .btn:not(.pay-soon)').last().click();
     await heading(T.login);
     await register(page, tgId, login);
     await heading(T.shop);
