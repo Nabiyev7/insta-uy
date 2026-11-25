@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseBankMessage } from './payments/bank.ts';
 import { createAccount } from './auth.ts';
 import { HttpError, type Ctx, type Telegram, type TgButton } from './types.ts';
-import { json, keyed, limit, randomPassword, randomToken, readJson, safeEqual } from './util.ts';
+import { json, keyed, limit, randomPassword, randomToken, readJson, requireUser, safeEqual } from './util.ts';
 
 export const telegramApi = (token: string, fetcher: typeof fetch = fetch): Telegram => {
   const call = async (method: string, body: unknown): Promise<void> => {
@@ -18,6 +18,14 @@ export const telegramApi = (token: string, fetcher: typeof fetch = fetch): Teleg
     send: (chat, text, buttons) => call('sendMessage', { chat_id: chat, text, reply_markup: keyboard(buttons), link_preview_options: { is_disabled: true } }),
     answer: (id, text) => call('answerCallbackQuery', { callback_query_id: id, text }),
     video: (chat, url, caption) => call('sendVideo', { chat_id: chat, video: url, caption }),
+    isMember: async (channel, user) => {
+      const res = await fetcher(`https://api.telegram.org/bot${token}/getChatMember`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: channel, user_id: user }),
+      });
+      if (!res.ok) return false;
+      const body = (await res.json().catch(() => ({}))) as { result?: { status?: string } };
+      return ['creator', 'administrator', 'member'].includes(body.result?.status ?? '');
+    },
   };
 };
 
@@ -118,7 +126,7 @@ const bankForward = async (ctx: Ctx, tg: Telegram, m: Message): Promise<boolean>
 
 const menu = (ctx: Ctx, tg: Telegram, chat: number): Promise<void> => {
   const channel = ctx.env.TELEGRAM_CHANNEL ?? 'citylanduz';
-  return tg.send(chat, HELP, [{ text: '🏙 Shaharni ochish / Открыть город', data: 'open' }, { text: '📣 Yangiliklar kanali / Канал новостей', url: `https://t.me/${channel}` }]);
+  return tg.send(chat, HELP, [{ text: '🏙 Shaharni ochish / Открыть город', data: 'open' }, { text: '📣 Yangiliklar kanali / Канал новостей', url: `https://t.me/${channel}` }, { text: '✅ Obuna bo‘ldim — tanga olish / Я подписался', data: 'chan' }]);
 };
 
 const onStart = async (ctx: Ctx, tg: Telegram, m: Message, param: string): Promise<void> => {
@@ -153,6 +161,7 @@ const onMessage = async (ctx: Ctx, tg: Telegram, m: Message): Promise<void> => {
 };
 
 const onCallback = async (ctx: Ctx, tg: Telegram, q: NonNullable<Update['callback_query']>): Promise<void> => {
+  if (q.data === 'chan') return channelButton(ctx, tg, q.id, q.from.id);
   if (q.data === 'open') {
     await tg.answer(q.id, '🏙');
     const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: q.from.id, p_ref: null, p_name: q.from.first_name });
@@ -186,7 +195,7 @@ export const handleTelegram = async (req: Request, ctx: Ctx): Promise<Response> 
 export const devTelegram = async (req: Request, ctx: Ctx): Promise<Response> => {
   if (ctx.env.DEV !== '1') throw new HttpError(404, 'not_found');
   const sent: { readonly text: string; readonly buttons: readonly TgButton[] }[] = [];
-  const tg: Telegram = { send: async (_chat, text, buttons) => { sent.push({ text, buttons: buttons ?? [] }); }, answer: async () => undefined, video: async () => undefined };
+  const tg: Telegram = { send: async (_chat, text, buttons) => { sent.push({ text, buttons: buttons ?? [] }); }, answer: async (_id, text) => { sent.push({ text, buttons: [] }); }, video: async () => undefined, isMember: async () => true };
   await botUpdate(ctx, tg, await readJson(req, updateSchema));
   return json({ sent });
 };
@@ -223,3 +232,28 @@ export const flushOutbox = async (ctx: Ctx): Promise<number> => {
   }));
   return results.filter((r) => r.status === 'fulfilled').length;
 };
+
+const channelOf = (ctx: Ctx): string => `@${(ctx.env.TELEGRAM_CHANNEL ?? 'citylanduz').replace(/^@/, '')}`;
+interface ChannelResult { readonly state: 'paid' | 'done'; readonly gain?: number; readonly coins: number }
+/** Kanalga obuna bonusi (bir marta): bot getChatMember bilan tekshiradi. */
+const channelBonus = async (ctx: Ctx, tg: Telegram, telegram: number): Promise<ChannelResult> => {
+  if (!(await tg.isMember(channelOf(ctx), telegram))) throw new HttpError(400, 'not_subscribed');
+  return ctx.db.rpc<ChannelResult>('svc_channel_bonus', { p_telegram: telegram });
+};
+/** POST /coins/channel — saytdagi "Obunani tekshirish". */
+export const channelCheck = async (req: Request, ctx: Ctx): Promise<Response> => {
+  const user = await requireUser(req, ctx);
+  if (!ctx.tg) throw new HttpError(503, 'telegram_off');
+  await limit(ctx, 'channel', 10, 3600, user.id);
+  const telegram = await ctx.db.rpc<number>('svc_channel_target', { p_user: user.id });
+  return json(await channelBonus(ctx, ctx.tg, telegram));
+};
+/** Botdagi "Obuna bo'ldim" tugmasi. */
+async function channelButton(ctx: Ctx, tg: Telegram, callbackId: string, telegram: number): Promise<void> {
+  try {
+    const r = await channelBonus(ctx, tg, telegram);
+    await tg.answer(callbackId, r.state === 'paid' ? `+${r.gain ?? 0} tanga ✅` : 'Bonus olingan / Бонус уже получен');
+  } catch (error: unknown) {
+    await tg.answer(callbackId, error instanceof HttpError && error.message === 'not_subscribed' ? 'Avval kanalga obuna bo‘ling / Сначала подпишитесь' : 'Xato / Ошибка');
+  }
+}

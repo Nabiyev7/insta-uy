@@ -22,10 +22,12 @@ let db: PGlite;
 let emu: (req: Request) => Promise<Response>;
 const sent: { chat: number; text: string; buttons?: readonly TgButton[] }[] = [];
 const errors: unknown[] = [];
+const members = new Set<number>();
 const tg: Telegram = {
   send: async (chat, text, buttons) => { sent.push({ chat, text, ...(buttons ? { buttons } : {}) }); },
-  answer: async () => undefined,
+  answer: async (_id, text) => { sent.push({ chat: 0, text }); },
   video: async (chat, url) => { sent.push({ chat, text: url }); },
+  isMember: async (_channel, user) => members.has(user),
 };
 const emuFetch: typeof fetch = (input, init) => emu(new Request(input as string, init));
 let ipN = 0;
@@ -280,5 +282,26 @@ describe('sahifalar va cron', () => {
     expect((await call('/auth/delete', {}, { authorization: `Bearer ${jwt}` })).body).toEqual({ ok: true });
     await webhook(message(1300, '/start'));
     expect(sent.at(-1)!.text).toContain('Instagram nikingizni');
+  });
+});
+
+describe('kanalga obuna bonusi', () => {
+  test('sayt: obuna bo‘lmasa — yo‘q, bo‘lsa — 300 bir marta', async () => {
+    const jwt = await botUser(1400, 'kanal_odam');
+    const auth = { authorization: `Bearer ${jwt}` };
+    expect((await call('/coins/channel', {}, auth)).body).toMatchObject({ error: 'not_subscribed' });
+    members.add(1400);
+    expect((await call('/coins/channel', {}, auth)).body).toMatchObject({ state: 'paid', gain: 300 });
+    expect((await call('/coins/channel', {}, auth)).body).toMatchObject({ state: 'done' });
+    expect((await call('/coins/channel', {})).status).toBe(401);
+  });
+  test('bot: "Obuna bo‘ldim" tugmasi', async () => {
+    await botUser(1401, 'kanal_odam2');
+    const press = (): Promise<unknown> => webhook({ update_id: 1, callback_query: { id: 'c1', from: { id: 1401, first_name: 'K' }, data: 'chan' } });
+    await press();
+    expect(sent.at(-1)!.text).toContain('obuna');
+    members.add(1401);
+    await press();
+    expect(sent.at(-1)!.text).toContain('+300');
   });
 });

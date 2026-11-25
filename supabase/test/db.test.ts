@@ -126,7 +126,7 @@ describe('bepul uy', () => {
     const guest = await user(ref);
     const plot = await freePlot();
     await as(guest, 'my_claim', { p_plot: plot, p_instagram: 'mehmon_1' });
-    expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 50, invited: 1 });
+    expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 500, invited: 1 });
   });
 });
 
@@ -142,7 +142,7 @@ describe('uy bezash va sovg‘a', () => {
     await expect(as(uid, 'my_edit_house', { p_plot: plot, p_bio: '', p_wall: 3, p_roof: 2 })).rejects.toThrow(/my_edit_house/);
     await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } })).rejects.toThrow('not_owned');
     await sql('update profiles set coins = 1000 where user_id = $1', [uid]);
-    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'sign_nick' })).toBe(900);
+    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'sign_nick' })).toBe(800);
     await as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } });
     for (const id of ['gate_wood', 'tree_anor', 'daraxt_olma', 'avto_sedan']) await expect(as(uid, 'my_buy_decor_coins', { p_id: id })).rejects.toThrow('level_low');
     await sql('update profiles set coins = 350 where user_id = $1', [uid]);
@@ -300,17 +300,12 @@ describe('ko‘cha nomi', () => {
 });
 
 describe('tanga iqtisodi', () => {
-  test('kunlik bonus bir marta, topshiriq serverda tekshiriladi', async () => {
+  test('kunlik bonus bir marta', async () => {
     const { uid } = await owner();
-    expect(await as(uid, 'my_daily')).toMatchObject({ gain: 10, streak: 1 });
+    expect(await as(uid, 'my_daily')).toMatchObject({ gain: 100, streak: 1 });
     await expect(as(uid, 'my_daily')).rejects.toThrow('already_claimed');
     await sql('update profiles set last_daily = current_date - 1 where user_id = $1', [uid]);
-    expect(await as(uid, 'my_daily')).toMatchObject({ gain: 15, streak: 2 });
-    await as(uid, 'my_quest_claim', { p_quest: 'house' });
-    await expect(as(uid, 'my_quest_claim', { p_quest: 'house' })).rejects.toThrow('already_claimed');
-    for (const d of [1, 2, 3]) await as(uid, 'my_ping', { p_district: d });
-    await as(uid, 'my_quest_claim', { p_quest: 'walk' });
-    expect((await as(uid, 'my_quests') as Row[]).length).toBe(7);
+    expect(await as(uid, 'my_daily')).toMatchObject({ gain: 100, streak: 2 });
   });
 
   test('umumiy loyiha: maqsaddan oshmaydi', async () => {
@@ -325,9 +320,10 @@ describe('tanga iqtisodi', () => {
   test('xazina: uzoqda iliq/sovuq, yaqinda topiladi, bir marta', async () => {
     const { uid } = await owner();
     expect(await as(uid, 'my_treasure', { p_x: 1500, p_z: 1500 })).toMatchObject({ state: 'hunt', heat: 'cold' });
-    const t = (await sql('select x, z from treasures where day = current_date'))[0]!;
-    expect(await as(uid, 'my_treasure', { p_x: t.x, p_z: t.z })).toMatchObject({ state: 'found', coins: 100 });
-    expect(await as(uid, 'my_treasure', { p_x: t.x, p_z: t.z })).toEqual({ state: 'done' });
+    const t = (await sql('select x, z from treasures where day = current_date and n = 1'))[0]!;
+    const before = ((await as(uid, 'my_profile')) as Row).coins as number;
+    expect(await as(uid, 'my_treasure', { p_x: t.x, p_z: t.z })).toMatchObject({ state: 'found', n: 1, coins: before + 50 });
+    expect(await as(uid, 'my_treasure', { p_x: 1500, p_z: 1500 })).toMatchObject({ state: 'hunt', n: 2 });
   });
 
   test('chastota chegarasi', async () => {

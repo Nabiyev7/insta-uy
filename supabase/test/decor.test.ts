@@ -182,7 +182,7 @@ describe('ekran uchun ma’lumot', () => {
     await sql('update profiles set last_daily = current_date - 1, streak = 3 where user_id = $1', [uid]);
     expect(await next()).toBe(4);
     await sql('update profiles set streak = 7 where user_id = $1', [uid]);
-    expect(await next()).toBe(7);
+    expect(await next()).toBe(1);
     await sql('update profiles set last_daily = current_date - 3 where user_id = $1', [uid]);
     expect(await next()).toBe(1);
   });

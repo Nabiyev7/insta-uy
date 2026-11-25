@@ -86,7 +86,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual s
 - Shahar hokimi (oylik saylov), mahalla raislari
 - Shahar gazetasi: haftalik yangiliklar → avtomatik Instagram karusel
 - Ob-havo, fasllar, bayramlar (Navro'z, Yangi yil, Mustaqillik)
-- Kunlik bonus, topshiriqlar, xazina ovi
+- Kunlik bonus, kanal bonusi, xazina ovi (kuniga 3 ta), tanga o'tkazish
 - NPC odamlar, mushuk, kaptarlar; choyxona, bozor, maktab (bezak)
 - Eng ko'p hissa qo'shganning haykali maydonda
 - Bildirishnomalar Telegram bot orqali
@@ -136,7 +136,9 @@ Texnologiya: **Remotion** yoki headless brauzer (Playwright) bilan 3D sahnani yo
 
 ## 9. Tanga iqtisodi (v3)
 
-- Topish: kunlik kirish, taklif, topshiriqlar.
+- Pul birligi: **Tanga** / «Монеты». Topish faqat shulardan: birinchi 100 kishi 1 000; kunlik kirish 100 (7-kuni +300, bir kun o'tkazilsa seriya noldan); Telegram kanalga obuna 300 (bir marta, bot `getChatMember` bilan tekshiradi); do'st taklifi 500 (do'st uy olganda); "Haftaning hovlisi" g'olibi 2 000; xazina 50 (kuniga 3 ta). Topshiriqlar yo'q.
+- Tanga o'tkazish: kuniga yuborish ≤ 500, qabul ≤ 1 000, komissiya yo'q, faqat uyi va Telegrami bor akkauntlar orasida, o'ziga yo'q; admin "Iqtisod" sahifasida ro'yxat.
+- Chatga yozish tekin.
 - Sarflash: bezaklar, uy darajasi, ovoz.
 - Barcha narx va mukofotlar admin paneldan sozlanadi (inflyatsiyani oldini olish).
 - Hamma operatsiyalar **serverda** tasdiqlanadi (aldashga qarshi).
@@ -238,6 +240,7 @@ cityland-uz/
 
 > Oxirgi yangilanish: 2026-11-25. Ishga tushirish va internetga chiqarish: README.md.
 
+- [x] **6-qadam, D (2026-11-25): tanga** — topish: asoschi 1 000, kunlik 100 (7-kuni +300, seriya 1..7, bir kun o'tkazilsa noldan), kanalga obuna 300 (sayt "Obunani tekshirish" → `POST /coins/channel`, botda "Obuna bo'ldim"; `getChatMember`; bir Telegramga bir marta), do'st taklifi 500, haftaning hovlisi 2 000, xazina 50 × 3 (har biri boshqa joyda). Topshiriqlar olib tashlandi. Tanga o'tkazish (`my_send_coins`: ≤500 yuborish, ≤1 000 qabul, komissiyasiz). Admin "Iqtisod": qiymatlar, 7 kunlik kirim/chiqim, o'tkazmalar ro'yxati. Mavsumiy bezaklar 500–600, mangal/it uyi 400, maydoncha 1 000, nik lavhasi 200 (`0021_coins.sql`).
 - [x] **6-qadam, B+C (2026-11-25): kirish faqat bot orqali, uy olish** — bot: /start → nik (format, so'z filtri, band emas; bir nik — bir akkaunt, bazada noyob indeks) → bir martalik havola `?kirish=` (15 daqiqa, bir marta; manzildan darhol o'chiriladi, Telegramga o'tishdan oldingi oyna qaytadi). Saytdagi tugma botga (`?start=login` yoki `r_<taklif>`); bot nomi bo'sh bo'lsa "Tez kunda". Ro'yxat, parol va kod bilan tiklash olib tashlandi; eski parolli akkaunt Telegram ulamaguncha faqat ko'radi (`telegram_required`). Nikni faqat admin o'zgartiradi (Foydalanuvchilar → Nik). Admin panelga kirish — botga `/admin` (faqat admin/moderator). Lokal sinov uchun kirish oynasida "Sinov kirish" (faqat `npm run dev`). Uy olish: nik profildan; asoschi nishoni navbat bilan (aniq 100); 3 oy kirmagan bepul uy bo'shaydi, pullik — yo'q. Bot: `/start wait` — kutish ro'yxati.
 - [x] **6-qadam, A (2026-11-25): tozalash va qoidalar** — uy leveli 1–5 (`MAX_TIER`, bazada `private.max_tier()`, `kit_levels.py` `MAX_LEVEL`; 6–10 modellari kodda qoladi), kuchaytirish 300/1 000/2 000/3 500 tanga va katta "Kuchaytirish" tugmasi (tasdiq → qurilish → tabrik), lyuks 5-leveldan, villa/qasrda ham 1–5-level uylar; uy/avatar ranglari, shikoyat va nik tasdig'i olib tashlandi (`0019_levels5.sql`)
 - [x] Reja tuzildi (2026-11-23)

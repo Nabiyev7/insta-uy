@@ -68,26 +68,18 @@ describe('tanga fermasi', () => {
     const guest = await user('user', [], ref);
     expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 0, invited: 0 });
     const plot = await claim(guest, 'mehmon_x');
-    expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 50, invited: 1 });
+    expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 500, invited: 1 });
     await as(admin, 'admin_plot', { p_plot: plot, p_action: 'release' });
     await claim(guest, 'mehmon_x');
-    expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 50 });
+    expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 500 });
   });
-  test('telegram topshirig‘i bitta Telegram uchun bir marta', async () => {
+  test('kanal bonusi bitta Telegram uchun bir marta (akkaunt o‘chirib qayta ochilsa ham)', async () => {
     const [a, b] = [await user(), await user()];
     await sql('update profiles set telegram_id = 4242 where user_id = $1', [a]);
-    await as(a, 'my_quest_claim', { p_quest: 'telegram' });
+    expect(await svc('svc_channel_bonus', { p_telegram: 4242 })).toMatchObject({ state: 'paid' });
     await svc('svc_delete_account', { p_user: a });
     await sql('update profiles set telegram_id = 4242 where user_id = $1', [b]);
-    await expect(as(b, 'my_quest_claim', { p_quest: 'telegram' })).rejects.toThrow('already_claimed');
-  });
-  test('1 tanga hissa bilan mukofot olinmaydi', async () => {
-    const u = await user();
-    await sql('update profiles set coins = 100 where user_id = $1', [u]);
-    await as(u, 'my_contribute', { p_project: 2, p_amount: 1 });
-    await expect(as(u, 'my_quest_claim', { p_quest: 'contribute' })).rejects.toThrow('quest_not_ready');
-    await as(u, 'my_contribute', { p_project: 2, p_amount: 19 });
-    await as(u, 'my_quest_claim', { p_quest: 'contribute' });
+    expect(await svc('svc_channel_bonus', { p_telegram: 4242 })).toMatchObject({ state: 'done' });
   });
 });
 

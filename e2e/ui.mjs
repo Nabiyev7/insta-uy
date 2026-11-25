@@ -315,6 +315,13 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
   await at('7. tanga, qo‘ng‘iroq, kunlik bonus kartasi', async () => {
     await page.locator('.pill.coins').click();
     await heading(T.coins);
+    await sheet.getByText(T.r_founder).waitFor();
+    assert.equal(await sheet.getByText(T.quests ?? 'Topshiriqlar', { exact: true }).count(), 0, 'topshiriqlar yo‘q');
+    await sheet.getByLabel(T.sendTo).fill('yoq_odam_xyz');
+    await sheet.getByLabel(T.amount).fill('5');
+    await sheet.getByRole('button', { name: T.send, exact: true }).click();
+    await page.locator('.toasts').getByText(T.e_user_not_found).waitFor();
+    await checkLayout(page, 'tanga oynasi');
     await closeAll();
     await page.locator('.bell').click();
     await heading(T.notes);
@@ -326,7 +333,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await checkLayout(page, 'kunlik bonus');
     const before = await app(() => window.__app.getState().profile.coins);
     await page.locator('.card').getByRole('button', { name: T.dailyTake }).click();
-    await waitFor(() => app((n) => window.__app.getState().profile.coins === n, before + 10), 'kunlik bonus');
+    await waitFor(() => app((n) => window.__app.getState().profile.coins === n, before + 100), 'kunlik bonus');
     await page.locator('.card').getByText(T.newDecor).waitFor();
     await page.locator('.card-x').click();
     assert.equal(await page.locator('.card').count(), 0);

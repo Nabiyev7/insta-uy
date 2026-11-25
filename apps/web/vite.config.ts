@@ -34,7 +34,7 @@ export default defineConfig({
       workbox: { dontCacheBustURLsMatching: /assets\/.+-[\w-]{8}\.(?:js|css|woff2)$/, globPatterns: ['**/*.{js,css,html,svg,woff2,webp,glb,json}'], globIgnores: ['assets/decor/**'], runtimeCaching: [{ urlPattern: /\/assets\/decor\//, handler: 'StaleWhileRevalidate', options: { cacheName: 'bezak-rasmlari' } }], maximumFileSizeToCacheInBytes: 4_000_000, navigateFallbackDenylist: [/^\/(uy|rest|auth|storage|socket\.io|pay|telegram|kutish)/] },
     }),
   ],
-  server: { proxy: Object.fromEntries(['/rest', '/auth', '/storage', '/waitlist', '/uy', '/pay', '/telegram', '/dev'].map((p) => [p, API]).concat([['/socket.io', { target: API, ws: true } as unknown as string]])) },
+  server: { proxy: Object.fromEntries(['/rest', '/auth', '/storage', '/waitlist', '/uy', '/pay', '/telegram', '/dev', '/coins'].map((p) => [p, API]).concat([['/socket.io', { target: API, ws: true } as unknown as string]])) },
   build: {
     target: 'es2022',
     rollupOptions: { input: { main: 'index.html', kutish: 'kutish.html' } },

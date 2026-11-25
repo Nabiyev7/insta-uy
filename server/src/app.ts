@@ -1,7 +1,7 @@
 import { deleteAccount, telegramLink, telegramRedeem } from './auth.ts';
 import { housePage, waitlist } from './pages.ts';
 import { PROVIDERS } from './payments/provider.ts';
-import { devTelegram, handleTelegram } from './telegram.ts';
+import { channelCheck, devTelegram, handleTelegram } from './telegram.ts';
 import { HttpError, type Ctx } from './types.ts';
 import { json } from './util.ts';
 
@@ -14,6 +14,7 @@ const POST: Readonly<Record<string, Handler>> = {
   '/waitlist': waitlist,
   '/telegram/webhook': handleTelegram,
   '/dev/telegram': devTelegram,
+  '/coins/channel': channelCheck,
 };
 
 const route = async (req: Request, ctx: Ctx, path: string): Promise<Response> => {

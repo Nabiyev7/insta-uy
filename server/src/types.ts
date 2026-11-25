@@ -43,6 +43,8 @@ export interface Telegram {
   send(chat: number, text: string, buttons?: readonly TgButton[]): Promise<void>;
   answer(callbackId: string, text: string): Promise<void>;
   video(chat: number, url: string, caption: string): Promise<void>;
+  /** Kanal a'zosimi (bot kanalda admin bo'lishi kerak). */
+  isMember(channel: string, user: number): Promise<boolean>;
 }
 export interface TgButton { readonly text: string; readonly data?: string; readonly url?: string }
 

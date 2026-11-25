@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BUZZ, buzz, goToPlot } from '../app/actions.ts';
-import { rpc } from '../app/api.ts';
+import { post, rpc } from '../app/api.ts';
 import { money, useT, type Key } from '../app/i18n.ts';
 import { player } from '../app/runtime.ts';
 import { openAuth, refreshBoot, refreshProfile, setApp, setting, toast, useApp } from '../app/store.ts';
@@ -41,18 +41,61 @@ export function RankPanel(): React.JSX.Element {
   );
 }
 
-interface Quest { readonly id: string; readonly daily: boolean; readonly reward: number; readonly ready: boolean; readonly done: boolean }
 interface Treasure { readonly state: 'hunt' | 'found' | 'done' | 'empty'; readonly district?: number; readonly heat?: 'hot' | 'warm' | 'cold' }
-/** Sozlama kelmasa xazina mukofoti. */
-const TREASURE_GAIN = 100;
+interface CoinRules {
+  readonly founder: number; readonly daily: number; readonly streakBonus: number; readonly channel: number; readonly referral: number;
+  readonly yardWinner: number; readonly treasure: number; readonly treasurePerDay: number; readonly sendDay: number; readonly receiveDay: number;
+}
+/** Sozlama kelmasa (TANGA-NARXLAR.md). */
+const RULES: CoinRules = { founder: 1000, daily: 100, streakBonus: 300, channel: 300, referral: 500, yardWinner: 2000, treasure: 50, treasurePerDay: 3, sendDay: 500, receiveDay: 1000 };
+const CHANNEL = 'citylanduz';
+
+function SendCoins({ rules }: { readonly rules: CoinRules }): React.JSX.Element {
+  const t = useT();
+  const sent = useApp((s) => s.profile?.sent_today ?? 0);
+  const { isBusy, run } = useAction();
+  const [to, setTo] = useState('');
+  const [amount, setAmount] = useState('');
+  const submit = (e: React.FormEvent): void => {
+    e.preventDefault();
+    void run(async () => { await rpc('my_send_coins', { p_to: to, p_amount: Number(amount) }); buzz(BUZZ.coin); setTo(''); setAmount(''); await refreshProfile(); }, t('saved'));
+  };
+  const rulesText = t('sendRules').replace('{send}', money(rules.sendDay)).replace('{receive}', money(rules.receiveDay));
+  return (
+    <Section title={t('sendCoins')} icon="coin">
+      <p className="muted">{rulesText}</p>
+      <form className="row send-coins" onSubmit={submit}>
+        <input className="input grow" value={to} onChange={(ev) => setTo(ev.target.value)} maxLength={31} placeholder="@nik" aria-label={t('sendTo')} required />
+        <input className="input" type="number" inputMode="numeric" min={1} max={Math.max(1, rules.sendDay - sent)} value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder={t('amount')} aria-label={t('amount')} required />
+        <button type="submit" className="btn small" disabled={isBusy || sent >= rules.sendDay}>{t('send')}</button>
+      </form>
+      <p className="muted">{t('sentToday')}: {money(sent)} / {money(rules.sendDay)}</p>
+    </Section>
+  );
+}
+
+function ChannelBonus({ gain }: { readonly gain: number }): React.JSX.Element {
+  const t = useT();
+  const isPaid = useApp((s) => s.profile?.channel_paid ?? false);
+  const { isBusy, run } = useAction();
+  const channel = setting('telegram_channel', '').replace(/^@/, '') || CHANNEL;
+  if (isPaid) return <p className="muted"><Icon name="check" /> {t('channelDone')}</p>;
+  const check = (): void => { void run(async () => { await post('/coins/channel', {}, true); buzz(BUZZ.coin); await refreshProfile(); toast(`+${gain}`); }); };
+  return (
+    <div className="row channel-bonus">
+      <a className="btn soft grow" href={`https://t.me/${channel}`} target="_blank" rel="noopener noreferrer"><Icon name="telegram" />{t('channelJoin')} · +{gain}</a>
+      <button type="button" className="btn small" disabled={isBusy} onClick={check}>{t('channelCheck')}</button>
+    </div>
+  );
+}
+
 export function CoinsPanel(): React.JSX.Element {
   const t = useT();
   const name = useDistrictName();
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
-  const loaded = useLoad(() => (profile ? rpc<readonly Quest[]>('my_quests') : Promise.resolve([])), profile?.id ?? '');
-  const { data, reload } = loaded;
   const isWalking = useApp((s) => s.mode !== 'city');
+  const rules: CoinRules = { ...RULES, ...setting<Partial<CoinRules>>('coins', {}) };
   if (!profile) return <Sheet title={t('coins')}><button type="button" className="btn" onClick={() => openAuth()}>{t('login')}</button></Sheet>;
   const dig = (): void => {
     void run(async () => {
@@ -61,22 +104,26 @@ export function CoinsPanel(): React.JSX.Element {
       else toast(t(`tr_${r.state}`));
       if (r.state !== 'found') return;
       buzz(BUZZ.coin);
-      setApp({ treasure: setting<{ readonly treasure?: number }>('coins', {}).treasure ?? TREASURE_GAIN });
+      setApp({ treasure: rules.treasure });
       await refreshProfile();
     });
   };
+  const daily = (): void => { void run(async () => { const r = await rpc<{ gain: number }>('my_daily'); buzz(BUZZ.coin); await refreshProfile(); toast(`+${r.gain}`); }); };
+  const earn: readonly (readonly [Key, number])[] = [['r_founder', rules.founder], ['r_daily', rules.daily], ['r_streak', rules.streakBonus], ['r_channel', rules.channel], ['r_referral', rules.referral], ['r_yard', rules.yardWinner], ['r_treasure', rules.treasure]];
+  const isTreasureDone = profile.treasures_today >= rules.treasurePerDay;
   return (
     <Sheet title={t('coins')}>
       <p className="big-coins"><Icon name="coin" />{money(profile.coins)}</p>
-      <button type="button" className="btn gold" disabled={isBusy || profile.daily_done} onClick={() => run(async () => { const r = await rpc<{ gain: number }>('my_daily'); buzz(BUZZ.coin); await refreshProfile(); toast(`+${r.gain}`); })}><Icon name="gift" />{profile.daily_done ? t('dailyDone') : `${t('daily')} · ${profile.daily_next}-${t('dayRow')}`}</button>
-      <Section title={t('treasure')}><button type="button" className="btn" disabled={isBusy || !isWalking} onClick={dig}><Icon name="dig" />{t('treasureCheck')}</button>{!isWalking && <p className="muted">{t('walkFirst')}</p>}</Section>
-      <Section title={t('quests')}>
-        <LoadState of={loaded} isEmpty={data?.length === 0} />
-        <ul className="list">{data?.map((q) => (
-          <li key={q.id}><span className="grow">{t(`q_${q.id}` as Key)}</span><span className="tag gold">+{q.reward}</span>
-            {q.done ? <span className="tag free"><Icon name="check" /></span> : <button type="button" className="btn small" disabled={isBusy || !q.ready} onClick={() => run(async () => { await rpc('my_quest_claim', { p_quest: q.id }); await refreshProfile(); reload(); }, t('saved'))}>{t('take')}</button>}
-          </li>))}</ul>
+      <button type="button" className="btn gold" disabled={isBusy || profile.daily_done} onClick={daily}><Icon name="gift" />{profile.daily_done ? t('dailyDone') : `${t('daily')} · ${profile.daily_next}-${t('dayRow')}`}</button>
+      <ChannelBonus gain={rules.channel} />
+      <Section title={t('treasure')}>
+        <button type="button" className="btn" disabled={isBusy || !isWalking || isTreasureDone} onClick={dig}><Icon name="dig" />{t('treasureCheck')}</button>
+        <p className="muted">{t('treasureLeft')}: {profile.treasures_today} / {rules.treasurePerDay}{isWalking ? '' : ` · ${t('walkFirst')}`}</p>
       </Section>
+      <Section title={t('earn')}>
+        <ul className="list">{earn.map(([key, n]) => <li key={key}><span className="grow">{t(key)}</span><span className="tag gold">+{money(n)}</span></li>)}</ul>
+      </Section>
+      <SendCoins rules={rules} />
     </Sheet>
   );
 }

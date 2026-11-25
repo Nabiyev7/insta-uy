@@ -124,3 +124,11 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 5. **Birinchi admin**: botga /start yozib akkaunt ochiladi, so'ng bazada `role='admin'` qilinadi (README).
 6. **Kim kirmasa**: 3 oy (90 kun) — bepul uy bo'shaydi, 2 hafta oldin bot ogohlantiradi. Level oshirilgan bepul uy ham bo'shaydi (faqat pulga olingani qoladi). Pulga kengaytirilgan bepul uy ham bo'shaydi; sovg'a qilib berilgan uy esa pullik hisoblanadi va bo'shamaydi — kerak bo'lsa o'zgartiramiz.
 7. **Instagram ichki brauzeri**: bot havolasi tashqi brauzerda emas, Telegram ichida ochilishi mumkin — sayt baribir kirgan holda ochiladi.
+
+### D qismi (tanga)
+1. **"O'ziga yuborish (bir qurilma)"** — bir qurilmani aniqlash yo'q; o'ziga va bir Telegramga yuborish bloklangan, shubhali akkauntni admin "Iqtisod" ro'yxatidan ko'rib bloklaydi.
+2. **Kanal bonusi** ishlashi uchun bot kanalda **admin** bo'lishi va serverda `TELEGRAM_CHANNEL` yozilgan bo'lishi kerak.
+3. **Kunlik seriya** 7 kunda yopiladi: 7-kuni +300, 8-kundan yana 1-kun.
+4. **Xazina**: har kim kuniga 3 ta topadi (birinchisi topilgach keyingisi boshqa joyda paydo bo'ladi). Bitta joyni necha kishi topishi chegarasi yo'q.
+5. **Narxlar**: lyuks bezaklar (3 000–15 000) va tovus (4 000) avvalgi promtdagi narxida qoldi — "Noyob 5 000–10 000" toifasidan biroz chetda. Markaziy ko'cha nomi (10 000 tanga) hozircha so'mda sotiladi — tanga bilan keyin.
+6. **Uy bo'shatilganda tanga/level/bezaklar** — TANGA-NARXLAR bo'yicha keyin hal qilinadi (hozir bezaklar egasida qoladi).
