@@ -5,7 +5,7 @@ Maqsad: odam saytga kiradi, bepul uy oladi va o'z uyini shaharda ko'radi. Sayt n
 ## Kirish
 - Faqat **Telegram orqali** (login+parol yo'q). Shaharni ko'rish uchun kirish shart emas (mehmon rejimi).
 - Birinchi kirishda bitta qadam: **Instagram nikini yozish** (majburiy). Instagram orqali "kirish" (Meta login) emas — nik oddiy yoziladi, chunki Meta bunday kirishni oddiy saytlarga bermaydi.
-- Nik: so'z filtri, takrorlanmaydi (bitta nik = bitta uy), keyin o'zgartirish mumkin (admin tasdig'i bilan yoki cheklangan marta — keyin hal qilinadi).
+- Nik: so'z filtri, takrorlanmaydi (bitta nik = bitta uy), keyin **o'zgartirilmaydi** (faqat admin). Admin tasdig'i yo'q — nik darhol ko'rinadi (2026-11-25).
 
 ## Uy olish
 - Faqat **hovli uy** (kvartira hozircha berilmaydi).

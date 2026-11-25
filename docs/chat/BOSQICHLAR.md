@@ -19,7 +19,7 @@ Maqsad: odam saytni ochib, chiroyli va tartibli shaharni tepadan aylanib ko'ra o
 
 ## 3-bosqich — TANGA: UY LEVELI VA BEZAKLAR
 - Alohida "o'yinchi leveli" yoki XP **yo'q**. Level — faqat **uyning** darajasi.
-- Hamma narsa **tanga** bilan: uyni 2- va 3-levelga ko'tarish, bezaklar, kuchaytirishlar.
+- Hamma narsa **tanga** bilan: uyni 2–5-levelga ko'tarish, bezaklar, kuchaytirishlar.
 - Birinchi uy hammaga **tekin**, keyin tanga bilan kuchaytiriladi.
 - **Tanga beriladi (faqat shular uchun):**
   1. Birinchi 100 kishiga (bir martalik bonus)

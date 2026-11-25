@@ -10,7 +10,7 @@ Dizayn **Farg'ona yoki boshqa bir hududga bog'lanmaydi** — **umumiy, universal
 - Promtlarda milliy uslub talab qilingan joy qolgan bo'lsa — bu bo'lim ustun turadi.
 
 ## Joriy vazifa
-Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. **10-qadamni bajar, keyin 11-qadamni.** 6 va 7-qadamlar keyingi bosqichlarda — hozir tegma.
+Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. **6-qadamni bajar: `docs/chat/BOSQICH-2-3-PROMT.md`** (A → F qismlar, har qismdan keyin tekshiruv va commit). 7-qadam keyingi bosqichda — hozir tegma. (2026-11-25)
 
 ## Ro'yxat
 
@@ -20,12 +20,12 @@ Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. **10-qadamni bajar, keyin
 - [x] **3. Harakat va ekran** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 1-bosqich
 - [x] **4. Bezaklar tizimi** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 2-bosqich
 - [x] **5. Yangi bezaklar va sotuv** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 3-bosqich
-- [ ] **6. Kirish, tanga, referal, zaxira** — `docs/chat/IQTISOD-PROMT.md`
+- [ ] **6. Kirish (bot), uy olish, tanga, premium** — `docs/chat/BOSQICH-2-3-PROMT.md` (eski `IQTISOD-PROMT.md` o'rniga; zid joyda yangisi ustun)
 - [ ] **7. Yuklamani taqsimlash** — `docs/chat/YUKLAMA-PROMT.md`
 - [x] **8. Xarita: shaharni qurish (CityLand UZ)** — `docs/chat/XARITA-PROMT.md`
 - [x] **9. Bo'sh uchastkalar, yangi uylar 1–5, bezaklar** — `docs/chat/UYLAR-BEZAK-PROMT.md`
-- [ ] **10. Lyuks bezaklar (7-leveldan)** — `docs/chat/BEZAK-LYUKS-PROMT.md`
-- [ ] **11. Yangi interfeys** — `docs/chat/INTERFEYS-PROMT.md`
+- [x] **10. Lyuks bezaklar (7-leveldan)** — `docs/chat/BEZAK-LYUKS-PROMT.md`
+- [x] **11. Yangi interfeys** — `docs/chat/INTERFEYS-PROMT.md`
 
 ## Har qadamdan keyin
 

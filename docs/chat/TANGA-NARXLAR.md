@@ -16,6 +16,8 @@
 Har kuni kirib, xazina izlaydigan odam: kuniga ~250, haftasiga ~2 000, oyiga ~8 000–9 000 (+ referallar).
 
 ## Uy levellari
+> 2026-11-25: hozircha faqat **1–5-level**. 6–10 qatorlari — keyin, yangi modellar chizilgach.
+
 | Level | Narx | Jami (1 dan) | Faol odamga qancha vaqt |
 |---|---|---|---|
 | 1 | tekin | 0 | darhol |
@@ -23,7 +25,7 @@ Har kuni kirib, xazina izlaydigan odam: kuniga ~250, haftasiga ~2 000, oyiga ~8 
 | 3 | 1 000 | 1 300 | ~5 kun |
 | 4 | 2 000 | 3 300 | ~2 hafta |
 | 5 | 3 500 | 6 800 | ~1 oy |
-| 6 | 5 000 | 11 800 | ~1,5 oy |
+| 6 *(hozircha yopiq)* | 5 000 | 11 800 | ~1,5 oy |
 | 7 | 7 000 | 18 800 | ~2,5 oy |
 | 8 | 9 500 | 28 300 | ~3,5 oy |
 | 9 | 12 500 | 40 800 | ~5 oy |
@@ -39,10 +41,10 @@ Har kuni kirib, xazina izlaydigan odam: kuniga ~250, haftasiga ~2 000, oyiga ~8 
 | Noyob, raqamlangan | tovus, oltin darvoza | 5 000–10 000 |
 
 ## Boshqalar
+> Uy va avatar ranglarini o'zgartirish **olib tashlandi** (2026-11-25).
+
 | Narsa | Narx |
 |---|---|
-| Uy ranglarini o'zgartirish | tekin |
-| Devor materiali | 300 |
 | Darvozadagi nik lavhasi | 200 |
 | Avatar kiyimlari | oddiylari tekin, qolganlari 100–500 |
 | Markaziy ko'cha nomi | 10 000 |

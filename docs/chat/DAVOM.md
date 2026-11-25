@@ -33,6 +33,7 @@
 - Tanga — asosiy valyuta; pul (Stars + so'm) ochilgandan 2–4 hafta keyin yoqiladi.
 
 ## Keyingi navbat
-1. 6-qadam (`BOSQICH-2-3-PROMT.md`) — Claude Code'da.
-2. 6–10-level uylarni egasi bilan Blender'da chizish.
+1. 6-qadam (`BOSQICH-2-3-PROMT.md`) — Claude Code'da. Hujjatlar unga moslandi (2026-11-25): `ISHLAR.md` joriy vazifasi, `CLAUDE.md`, `TANGA-NARXLAR.md`, `BOSQICH-2.md`, `BOSQICHLAR.md`.
+2. Telegram bot va kanal **ochilgan** (egasi, 2026-11-25) — bot username'ni egasidan olib, `telegram_bot` sozlamasiga yozish.
 3. 7-qadam (yuklama), keyin internetga chiqarish, Redmi telefonda sinash, beta, reels.
+4. 6–10-level uylar — **keyinga qoldirildi** (egasi, 2026-11-25): uslub, o'sish va chizish tartibi o'shanda so'raladi.
