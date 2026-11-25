@@ -38,4 +38,11 @@ export const serverPost = async (path: string, body: unknown): Promise<unknown> 
   if (!res.ok) throw new Error(out.error ?? `HTTP ${res.status}`);
   return out;
 };
+/** Server javobi rasm bo'lsa (nizo dalili). */
+export const serverBlob = async (path: string, body: unknown): Promise<Blob> => {
+  const { data } = await supabase.auth.getSession();
+  const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${data.session?.access_token ?? ''}` }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.blob();
+};
 export interface Me { readonly login: string; readonly role: 'moderator' | 'admin'; readonly perms: readonly string[] }

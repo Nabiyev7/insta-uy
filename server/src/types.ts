@@ -55,6 +55,11 @@ export interface Telegram {
   refundStars(user: number, chargeId: string): Promise<void>;
   /** Fayl yuborish (zaxira). */
   document(chat: number, name: string, data: Uint8Array, caption: string): Promise<void>;
+  /** Xabar yuborib, uning raqamini qaytaradi (admin "reply" javobini bog'lash uchun). */
+  sendId(chat: number, text: string): Promise<number | null>;
+  photo(chat: number, fileId: string, caption: string): Promise<number | null>;
+  /** Telegram'dagi faylni yuklab olish (nizo dalili). */
+  download(fileId: string): Promise<Uint8Array | null>;
 }
 export interface TgButton { readonly text: string; readonly data?: string; readonly url?: string }
 

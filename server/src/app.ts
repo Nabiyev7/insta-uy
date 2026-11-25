@@ -3,6 +3,7 @@ import { housePage, waitlist } from './pages.ts';
 import { PROVIDERS } from './payments/provider.ts';
 import { register, resetFinish, resetStart } from './password.ts';
 import { refund } from './shop.ts';
+import { disputeProof, panelReply } from './support.ts';
 import { channelCheck, devAdmin, devTelegram, handleTelegram } from './telegram.ts';
 import { HttpError, type Ctx } from './types.ts';
 import { json } from './util.ts';
@@ -22,6 +23,8 @@ const POST: Readonly<Record<string, Handler>> = {
   '/dev/admin': devAdmin,
   '/coins/channel': channelCheck,
   '/pay/refund': refund,
+  '/admin/support/reply': panelReply,
+  '/admin/dispute/proof': disputeProof,
 };
 
 const route = async (req: Request, ctx: Ctx, path: string): Promise<Response> => {

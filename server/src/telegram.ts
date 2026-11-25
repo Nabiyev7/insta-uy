@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { parseBankMessage } from './payments/bank.ts';
 import { createAccount } from './auth.ts';
 import { sendReset } from './password.ts';
+import { SUPPORT_ASK, adminReply, askNick, nickProblem, normalizeNick, openDispute, proposeNick, supportMessage, takeProof } from './support.ts';
 import { buyCode, preCheckout, sendInvoice, shopMenu, starsPaid } from './shop.ts';
 import { HttpError, type Ctx, type Telegram, type TgButton } from './types.ts';
 import { json, keyed, limit, randomPassword, randomToken, readJson, requireUser, safeEqual } from './util.ts';
@@ -13,6 +14,11 @@ export const telegramApi = (token: string, fetcher: typeof fetch = fetch): Teleg
     });
     // 403 = foydalanuvchi botni bloklagan; boshqalarni to'xtatmasin.
     if (!res.ok && res.status !== 403) throw new Error(`telegram ${method}: ${res.status}`);
+  };
+  const callResult = async <R>(method: string, body: unknown): Promise<R | null> => {
+    const res = await fetcher(`https://api.telegram.org/bot${token}/${method}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) return null;
+    return ((await res.json().catch(() => ({}))) as { result?: R }).result ?? null;
   };
   const keyboard = (buttons?: readonly TgButton[]): unknown =>
     buttons && { inline_keyboard: buttons.map((b) => [b.url ? { text: b.text, url: b.url } : { text: b.text, callback_data: b.data }]) };
@@ -38,6 +44,14 @@ export const telegramApi = (token: string, fetcher: typeof fetch = fetch): Teleg
       const res = await fetcher(`https://api.telegram.org/bot${token}/sendDocument`, { method: 'POST', body: form });
       if (!res.ok) throw new Error(`telegram sendDocument: ${res.status}`);
     },
+    sendId: async (chat, text) => (await callResult<{ message_id: number }>('sendMessage', { chat_id: chat, text, link_preview_options: { is_disabled: true } }))?.message_id ?? null,
+    photo: async (chat, fileId, caption) => (await callResult<{ message_id: number }>('sendPhoto', { chat_id: chat, photo: fileId, caption: caption.slice(0, 1000) }))?.message_id ?? null,
+    download: async (fileId) => {
+      const file = await callResult<{ file_path?: string }>('getFile', { file_id: fileId });
+      if (!file?.file_path) return null;
+      const res = await fetcher(`https://api.telegram.org/file/bot${token}/${file.file_path}`);
+      return res.ok ? new Uint8Array(await res.arrayBuffer()) : null;
+    },
     refundStars: async (user, chargeId) => {
       const res = await fetcher(`https://api.telegram.org/bot${token}/refundStarPayment`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user_id: user, telegram_payment_charge_id: chargeId }),
@@ -52,6 +66,8 @@ const updateSchema = z.object({
   message: z.object({
     from: fromSchema.optional(), chat: z.object({ id: z.number(), type: z.string() }), text: z.string().max(4096).optional(), message_id: z.number(),
     forward_origin: z.object({ sender_user: z.object({ username: z.string().optional() }).optional() }).optional(), date: z.number().optional(),
+    photo: z.array(z.object({ file_id: z.string().max(300) })).max(10).optional(), caption: z.string().max(1024).optional(),
+    reply_to_message: z.object({ message_id: z.number() }).optional(),
     successful_payment: z.object({ currency: z.string(), total_amount: z.number().int(), invoice_payload: z.string().max(128), telegram_payment_charge_id: z.string().max(200) }).optional(),
   }).optional(),
   pre_checkout_query: z.object({ id: z.string(), from: fromSchema, currency: z.string(), total_amount: z.number().int(), invoice_payload: z.string().max(128) }).optional(),
@@ -65,19 +81,7 @@ const HELP = [
   "Shaharni ochish uchun pastdagi tugmani bosing. / Нажмите кнопку ниже, чтобы открыть город.",
   '/yordam matn — savol yuborish / вопрос в поддержку',
 ].join('\n');
-const ASK_NICK = [
-  '👋 Xush kelibsiz! CityLand UZ — Instagram obunachilari shahri.',
-  'Instagram nikingizni yozing (masalan: ali_karimov). Uy ustida shu nik turadi, keyin o‘zgartirib bo‘lmaydi.',
-  '',
-  '👋 Добро пожаловать! Напишите ваш ник в Instagram (например: ali_karimov). Он будет над вашим домом, изменить потом нельзя.',
-].join('\n');
-const NICK_ERRORS: Readonly<Record<string, string>> = {
-  nick_taken: 'Bu nik band. Agar nik sizniki bo‘lsa — /yordam orqali yozing. / Этот ник занят. Если он ваш — напишите в /yordam.',
-  banned_word: 'Bu nikni ishlatib bo‘lmaydi. / Такой ник нельзя.',
-  bad_format: 'Nik faqat lotin harf, raqam, nuqta va _ dan iborat bo‘lsin. / Ник: латиница, цифры, точка и _.',
-  empty: 'Nikingizni yozing. / Напишите ник.',
-};
-const NICK_OK = /^@?[A-Za-z0-9._]{1,30}$/;
+
 
 const issueLogin = async (ctx: Ctx, user: string): Promise<string> => {
   const token = randomToken();
@@ -106,23 +110,20 @@ const greet = async (ctx: Ctx, tg: Telegram, m: Message, ref: string | null): Pr
   const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: from.id, p_ref: ref, p_name: from.first_name });
   if (r.state === 'banned') return tg.send(m.chat.id, 'Akkaunt bloklangan. / Аккаунт заблокирован.');
   if (r.state === 'ready' && r.user) return sendLogin(ctx, tg, m.chat.id, r.user);
-  return tg.send(m.chat.id, ASK_NICK);
+  return tg.send(m.chat.id, await askNick(ctx));
 };
 
-/** Nik yozildi: tekshiriladi, akkaunt yaratiladi, havola yuboriladi. */
-const takeNick = async (ctx: Ctx, tg: Telegram, m: Message, text: string): Promise<void> => {
-  const from = m.from!;
-  if (!NICK_OK.test(text)) return tg.send(m.chat.id, NICK_ERRORS.bad_format ?? '');
+/** "Ha, to'g'ri" bosildi: akkaunt yaratiladi, havola yuboriladi. */
+const confirmNick = async (ctx: Ctx, tg: Telegram, chat: number, from: { readonly id: number }, nick: string): Promise<void> => {
   try {
-    const nick = await ctx.db.rpc<string>('svc_nick_check', { p_nick: text });
-    const user = await createAccount(ctx, `tg${from.id}`, randomPassword(), null, from.id, nick);
+    const free = await ctx.db.rpc<string>('svc_nick_check', { p_nick: nick });
+    const user = await createAccount(ctx, `tg${from.id}`, randomPassword(), null, from.id, free);
     await promoteOwner(ctx, from.id);
-    return await sendLogin(ctx, tg, m.chat.id, user, true);
+    return await sendLogin(ctx, tg, chat, user, true);
   } catch (error: unknown) {
     const code = error instanceof Error ? error.message : '';
-    const known = Object.keys(NICK_ERRORS).find((k) => code.includes(k));
-    if (!known) throw error;
-    return tg.send(m.chat.id, NICK_ERRORS[known] ?? '');
+    if (code.includes('nick_taken')) return proposeNick(ctx, tg, chat, from.id, nick);
+    throw error;
   }
 };
 
@@ -153,13 +154,17 @@ const bankForward = async (ctx: Ctx, tg: Telegram, m: Message): Promise<boolean>
 
 const menu = (ctx: Ctx, tg: Telegram, chat: number): Promise<void> => {
   const channel = ctx.env.TELEGRAM_CHANNEL ?? 'citylanduz';
-  return tg.send(chat, HELP, [{ text: '🏙 Shaharni ochish / Открыть город', data: 'open' }, { text: '🏠 Mening uyim / Мой дом', data: 'open' }, { text: '📣 Yangiliklar kanali / Канал новостей', url: `https://t.me/${channel}` }, { text: '✅ Obuna bo‘ldim — tanga olish / Я подписался', data: 'chan' }, { text: '🛍 Do‘kon / Магазин', data: 'shop' }]);
+  return tg.send(chat, HELP, [{ text: '🏙 Shaharni ochish / Открыть город', data: 'open' }, { text: '🏠 Mening uyim / Мой дом', data: 'open' }, { text: '📣 Yangiliklar kanali / Канал новостей', url: `https://t.me/${channel}` }, { text: '✅ Obuna bo‘ldim — tanga olish / Я подписался', data: 'chan' }, { text: '🛍 Do‘kon / Магазин', data: 'shop' }, { text: '✍️ Adminga yozish / Написать админу', data: 'support' }]);
 };
 
 const onStart = async (ctx: Ctx, tg: Telegram, m: Message, param: string): Promise<void> => {
   const link = /^link_([0-9a-f]{32})$/.exec(param)?.[1];
   if (link) return confirmButton(ctx, tg, m.chat.id, link);
   if (param === 'reset') return sendReset(ctx, tg, m.from!.id);
+  if (param === 'yordam') {
+    await ctx.db.rpc('svc_bot_step', { p_telegram: m.from!.id, p_step: 'support' });
+    return tg.send(m.chat.id, SUPPORT_ASK);
+  }
   if (param === 'wait') {
     const n = await ctx.db.rpc<number>('svc_tg_waitlist', { p_telegram: m.from!.id });
     return tg.send(m.chat.id, `✅ Ro'yxatga yozildingiz (${n}). Shahar ochilganda shu yerga xabar beramiz. / Вы в списке. Сообщим, когда город откроется.`);
@@ -178,14 +183,35 @@ const onMessage = async (ctx: Ctx, tg: Telegram, m: Message): Promise<void> => {
   const text = (m.text ?? '').trim();
   const start = /^\/start(?:\s+(\S{1,64}))?$/.exec(text);
   if (start) return onStart(ctx, tg, m, start[1] ?? '');
+  const photo = m.photo?.at(-1)?.file_id ?? null;
+  const body = text || (m.caption ?? '').trim();
+  // Admin murojaatga "Javob berish" (reply) qildi.
+  if (String(m.from.id) === ctx.env.ADMIN_TELEGRAM_ID?.trim() && m.reply_to_message && (await adminReply(ctx, tg, m.reply_to_message.message_id, body, photo))) return tg.send(m.chat.id, '✅ Javob yuborildi.');
   const help = /^\/yordam\s+([\s\S]{3,1000})$/.exec(text);
-  if (help?.[1]) {
-    const admin = Number(ctx.env.ADMIN_TELEGRAM_ID);
-    if (admin) await tg.send(admin, `🆘 ${m.from.first_name} ${m.from.username ? `@${m.from.username}` : ''} (${m.from.id}):\n${help[1]}`);
-    return tg.send(m.chat.id, 'Xabaringiz yuborildi. / Сообщение отправлено.');
+  if (help?.[1]) return supportMessage(ctx, tg, m.chat.id, m.from, help[1], null);
+  if (text === '/yordam') {
+    await ctx.db.rpc('svc_bot_step', { p_telegram: m.from.id, p_step: 'support' });
+    return tg.send(m.chat.id, SUPPORT_ASK);
   }
-  const session = await ctx.db.rpc<{ step: string } | null>('svc_bot_session', { p_telegram: m.from.id });
-  if (session?.step === 'nick' && !text.startsWith('/')) return takeNick(ctx, tg, m, text);
+  const session = await ctx.db.rpc<{ step: string; nick: string | null; ref_id: number | null } | null>('svc_bot_session', { p_telegram: m.from.id });
+  const isPlain = !text.startsWith('/');
+  if (session?.step === 'support' && isPlain && (body || photo)) return supportMessage(ctx, tg, m.chat.id, m.from, body, photo);
+  if ((session?.step === 'dispute' || session?.step === 'dispute_owner') && session.ref_id) {
+    if (photo) return takeProof(ctx, tg, m.chat.id, m.from.id, session.ref_id, photo);
+    if (isPlain) return tg.send(m.chat.id, 'Iltimos, skrinshotni rasm qilib yuboring. / Пришлите скриншот как фото.');
+  }
+  if ((session?.step === 'nick' || session?.step === 'confirm') && isPlain && text) return proposeNick(ctx, tg, m.chat.id, m.from.id, text);
+  if (session?.step === 'renick' && isPlain && text) {
+    const problem = nickProblem(normalizeNick(text));
+    if (problem) return tg.send(m.chat.id, problem);
+    try {
+      const nick = await ctx.db.rpc<string>('svc_renick', { p_telegram: m.from.id, p_nick: normalizeNick(text) });
+      return tg.send(m.chat.id, `✅ Yangi nikingiz: @${nick}. / Ваш новый ник: @${nick}.`);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('nick_taken')) return tg.send(m.chat.id, 'Bu nik band — boshqasini yozing. / Ник занят.');
+      throw error;
+    }
+  }
   if (text === '/kirish') return greet(ctx, tg, m, null);
   if (text === '/admin') return adminLink(ctx, tg, m);
   if (text === '/parol') return sendReset(ctx, tg, m.from.id);
@@ -208,6 +234,26 @@ const onCallback = async (ctx: Ctx, tg: Telegram, q: NonNullable<Update['callbac
     return tg.answer(q.id, picked === 'closed' ? 'So‘rovnoma yopilgan / Опрос закрыт' : `✅ ${picked}`);
   }
   if (q.data === 'shop') { await tg.answer(q.id, '🛍'); return shopMenu(ctx, tg, q.from.id); }
+  if (q.data === 'support') {
+    await tg.answer(q.id, '✍️');
+    await ctx.db.rpc('svc_bot_step', { p_telegram: q.from.id, p_step: 'support' });
+    return tg.send(q.from.id, SUPPORT_ASK);
+  }
+  if (q.data === 'nick_ok' || q.data === 'nick_again' || q.data === 'claim') {
+    await tg.answer(q.id, '✓');
+    const session = await ctx.db.rpc<{ step: string; nick: string | null } | null>('svc_bot_session', { p_telegram: q.from.id });
+    if (!session?.nick) return tg.send(q.from.id, await askNick(ctx));
+    if (q.data === 'nick_ok' && session.step === 'confirm') return confirmNick(ctx, tg, q.from.id, q.from, session.nick);
+    if (q.data === 'claim') return openDispute(ctx, tg, q.from.id, q.from.id, session.nick);
+    await ctx.db.rpc('svc_bot_step', { p_telegram: q.from.id, p_step: 'nick' });
+    return tg.send(q.from.id, await askNick(ctx));
+  }
+  const give = /^dgive:(\d{1,9})$/.exec(q.data ?? '')?.[1];
+  if (give) {
+    await ctx.db.rpc('svc_dispute_give', { p_id: Number(give), p_telegram: q.from.id });
+    await tg.answer(q.id, '✓');
+    return tg.send(q.from.id, "Rahmat. Nik haqiqiy egasiga o'tdi — yangi nikingizni yozing. / Спасибо. Напишите новый ник.");
+  }
   if (q.data === 'chan') return channelButton(ctx, tg, q.id, q.from.id);
   const buy = /^buy:([A-Za-z0-9_]{1,60})$/.exec(q.data ?? '')?.[1];
   if (buy) { await tg.answer(q.id, '🛍'); return buyCode(ctx, tg, q.from.id, q.from.id, buy); }
@@ -215,7 +261,7 @@ const onCallback = async (ctx: Ctx, tg: Telegram, q: NonNullable<Update['callbac
     await tg.answer(q.id, '🏙');
     const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: q.from.id, p_ref: null, p_name: q.from.first_name });
     if (r.state === 'ready' && r.user) return sendLogin(ctx, tg, q.from.id, r.user);
-    return tg.send(q.from.id, r.state === 'banned' ? 'Akkaunt bloklangan. / Аккаунт заблокирован.' : ASK_NICK);
+    return tg.send(q.from.id, r.state === 'banned' ? 'Akkaunt bloklangan. / Аккаунт заблокирован.' : await askNick(ctx));
   }
   const token = /^ok:([0-9a-f]{32})$/.exec(q.data ?? '')?.[1];
   if (!token) return;
@@ -247,7 +293,7 @@ export const devTelegram = async (req: Request, ctx: Ctx): Promise<Response> => 
   const sent: { readonly text: string; readonly buttons: readonly TgButton[] }[] = [];
   const tg: Telegram = { send: async (_chat, text, buttons) => { sent.push({ text, buttons: buttons ?? [] }); }, answer: async (_id, text) => { sent.push({ text, buttons: [] }); }, video: async () => undefined, isMember: async () => true,
     invoice: async (_chat, title, _d, payload, stars) => { sent.push({ text: `invoice:${payload}:${stars}:${title}`, buttons: [] }); },
-    preCheckout: async (_id, isOk) => { sent.push({ text: `precheckout:${isOk}`, buttons: [] }); }, refundStars: async () => undefined, document: async () => undefined };
+    preCheckout: async (_id, isOk) => { sent.push({ text: `precheckout:${isOk}`, buttons: [] }); }, refundStars: async () => undefined, document: async () => undefined, sendId: async () => null, photo: async () => null, download: async () => null };
   await botUpdate(ctx, tg, await readJson(req, updateSchema));
   return json({ sent });
 };
@@ -294,7 +340,7 @@ const channelBonus = async (ctx: Ctx, tg: Telegram, telegram: number): Promise<C
 };
 /** POST /coins/channel — saytdagi "Obunani tekshirish". */
 /** Lokal sinov uchun hech narsa yubormaydigan Telegram. */
-const DEV_TG: Telegram = { send: async () => undefined, answer: async () => undefined, video: async () => undefined, isMember: async () => false, invoice: async () => undefined, preCheckout: async () => undefined, refundStars: async () => undefined, document: async () => undefined };
+const DEV_TG: Telegram = { send: async () => undefined, answer: async () => undefined, video: async () => undefined, isMember: async () => false, invoice: async () => undefined, preCheckout: async () => undefined, refundStars: async () => undefined, document: async () => undefined, sendId: async () => null, photo: async () => null, download: async () => null };
 export const channelCheck = async (req: Request, ctx: Ctx): Promise<Response> => {
   const user = await requireUser(req, ctx);
   // Lokal sinov: bot tokeni yo'q, lekin DEV=1 va DEV_CHANNEL_OK=1 bo'lsa — obuna "bor".

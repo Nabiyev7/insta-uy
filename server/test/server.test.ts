@@ -32,6 +32,9 @@ const tg: Telegram = {
   preCheckout: async (_id, isOk) => { sent.push({ chat: 0, text: `precheckout:${String(isOk)}` }); },
   refundStars: async (user, charge) => { refunds.push(`${user}:${charge}`); },
   document: async (chat, name, data) => { docs.push({ chat, name, size: data.length }); },
+  sendId: async (chat, text) => { sent.push({ chat, text }); return 9000 + sent.length; },
+  photo: async (chat, fileId, caption) => { sent.push({ chat, text: `photo:${fileId}:${caption}` }); return 9000 + sent.length; },
+  download: async (fileId) => (fileId === 'rasm_1' ? new Uint8Array([1, 2, 3]) : null),
 };
 const docs: { chat: number; name: string; size: number }[] = [];
 const refunds: string[] = [];
@@ -60,9 +63,12 @@ const redeem = async (token: string): Promise<string> => {
   return ((await res.json()) as { access_token: string }).access_token;
 };
 /** Bot orqali yangi akkaunt: /start → nik → havola → sessiya. */
+/** Nik → tasdiq ("Ha, to'g'ri") → akkaunt. */
+const confirmNick = (id: number, c?: Ctx): ReturnType<typeof call> => call('/telegram/webhook', { callback_query: { id: 'n', from: { id, first_name: 'S' }, data: 'nick_ok' } }, { 'x-telegram-bot-api-secret-token': 'wh' }, c);
 const botUser = async (id: number, nick: string): Promise<string> => {
   await webhook(message(id, '/start login'));
   await webhook(message(id, nick));
+  await confirmNick(id);
   return redeem(linkToken());
 };
 /** Telegramsiz eski (parolli) akkaunt — faqat ulash sinovi uchun. */
@@ -92,7 +98,13 @@ describe('kirish faqat Telegram bot orqali', () => {
     expect(sent.at(-1)!.text).toContain('Instagram nikingizni');
     await webhook(message(700, 'a b c'));
     expect(sent.at(-1)!.text).toContain('lotin');
-    await webhook(message(700, '@Ali.Karimov'));
+    await webhook(message(700, 'ali..vali'));
+    expect(sent.at(-1)!.text).toContain('ikki nuqta');
+    await webhook(message(700, 'https://instagram.com/Ali.Karimov.'));
+    // Tasdiq qadami: akkaunt hali yo'q, Instagram havolasi bor.
+    expect(sent.at(-1)!.buttons!.map((b) => b.url ?? b.data)).toEqual(['https://instagram.com/ali.karimov', 'nick_ok', 'nick_again']);
+    expect((await db.query("select 1 from profiles where telegram_id = 700")).rows).toHaveLength(0);
+    await confirmNick(700);
     const token = linkToken();
     expect(sent.at(-1)!.buttons![0]!.url).toBe(`https://shahar.test/?kirish=${token}`);
     const jwt = await redeem(token);
@@ -104,6 +116,7 @@ describe('kirish faqat Telegram bot orqali', () => {
     await webhook(message(701, '/start'));
     await webhook(message(701, 'ali.karimov'));
     expect(sent.at(-1)!.text).toContain('band');
+    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['claim']);
     await webhook(message(700, '/start'));
     expect(await redeem(linkToken())).toBeTruthy();
     await webhook({ callback_query: { id: 'c', from: { id: 700, first_name: 'Ali' }, data: 'open' } });
@@ -114,6 +127,7 @@ describe('kirish faqat Telegram bot orqali', () => {
     const ref = ((await userRpc(inviter, 'my_profile')) as { ref: string }).ref;
     await webhook(message(711, `/start r_${ref}`));
     await webhook(message(711, 'mehmon_tg'));
+    await confirmNick(711);
     const [row] = (await db.query<{ referred_by: string }>("select referred_by from profiles where login = 'tg711'")).rows;
     expect(row?.referred_by).toBeTruthy();
   });
@@ -422,9 +436,11 @@ describe('admin qanday kiradi', () => {
     const c = ctx({ env: { ...ENV, ADMIN_TELEGRAM_ID: '1800' } });
     await call('/telegram/webhook', message(1800, '/start login'), { 'x-telegram-bot-api-secret-token': 'wh' }, c);
     await call('/telegram/webhook', message(1800, 'egasi_nik'), { 'x-telegram-bot-api-secret-token': 'wh' }, c);
+    await confirmNick(1800, c);
     expect((await db.query("select role from profiles where telegram_id = 1800")).rows).toEqual([{ role: 'admin' }]);
     await webhook(message(1801, '/start login'));
     await webhook(message(1801, 'oddiy_nik'));
+    await confirmNick(1801);
     expect((await db.query("select role from profiles where telegram_id = 1801")).rows).toEqual([{ role: 'user' }]);
   });
   test('lokal "Admin sifatida kirish": faqat DEV=1, aks holda 404', async () => {
@@ -434,6 +450,44 @@ describe('admin qanday kiradi', () => {
     expect(token).toMatch(/^[0-9a-f]{32}$/);
     expect(await redeem(token)).toBeTruthy();
     expect((await db.query("select role from profiles where telegram_id = 1802")).rows).toEqual([{ role: 'admin' }]);
+  });
+});
+
+describe('adminga yozish va nik nizosi (bot)', () => {
+  const photoMsg = (id: number, file: string, extra = {}): unknown => ({ message: { message_id: 2, from: { id, first_name: 'R' }, chat: { id, type: 'private' }, photo: [{ file_id: 'kichik' }, { file_id: file }], ...extra } });
+  test('murojaat → admin "reply" → foydalanuvchiga; rasm; paneldan javob', async () => {
+    await botUser(2100, 'murojaatchi');
+    await webhook({ callback_query: { id: 's', from: { id: 2100, first_name: 'M' }, data: 'support' } });
+    expect(sent.at(-1)!.text).toContain('Savolingiz');
+    await webhook(message(2100, 'Uyim ko‘rinmayapti'));
+    const toAdmin = sent.filter((m) => m.chat === 1).at(-1)!;
+    expect(toAdmin.text).toContain('@murojaatchi');
+    const adminMsgId = sent.length + 9000 - (sent.length - sent.indexOf(toAdmin)) + 1;
+    await webhook(photoMsg(2100, 'rasm_1', { caption: 'mana' }));
+    expect(sent.some((m) => m.chat === 1 && m.text.startsWith('photo:rasm_1'))).toBe(true);
+    await webhook(message(1, 'Tuzatdik', { reply_to_message: { message_id: adminMsgId } }));
+    expect(sent.some((m) => m.chat === 2100 && m.text.includes('Admin javobi'))).toBe(true);
+    const jwt = await botUser(2101, 'panel_admin');
+    await db.query("update profiles set role = 'admin' where telegram_id = 2101");
+    const ticket = (await db.query<{ id: number }>('select id from support_tickets where telegram_id = 2100 order by id desc limit 1')).rows[0]!.id;
+    expect((await call('/admin/support/reply', { ticket, text: 'Paneldan' }, { authorization: `Bearer ${jwt}` })).body).toEqual({ ok: true });
+    expect(sent.at(-1)).toMatchObject({ chat: 2100 });
+  });
+  test('band nik: "Bu nik meniki" → dalil (rasm) → admin panelda ko‘rinadi', async () => {
+    await botUser(2200, 'haqiqiy_nik');
+    await webhook(message(2201, '/start login'));
+    await webhook(message(2201, 'haqiqiy_nik'));
+    await webhook({ callback_query: { id: 'c', from: { id: 2201, first_name: 'D' }, data: 'claim' } });
+    expect(sent.at(-1)!.text).toContain('Profilni tahrirlash');
+    await webhook(message(2201, 'matn'));
+    expect(sent.at(-1)!.text).toContain('rasm');
+    await webhook(photoMsg(2201, 'rasm_1'));
+    expect(sent.at(-1)!.text).toContain('Dalil qabul qilindi');
+    const id = (await db.query<{ id: number }>("select id from nick_disputes where nick = 'haqiqiy_nik'")).rows[0]!.id;
+    const jwt = await botUser(2202, 'nizo_admin');
+    await db.query("update profiles set role = 'admin' where telegram_id = 2202");
+    const res = await handle(new Request('https://api.test/admin/dispute/proof', { method: 'POST', body: JSON.stringify({ id, side: 'claimant' }), headers: { authorization: `Bearer ${jwt}` } }), ctx(), () => undefined);
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
   });
 });
 

@@ -20,6 +20,6 @@ const masterPlan = (): Plugin => ({
 
 export default defineConfig({
   plugins: [react(), masterPlan()],
-  server: { proxy: { '/rest': API, '/auth': API, '/storage': API, '/pay': API } },
+  server: { proxy: { '/rest': API, '/auth': API, '/storage': API, '/pay': API, '/admin': API } },
   build: { target: 'es2022' },
 });

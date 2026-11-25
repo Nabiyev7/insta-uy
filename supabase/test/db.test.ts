@@ -521,7 +521,9 @@ describe('xizmat funksiyalari', () => {
     const u = await user();
     await sql('update profiles set telegram_id = 999 where user_id = $1', [u]);
     await sql("select private.notify($1::uuid, 'approved', '{}'::jsonb)", [u]);
-    expect(await svc('svc_outbox')).toMatchObject(expect.arrayContaining([expect.objectContaining({ chat: 999 })]));
+    const all: Row[] = [];
+    for (let i = 0; i < 50; i++) { const batch = (await svc('svc_outbox')) as Row[]; if (batch.length === 0) break; all.push(...batch); }
+    expect(all).toMatchObject(expect.arrayContaining([expect.objectContaining({ chat: 999 })]));
     expect(await svc('svc_outbox')).toEqual([]);
   });
 });
