@@ -199,14 +199,18 @@ export function CityPanel(): React.JSX.Element {
   const loaded = useLoad(() => rpc<readonly Election[]>('api_elections'), 'elections');
   const { data, reload } = loaded;
   const isGuest = useApp((s) => s.profile === null);
+  const topsLoaded = useLoad(() => rpc<readonly { readonly id: number; readonly top: readonly { readonly nick: string; readonly total: number }[] }[]>('api_projects'), `top:${boot?.projects.map((p) => p.raised).join(',') ?? ''}`);
+  const tops = topsLoaded.data ? Object.fromEntries(topsLoaded.data.map((p) => [p.id, p.top])) : null;
   return (
     <Sheet title={t('cityWorks')}>
       <Section title={t('projects')}>
+        <p className="muted">{t('projHow')}</p>
         {boot?.projects.length === 0 && <p className="muted">{t('listEmpty')}</p>}
         {boot?.projects.map((p) => (
           <div key={p.id} className="field">
             <div className="row between"><b>{lang === 'uz' ? p.uz : p.ru}</b><span className="muted">{p.raised} / {p.goal}</span></div>
             <div className="bar"><i style={{ width: `${Math.min(100, (p.raised / p.goal) * 100)}%` }} /></div>
+            {(tops?.[p.id]?.length ?? 0) > 0 && <p className="muted">{t('projTop')}: {tops?.[p.id]?.map((x) => `${x.nick} (${x.total})`).join(', ')}</p>}
             {p.status === 'done' ? <span className="tag free">{t('projDone')}</span> : <div className="row">{[10, 50, 200].map((n) => <button type="button" key={n} className="btn small soft" disabled={isBusy} onClick={() => (isGuest ? openAuth() : void run(async () => { await rpc('my_contribute', { p_project: p.id, p_amount: n }); await Promise.all([refreshBoot(), refreshProfile()]); }, t('saved')))}><Icon name="coin" />+{n}</button>)}</div>}
           </div>
         ))}

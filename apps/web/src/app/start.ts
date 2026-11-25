@@ -15,6 +15,9 @@ const hasWebgl2 = (): boolean => document.createElement('canvas').getContext('we
 
 const bump = (share: number): void => setApp((s) => ({ progress: Math.min(1, s.progress + share) }));
 
+import { countVisit } from './install.ts';
+import { playIntro } from './intro.ts';
+
 const params = new URLSearchParams(location.search);
 export const isVideoMode = params.has('video');
 
@@ -29,6 +32,8 @@ const applyLink = (): void => {
     }
   }
   goToPlot(params.get('uy') ?? '', true);
+  if (!isVideoMode) playIntro(params.get('uy'));
+  countVisit();
 };
 
 /** Sinov rejimi: admin qoralama xaritani ko'radi (?xarita=ID). */

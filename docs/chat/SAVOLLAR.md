@@ -176,3 +176,11 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 7. **Gazeta va ko'cha oynasi** — faqat saytdan yashirildi, server va baza qoladi (promt: "UI'dan yashiriladi").
 8. **Interfeys kontrasti (WCAG AA)** — to'q rejim avvalgi to'q mavzu ranglarida; alohida o'lchov vositasi bilan tekshirilmadi.
 9. **Lokal admin tugmasi** — `import.meta.env.DEV` ortida (ishlab chiqarish yig'ilishida kod chiqib ketadi), endpoint esa `DEV=1` bo'lmasa 404 (test bor).
+
+### 6b — Qo'shimcha 1 (nimani tanladim va nega)
+1. **Nizo dalillari (skrinshot)** Supabase Storage'ga emas, Telegram'da qoladi (fayl ID bazada); admin panel ularni server orqali ko'radi. Sabab: omborga shaxsiy rasm ko'chirilmaydi, kod sodda.
+2. **Nik o'tganda da'vogar** akkauntini o'zi ochadi: bot "/start yozing" deydi (nik bo'shagan bo'ladi). Sabab: akkaunt faqat bot suhbatida yaratiladi.
+3. **"Yangi qo'shningiz"** — kuniga 3 tagacha alohida xabar (bitta xabarga jamlash — keyin).
+4. **Kirish animatsiyasi** admin "Video" (reels) uchun hali ishlatilmadi — video o'z kamera yo'lidan foydalanadi. Kirishdan oldin profil yuklanmagan bo'lsa, kamera markazga (o'z uyiga emas) tushadi.
+5. **Shahar loyihalari**: ko'prik uchun bosh rejada joy yo'q — taxta chiqmaydi (loyiha bazada qoladi). Bog' taxtasi hovuz yonida. Loyiha to'lganda yangi 3D obyekt (stadion modeli va h.k.) hali yo'q — faqat taxta 100% bo'ladi va xabar boradi.
+6. **Eslatma soati** 19:00 (sozlama `reminder_hour`); xabar uy egasi bo'lgan va bonusni olmaganlarga.

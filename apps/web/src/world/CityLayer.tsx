@@ -18,6 +18,9 @@ import { collect, type CollectSource } from './collect.ts';
 import { FAR_CHUNK, Ground } from './ground.ts';
 import { kitUniforms, type Kit } from './kit.ts';
 import { Labels, type LabelInfo } from './labels.ts';
+import { POND, STADIUM } from '../logic/paving.ts';
+/** Loyiha joylari bosh rejadagi mavjud joylarda (qulfga tegilmaydi): stadion — o'z joyi, bog' — hovuz yonida. */
+const PROJECT_SPOTS: Readonly<Partial<Record<'bog' | 'stadion' | 'koprik', { readonly x: number; readonly z: number }>>> = { stadion: STADIUM, bog: { x: POND.x, z: POND.z + POND.r + 12 } };
 import { Markers, Selection, activeMarkers } from './markers.ts';
 import { Pools } from './pools.ts';
 import { Boards, Signs } from './signs.ts';
@@ -163,7 +166,14 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.markers.set(free);
     const hero = boot?.hero;
     const heroLabel: LabelInfo[] = hero && Math.hypot(v.x - HERO_SPOT.x, v.z - HERO_SPOT.z) < HERO_RANGE ? [{ key: 'hero', text: hero.nick, kind: 'gold', badge: null, icon: 'rank', x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
-    world.labels.set([...heroLabel, ...labels]);
+    // Shahar loyihalari joyida taxta: "Stadion · 34%" (ko'prik uchun joy hali yo'q).
+    const works: LabelInfo[] = (boot?.projects ?? []).flatMap((p) => {
+      const at = PROJECT_SPOTS[p.kind];
+      if (!at || Math.hypot(v.x - at.x, v.z - at.z) > HERO_RANGE * 3) return [];
+      const pct = Math.min(100, Math.floor((p.raised / Math.max(1, p.goal)) * 100));
+      return [{ key: `work-${p.id}`, text: `${p.uz} · ${p.status === 'done' ? '100%' : `${pct}%`}`, kind: p.status === 'done' ? 'gold' : 'plain', badge: null, icon: 'bank', x: at.x, y: 12, z: at.z, size: 1.6 } satisfies LabelInfo];
+    });
+    world.labels.set([...heroLabel, ...works, ...labels]);
   };
 
   const updateGround = (v: View, isHigh: boolean): void => {

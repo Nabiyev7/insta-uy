@@ -1,5 +1,5 @@
 /** Pastdagi karta: bittadan, ustuvorlik bo'yicha (tabrik → kunlik bonus → xazina → yangi bezak; uysizga — "Bepul uy oling"). */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { BUZZ, buzz, goToPlot, nearestFree } from '../app/actions.ts';
 import { rpc } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
@@ -7,6 +7,8 @@ import { markNewSeen, openPanel, openRoot, refreshProfile, setApp, setting, toas
 import { DAILY, nextCard, type CardKind } from '../logic/cards.ts';
 import { Icon, type IconName } from './icons.tsx';
 import { DecorImage, useAction } from './kit.tsx';
+import { dismissInstall, hasInstallPrompt, installDue, promptInstall } from '../app/install.ts';
+import { installWay } from '../logic/growth.ts';
 
 interface CardProps { readonly icon: ReactNode; readonly title: string; readonly children: ReactNode; readonly button: string; readonly isGold?: boolean; readonly isBusy?: boolean; readonly onClick: () => void; readonly onClose?: () => void; readonly buttonLabel?: string }
 function Card({ icon, title, children, button, isGold = false, isBusy = false, onClick, onClose, buttonLabel }: CardProps): React.JSX.Element {
@@ -83,6 +85,18 @@ function TreasureCard(): React.JSX.Element | null {
 
 const VIEWS: Readonly<Record<CardKind, () => React.JSX.Element | null>> = { cheer: CheerCard, daily: DailyCard, treasure: TreasureCard, fresh: NewDecorCard, free: FreeCard };
 
+function InstallCard(): React.JSX.Element | null {
+  const t = useT();
+  const [isShown, setShown] = useState(installDue);
+  if (!isShown) return null;
+  const way = installWay(navigator.userAgent, hasInstallPrompt());
+  if (way === 'none') return null;
+  const close = (): void => { dismissInstall(); setShown(false); };
+  const text = way === 'ios' ? t('installIos') : way === 'instagram' ? t('installInsta') : t('installText');
+  const add = (): void => { if (way === 'prompt') void promptInstall().finally(() => setShown(false)); else close(); };
+  return <Card icon={<Icon name="home" />} title={t('installTitle')} button={way === 'prompt' ? t('install') : t('done')} onClick={add} onClose={close}><small>{text}</small></Card>;
+}
+
 export function BottomCard(): React.JSX.Element | null {
   const { profile, panel, preview, building, mode, cheer, treasure, catalog, seenNew } = useApp();
   if (panel || preview || building) return null;
@@ -91,7 +105,8 @@ export function BottomCard(): React.JSX.Element | null {
     hasCheer: cheer !== null, hasTreasure: treasure !== null, hasFresh: catalog.some((c) => c.onSale && c.isNew && !seenNew.includes(c.id)),
   });
   const View = kind ? VIEWS[kind] : null;
-  return View && <View />;
+  if (!View) return mode === 'city' ? <InstallCard /> : null;
+  return <View />;
 }
 
 export function PreviewBar(): React.JSX.Element | null {

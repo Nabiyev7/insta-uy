@@ -8,7 +8,8 @@ import { forgetMe } from '../app/multiplayer.ts';
 import { openAuth, openPanel, openRoot, refreshProfile, setting, toast, useApp } from '../app/store.ts';
 import { PaidExtras, UpgradeButton } from './HousePanels.tsx';
 import { Icon } from './icons.tsx';
-import { RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
+import { DecorImage, RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
+import { referralSteps } from '../logic/growth.ts';
 
 function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
   const t = useT();
@@ -51,6 +52,23 @@ function TelegramLink(): React.JSX.Element | null {
   );
 }
 
+/** Do'st taklifi shkalasi: 1 → 3 → 10, har nuqtada sovg'a rasmi (sozlama `referral_gifts`). */
+function InviteScale({ invited }: { readonly invited: number }): React.JSX.Element {
+  const t = useT();
+  const lang = useApp((s) => s.lang);
+  const catalog = useApp((s) => s.catalog);
+  const { steps, left } = referralSteps(invited, setting<Readonly<Record<string, string>>>('referral_gifts', { 1: 'gul_zor', 3: 'dam_besedka', 10: 'avto_sedan' }));
+  return (
+    <>
+      <ol className="invite-scale">{steps.map((s) => {
+        const c = catalog.find((x) => x.id === s.decor);
+        return <li key={s.at} className={s.isDone ? 'done' : ''}><DecorImage model={c?.model ?? s.decor} /><b>{s.at} {t('friendsWord')}</b><span className="muted">{c?.[lang] ?? s.decor}</span>{s.isDone && <Icon name="check" />}</li>;
+      })}</ol>
+      <p className="muted">{left === null ? t('inviteAll') : t('inviteLeft').replace('{n}', String(left))}</p>
+    </>
+  );
+}
+
 export function MePanel(): React.JSX.Element {
   const t = useT();
   const profile = useApp((s) => s.profile);
@@ -78,7 +96,8 @@ export function MePanel(): React.JSX.Element {
     <Sheet title={t('me')} extra={<span className="tag">{profile.instagram ? `@${profile.instagram}` : profile.login}</span>}>
       {profile.plots.length === 0 && <section className="house-card"><p>{t('noHouse')}</p><button type="button" className="btn gold block" onClick={findFree}><Icon name="home" />{t('findFree')}</button></section>}
       {profile.plots.map((p) => <HouseCard key={p.plot} plot={p} />)}
-      <Section title={t('invite')} icon="users">
+      <Section title={t('inviteScale')} icon="users">
+        <InviteScale invited={profile.invited} />
         <div className="row between"><span className="muted">{t('invited')}: <b>{profile.invited}</b></span><button type="button" className="btn small" onClick={() => run(() => copyText(inviteUrl(profile.ref)), t('copied'))}><Icon name="link" />{t('share')}</button></div>
       </Section>
       <div className="menu-list">

@@ -109,7 +109,11 @@ const greet = async (ctx: Ctx, tg: Telegram, m: Message, ref: string | null): Pr
   await promoteOwner(ctx, from.id);
   const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: from.id, p_ref: ref, p_name: from.first_name });
   if (r.state === 'banned') return tg.send(m.chat.id, 'Akkaunt bloklangan. / Аккаунт заблокирован.');
-  if (r.state === 'ready' && r.user) return sendLogin(ctx, tg, m.chat.id, r.user);
+  if (r.state === 'ready' && r.user) {
+    // /start — eslatma va xabarlar yana yoqiladi (/stop bilan o'chirilgan bo'lsa).
+    await ctx.db.rpc('svc_news', { p_telegram: from.id, p_on: true });
+    return sendLogin(ctx, tg, m.chat.id, r.user);
+  }
   return tg.send(m.chat.id, await askNick(ctx));
 };
 
@@ -313,20 +317,23 @@ const NOTES: Readonly<Record<string, readonly [string, string]>> = {
   yard_winner: ['🌷 Tabriklaymiz! Hovlingiz haftaning eng chiroyli hovlisi bo‘ldi.', '🌷 Поздравляем! Ваш двор — лучший двор недели.'],
   new_decor: ['✨ Do‘konda yangi bezak: {name}', '✨ Новое украшение в магазине: {name}'],
   elected: ['👑 Saylovda g‘olib bo‘ldingiz!', '👑 Вы победили на выборах!'],
+  new_neighbour: ['🏡 Yangi qo‘shningiz: @{nick}', '🏡 Новый сосед: @{nick}'],
   inactive_warning: ['⏳ Uzoq vaqt kirmadingiz. 14 kun ichida kirmasangiz, bepul uyingiz bo‘shatiladi.', '⏳ Вы давно не заходили. Если не зайдёте 14 дней, бесплатный дом освободится.'],
 };
 
 interface OutboxRow { readonly kind: string; readonly chat: number; readonly lang: string; readonly data?: Readonly<Record<string, unknown>> }
 const noteText = (r: OutboxRow): string | undefined => {
   const isRu = r.lang === 'ru';
-  return NOTES[r.kind]?.[isRu ? 1 : 0].replace('{name}', String(r.data?.[isRu ? 'ru' : 'uz'] ?? ''));
+  return NOTES[r.kind]?.[isRu ? 1 : 0].replace('{name}', String(r.data?.[isRu ? 'ru' : 'uz'] ?? '')).replace('{nick}', String(r.data?.nick ?? ''));
 };
 export const flushOutbox = async (ctx: Ctx): Promise<number> => {
   if (!ctx.tg) return 0;
   const rows = await ctx.db.rpc<readonly OutboxRow[]>('svc_outbox', {});
   const results = await Promise.allSettled(rows.map((r) => {
     const text = noteText(r);
-    return text && ctx.tg ? ctx.tg.send(r.chat, text, [{ text: '🏙', url: ctx.env.SITE_URL }]) : Promise.resolve();
+    // Uyga oid xabarda — o'sha uyga havola (?uy=ID).
+    const plot = typeof r.data?.plot === 'string' && /^[A-Z0-9]{1,8}$/.test(r.data.plot) ? r.data.plot : null;
+    return text && ctx.tg ? ctx.tg.send(r.chat, text, [{ text: '🏙', url: plot ? `${ctx.env.SITE_URL}/?uy=${plot}` : ctx.env.SITE_URL }]) : Promise.resolve();
   }));
   return results.filter((r) => r.status === 'fulfilled').length;
 };

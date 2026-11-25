@@ -394,4 +394,10 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .tabs > * { flex: 0 0 auto; }
 .heart .btn .icon { margin-right: 4px; }
 .heart .btn[aria-pressed='true'] svg path { fill: currentColor; }
+/* 6b: taklif shkalasi */
+.invite-scale { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; list-style: none; margin: 0 0 8px; padding: 0; }
+.invite-scale li { display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border-radius: 14px; background: var(--bg-2); text-align: center; font-size: 12px; position: relative; }
+.invite-scale li.done { outline: 2px solid var(--gold-a); }
+.invite-scale li img { width: 56px; height: 56px; object-fit: contain; }
+.invite-scale li svg:last-child { position: absolute; top: 6px; right: 6px; }
 
