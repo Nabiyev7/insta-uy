@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { z } from 'zod';
 import { HttpError, type AuthUser, type Ctx } from './types.ts';
 
@@ -6,7 +6,6 @@ export const md5 = (s: string): string => createHash('md5').update(s).digest('he
 export const sha256 = (s: string): string => createHash('sha256').update(s).digest('hex');
 export const keyed = (secret: string, s: string): string => createHmac('sha256', secret).update(s).digest('hex');
 export const randomToken = (): string => randomBytes(16).toString('hex');
-export const randomCode = (): string => String(randomInt(0, 1_000_000)).padStart(6, '0');
 export const randomPassword = (): string => randomBytes(24).toString('base64url');
 
 /** Uzunlik ham sizib chiqmasin: avval xesh. */

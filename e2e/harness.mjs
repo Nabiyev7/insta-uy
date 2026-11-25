@@ -32,7 +32,7 @@ export const startServers = async ({ base = 8797, site = 5183, hasDemo = true } 
     return c;
   };
   let log = '';
-  const api = run(['server/dev/main.ts'], root, { PORT: String(base), ...(hasDemo ? { DEMO: '1' } : {}), DEV_DATA: data, SITE_URL: SITE, ALLOWED_ORIGINS: `${SITE},${ADMIN}` });
+  const api = run(['server/dev/main.ts'], root, { PORT: String(base), ...(hasDemo ? { DEMO: '1' } : {}), DEV_DATA: data, SITE_URL: SITE, ADMIN_URL: ADMIN, ALLOWED_ORIGINS: `${SITE},${ADMIN}` });
   api.stdout.on('data', (d) => { log += d; });
   await waitFor(() => log.includes('Admin:'), 'API', 60_000);
   const anon = /ANON=(\S+)/.exec(log)[1];
@@ -43,19 +43,33 @@ export const startServers = async ({ base = 8797, site = 5183, hasDemo = true } 
   run([vite, '--port', String(site + 1), '--strictPort'], path.join(root, 'apps/admin'), env);
   await waitFor(async () => (await fetch(SITE)).ok && (await fetch(ADMIN)).ok, 'vite');
   const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: token ? { authorization: `Bearer ${token}` } : {}, body: JSON.stringify(args) }).then((r) => r.json());
+  /** Bot bilan lokal suhbat (/dev/telegram): javobdagi kirish tokeni. */
+  const botSay = async (id, text) => {
+    const r = await fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify({ message: { message_id: 1, from: { id, first_name: 'Sinov' }, chat: { id, type: 'private' }, text } }) }).then((x) => x.json());
+    const url = r.sent.flatMap((m) => m.buttons).find((b) => b.url?.includes('kirish='))?.url;
+    return url ? new URL(url).searchParams.get('kirish') : null;
+  };
+  /** Telegram ID bo'yicha sessiya (akkaunt bo'lmasa nik bilan ochiladi). */
+  const tgToken = async (id, nick = `tg_${id}`) => {
+    const link = (await botSay(id, '/start')) ?? (await botSay(id, nick));
+    const { token_hash: hash } = await fetch(`${API}/auth/telegram/redeem`, { method: 'POST', body: JSON.stringify({ token: link }) }).then((x) => x.json());
+    return (await fetch(`${API}/auth/v1/verify`, { method: 'POST', body: JSON.stringify({ token_hash: hash }) }).then((x) => x.json())).access_token;
+  };
   const tokenOf = async (login, password) => (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', body: JSON.stringify({ email: `${login}@login.citylanduz.uz`, password }) }).then((r) => r.json())).access_token;
   const stop = async () => {
     for (const c of children) c.kill();
     await new Promise((r) => { setTimeout(r, 500); });
     rmSync(data, { recursive: true, force: true, maxRetries: 5 });
   };
-  return { API, SITE, ADMIN, data, service, call, tokenOf, adminToken: () => tokenOf('admin', 'admin12345'), stop };
+  // Sinov bazasida bot nomi bor (haqiqiy sozlama egasi bergunicha bo'sh turadi).
+  await call('admin_setting', { p_key: 'telegram_bot', p_value: 'citylanduz_sinov_bot' }, await tokenOf('admin', 'admin12345'));
+  return { API, SITE, ADMIN, data, service, call, tokenOf, tgToken, botSay, adminToken: () => tokenOf('admin', 'admin12345'), stop };
 };
 
 export const launch = () => chromium.launch({ channel: 'chrome', headless: true, args: GPU });
 
 /** Server bilan ishlaydigan qulay amallar. */
-export const helpers = ({ SITE, call, tokenOf, adminToken }) => {
+export const helpers = ({ SITE, call, tgToken, botSay, adminToken }) => {
   /** Ko'rsatmadan o'tib shaharga kirish. */
   const enter = async (page, url = SITE) => {
     await page.goto(url);
@@ -72,23 +86,28 @@ export const helpers = ({ SITE, call, tokenOf, adminToken }) => {
     await page.locator('.nav5').waitFor({ state: 'attached', timeout: 60_000 });
     await page.waitForFunction(() => Boolean(window.__scene));
   };
-  /** Ochiq ro'yxatdan o'tish oynasida yangi akkaunt. */
-  const register = async (page, login, texts = { tab: "Ro'yxatdan o'tish", login: 'Login', password: 'Parol' }) => {
-    await page.locator('.sheet').getByRole('button', { name: texts.tab, exact: true }).first().click();
-    await page.getByLabel(texts.login).fill(login);
-    await page.getByLabel(texts.password).fill('parol12345');
-    await page.locator('.sheet form button[type=submit]').click();
-    await page.waitForFunction(() => window.__app.getState().profile !== null);
+  /** Ochiq kirish oynasida: Telegram tugmasi (t.me ochilmaydi) → bot suhbati → havola → sayt kirgan holda qayta ochiladi. */
+  const register = async (page, id, nick) => {
+    await page.evaluate(() => {
+      const a = document.querySelector('.sheet a[href^="https://t.me/"]');
+      a.addEventListener('click', (e) => e.preventDefault(), { once: true });
+      a.click();
+    });
+    const token = (await botSay(id, '/start login')) ?? (await botSay(id, nick));
+    if (!token) throw new Error(`bot havola bermadi: ${nick}`);
+    await page.goto(`${SITE}/?kirish=${token}`);
+    await page.waitForFunction(() => window.__app?.getState().profile !== null && !location.search.includes('kirish='), null, { timeout: 60_000 });
   };
   /** Uyni shu levelgacha ko'taradi va tanga beradi (admin sozlamasi orqali). */
-  const raise = async (page, login, tier, coins = 100) => {
+  const raise = async (page, id, tier, coins = 100) => {
+    const login = `tg${id}`;
     const token = await adminToken();
     const me = (await call('admin_users', { p_q: login }, token))[0];
     const state = await page.evaluate(() => ({ coins: window.__app.getState().boot.settings.coins, plots: window.__app.getState().profile.plots }));
     await call('admin_setting', { p_key: 'coins', p_value: { ...state.coins, tier: { 2: 1, 3: 1, 4: 1, 5: 1 }, maxTier: 5 } }, token);
     await call('admin_user', { p_id: me.id, p_action: 'coins', p_data: { delta: coins } }, token);
     const plot = state.plots[0];
-    const mine = await tokenOf(login, 'parol12345');
+    const mine = await tgToken(id);
     for (let t = plot.tier; t < tier; t++) await call('my_tier_coins', { p_plot: plot.plot }, mine);
     await call('admin_setting', { p_key: 'coins', p_value: state.coins }, token);
   };

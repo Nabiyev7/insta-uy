@@ -6,7 +6,7 @@ import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { forgetMe } from '../app/multiplayer.ts';
 import { openAuth, openPanel, openRoot, refreshProfile, toast, useApp } from '../app/store.ts';
-import { NickForm, PaidExtras, UpgradeButton } from './HousePanels.tsx';
+import { PaidExtras, UpgradeButton } from './HousePanels.tsx';
 import { Icon } from './icons.tsx';
 import { RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
 
@@ -20,7 +20,7 @@ function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
   return (
     <section className="house-card">
       <div className="row between"><span className="tag"><Icon name="star" />{plot.tier}/{MAX_TIER} · {tier}</span><span className="tag free">{t('owned')}</span></div>
-      {plot.instagram ? <p className="nick">@{plot.instagram}</p> : <NickForm plot={plot} />}
+      {plot.instagram && <p className="nick">@{plot.instagram}</p>}
       <p className="muted with-icon"><Icon name="pin" />{plot.address}</p>
       <button type="button" className="btn block" onClick={() => goToPlot(plot.plot)}><Icon name="home" />{t('goHome')}</button>
       {isYard && isOwned && <UpgradeButton plot={plot} />}
@@ -71,7 +71,7 @@ export function MePanel(): React.JSX.Element {
     });
   };
   return (
-    <Sheet title={t('me')} extra={<span className="tag">{profile.login}</span>}>
+    <Sheet title={t('me')} extra={<span className="tag">{profile.instagram ? `@${profile.instagram}` : profile.login}</span>}>
       {profile.plots.length === 0 && <section className="house-card"><p>{t('noHouse')}</p><button type="button" className="btn gold block" onClick={findFree}><Icon name="home" />{t('findFree')}</button></section>}
       {profile.plots.map((p) => <HouseCard key={p.plot} plot={p} />)}
       <Section title={t('invite')} icon="users">

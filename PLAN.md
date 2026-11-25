@@ -26,6 +26,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual s
 8. **Uy leveli 1–5, ko'pi bilan 2 qavat** — 1–4-level bir qavat, 5-level ikki qavat. 6–10 keyin (egasi, 2026-11-25). Kuchaytirish tanga bilan: 300 / 1 000 / 2 000 / 3 500.
 9. **Egasi yo'q uchastkada uy chizilmaydi**: bo'sh joy — maysa, daraxt va "Bo'sh joy — oling!" taxtachasi. Bezaklar (lyukslar ham) tanga bilan faqat 5-leveldan (nik lavhasi bundan mustasno).
 10. **Uy va avatar ranglari tanlanmaydi** — uy har levelda o'z standart rangida; avatarda faqat bosh kiyim va libos. **Shikoyat bo'limi yo'q** (so'z filtri, havola taqiqi, admin bloklashi qoladi). **Nik tasdig'i yo'q** — uy darhol tayyor.
+11. **Kirish faqat Telegram bot orqali, nik botda yoziladi va keyin faqat admin o'zgartiradi.** Bitta nik — bitta akkaunt. Bepul uy bittadan (hovli, 1-level, birinchi 100 kishi — "Shahar asoschisi"); qo'shimcha uylar faqat pulga. 3 oy kirmagan odamning bepul uyi bo'shatiladi (2 hafta oldin bot ogohlantiradi), pulga olingani bo'shatilmaydi.
 
 ## 3. Shahar (bosh reja)
 
@@ -47,7 +48,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual s
 - Qidiruv: nik → o'sha uyga teleport
 - Mini-xarita
 - Bepul uy olish (1 kishiga 1 ta bepul uy limiti)
-- Login: **login+parol** yoki **Telegram orqali kirish**; parol tiklash — Telegram orqali (ro'yxatdan keyin "Telegram'ni ulang" taklifi)
+- Kirish **faqat Telegram bot orqali**: bot nik so'raydi → bir martalik havola (15 daqiqa) → sayt kirgan holda ochiladi. Parol va ro'yxat formasi yo'q; eski parolli akkauntlar Telegram ulamaguncha faqat ko'radi
 - "Mening uyim" → stories uchun tayyor rasm
 - Yuklanish ekrani (logo + progress), ochilishda qisqa yo'riqnoma
 - Kun/tun sikli
@@ -100,7 +101,7 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual s
 - Qoidalar: so'z filtri + admin tasdig'i, max 25 belgi, takrorlanmaydi, yiliga 1 marta qayta ovoz.
 - Ko'cha nomlangan kuni → avtomatik reels.
 
-## 6. Admin panel (faqat admin, parol + rol)
+## 6. Admin panel (faqat admin/moderator; kirish — botga /admin, havola orqali)
 
 - Uylar: egasini o'zgartirish, levelini o'rnatish, bo'shatish
 - Tumanlarni ochish/yopish, narxlar, chegirmalar
@@ -237,6 +238,7 @@ cityland-uz/
 
 > Oxirgi yangilanish: 2026-11-25. Ishga tushirish va internetga chiqarish: README.md.
 
+- [x] **6-qadam, B+C (2026-11-25): kirish faqat bot orqali, uy olish** — bot: /start → nik (format, so'z filtri, band emas; bir nik — bir akkaunt, bazada noyob indeks) → bir martalik havola `?kirish=` (15 daqiqa, bir marta; manzildan darhol o'chiriladi, Telegramga o'tishdan oldingi oyna qaytadi). Saytdagi tugma botga (`?start=login` yoki `r_<taklif>`); bot nomi bo'sh bo'lsa "Tez kunda". Ro'yxat, parol va kod bilan tiklash olib tashlandi; eski parolli akkaunt Telegram ulamaguncha faqat ko'radi (`telegram_required`). Nikni faqat admin o'zgartiradi (Foydalanuvchilar → Nik). Admin panelga kirish — botga `/admin` (faqat admin/moderator). Lokal sinov uchun kirish oynasida "Sinov kirish" (faqat `npm run dev`). Uy olish: nik profildan; asoschi nishoni navbat bilan (aniq 100); 3 oy kirmagan bepul uy bo'shaydi, pullik — yo'q. Bot: `/start wait` — kutish ro'yxati.
 - [x] **6-qadam, A (2026-11-25): tozalash va qoidalar** — uy leveli 1–5 (`MAX_TIER`, bazada `private.max_tier()`, `kit_levels.py` `MAX_LEVEL`; 6–10 modellari kodda qoladi), kuchaytirish 300/1 000/2 000/3 500 tanga va katta "Kuchaytirish" tugmasi (tasdiq → qurilish → tabrik), lyuks 5-leveldan, villa/qasrda ham 1–5-level uylar; uy/avatar ranglari, shikoyat va nik tasdig'i olib tashlandi (`0019_levels5.sql`)
 - [x] Reja tuzildi (2026-11-23)
 - [x] Mahalla prototipi — kompyuterda tayyor; **haqiqiy Redmi A telefonda hali sinalmagan**
@@ -264,6 +266,6 @@ Rejadan farqlar (sababi bilan):
 - KTX2/R2 ishlatilmadi: barcha 3D fayllar jami ~2,3 MB, Pages'ning o'zi yetadi.
 - Ko'p o'yinchi: Socket.io. Musiqa va tabiat ovozi sintez qilinadi (litsenziya masalasi yo'q).
 - Ko'cha/panjara kabi protsedural qismlar koddan, modellar Blender skriptidan (`npm run models`); Blender MCP kerak bo'lmadi.
-- `TURNSTILE_SECRET` ishlab chiqarishda majburiy (soxta akkauntlarga qarshi).
+- Soxta akkauntlarga qarshi: akkaunt faqat Telegram bot orqali ochiladi (bitta Telegram — bitta akkaunt, bitta nik — bitta akkaunt).
 
-Ma'lum cheklovlar: chastota chegarasi xato bilan tugagan urinishlarni sanamaydi; xazina va «3 mahalla» topshirig'ida joylashuv mijozdan olinadi (mukofotlar shuning uchun kichik); parol tiklanganda eski sessiyalar darhol yopilmaydi.
+Ma'lum cheklovlar: chastota chegarasi xato bilan tugagan urinishlarni sanamaydi; xazina va «3 mahalla» topshirig'ida joylashuv mijozdan olinadi (mukofotlar shuning uchun kichik); kirish havolasi 15 daqiqa amal qiladi (kim ko'rsa — kiradi), shuning uchun bot uni faqat shaxsiy chatga yuboradi.

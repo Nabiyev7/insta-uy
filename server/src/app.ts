@@ -1,22 +1,19 @@
-import { deleteAccount, register, resetFinish, resetStart, telegramLink, telegramPoll, telegramStart } from './auth.ts';
+import { deleteAccount, telegramLink, telegramRedeem } from './auth.ts';
 import { housePage, waitlist } from './pages.ts';
 import { PROVIDERS } from './payments/provider.ts';
-import { handleTelegram } from './telegram.ts';
+import { devTelegram, handleTelegram } from './telegram.ts';
 import { HttpError, type Ctx } from './types.ts';
 import { json } from './util.ts';
 
 type Handler = (req: Request, ctx: Ctx) => Promise<Response>;
 
 const POST: Readonly<Record<string, Handler>> = {
-  '/auth/register': register,
-  '/auth/telegram/start': telegramStart,
   '/auth/telegram/link': telegramLink,
-  '/auth/telegram/poll': telegramPoll,
-  '/auth/reset/start': resetStart,
-  '/auth/reset/finish': resetFinish,
+  '/auth/telegram/redeem': telegramRedeem,
   '/auth/delete': deleteAccount,
   '/waitlist': waitlist,
   '/telegram/webhook': handleTelegram,
+  '/dev/telegram': devTelegram,
 };
 
 const route = async (req: Request, ctx: Ctx, path: string): Promise<Response> => {

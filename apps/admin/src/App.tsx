@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { rpc, signIn, supabase, type Me } from './api.ts';
+import { rpc, signIn, signInFromLink, supabase, type Me } from './api.ts';
 import { Btn, NotifyContext, useAction, type Notify } from './ui.tsx';
 import { Districts, Stats } from './sections/Overview.tsx';
 import { Houses } from './sections/Houses.tsx';
@@ -29,6 +29,7 @@ function Login({ onDone }: { readonly onDone: () => void }): React.JSX.Element {
   return (
     <div className="login"><form onSubmit={submit}>
       <h2>CityLand UZ — admin</h2>
+      <p className="muted">Telegram botga <b>/admin</b> yozing — kirish havolasi keladi.</p>
       <input className="input" value={login} onChange={(e) => setLogin(e.target.value)} placeholder="Login" aria-label="Login" autoComplete="username" required />
       <input className="input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Parol" aria-label="Parol" autoComplete="current-password" required />
       <Btn kind="main" type="submit" disabled={isBusy}>Kirish</Btn>
@@ -63,7 +64,7 @@ export function App(): React.JSX.Element {
     }
     setReady(true);
   }, [notify]);
-  useEffect(() => { void loadMe(); }, [loadMe]);
+  useEffect(() => { void signInFromLink().catch((error: unknown) => notify(error instanceof Error ? error.message : 'Xato', true)).finally(() => { void loadMe(); }); }, [loadMe, notify]);
 
   const allowed = SECTIONS.filter(([, , perm]) => me && (perm === null || me.role === 'admin' || me.perms.includes(perm)));
   const current = allowed.find(([id]) => id === section) ?? allowed[0];

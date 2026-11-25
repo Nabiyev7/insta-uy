@@ -15,7 +15,7 @@ import { md5 } from '../src/util.ts';
 const keys = makeKeys('test-secret');
 const ENV: Env = {
   SUPABASE_URL: 'http://emu', SUPABASE_SERVICE_KEY: keys.service, SITE_URL: 'https://shahar.test', ALLOWED_ORIGINS: 'https://shahar.test', HASH_SECRET: 'h',
-  TELEGRAM_BOT: 'shahar_bot', TELEGRAM_WEBHOOK_SECRET: 'wh', ADMIN_TELEGRAM_ID: '1', BANK_BOT: 'bankbot', BANK_SECRET: 'bs', PAYME_KEY: 'pk', CLICK_SECRET: 'cs', CLICK_SERVICE_ID: '77',
+  TELEGRAM_BOT: 'shahar_bot', ADMIN_URL: 'https://admin.test', TELEGRAM_WEBHOOK_SECRET: 'wh', ADMIN_TELEGRAM_ID: '1', BANK_BOT: 'bankbot', BANK_SECRET: 'bs', PAYME_KEY: 'pk', CLICK_SECRET: 'cs', CLICK_SERVICE_ID: '77',
   META_TOKEN: 'mt', META_MEDIA_IDS: '123, bad', DEV: '1',
 };
 let db: PGlite;
@@ -44,6 +44,25 @@ const userRpc = async (jwt: string, fn: string, args: unknown = {}): Promise<Rec
   (await (await emu(new Request(`http://emu/rest/v1/rpc/${fn}`, { method: 'POST', body: JSON.stringify(args), headers: { authorization: `Bearer ${jwt}` } }))).json()) as Record<string, unknown>;
 const webhook = (update: unknown): ReturnType<typeof call> => call('/telegram/webhook', update, { 'x-telegram-bot-api-secret-token': 'wh' });
 const message = (id: number, text: string, extra = {}): unknown => ({ message: { message_id: 1, from: { id, first_name: 'Ali' }, chat: { id, type: 'private' }, text, ...extra } });
+const linkToken = (): string => /kirish=([0-9a-f]{32})/.exec(sent.at(-1)?.buttons?.[0]?.url ?? '')?.[1] ?? '';
+const redeem = async (token: string): Promise<string> => {
+  const r = (await call('/auth/telegram/redeem', { token })).body as { token_hash?: string };
+  if (!r.token_hash) return '';
+  const res = await emu(new Request('http://emu/auth/v1/verify', { method: 'POST', body: JSON.stringify({ token_hash: r.token_hash }) }));
+  return ((await res.json()) as { access_token: string }).access_token;
+};
+/** Bot orqali yangi akkaunt: /start → nik → havola → sessiya. */
+const botUser = async (id: number, nick: string): Promise<string> => {
+  await webhook(message(id, '/start login'));
+  await webhook(message(id, nick));
+  return redeem(linkToken());
+};
+/** Telegramsiz eski (parolli) akkaunt — faqat ulash sinovi uchun. */
+const legacyUser = async (login: string, password: string): Promise<string> => {
+  const user = await supabaseBackend(ENV, emuFetch).createUser(`${login}@login.citylanduz.uz`, password);
+  await db.query('select public.svc_profile_create($1, $2)', [user.id, login]);
+  return (await signIn(login, password))!;
+};
 
 beforeAll(async () => {
   db = await openDb();
@@ -51,83 +70,76 @@ beforeAll(async () => {
   await db.query("update settings set value = 'true' where key = 'payments_enabled'");
 });
 
-describe('ro‘yxatdan o‘tish', () => {
-  test('yaratadi, kiradi, takror login rad etiladi', async () => {
-    expect((await call('/auth/register', { login: 'Ali_1', password: 'parol12345' })).body).toEqual({ ok: true });
-    expect(await signIn('ali_1', 'parol12345')).toBeTruthy();
-    expect(await signIn('ali_1', 'xato')).toBeUndefined();
-    expect((await call('/auth/register', { login: 'ali_1', password: 'parol12345' })).body).toEqual({ error: 'login_taken' });
+describe('kirish faqat Telegram bot orqali', () => {
+  test('eski yo‘llar yopiq: ro‘yxat, parolni tiklash, so‘rov-kutish', async () => {
+    for (const p of ['/auth/register', '/auth/reset/start', '/auth/reset/finish', '/auth/telegram/start', '/auth/telegram/poll']) expect((await call(p, {})).status).toBe(404);
   });
-  test('validatsiya va noto‘g‘ri JSON', async () => {
-    expect((await call('/auth/register', { login: '1', password: 'parol12345' })).body.error).toBe('login_too_short');
-    expect((await call('/auth/register', { login: 'ali_2', password: '123' })).body.error).toBe('password_too_short');
-    expect((await call('/auth/register', '{')).body.error).toBe('bad_json');
-    expect((await call('/auth/register', { login: 5 })).body.error).toBe('bad_format');
-    expect((await call('/auth/register', 'x'.repeat(20_000))).status).toBe(413);
-  });
-  test('himoyasiz ishlab chiqarishda yopiq; tg<raqam> loginlar band qilinmaydi', async () => {
-    expect((await call('/auth/register', { login: 'prod_1', password: 'parol12345' }, {}, ctx({ env: { ...ENV, DEV: '' } }))).status).toBe(503);
-    expect((await call('/auth/register', { login: 'tg123456789', password: 'parol12345' })).body.error).toBe('login_taken');
-  });
-  test('bir IP dan cheklov', async () => {
-    const c = ctx();
-    const codes: number[] = [];
-    for (let i = 0; i < 7; i++) codes.push((await call('/auth/register', { login: `lim_${i}`, password: 'parol12345' }, {}, c)).status);
-    expect(codes.filter((s) => s === 429).length).toBe(2);
-  });
-  test('Turnstile', async () => {
-    const verify = (success: boolean): typeof fetch => async () => new Response(JSON.stringify({ success }));
-    const env = { ...ENV, TURNSTILE_SECRET: 'x' };
-    expect((await call('/auth/register', { login: 'bot_1', password: 'parol12345' }, {}, ctx({ env, fetch: verify(false) }))).body.error).toBe('bot_check');
-    expect((await call('/auth/register', { login: 'odam_1', password: 'parol12345' }, {}, ctx({ env, fetch: verify(true) }))).status).toBe(200);
-  });
-});
-
-describe('Telegram', () => {
   test('webhook siri majburiy', async () => {
     expect((await call('/telegram/webhook', message(5, '/start'))).status).toBe(403);
     expect((await call('/telegram/webhook', message(5, '/start'), { 'x-telegram-bot-api-secret-token': 'wrong' })).status).toBe(403);
   });
-  test('kirish: havola → tugma → sessiya, akkaunt avtomatik', async () => {
-    const start = (await call('/auth/telegram/start', {})).body as { token: string; url: string };
-    expect(start.url).toBe(`https://t.me/shahar_bot?start=login_${start.token}`);
-    expect((await call('/auth/telegram/poll', { token: start.token })).body).toEqual({ state: 'waiting' });
-    await webhook(message(700, `/start login_${start.token}`));
-    const button = sent.at(-1)!.buttons![0]!;
-    expect((await call('/auth/telegram/poll', { token: start.token })).body).toEqual({ state: 'waiting' });
-    await webhook({ callback_query: { id: 'c', from: { id: 700, first_name: 'Ali' }, data: button.data } });
-    const done = (await call('/auth/telegram/poll', { token: start.token })).body as { state: string; token_hash: string };
-    expect(done.state).toBe('ok');
-    const res = await emu(new Request('http://emu/auth/v1/verify', { method: 'POST', body: JSON.stringify({ token_hash: done.token_hash }) }));
-    const jwt = ((await res.json()) as { access_token: string }).access_token;
-    expect(await userRpc(jwt, 'my_profile')).toMatchObject({ login: 'tg700', telegram: true });
-    expect((await call('/auth/telegram/poll', { token: start.token })).body).toEqual({ state: 'expired' });
+  test('yangi odam: nik so‘raladi → akkaunt → bir martalik havola → sessiya', async () => {
+    await webhook(message(700, '/start login'));
+    expect(sent.at(-1)!.text).toContain('Instagram nikingizni');
+    await webhook(message(700, 'a b c'));
+    expect(sent.at(-1)!.text).toContain('lotin');
+    await webhook(message(700, '@Ali.Karimov'));
+    const token = linkToken();
+    expect(sent.at(-1)!.buttons![0]!.url).toBe(`https://shahar.test/?kirish=${token}`);
+    const jwt = await redeem(token);
+    expect(await userRpc(jwt, 'my_profile')).toMatchObject({ login: 'tg700', instagram: 'ali.karimov', telegram: true });
+    expect((await call('/auth/telegram/redeem', { token })).body).toEqual({ error: 'expired' });
+    expect((await call('/auth/telegram/redeem', { token: 'x' })).body.error).toBe('bad_format');
   });
-  test('ulash va parolni tiklash', async () => {
-    await call('/auth/register', { login: 'tikla_1', password: 'eskiparol1' });
-    const jwt = (await signIn('tikla_1', 'eskiparol1'))!;
+  test('band nik rad etiladi; qaytgan odamga darhol havola', async () => {
+    await webhook(message(701, '/start'));
+    await webhook(message(701, 'ali.karimov'));
+    expect(sent.at(-1)!.text).toContain('band');
+    await webhook(message(700, '/start'));
+    expect(await redeem(linkToken())).toBeTruthy();
+    await webhook({ callback_query: { id: 'c', from: { id: 700, first_name: 'Ali' }, data: 'open' } });
+    expect(linkToken()).toMatch(/^[0-9a-f]{32}$/);
+  });
+  test('taklif havolasi: /start r_kod', async () => {
+    const inviter = await botUser(710, 'taklifchi');
+    const ref = ((await userRpc(inviter, 'my_profile')) as { ref: string }).ref;
+    await webhook(message(711, `/start r_${ref}`));
+    await webhook(message(711, 'mehmon_tg'));
+    const [row] = (await db.query<{ referred_by: string }>("select referred_by from profiles where login = 'tg711'")).rows;
+    expect(row?.referred_by).toBeTruthy();
+  });
+  test('eski akkauntni ulash: tasdiq tugmasi', async () => {
+    const jwt = await legacyUser('eski_1', 'eskiparol1');
     expect((await call('/auth/telegram/link', {})).status).toBe(401);
     const link = (await call('/auth/telegram/link', {}, { authorization: `Bearer ${jwt}` })).body as { url: string };
     const token = link.url.split('link_')[1]!;
     await webhook(message(801, `/start link_${token}`));
     await webhook({ callback_query: { id: 'c', from: { id: 801, first_name: 'T' }, data: `ok:${token}` } });
-    expect((await call('/auth/reset/start', { login: 'yoq' })).body).toEqual((await call('/auth/reset/start', { login: 'tikla_1' })).body);
-    await webhook(message(801, '/parol'));
-    const code = /kodi: (\d{6})/.exec(sent.at(-1)!.text)![1]!;
-    const wrong = code === '000000' ? '111111' : '000000';
-    expect((await call('/auth/reset/finish', { login: 'tikla_1', code: wrong, password: 'yangiparol1' })).body.error).toBe('bad_code');
-    expect((await call('/auth/reset/finish', { login: 'yoq_user', code, password: 'yangiparol1' })).body.error).toBe('bad_code');
-    expect((await call('/auth/reset/finish', { login: 'tikla_1', code, password: 'yangiparol1' })).status).toBe(200);
-    expect(await signIn('tikla_1', 'yangiparol1')).toBeTruthy();
-    expect(await signIn('tikla_1', 'eskiparol1')).toBeUndefined();
+    expect(await userRpc(jwt, 'my_profile')).toMatchObject({ telegram: true });
+    await webhook(message(801, '/start'));
+    expect(linkToken()).toMatch(/^[0-9a-f]{32}$/);
   });
-  test('yordam adminga boradi, noma’lum buyruq — menyu, ulanmagan /parol', async () => {
+  test('kutish ro‘yxati, yordam adminga, noma’lum matn — menyu', async () => {
+    await webhook(message(900, '/start wait'));
+    expect(sent.at(-1)!.text).toContain('(1)');
     await webhook(message(900, '/yordam Uyim qani?'));
     expect(sent.some((m) => m.chat === 1 && m.text.includes('Uyim qani?'))).toBe(true);
-    await webhook(message(900, 'salom'));
-    expect(sent.at(-1)!.text).toContain('/parol');
-    await webhook(message(900, '/parol'));
-    expect(sent.at(-1)!.text).toContain('ulanmagan');
+    await webhook(message(700, 'salom'));
+    expect(sent.at(-1)!.text).toContain('/yordam');
+  });
+  test('/admin: faqat admin va moderatorga admin panel havolasi', async () => {
+    await webhook(message(700, '/admin'));
+    expect(sent.at(-1)!.text).toContain('faqat adminlar');
+    await db.query("update profiles set role = 'moderator' where telegram_id = 700");
+    await webhook(message(700, '/admin'));
+    const url = sent.at(-1)!.buttons![0]!.url!;
+    expect(url).toMatch(/^https:\/\/admin\.test\/\?kirish=[0-9a-f]{32}$/);
+    expect(await redeem(url.split('kirish=')[1]!)).toBeTruthy();
+    await db.query("update profiles set role = 'user' where telegram_id = 700");
+  });
+  test('lokal bot sinovi faqat DEV=1 da', async () => {
+    expect((await call('/dev/telegram', message(720, '/start'))).body).toMatchObject({ sent: [{ text: expect.stringContaining('Instagram') }] });
+    expect((await call('/dev/telegram', message(720, '/start'), {}, ctx({ env: { ...ENV, DEV: '' } }))).status).toBe(404);
   });
   test('Bot API: 403 yutiladi, 500 xato', async () => {
     const urls: string[] = [];
@@ -153,8 +165,7 @@ describe('to‘lovlar', () => {
     return (await userRpc(jwt, 'my_order', { p_kind: 'decor', p_payload: { id: 'sign_nick' } })) as { id: string; amount: number };
   };
   beforeAll(async () => {
-    await call('/auth/register', { login: 'xaridor', password: 'parol12345' });
-    jwt = (await signIn('xaridor', 'parol12345'))!;
+    jwt = await botUser(1200, 'xaridor');
   });
 
   test('karta: sir, mos summa, takror', async () => {
@@ -260,14 +271,14 @@ describe('sahifalar va cron', () => {
     await db.query("insert into video_jobs (status, file) values ('sent', 'https://x/v.mp4'), ('sent', 'lokal.mp4')");
     expect(await sendVideos(ctx())).toBe(1);
     expect(await sendVideos(ctx({ tg: null }))).toBe(0);
-    await db.query("insert into notifications (user_id, kind) select user_id, 'approved' from profiles where telegram_id = 700");
+    await db.query("insert into notifications (user_id, kind, data) select user_id, 'referral', '{\"nick\":\"x\"}' from profiles where telegram_id = 700");
     await runCron(ctx(), '*/10 * * * *');
-    expect(sent.some((m) => m.chat === 700 && m.text.includes('tasdiqlandi'))).toBe(true);
+    expect(sent.some((m) => m.chat === 700 && m.text.includes('Do‘stingiz'))).toBe(true);
   });
   test('akkauntni o‘chirish', async () => {
-    await call('/auth/register', { login: 'ochir_1', password: 'parol12345' });
-    const jwt = (await signIn('ochir_1', 'parol12345'))!;
+    const jwt = await botUser(1300, 'ochir_1');
     expect((await call('/auth/delete', {}, { authorization: `Bearer ${jwt}` })).body).toEqual({ ok: true });
-    expect(await signIn('ochir_1', 'parol12345')).toBeUndefined();
+    await webhook(message(1300, '/start'));
+    expect(sent.at(-1)!.text).toContain('Instagram nikingizni');
   });
 });

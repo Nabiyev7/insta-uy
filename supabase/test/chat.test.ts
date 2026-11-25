@@ -8,7 +8,7 @@ let n = 0;
 const svc = <T>(fn: string, args: Record<string, unknown> = {}): Promise<T> => rpc(db, 'service_role', null, fn, args) as Promise<T>;
 const user = async (role = 'user', perms: readonly string[] = []): Promise<string> => {
   const id = randomUUID();
-  await svc('svc_profile_create', { p_user: id, p_login: `chatchi${++n}`, p_ref: null });
+  await svc('svc_profile_create', { p_user: id, p_login: `chatchi${++n}`, p_ref: null, p_telegram: 900_000 + n });
   await db.query('update profiles set role = $2, perms = $3 where user_id = $1', [id, role, perms]);
   return id;
 };

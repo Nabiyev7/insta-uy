@@ -16,7 +16,7 @@ const set = (key: string, v: unknown): Promise<Row[]> => sql('update settings se
 
 const user = async (ref?: string): Promise<string> => {
   const id = randomUUID();
-  await svc('svc_profile_create', { p_user: id, p_login: `user${++n}`, p_ref: ref ?? null });
+  await svc('svc_profile_create', { p_user: id, p_login: `user${++n}`, p_ref: ref ?? null, p_telegram: 900_000 + n });
   return id;
 };
 const admin = async (): Promise<string> => {
@@ -306,7 +306,6 @@ describe('tanga iqtisodi', () => {
     await expect(as(uid, 'my_daily')).rejects.toThrow('already_claimed');
     await sql('update profiles set last_daily = current_date - 1 where user_id = $1', [uid]);
     expect(await as(uid, 'my_daily')).toMatchObject({ gain: 15, streak: 2 });
-    await expect(as(uid, 'my_quest_claim', { p_quest: 'telegram' })).rejects.toThrow('quest_not_ready');
     await as(uid, 'my_quest_claim', { p_quest: 'house' });
     await expect(as(uid, 'my_quest_claim', { p_quest: 'house' })).rejects.toThrow('already_claimed');
     for (const d of [1, 2, 3]) await as(uid, 'my_ping', { p_district: d });
@@ -358,19 +357,21 @@ describe('saylov, gazeta, bo‘shatish', () => {
     expect(((await anon('api_gazette')) as Row[]).length).toBe(1);
   });
 
-  test('faqat bepul, ogohlantirilgan, faol bo‘lmagan uy bo‘shaydi', async () => {
+  test('3 oy kirmagan bepul uy (level oshgan bo‘lsa ham) 2 hafta ogohlantirishdan keyin bo‘shaydi; pullik — yo‘q', async () => {
+    const paid = await owner();
+    await sql('update plot_state set is_free = false where plot_id = $1', [paid.plot]);
+    await sql("update profiles set last_seen = now() - interval '200 days' where user_id = $1", [paid.uid]);
     const { uid, plot } = await owner();
     await set('release_inactive', true);
     await sql("update profiles set last_seen = now() - interval '200 days' where user_id = $1", [uid]);
     await svc('svc_tick');
     expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned' });
     await sql("update notifications set created_at = now() - interval '15 days' where user_id = $1", [uid]);
-    await sql("update plot_state set tier = 2 where plot_id = $1", [plot]);
-    await svc('svc_tick');
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned' });
-    await sql("update plot_state set tier = 1 where plot_id = $1", [plot]);
+    await sql("update plot_state set tier = 3 where plot_id = $1", [plot]);
+    await sql("update notifications set created_at = now() - interval '15 days' where user_id = $1", [paid.uid]);
     await svc('svc_tick');
     expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'free' });
+    expect(await anon('api_plot', { p_plot: paid.plot })).toMatchObject({ status: 'owned' });
     await set('release_inactive', false);
   });
 
@@ -444,29 +445,73 @@ describe('admin', () => {
 });
 
 describe('xizmat funksiyalari', () => {
-  test('telegram login bir martalik', async () => {
-    const u = await user();
+  test('eski akkauntni Telegramga ulash bir martalik; bitta Telegram — bitta akkaunt', async () => {
+    const legacy = async (): Promise<string> => {
+      const id = randomUUID();
+      await svc('svc_profile_create', { p_user: id, p_login: `eski${++n}`, p_ref: null });
+      return id;
+    };
+    const u = await legacy();
+    await expect(as(u, 'my_daily')).rejects.toThrow('telegram_required');
     await svc('svc_tg_begin', { p_hash: 'h1', p_purpose: 'link', p_user: u });
     expect(await svc('svc_tg_confirm', { p_hash: 'h1', p_telegram: 555, p_name: 'Ali' })).toMatchObject({ ok: true, purpose: 'link' });
     expect(await svc('svc_tg_confirm', { p_hash: 'h1', p_telegram: 555, p_name: 'Ali' })).toMatchObject({ ok: false });
-    await svc('svc_tg_begin', { p_hash: 'h2', p_purpose: 'login' });
-    expect(await svc('svc_tg_consume', { p_hash: 'h2' })).toEqual({ state: 'waiting' });
-    await svc('svc_tg_confirm', { p_hash: 'h2', p_telegram: 555, p_name: 'Ali' });
-    expect(await svc('svc_tg_consume', { p_hash: 'h2' })).toMatchObject({ state: 'ok', user: u });
-    expect(await svc('svc_tg_consume', { p_hash: 'h2' })).toEqual({ state: 'expired' });
-    const u2 = await user();
+    expect(await as(u, 'my_daily')).toMatchObject({ gain: expect.any(Number) });
+    const u2 = await legacy();
     await svc('svc_tg_begin', { p_hash: 'h3', p_purpose: 'link', p_user: u2 });
     expect(await svc('svc_tg_confirm', { p_hash: 'h3', p_telegram: 555, p_name: 'Ali' })).toMatchObject({ ok: false, error: 'telegram_used' });
   });
 
-  test('parol kodi 5 urinishdan keyin o‘chadi', async () => {
-    const u = await user();
-    await svc('svc_reset_begin', { p_user: u, p_code_hash: 'good' });
-    for (let i = 0; i < 5; i++) expect(await svc('svc_reset_check', { p_user: u, p_code_hash: 'bad' })).toBe(false);
-    expect(await svc('svc_reset_check', { p_user: u, p_code_hash: 'good' })).toBe(false);
-    await svc('svc_reset_begin', { p_user: u, p_code_hash: 'good' });
-    expect(await svc('svc_reset_check', { p_user: u, p_code_hash: 'good' })).toBe(true);
-    expect(await svc('svc_reset_check', { p_user: u, p_code_hash: 'good' })).toBe(false);
+  test('bot: yangi odamdan nik so‘raladi, nik bir xil bo‘lmaydi, kirish havolasi bir martalik', async () => {
+    expect(await svc('svc_bot_start', { p_telegram: 4001, p_ref: null, p_name: 'Vali' })).toEqual({ state: 'need_nick' });
+    expect(await svc('svc_bot_session', { p_telegram: 4001 })).toMatchObject({ step: 'nick' });
+    expect(await svc('svc_nick_check', { p_nick: '@Vali.Uz' })).toBe('vali.uz');
+    const id = randomUUID();
+    await svc('svc_profile_create', { p_user: id, p_login: 'tg4001', p_telegram: 4001, p_instagram: 'Vali.Uz' });
+    expect(await svc('svc_bot_session', { p_telegram: 4001 })).toBeNull();
+    expect(await svc('svc_bot_start', { p_telegram: 4001, p_ref: null, p_name: 'Vali' })).toMatchObject({ state: 'ready', user: id });
+    await expect(svc('svc_nick_check', { p_nick: 'VALI.UZ' })).rejects.toThrow('nick_taken');
+    await expect(svc('svc_profile_create', { p_user: randomUUID(), p_login: 'tg4002', p_telegram: 4002, p_instagram: 'vali.uz' })).rejects.toThrow('nick_taken');
+    await expect(svc('svc_nick_check', { p_nick: 'a b' })).rejects.toThrow('bad_format');
+    await svc('svc_login_issue', { p_hash: 'm1', p_user: id });
+    expect(await svc('svc_login_redeem', { p_hash: 'm1' })).toBe(id);
+    expect(await svc('svc_login_redeem', { p_hash: 'm1' })).toBeNull();
+    await svc('svc_login_issue', { p_hash: 'm2', p_user: id });
+    await sql("update tg_tokens set expires_at = now() - interval '1 second' where token_hash = 'm2'");
+    expect(await svc('svc_login_redeem', { p_hash: 'm2' })).toBeNull();
+    await sql('update profiles set is_banned = true where user_id = $1', [id]);
+    expect(await svc('svc_bot_start', { p_telegram: 4001, p_ref: null, p_name: 'Vali' })).toMatchObject({ state: 'banned' });
+  });
+
+  test('shahar asoschisi: bir vaqtda kelganlardan aniq N kishi (navbat bilan)', async () => {
+    const before = Number((await sql("select count(*) from profiles where 'asoschi' = any (badges)"))[0]!.count);
+    await set('founder_limit', before + 3);
+    const people = await Promise.all(Array.from({ length: 6 }, () => user()));
+    const plots = ((await sql("select id from plots p where district_id = 1 and type = 'hovli' and not exists (select 1 from plot_state s where s.plot_id = p.id) order by id limit 6")) as Row[]).map((r) => r.id as string);
+    await Promise.all(people.map((uid, i) => as(uid, 'my_claim', { p_plot: plots[i], p_instagram: `asos${n}_${i}` })));
+    expect(Number((await sql("select count(*) from profiles where 'asoschi' = any (badges)"))[0]!.count)).toBe(before + 3);
+    await set('founder_limit', 100);
+  });
+
+  test('nikni faqat admin o‘zgartiradi; band nikka emas; uy ustidagi nik ham yangilanadi', async () => {
+    const a = await admin();
+    const { uid, plot } = await owner();
+    const other = await owner();
+    const otherNick = (await sql('select instagram from profiles where user_id = $1', [other.uid]))[0]!.instagram as string;
+    expect(await sql("select 1 from pg_proc where proname = 'my_set_nick'")).toEqual([]);
+    await expect(as(a, 'admin_user', { p_id: uid, p_action: 'nick', p_data: { instagram: otherNick } })).rejects.toThrow('nick_taken');
+    await as(a, 'admin_user', { p_id: uid, p_action: 'nick', p_data: { instagram: '@Yangi.Nik' } });
+    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ instagram: 'yangi.nik' });
+    await expect(as(uid, 'admin_user', { p_id: uid, p_action: 'nick', p_data: { instagram: 'boshqa' } })).rejects.toThrow('forbidden');
+  });
+
+  test('taklif havolasi bot orqali: /start r_kod → akkaunt ochilganda taklif qilgan odamga yoziladi', async () => {
+    const inviter = await user();
+    const ref = (await sql('select ref_code from profiles where user_id = $1', [inviter]))[0]!.ref_code as string;
+    await svc('svc_bot_start', { p_telegram: 4101, p_ref: ref, p_name: 'Mehmon' });
+    const id = randomUUID();
+    await svc('svc_profile_create', { p_user: id, p_login: 'tg4101', p_telegram: 4101, p_instagram: 'mehmon_bot' });
+    expect((await sql('select referred_by from profiles where user_id = $1', [id]))[0]!.referred_by).toBe(inviter);
   });
 
   test('akkaunt o‘chirilsa uy bo‘shaydi, shaxsiy ma’lumot qolmaydi', async () => {

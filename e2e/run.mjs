@@ -18,7 +18,9 @@ let browser;
 let server;
 try {
   server = await startServers();
-  const { API, SITE, ADMIN, data, service, call, tokenOf, adminToken } = server;
+  const { API, SITE, ADMIN, data, service, call, tgToken, adminToken } = server;
+  const { register } = helpers(server);
+  const ODAM = 5_000_001;
   const { enter } = helpers(server);
   browser = await launch();
   const errors = [];
@@ -102,13 +104,9 @@ try {
   });
   await step("ro'yxatdan o'tish va bo'sh joyga bepul uy qurish", async () => {
     await desk.locator('.nav5').getByRole('button', { name: 'Kirish' }).click();
-    await desk.getByRole('button', { name: "Ro'yxatdan o'tish" }).first().click();
-    await desk.getByLabel('Login').fill('sinov_odam');
-    await desk.getByLabel('Parol').fill('parol12345');
-    await desk.locator('form button[type=submit]').click();
+    await register(desk, ODAM, '@Sinov.Nik');
     await desk.getByRole('button', { name: /Bo'sh joy topish/ }).click();
     await desk.getByRole('button', { name: 'Shu yerda bepul uy qurish' }).click();
-    await desk.getByLabel('Instagram nikingiz').fill('@Sinov.Nik');
     await desk.locator('.sheet form button[type=submit]').click();
     await desk.waitForFunction(() => window.__app.getState().building !== null);
     const plotId = await desk.evaluate(() => window.__app.getState().building.plot);
@@ -129,14 +127,20 @@ try {
     await admin.getByText('@sinov.nik').waitFor();
     assert.equal(await admin.getByRole('button', { name: /Tasdiqlash/ }).count(), 0);
   });
-  await step('oddiy foydalanuvchi admin panelga kirolmaydi', async () => {
-    const p = await open({});
-    await p.goto(ADMIN);
-    await p.getByLabel('Login').fill('sinov_odam');
-    await p.getByLabel('Parol').fill('parol12345');
-    await p.getByRole('button', { name: 'Kirish' }).click();
-    await p.getByText("admin huquqi yo'q").waitFor();
-    await p.context().close();
+  await step('oddiy foydalanuvchi admin panelga kirolmaydi; moderatorga bot havolasi', async () => {
+    const res = await fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify({ message: { message_id: 1, from: { id: ODAM, first_name: 'S' }, chat: { id: ODAM, type: 'private' }, text: '/admin' } }) }).then((r) => r.json());
+    assert.match(res.sent[0].text, /faqat adminlar/);
+    const admin2 = await open({});
+    const me = (await call('admin_users', { p_q: `tg${ODAM}` }, await adminToken()))[0];
+    await call('admin_user', { p_id: me.id, p_action: 'role', p_data: { role: 'moderator', perms: ['plots'] } }, await adminToken());
+    const link = await fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify({ message: { message_id: 1, from: { id: ODAM, first_name: 'S' }, chat: { id: ODAM, type: 'private' }, text: '/admin' } }) }).then((r) => r.json());
+    await admin2.goto(link.sent[0].buttons[0].url);
+    await admin2.getByRole('button', { name: 'Uylar' }).waitFor();
+    assert.equal(new URL(admin2.url()).search, '', 'havola manzildan olib tashlansin');
+    await call('admin_user', { p_id: me.id, p_action: 'role', p_data: { role: 'user', perms: [] } }, await adminToken());
+    await admin2.reload();
+    await admin2.getByText("admin huquqi yo'q").waitFor();
+    await admin2.context().close();
   });
   await step('xarita: nik qidirish → kamera uchadi', async () => {
     await desk.keyboard.press('Escape');
@@ -173,13 +177,13 @@ try {
   };
   await step("bezak: 1-levelda yopiq; 5-levelda do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
     const token = await adminToken();
-    const me = (await call('admin_users', { p_q: 'sinov_odam' }, token))[0];
+    const me = (await call('admin_users', { p_q: `tg${ODAM}` }, token))[0];
     await shop('Bog‘', 'daraxt_olma');
     assert.ok(await desk.getByRole('button', { name: /^Olma daraxti: 5-levelda/ }).isDisabled(), '1-levelda bezak sotilmasin');
     const plot = await desk.evaluate(() => window.__app.getState().profile.plots[0].plot);
     const coins = await desk.evaluate(() => window.__app.getState().boot.settings.coins);
     await call('admin_setting', { p_key: 'coins', p_value: { ...coins, tier: { 2: 1, 3: 1, 4: 1, 5: 1 }, maxTier: 5 } }, token);
-    const mine = await tokenOf('sinov_odam', 'parol12345');
+    const mine = await tgToken(ODAM);
     for (let tier = 2; tier <= 5; tier++) await call('my_tier_coins', { p_plot: plot }, mine);
     await desk.reload();
     await desk.locator('.nav5').waitFor();

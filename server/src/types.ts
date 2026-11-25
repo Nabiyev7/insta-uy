@@ -6,6 +6,10 @@ export interface Env {
   readonly ALLOWED_ORIGINS: string;
   readonly TELEGRAM_TOKEN?: string;
   readonly TELEGRAM_BOT?: string;
+  /** Yangiliklar kanali (@siz). */
+  readonly TELEGRAM_CHANNEL?: string;
+  /** Admin panel manzili (botning /admin havolasi uchun). */
+  readonly ADMIN_URL?: string;
   readonly TELEGRAM_WEBHOOK_SECRET?: string;
   readonly ADMIN_TELEGRAM_ID?: string;
   readonly BANK_BOT?: string;
@@ -13,7 +17,6 @@ export interface Env {
   readonly PAYME_KEY?: string;
   readonly CLICK_SECRET?: string;
   readonly CLICK_SERVICE_ID?: string;
-  readonly TURNSTILE_SECRET?: string;
   readonly META_TOKEN?: string;
   readonly META_MEDIA_IDS?: string;
   /** Kod va tokenlarni xeshlash uchun tuz. */

@@ -12,7 +12,7 @@ const svc = <T = unknown>(fn: string, args: Row = {}): Promise<T> => rpc(db, 'se
 const sql = async (q: string, p: unknown[] = []): Promise<Row[]> => (await db.query<Row>(q, p)).rows;
 const user = async (role = 'user'): Promise<string> => {
   const id = randomUUID();
-  await svc('svc_profile_create', { p_user: id, p_login: `xaridor${++n}`, p_ref: null });
+  await svc('svc_profile_create', { p_user: id, p_login: `xaridor${++n}`, p_ref: null, p_telegram: 900_000 + n });
   await sql('update profiles set role = $2, coins = 20000 where user_id = $1', [id, role]);
   return id;
 };
@@ -116,8 +116,7 @@ describe('yangilik xabari', () => {
   test('faqat Telegrami bor va o‘chirmaganlarga', async () => {
     const admin = await user('admin');
     const [yes, no, none] = [await user(), await user(), await user()];
-    await sql('update profiles set telegram_id = 901 where user_id = $1', [yes]);
-    await sql('update profiles set telegram_id = 902 where user_id = $1', [no]);
+    await sql('update profiles set telegram_id = null where user_id <> all($1::uuid[])', [[yes, no]]);
     await as(no, 'my_news', { p_on: false });
     expect(await as(admin, 'admin_decor_announce', { p_id: 'yard_tandir' })).toBe(1);
     const got = (await sql("select user_id from notifications where kind = 'new_decor'")).map((r) => r.user_id);

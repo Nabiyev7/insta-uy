@@ -23,6 +23,10 @@ export function Users(): React.JSX.Element {
     const n = Number(prompt('Tanga (+/−):'));
     if (n) act(u.id, 'coins', { delta: n });
   };
+  const setNick = (u: UserRow): void => {
+    const nick = prompt('Yangi Instagram nik (faqat admin o‘zgartiradi):', u.instagram ?? '');
+    if (nick) act(u.id, 'nick', { instagram: nick });
+  };
   const actions = (u: UserRow): React.JSX.Element => (
     <>
       <select aria-label="Nishon berish" value="" onChange={(e) => act(u.id, 'badge', { badge: e.target.value })}>
@@ -31,6 +35,7 @@ export function Users(): React.JSX.Element {
       </select>
       <Btn disabled={isBusy} onClick={() => addCoins(u)}>Tanga</Btn>
       <Btn disabled={isBusy} onClick={() => setRole(u)}>Rol</Btn>
+      <Btn disabled={isBusy} onClick={() => setNick(u)}>Nik</Btn>
       <Btn kind="danger" disabled={isBusy} onClick={() => { if (confirm(u.banned ? 'Blokdan chiqarilsinmi?' : 'Bloklansinmi?')) act(u.id, u.banned ? 'unban' : 'ban'); }}>{u.banned ? 'Blokdan chiqarish' : 'Bloklash'}</Btn>
     </>
   );

@@ -20,6 +20,7 @@ function ClaimForm({ plot }: InfoProps): React.JSX.Element {
   const [nick, setNick] = useState(profile?.instagram ?? '');
   const [bio, setBio] = useState('');
   const [isOpen, setOpen] = useState(false);
+  const hasNick = Boolean(profile?.instagram);
   if (profile?.free_used) return <p className="muted">{t('e_free_used')}</p>;
   if (!isOpen) {
     const hint = setting('telegram_bot', '') ? t('tgFast') : t('needSignIn');
@@ -28,11 +29,11 @@ function ClaimForm({ plot }: InfoProps): React.JSX.Element {
   const submit = (e: FormEvent): void => {
     e.preventDefault();
     void run(async () => {
-      const ig = parseInstagram(nick);
-      if (!ig.ok) throw new Error(ig.code);
+      const ig = hasNick ? null : parseInstagram(nick);
+      if (ig && !ig.ok) throw new Error(ig.code);
       const text = parseBio(bio);
       if (!text.ok) throw new Error(text.code);
-      await rpc('my_claim', { p_plot: plot.id, p_instagram: ig.value, p_bio: text.value });
+      await rpc('my_claim', { p_plot: plot.id, p_instagram: ig?.value ?? null, p_bio: text.value });
       const full = getApp().plotById.get(plot.id);
       if (full) startConstruction(full);
       await Promise.all([refreshHouses(), refreshProfile()]);
@@ -40,7 +41,7 @@ function ClaimForm({ plot }: InfoProps): React.JSX.Element {
   };
   return (
     <form className="section" onSubmit={submit}>
-      <Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} placeholder="@nik" autoCapitalize="none" required maxLength={80} /></Field>
+      {hasNick ? <p className="nick">@{profile?.instagram}</p> : <Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} placeholder="@nik" autoCapitalize="none" required maxLength={80} /></Field>}
       <Field label={t('bio')}><input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} /></Field>
       <button type="submit" className="btn gold block big" disabled={isBusy}><Icon name="tools" />{t('claimBtn')}</button>
       <button type="button" className="link" onClick={() => openPanel({ kind: 'rules' })}>{t('rulesAgree')}</button>
@@ -57,7 +58,7 @@ function BuyPlot({ plot }: InfoProps): React.JSX.Element {
   const submit = (e: FormEvent): void => {
     e.preventDefault();
     void run(async () => {
-      const ig = parseInstagram(nick);
+      const ig = parseInstagram(profile?.instagram ?? nick);
       if (!ig.ok) throw new Error(ig.code);
       await createOrder('plot', { plot: plot.id, instagram: ig.value });
     });
@@ -67,7 +68,7 @@ function BuyPlot({ plot }: InfoProps): React.JSX.Element {
       <div className="row between"><span className="muted">{t('price')}</span><b>{money(plot.price)} {t('som')}</b></div>
       {!isPaid && <p className="muted">{t('paidSoon')}</p>}
       {isPaid && profile && <>
-        <Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} required maxLength={80} /></Field>
+        {!profile.instagram && <Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} required maxLength={80} /></Field>}
         <button type="submit" className="btn block" disabled={isBusy}>{t('buy')}</button>
       </>}
       {isPaid && !profile && <button type="button" className="btn block" onClick={() => openAuth()}>{t('login')}</button>}

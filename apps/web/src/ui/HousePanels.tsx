@@ -1,6 +1,6 @@
 /** O'z uyim ishlari: ranglar va material, level, nik, bezash, sovg'alar. */
 import { useState, type FormEvent } from 'react';
-import { MAX_TIER, TIERS, TIER_COINS, parseBio, parseInstagram, type TierId } from '../../../../packages/shared/src/index.ts';
+import { MAX_TIER, TIERS, TIER_COINS, parseBio, type TierId } from '../../../../packages/shared/src/index.ts';
 import { startConstruction } from '../app/actions.ts';
 import { rpc, type MyPlot } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
@@ -101,23 +101,6 @@ export function PaidExtras({ plot }: PlotProps): React.JSX.Element | null {
       {plot.expansion && !plot.has_expansion && <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(() => createOrder('expansion', { plot: plot.plot }))}>{t('expand')} · {money(prices.expansion)}</button>}
     </>
   );
-}
-
-/** Nik tasdiqlanmagan yoki band bo'lib qolgan uy: qayta yozish. */
-export function NickForm({ plot }: PlotProps): React.JSX.Element {
-  const t = useT();
-  const { isBusy, run } = useAction();
-  const [nick, setNick] = useState('');
-  const submit = (e: FormEvent): void => {
-    e.preventDefault();
-    void run(async () => {
-      const ig = parseInstagram(nick);
-      if (!ig.ok) throw new Error(ig.code);
-      await rpc('my_set_nick', { p_plot: plot.plot, p_instagram: ig.value });
-      await refreshMine();
-    }, t('sent'));
-  };
-  return <form className="stack" onSubmit={submit}><Field label={t('igNick')}><input value={nick} onChange={(e) => setNick(e.target.value)} placeholder="@nik" autoCapitalize="none" maxLength={80} required /></Field><button type="submit" className="btn" disabled={isBusy}>{t('save')}</button></form>;
 }
 
 function GiftHouse({ plot }: PlotProps): React.JSX.Element {

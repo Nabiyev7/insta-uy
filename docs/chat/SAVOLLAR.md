@@ -115,3 +115,12 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 3. **Avatar ranglari** odamga qarab avtomatik (bir xil odam — doim bir xil rang), tanlanmaydi.
 4. **Temir panjara va oltin darvoza** endi levelga tekin berilmaydi (eski 7–10-levelniki edi) — do'kondagi bezak sifatida 5-leveldan.
 5. **Kunduzgi tun yorug'ligi** 5-levelda ham yaxshi ko'rinadi (eski 10-levelnikidan kamroq).
+
+### B+C qismi
+1. **Kirish havolasi 15 daqiqa** amal qiladi va bir marta ishlaydi. Muddati o'tsa — botga /start yozib yangisini olish kerak.
+2. **Bot nomi** (`telegram_bot`) hali bo'sh — saytdagi tugma "Tez kunda". Egasi bot nomini admin → Sozlamalar'ga yozganda ishlaydi.
+3. **Admin panelga kirish** — botga `/admin` (faqat admin/moderator). Serverga `ADMIN_URL` (admin panel manzili) yozish kerak.
+4. **Eski parolli akkauntlar** (sinov paytida ochilganlar) kirib ko'ra oladi, lekin uy olish, chat, sovg'a uchun Telegram ulashi kerak. Parol tiklash yo'q.
+5. **Birinchi admin**: botga /start yozib akkaunt ochiladi, so'ng bazada `role='admin'` qilinadi (README).
+6. **Kim kirmasa**: 3 oy (90 kun) — bepul uy bo'shaydi, 2 hafta oldin bot ogohlantiradi. Level oshirilgan bepul uy ham bo'shaydi (faqat pulga olingani qoladi). Pulga kengaytirilgan bepul uy ham bo'shaydi; sovg'a qilib berilgan uy esa pullik hisoblanadi va bo'shamaydi — kerak bo'lsa o'zgartiramiz.
+7. **Instagram ichki brauzeri**: bot havolasi tashqi brauzerda emas, Telegram ichida ochilishi mumkin — sayt baribir kirgan holda ochiladi.

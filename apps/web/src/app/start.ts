@@ -3,6 +3,7 @@ import { loadKit } from '../world/kit.ts';
 import { goToPlot } from './actions.ts';
 import { onSession, rpc, supabase } from './api.ts';
 import { startAudio } from './audio.ts';
+import { applyLoginLink } from './login.ts';
 import { connectMultiplayer } from './multiplayer.ts';
 import { getApp, loadPlan, refreshBoot, refreshCatalog, refreshHouses, refreshProfile, setApp } from './store.ts';
 import { exposeVideoApi } from './videoMode.ts';
@@ -59,6 +60,7 @@ export const start = async (): Promise<void> => {
     }
     setApp({ kit, stage: isVideoMode || seen ? 'play' : 'intro' });
     if (isVideoMode) { exposeVideoApi(); return; }
+    void applyLoginLink();
     await runBackground();
   } catch (error: unknown) {
     setApp({ stage: 'error', error: error instanceof Error ? error.message : 'load' });

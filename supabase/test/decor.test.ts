@@ -12,7 +12,7 @@ const anon = <T = unknown>(fn: string, args: Row = {}): Promise<T> => rpc(db, 'a
 const sql = async (q: string, p: unknown[] = []): Promise<Row[]> => (await db.query<Row>(q, p)).rows;
 const user = async (role = 'user'): Promise<string> => {
   const id = randomUUID();
-  await rpc(db, 'service_role', null, 'svc_profile_create', { p_user: id, p_login: `bezakchi${++n}`, p_ref: null });
+  await rpc(db, 'service_role', null, 'svc_profile_create', { p_user: id, p_login: `bezakchi${++n}`, p_ref: null, p_telegram: 900_000 + n });
   await sql('update profiles set role = $2, coins = 50000 where user_id = $1', [id, role]);
   return id;
 };

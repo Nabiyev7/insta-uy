@@ -13,6 +13,7 @@ const { open, register, raise } = helpers(server);
 const PHONE = { width: 390, height: 844 };
 const SMALL = { width: 360, height: 640 };
 const LOGIN = 'ai_nabiyev7';
+const TG = 7_000_007;
 const make = async (viewport, { isPhone = true, lang = 'uz', storage } = {}) => {
   const ctx = await browser.newContext({ viewport, isMobile: isPhone, hasTouch: isPhone, deviceScaleFactor: 2, ...(storage ? { storageState: storage } : {}) });
   await ctx.addInitScript((l) => {
@@ -69,14 +70,13 @@ const guestScreens = async () => {
   await shot(guest, 'ui-bosh-joy', 1500);
   await guest.getByRole('button', { name: 'Shu yerda bepul uy qurish' }).click();
   await shot(guest, 'ui-kirish');
-  await register(guest, LOGIN);
+  await register(guest, TG, LOGIN);
   await guest.getByRole('button', { name: 'Shu yerda bepul uy qurish' }).click();
-  await guest.getByLabel('Instagram nikingiz').fill(`@${LOGIN}`);
   await shot(guest, 'ui-uy-qurish');
   await guest.locator('.sheet form button[type=submit]').click();
   await guest.getByRole('heading', { name: /Tabriklaymiz/ }).waitFor({ timeout: 20_000 });
   await shot(guest, 'ui-tabrik');
-  await raise(guest, LOGIN, 5, 1250);
+  await raise(guest, TG, 5, 1250);
   const storage = await guest.context().storageState();
   await guest.context().close();
   return { id, storage };

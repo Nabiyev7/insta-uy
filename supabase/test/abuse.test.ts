@@ -13,7 +13,7 @@ const svc = (fn: string, args: Row = {}): Promise<unknown> => rpc(db, 'service_r
 const sql = async (q: string, p: unknown[] = []): Promise<Row[]> => (await db.query<Row>(q, p)).rows;
 const user = async (role = 'user', perms: string[] = [], ref: string | null = null): Promise<string> => {
   const id = randomUUID();
-  await svc('svc_profile_create', { p_user: id, p_login: `maxfiy_login${++n}`, p_ref: ref });
+  await svc('svc_profile_create', { p_user: id, p_login: `maxfiy_login${++n}`, p_ref: ref, p_telegram: 900_000 + n });
   await sql('update profiles set role = $2, perms = $3 where user_id = $1', [id, role, perms]);
   return id;
 };

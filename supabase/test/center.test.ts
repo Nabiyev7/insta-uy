@@ -8,7 +8,7 @@ let uid: string;
 beforeAll(async () => {
   db = await openDb();
   uid = randomUUID();
-  await rpc(db, 'service_role', null, 'svc_profile_create', { p_user: uid, p_login: 'markazchi', p_ref: null });
+  await rpc(db, 'service_role', null, 'svc_profile_create', { p_user: uid, p_login: 'markazchi', p_ref: null, p_telegram: 900_001 });
 });
 const quote = (id: string): Promise<unknown> =>
   db.query("select private.quote(p, 'commerce', jsonb_build_object('id', $1::text)) q from public.profiles p where user_id = $2", [id, uid]);

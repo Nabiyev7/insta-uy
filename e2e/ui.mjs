@@ -37,10 +37,11 @@ const noEmoji = async (page, where) => {
 
 /** Bitta ekran o'lchami va tilda hamma oqim. */
 const runFlows = async ({ browser, server, viewport, lang, step }) => {
-  const { enter, raise } = helpers(server);
+  const { enter, raise, register } = helpers(server);
   const isPhone = viewport.width < 700;
   const tag = `${viewport.width}×${viewport.height} ${lang}`;
   const login = `ui_${lang}_${viewport.width}`;
+  const tgId = (lang === 'uz' ? 6_100_000 : 6_200_000) + viewport.width;
   const errors = [];
   const ctx = await browser.newContext({ viewport, hasTouch: isPhone, isMobile: isPhone, deviceScaleFactor: 1 });
   await ctx.addInitScript((l) => { localStorage.setItem('lang', l); localStorage.setItem('quality', 'low'); }, lang);
@@ -76,17 +77,16 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await noEmoji(page, 'bo‘sh joy');
     await sheet.getByRole('button', { name: T.buildFree }).click();
     await heading(T.login);
-    await sheet.getByRole('button', { name: T.viaTelegram }).waitFor();
+    assert.match(await sheet.getByRole('link', { name: T.viaTelegram }).getAttribute('href'), /^https:\/\/t\.me\/[a-z_]+\?start=login$/);
+    assert.equal(await sheet.getByLabel(T.password).isVisible(), false, 'parol maydoni yashirin bo‘lsin (eski akkauntlar uchun)');
   });
 
   await at('2. kirish → o‘sha joyga qaytadi → uy qurish → tabrik → nik', async () => {
-    await sheet.getByRole('button', { name: T.register, exact: true }).first().click();
-    await page.getByLabel(T.loginField).fill(login);
-    await page.getByLabel(T.password).fill('parol12345');
-    await sheet.locator('form button[type=submit]').click();
+    await register(page, tgId, login);
     await waitFor(() => app(() => window.__app.getState().panel?.kind === 'plot' && window.__app.getState().profile !== null), 'kirgach uchastkaga qaytish');
     await sheet.getByRole('button', { name: T.buildFree }).click();
-    await page.getByLabel(T.igNick).fill(`@${login}`);
+    assert.equal(await page.getByLabel(T.igNick).count(), 0, 'nik botda yozilgan — qayta so‘ralmasin');
+    await sheet.locator(`.nick`, { hasText: `@${login}` }).waitFor();
     await sheet.locator('form button[type=submit]').click();
     await waitFor(() => app(() => window.__app.getState().building !== null), async () => `qurilish: ${await page.locator('.toasts').innerText().catch(() => '')}`);
     await heading(T.congrats);
@@ -222,13 +222,13 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     };
     await openMine();
     const coins = await app(() => window.__app.getState().profile.coins);
-    await raise(page, login, 1, -coins);
+    await raise(page, tgId, 1, -coins);
     await reload(1);
     await openMine();
     await sheet.getByText(T.needMore.replace('{n}', '300')).waitFor();
     await sheet.getByRole('button', { name: T.addCoins }).click();
     await heading(T.coins);
-    await raise(page, login, 1, 300);
+    await raise(page, tgId, 1, 300);
     await reload(1);
     await openMine();
     await sheet.locator('.upgrade').click();
@@ -247,7 +247,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await goods('lux_pavilyon').getByText(`5-${T.atLevel}`).waitFor();
     await goods('dam_basseyn').click();
     assert.ok(await sheet.locator('footer .btn').last().isDisabled(), '1-levelda bezak sotilmasin');
-    await raise(page, login, 5, ENOUGH + 10);
+    await raise(page, tgId, 5, ENOUGH + 10);
     await reload(5);
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
     await openTab('tabYard');
@@ -379,10 +379,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await goods('avto_sedan').click();
     await sheet.locator('footer .btn').last().click();
     await heading(T.login);
-    await sheet.getByRole('button', { name: T.login, exact: true }).first().click();
-    await page.getByLabel(T.loginField).fill(login);
-    await page.getByLabel(T.password).fill('parol12345');
-    await sheet.locator('form button[type=submit]').click();
+    await register(page, tgId, login);
     await heading(T.shop);
     assert.equal(await goods('avto_sedan').getAttribute('aria-pressed'), 'true', 'kirgach o‘sha tovarga qaytsin');
   });

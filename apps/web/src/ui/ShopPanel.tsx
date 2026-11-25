@@ -107,8 +107,22 @@ function BuySetBar({ set, level, need }: { readonly set: SetRow; readonly level:
   return <button type="button" className="btn block" disabled={isBusy || (isLocked && profile !== null)} aria-label={`${set[lang]}: ${label}`} onClick={buy}>{label}</button>;
 }
 
-/** Kirish yoki boshqa oynadan qaytganda do'kon o'sha joyida ochiladi. */
-const memory: { tab: ShopTab | null; picked: string | null } = { tab: null, picked: null };
+/** Kirish (Telegramdan qaytish — sahifa qayta yuklanadi) yoki boshqa oynadan qaytganda do'kon o'sha joyida ochiladi. */
+const MEMORY_KEY = 'shopPick';
+type ShopMemory = { tab: ShopTab | null; picked: string | null };
+const readMemory = (): ShopMemory => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(MEMORY_KEY) ?? 'null') as Partial<ShopMemory> | null;
+    return { tab: typeof raw?.tab === 'string' ? raw.tab : null, picked: typeof raw?.picked === 'string' ? raw.picked : null };
+  } catch {
+    return { tab: null, picked: null };
+  }
+};
+let memory: ShopMemory = readMemory();
+const saveMemory = (next: ShopMemory): void => {
+  memory = next;
+  try { localStorage.setItem(MEMORY_KEY, JSON.stringify(next)); } catch { /* maxfiy rejim */ }
+};
 
 export function ShopPanel(): React.JSX.Element {
   const t = useT();
@@ -118,7 +132,7 @@ export function ShopPanel(): React.JSX.Element {
   const best = useBestPlot();
   const [tab, setTab] = useState(memory.tab);
   const [picked, setPicked] = useState(memory.picked);
-  useEffect(() => { Object.assign(memory, { tab, picked }); }, [tab, picked]);
+  useEffect(() => { saveMemory({ tab, picked }); }, [tab, picked]);
   const loaded = useLoad(refreshCatalog, 'catalog');
   const tabs = shopTabs(catalog, sets);
   const current = tabs.find((x) => x.tab === tab) ?? tabs[0];
