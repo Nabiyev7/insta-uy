@@ -21,7 +21,7 @@ const freePlot = async (type = 'hovli'): Promise<string> =>
 const pay = async (order: string, amount: number, provider = 'card'): Promise<Row> => svc<Row>('svc_payment', { p_provider: provider, p_external: `x${++n}`, p_amount: amount, p_order: order });
 const coinsOf = async (uid: string): Promise<number> => (await sql('select coins from profiles where user_id = $1', [uid]))[0]!.coins as number;
 
-beforeAll(async () => { db = await openDb(); });
+beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); });
 
 describe('to‘lov o‘chiq', () => {
   test('payments_enabled=false: buyurtma ham, Stars ham yo‘q', async () => {
@@ -36,27 +36,29 @@ describe('premium (to‘lov yoqilgan)', () => {
 
   test('tanga paketi: narx serverda, to‘langach tanga + bonus', async () => {
     const { uid } = await user();
-    expect(await as(uid, 'my_quote', { p_kind: 'coins', p_payload: { pack: 2 } })).toBe(25000);
+    expect(await as(uid, 'my_quote', { p_kind: 'coins', p_payload: { pack: 2 } })).toBe(6000);
     await expect(as(uid, 'my_quote', { p_kind: 'coins', p_payload: { pack: 9 } })).rejects.toThrow('not_found');
     const o = await as<Row>(uid, 'my_order', { p_kind: 'coins', p_payload: { pack: 2 } });
     const before = await coinsOf(uid);
     expect(await pay(o.id as string, o.amount as number)).toMatchObject({ result: 'paid' });
-    expect(await coinsOf(uid)).toBe(before + 3300);
+    expect(await coinsOf(uid)).toBe(before + 1200);
   });
 
   test('Stars: bot buyurtmasi yulduzda, tekshiruv va to‘lov', async () => {
     const { uid, tg } = await user();
-    const o = await svc<Row>('svc_stars_order', { p_telegram: tg, p_kind: 'coins', p_payload: { pack: 1 } });
-    expect(o).toMatchObject({ stars: 50, title: '1000 tanga' });
-    expect(await svc('svc_stars_check', { p_order: o.id, p_telegram: tg, p_stars: 50 })).toBe(true);
-    expect(await svc('svc_stars_check', { p_order: o.id, p_telegram: tg, p_stars: 49 })).toBe(false);
-    expect(await svc('svc_stars_check', { p_order: o.id, p_telegram: tg + 1, p_stars: 50 })).toBe(false);
+    // 1- va 2-paket Stars'da sotilmaydi (50 ⭐ dan kam).
+    await expect(svc('svc_stars_order', { p_telegram: tg, p_kind: 'coins', p_payload: { pack: 1 } })).rejects.toThrow('stars_unavailable');
+    const o = await svc<Row>('svc_stars_order', { p_telegram: tg, p_kind: 'coins', p_payload: { pack: 3 } });
+    expect(o).toMatchObject({ stars: 60, title: '3000 tanga' });
+    expect(await svc('svc_stars_check', { p_order: o.id, p_telegram: tg, p_stars: 60 })).toBe(true);
+    expect(await svc('svc_stars_check', { p_order: o.id, p_telegram: tg, p_stars: 59 })).toBe(false);
+    expect(await svc('svc_stars_check', { p_order: o.id, p_telegram: tg + 1, p_stars: 60 })).toBe(false);
     // Ikki kishi bir xil yulduz summasi bilan bir vaqtda buyurtma bera oladi.
     const other = await user();
-    await svc('svc_stars_order', { p_telegram: other.tg, p_kind: 'coins', p_payload: { pack: 1 } });
+    await svc('svc_stars_order', { p_telegram: other.tg, p_kind: 'coins', p_payload: { pack: 3 } });
     const before = await coinsOf(uid);
-    expect(await pay(o.id as string, 50, 'stars')).toMatchObject({ result: 'paid' });
-    expect(await coinsOf(uid)).toBe(before + 1000);
+    expect(await pay(o.id as string, 60, 'stars')).toMatchObject({ result: 'paid' });
+    expect(await coinsOf(uid)).toBe(before + 3000);
   });
 
   test('premium uy: darhol tanlangan level, bir nechta; villa qimmatroq', async () => {
@@ -114,8 +116,27 @@ describe('premium (to‘lov yoqilgan)', () => {
     expect(await svc('svc_refund_target', { p_user: admin.uid, p_payment: payment })).toMatchObject({ provider: 'card' });
     const before = await coinsOf(uid);
     await as(admin.uid, 'admin_payment', { p_id: payment, p_action: 'refunded' });
-    expect(await coinsOf(uid)).toBe(before - 1000);
+    expect(await coinsOf(uid)).toBe(before - 500);
     expect((await sql('select status from orders where id = $1', [o.id]))[0]!.status).toBe('refunded');
     await expect(as(admin.uid, 'admin_payment', { p_id: payment, p_action: 'refunded' })).rejects.toThrow('already_claimed');
   });
 });
+
+describe('Stars chegarasi va premium uy bayroqchasi', () => {
+  test('kurs bo‘yicha 50 ⭐ dan arzon tovar Stars’da sotilmaydi', async () => {
+    await flag('payments_enabled', true);
+    const { tg } = await user();
+    // gul_zor: 5 000 so'm → 25 ⭐ < 50
+    await expect(svc('svc_stars_order', { p_telegram: tg, p_kind: 'decor', p_payload: { id: 'gul_zor' } })).rejects.toThrow('stars_unavailable');
+    expect(await svc('svc_stars_order', { p_telegram: tg, p_kind: 'salute', p_payload: { text: 'Salom' } })).toMatchObject({ stars: 50 });
+  });
+  test('premium_house_enabled=false: pulga uchastka sotilmaydi (sayt ham, bot ham)', async () => {
+    await flag('premium_house_enabled', false);
+    const { uid, tg } = await user();
+    const plot = await freePlot();
+    await expect(as(uid, 'my_quote', { p_kind: 'plot', p_payload: { plot, tier: 3 } })).rejects.toThrow('not_for_sale');
+    await expect(svc('svc_stars_order', { p_telegram: tg, p_kind: 'plot', p_payload: { plot, tier: 3 } })).rejects.toThrow('not_for_sale');
+    await flag('premium_house_enabled', true);
+  });
+});
+

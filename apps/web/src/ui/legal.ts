@@ -5,7 +5,7 @@ export type Doc = Readonly<Record<Lang, readonly (readonly [string, readonly str
 
 export const FAQ: Doc = {
   uz: [
-    ['Uyni qanday olaman?', ["\"Kirish\" → Telegram botga o'ting, Instagram nikingizni yozing — bot saytga kirish havolasini yuboradi.", "\"Bo'sh joy — oling!\" taxtachali joyni bosing va \"Shu yerda uy qurish\" ni tanlang. Uy darhol quriladi.", '1 kishiga 1 ta bepul uy (1-level). Qo‘shimcha uylar — pulga.']],
+    ['Uyni qanday olaman?', ["\"Kirish\" → Telegram botga o'ting, Instagram nikingizni yozing — bot saytga kirish havolasini yuboradi.", "\"Bo'sh joy — oling!\" taxtachali joyni bosing va \"Shu yerda uy qurish\" ni tanlang. Uy darhol quriladi.", '1 kishiga 1 ta bepul uy (1-level). Uyni tanga bilan 5-levelgacha ko‘tarasiz: 300 / 1 000 / 2 000 / 3 500. Bezaklar 5-leveldan.']],
     ['Uyim joyi o‘zgaradimi?', ['Yo‘q. Uchastka ID, ko‘cha va joy qulflangan. Yangilanishlarda faqat ko‘rinish o‘zgaradi.']],
     ['Boshqa uylardan qanday ajralib turaman?', ['Daraja, bezak, nik yorlig‘i bilan. Uy ko‘pi bilan ikki qavat (5-leveldan) — asosan hashamati oshadi.']],
     ['Qanday kiraman?', ['Parol yo‘q: botga /start yozing — bot bir martalik havola yuboradi (15 daqiqa amal qiladi).']],
@@ -13,7 +13,7 @@ export const FAQ: Doc = {
     ['O‘yin qotyapti', ['Menyu → Sozlamalar → Sifat: Past. Brauzerni yangilang.']],
   ],
   ru: [
-    ['Как получить дом?', ['«Войти» → перейдите в Telegram-бот, напишите ник в Instagram — бот пришлёт ссылку для входа на сайт.', 'Нажмите на участок с табличкой «Свободно — забирайте!» и выберите «Построить дом здесь». Дом строится сразу.', 'Один бесплатный дом (1 уровень) на человека. Дополнительные дома — платно.']],
+    ['Как получить дом?', ['«Войти» → перейдите в Telegram-бот, напишите ник в Instagram — бот пришлёт ссылку для входа на сайт.', 'Нажмите на участок с табличкой «Свободно — забирайте!» и выберите «Построить дом здесь». Дом строится сразу.', 'Один бесплатный дом (1 уровень) на человека. Монетами дом растёт до 5 уровня: 300 / 1 000 / 2 000 / 3 500. Украшения — с 5 уровня.']],
     ['Изменится ли место моего дома?', ['Нет. Участок, улица и координаты зафиксированы. При обновлениях меняется только внешний вид.']],
     ['Как выделиться?', ['Уровнем дома, украшениями, табличкой. Дом — максимум два этажа (с 5 уровня), дальше растёт роскошь.']],
     ['Как войти?', ['Пароля нет: напишите боту /start — он пришлёт одноразовую ссылку (действует 15 минут).']],

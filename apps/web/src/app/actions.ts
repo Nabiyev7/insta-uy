@@ -5,7 +5,7 @@ import { viewOfPlot } from '../logic/cityCamera.ts';
 import { BUILD_MS, FLIGHT_MS } from '../logic/construction.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { flyTo, goToHouse, setMode } from './modes.ts';
-import { director, here, session, snapshotters } from './runtime.ts';
+import { cancelBuildTimer, director, here, session, snapshotters } from './runtime.ts';
 import { translate } from './i18n.ts';
 import { getApp, openRoot, setApp, toast } from './store.ts';
 
@@ -52,13 +52,18 @@ export const tryDecor = (row: CatalogRow): boolean => {
 /** Uy olindi: kamera uchastkaga uchadi, uy quriladi, so'ng "Tabriklaymiz". */
 /** Uy qurilishi (yangi uy yoki kuchaytirilgan level): kamera uchadi, uy ko'tariladi, so'ng tabrik. */
 export const startConstruction = (p: Plot, tier?: number): void => {
+  cancelBuildTimer();
   setApp({ building: { plot: p.id, at: performance.now() + FLIGHT_MS }, panel: null });
   if (session.mode !== 'city') setMode('city');
   flyTo(viewOfPlot(p));
-  setTimeout(() => {
+  session.buildTimer = setTimeout(() => {
+    session.buildTimer = null;
     buzz(BUZZ.big);
+    const cheer = { plot: p.id, tier: tier ?? 1, isBuilt: !tier };
+    // Shu orada boshqa oyna ochilgan bo'lsa — uni yopmaymiz: tabrik pastki kartada kutadi.
+    if (getApp().panel !== null) { setApp({ building: null, cheer }); return; }
     const panel = tier ? { kind: 'congrats', id: p.id, tier } as const : { kind: 'congrats', id: p.id } as const;
-    setApp({ building: null, cheer: { plot: p.id, tier: tier ?? 1, isBuilt: !tier }, panel, trail: [] });
+    setApp({ building: null, cheer, panel, trail: [] });
   }, FLIGHT_MS + BUILD_MS);
 };
 

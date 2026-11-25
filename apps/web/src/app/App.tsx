@@ -56,7 +56,9 @@ function PanelView({ panel }: { readonly panel: Panel }): React.JSX.Element {
 
 function Toasts(): React.JSX.Element {
   const toasts = useApp((s) => s.toasts);
-  return <div className="toasts" role="status" aria-live="polite">{toasts.map((x) => <p key={x.id} className={x.isError ? 'error' : ''}>{x.text}</p>)}</div>;
+  // Oyna ochiq bo'lsa xabar uning tugmalarini yopmasin — ekran tepasiga chiqadi.
+  const hasPanel = useApp((s) => s.panel !== null);
+  return <div className={`toasts ${hasPanel ? 'top' : ''}`} role="status" aria-live="polite">{toasts.map((x) => <p key={x.id} className={x.isError ? 'error' : ''}>{x.text}</p>)}</div>;
 }
 
 /** Tun rejimi, sifat (past sifatda xiralashtirish o'chadi) va chap qo'l — CSS shu belgilarga qaraydi. */

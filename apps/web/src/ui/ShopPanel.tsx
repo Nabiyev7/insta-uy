@@ -109,6 +109,8 @@ function BuySetBar({ set, level, need }: { readonly set: SetRow; readonly level:
 
 /** Kirish (Telegramdan qaytish — sahifa qayta yuklanadi) yoki boshqa oynadan qaytganda do'kon o'sha joyida ochiladi. */
 const MEMORY_KEY = 'shopPick';
+/** Tanlangan tab chetda kesilib qolmasin. */
+const scrollIntoTab = (el: HTMLButtonElement | null): void => { el?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); };
 type ShopMemory = { tab: ShopTab | null; picked: string | null };
 const readMemory = (): ShopMemory => {
   try {
@@ -144,7 +146,7 @@ export function ShopPanel(): React.JSX.Element {
   return (
     <Sheet title={t('shop')} variant="full" extra={wallet} footer={footer}>
       <div className="tabs" role="tablist" aria-label={t('shop')}>
-        {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{t(TAB_NAMES[x.tab])}</button>)}
+        {tabs.map((x) => <button type="button" role="tab" key={x.tab} ref={x.tab === current?.tab ? scrollIntoTab : undefined} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{t(TAB_NAMES[x.tab])}</button>)}
       </div>
       {(loaded.hasError || !current) && <LoadState of={loaded} isEmpty={!current} empty={t('shopEmpty')} />}
       <div className="goods">
@@ -170,16 +172,17 @@ export function CarsPanel(): React.JSX.Element {
   return (
     <Sheet title={t('myCars')} variant="half">
       <ul className="list">
-        {CARS.filter((c) => mine.has(c.id) || (c.decor !== null && onSale.has(c.decor))).map((c) => (
+        {CARS.filter((c) => mine.has(c.id)).map((c) => (
           <li key={c.id}>
             <DecorImage model={c.model} />
             <span className="grow"><b>{c[lang]}</b><br /><span className="muted">{Math.round(c.top * KMH)} {t('kmh')}</span></span>
             {mine.has(c.id)
               ? <button type="button" className={`btn small ${car.id === c.id ? '' : 'soft'}`} onClick={() => pick(c.id)}>{car.id === c.id && <Icon name="check" />}{t(car.id === c.id ? 'chosen' : 'choose')}</button>
-              : <button type="button" className="btn small gold" onClick={() => openPanel({ kind: 'shop' })}>{t('buy')}</button>}
+              : null}
           </li>
         ))}
       </ul>
+      {CARS.some((c) => !mine.has(c.id) && c.decor !== null && onSale.has(c.decor)) && <button type="button" className="btn block gold" onClick={() => { saveMemory({ tab: 'car', picked: null }); openPanel({ kind: 'shop' }); }}><Icon name="shop" />{t('moreCars')}</button>}
     </Sheet>
   );
 }

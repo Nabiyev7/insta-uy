@@ -1,23 +1,16 @@
-/** Chat oynasi: Umumiy, Mahalla, Onlayn. Yarim ekran — yuqorida shahar ko'rinib turadi. */
+/** Chat oynasi: Umumiy va (uyi borlarga) Mahalla. Yarim ekran — yuqorida shahar ko'rinib turadi. */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { setMuted } from '../app/chat.ts';
 import { useT } from '../app/i18n.ts';
-import { goToPoint } from '../app/modes.ts';
-import { loadOnline, moderateMessage, sendChat, type OnlinePerson } from '../app/multiplayer.ts';
+import { moderateMessage, sendChat } from '../app/multiplayer.ts';
 import { openAuth, setApp, toast, useApp, type ChatLine } from '../app/store.ts';
 import { Icon } from './icons.tsx';
 import { Seg, Sheet, askConfirm } from './kit.tsx';
 
-type Tab = 'all' | 'district' | 'online';
+type Tab = 'all' | 'district';
 const MAX_TEXT = 200;
-const ONLINE_REFRESH_MS = 5000;
 const COMMON = 0;
 
-const useHomeDistricts = (): readonly number[] => {
-  const profile = useApp((s) => s.profile);
-  const plotById = useApp((s) => s.plotById);
-  return [...new Set((profile?.plots ?? []).filter((p) => p.status === 'owned').map((p) => plotById.get(p.plot)?.districtId ?? 0).filter((d) => d > 0))];
-};
 const useCanModerate = (): boolean => useApp((s) => s.profile?.role === 'admin' || (s.profile?.role === 'moderator' && s.profile.perms.includes('reports')));
 
 function MessageTools({ line, onClose }: { readonly line: ChatLine; readonly onClose: () => void }): React.JSX.Element {
@@ -79,72 +72,26 @@ function Composer({ channel, canWrite }: { readonly channel: number; readonly ca
   );
 }
 
-function OnlineList(): React.JSX.Element {
-  const t = useT();
-  const boot = useApp((s) => s.boot);
-  const lang = useApp((s) => s.lang);
-  const muted = useApp((s) => s.muted);
-  const online = useApp((s) => s.online);
-  const [people, setPeople] = useState<readonly OnlinePerson[]>([]);
-  useEffect(() => {
-    let isActive = true;
-    const load = (): void => { void loadOnline().then((list) => { if (isActive) setPeople(list); }); };
-    load();
-    const id = setInterval(load, ONLINE_REFRESH_MS);
-    return () => {
-      isActive = false;
-      clearInterval(id);
-    };
-  }, []);
-  const districtName = (id: number): string => { const d = boot?.districts.find((x) => x.id === id); return d ? (lang === 'uz' ? d.name_uz : d.name_ru) : t('plaza'); };
-  const guests = Math.max(0, online - people.length);
-  return (
-    <ul className="list">
-      {people.map((p) => (
-        <li key={p.author}>
-          <button type="button" className="plain" onClick={() => goToPoint(p.x, p.z)}><b>{p.nick}</b><br /><span className="muted">{districtName(p.district)}</span></button>
-          <Icon name="next" className="chev" />
-        </li>
-      ))}
-      {people.length === 0 && guests === 0 && <li className="muted">{t('listEmpty')}</li>}
-      {guests > 0 && <li className="muted">+{guests} {t('guests')}</li>}
-      {muted.map((m) => <li key={`jim-${m.author}`}><span className="grow muted with-icon"><Icon name="mute" />{m.nick}</span><button type="button" className="btn small soft" onClick={() => setMuted(m, false)}>{t('unmute')}</button></li>)}
-    </ul>
-  );
-}
 
-function DistrictTab(): React.JSX.Element {
-  const t = useT();
-  const boot = useApp((s) => s.boot);
-  const lang = useApp((s) => s.lang);
-  const here = useApp((s) => s.district);
-  const homes = useHomeDistricts();
-  const canModerate = useCanModerate();
-  const [picked, setPicked] = useState(here || homes[0] || 1);
-  return (
-    <>
-      <select className="input" value={picked} aria-label={t('chatDistrict')} onChange={(e) => setPicked(Number(e.target.value))}>
-        {boot?.districts.map((d) => <option key={d.id} value={d.id}>{homes.includes(d.id) ? '• ' : ''}{lang === 'uz' ? d.name_uz : d.name_ru}</option>)}
-      </select>
-      <Messages channel={picked} />
-      <Composer channel={picked} canWrite={homes.includes(picked) || canModerate} />
-    </>
-  );
+/** Mahalla chati: faqat birinchi olingan uyning mahallasi (tanlov yo'q). */
+function DistrictTab({ district }: { readonly district: number }): React.JSX.Element {
+  return <><Messages channel={district} /><Composer channel={district} canWrite /></>;
 }
 
 export function ChatPanel(): React.JSX.Element {
   const t = useT();
-  const online = useApp((s) => s.online);
+  // Uyi yo'q yoki mehmon — faqat "Umumiy"; bir nechta uy bo'lsa — eng birinchi olinganining mahallasi.
+  const firstPlot = useApp((s) => s.profile?.plots.find((p) => p.status === 'owned')?.plot);
+  const district = useApp((s) => (firstPlot ? s.plotById.get(firstPlot)?.districtId ?? 0 : 0));
   const [tab, setTab] = useState<Tab>('all');
   useEffect(() => {
     setApp({ unread: 0 });
   }, []);
   return (
     <Sheet title={t('chatTitle')} variant="half chat">
-      <Seg<Tab> label={t('chatTitle')} value={tab} onPick={setTab} options={[['all', t('chatAll')], ['district', t('chatDistrict')], ['online', `${t('chatOnline')} (${online})`]]} />
-      {tab === 'all' && <><Messages channel={COMMON} /><Composer channel={COMMON} canWrite /></>}
-      {tab === 'district' && <DistrictTab />}
-      {tab === 'online' && <OnlineList />}
+      {district > 0 && <Seg<Tab> label={t('chatTitle')} value={tab} onPick={setTab} options={[['all', t('chatAll')], ['district', t('chatDistrict')]]} />}
+      {(tab === 'all' || district === 0) && <><Messages channel={COMMON} /><Composer channel={COMMON} canWrite /></>}
+      {tab === 'district' && district > 0 && <DistrictTab district={district} />}
     </Sheet>
   );
 }

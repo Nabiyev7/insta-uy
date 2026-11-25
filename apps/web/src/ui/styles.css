@@ -383,3 +383,15 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .list.packs li { flex-wrap: wrap; gap: 8px; }
 .list.packs li .tag { margin-left: 6px; }
 .banner.salute { background: var(--main); color: var(--on-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+/* 6a: admin sinov rejimi belgisi */
+.test-chip { position: absolute; left: 50%; bottom: calc(6px + var(--safe-b, 0px)); transform: translateX(-50%); margin: 0; padding: 3px 10px; border-radius: 10px; background: #b42318; color: #fff; font-size: 11px; font-weight: 700; pointer-events: none; z-index: 5; }
+.btn.test-buy { background: #b42318; color: #fff; }
+.tag.best { background: var(--gold-a); color: var(--on-gold); }
+.tag.popular { background: var(--main); color: var(--on-main); }
+/* 6a: xabar oyna tugmalarini yopmasin; do'kon tablari chetida so'nish */
+.toasts.top { bottom: auto; top: calc(64px + var(--safe-t)); }
+.tabs { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); scroll-padding-inline: 24px; }
+.tabs > * { flex: 0 0 auto; }
+.heart .btn .icon { margin-right: 4px; }
+.heart .btn[aria-pressed='true'] svg path { fill: currentColor; }
+

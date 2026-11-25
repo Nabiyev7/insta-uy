@@ -1,20 +1,25 @@
 import { deleteAccount, telegramLink, telegramRedeem } from './auth.ts';
 import { housePage, waitlist } from './pages.ts';
 import { PROVIDERS } from './payments/provider.ts';
+import { register, resetFinish, resetStart } from './password.ts';
 import { refund } from './shop.ts';
-import { channelCheck, devTelegram, handleTelegram } from './telegram.ts';
+import { channelCheck, devAdmin, devTelegram, handleTelegram } from './telegram.ts';
 import { HttpError, type Ctx } from './types.ts';
 import { json } from './util.ts';
 
 type Handler = (req: Request, ctx: Ctx) => Promise<Response>;
 
 const POST: Readonly<Record<string, Handler>> = {
+  '/auth/register': register,
+  '/auth/reset/start': resetStart,
+  '/auth/reset/finish': resetFinish,
   '/auth/telegram/link': telegramLink,
   '/auth/telegram/redeem': telegramRedeem,
   '/auth/delete': deleteAccount,
   '/waitlist': waitlist,
   '/telegram/webhook': handleTelegram,
   '/dev/telegram': devTelegram,
+  '/dev/admin': devAdmin,
   '/coins/channel': channelCheck,
   '/pay/refund': refund,
 };

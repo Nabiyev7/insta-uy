@@ -3,8 +3,7 @@ import type { Lang } from '../../../../packages/shared/src/index.ts';
 import { rpc, signOut } from '../app/api.ts';
 import { startAudio, stopAudio } from '../app/audio.ts';
 import { useT, type Key } from '../app/i18n.ts';
-import { openPanel, openRoot, refreshProfile, setApp, setting, useApp, write, type Theme } from '../app/store.ts';
-import type { QualityLevel } from '../logic/quality.ts';
+import { openPanel, openRoot, refreshProfile, setApp, setting, useApp, write } from '../app/store.ts';
 import { Icon, type IconName } from './icons.tsx';
 import { RowLink, Section, Seg, Sheet, useAction } from './kit.tsx';
 import { FAQ, PRIVACY, RULES, type Doc } from './legal.ts';
@@ -26,8 +25,8 @@ const pickLang = (v: Lang): void => {
 
 type MenuKind = 'city' | 'gazette' | 'avatar' | 'cars' | 'coins' | 'settings' | 'help' | 'rules' | 'privacy';
 const MENU: readonly (readonly [Key, readonly (readonly [MenuKind, IconName, Key])[]])[] = [
-  ['mCity', [['city', 'bank', 'cityWorks'], ['gazette', 'news', 'gazette']]],
-  ['mMe', [['avatar', 'user', 'avatar'], ['cars', 'drive', 'myCars'], ['coins', 'coin', 'coins']]],
+  ['mCity', [['city', 'bank', 'cityWorks']]],
+  ['mMe', [['cars', 'drive', 'myCars'], ['coins', 'coin', 'coins']]],
   ['mMore', [['settings', 'settings', 'settings'], ['help', 'help', 'help'], ['rules', 'rules', 'rules'], ['privacy', 'privacy', 'privacy']]],
 ];
 export function MenuPanel(): React.JSX.Element {
@@ -51,40 +50,25 @@ export function MenuPanel(): React.JSX.Element {
   );
 }
 
+/** Sozlamalarda faqat Til va Ovoz (sifat — doim "Avto", interfeys — doim to'q). Adminga — sinov rejimi. */
 export function SettingsPanel(): React.JSX.Element {
   const t = useT();
-  const { lang, quality, isAutoQuality, isSound, theme, isLeftHand, profile } = useApp();
+  const { lang, isSound, profile } = useApp();
   const { run } = useAction();
-  const setQuality = (v: QualityLevel | 'auto'): void => {
-    write('quality', v === 'auto' ? '' : v);
-    setApp(v === 'auto' ? { isAutoQuality: true } : { isAutoQuality: false, quality: v });
-  };
   const setSound = (v: 'on' | 'off'): void => {
     write('sound', v === 'on' ? '1' : '0');
     setApp({ isSound: v === 'on' });
     if (v === 'on') startAudio();
     else stopAudio();
   };
-  const setTheme = (v: Theme): void => {
-    write('theme', v);
-    setApp({ theme: v });
-  };
-  const setHand = (v: 'left' | 'right'): void => {
-    write('hand', v);
-    setApp({ isLeftHand: v === 'left' });
-  };
   return (
     <Sheet title={t('settings')}>
       <Section title={t('language')}><Seg label={t('language')} value={lang} onPick={pickLang} options={LANGS} /></Section>
-      <Section title={t('quality')}><Seg<QualityLevel | 'auto'> label={t('quality')} value={isAutoQuality ? 'auto' : quality} onPick={setQuality} options={[['auto', t('auto')], ['low', t('low')], ['mid', t('mid')], ['high', t('high')]]} /></Section>
       <Section title={t('sound')}><Seg<'on' | 'off'> label={t('sound')} value={isSound ? 'on' : 'off'} onPick={setSound} options={[['on', t('on')], ['off', t('off')]]} /></Section>
-      <Section title={t('night')}><Seg<Theme> label={t('night')} value={theme} onPick={setTheme} options={[['auto', t('auto')], ['light', t('light')], ['dark', t('dark')]]} /></Section>
-      <Section title={t('hand')}><Seg<'left' | 'right'> label={t('hand')} value={isLeftHand ? 'left' : 'right'} onPick={setHand} options={[['right', t('handRight')], ['left', t('handLeft')]]} /></Section>
-      <Section title={t('notifs')}>
-        {profile
-          ? <><span className="muted">{t('newsTg')}</span><Seg<'on' | 'off'> label={t('newsTg')} value={profile.wants_news ? 'on' : 'off'} onPick={(v) => void run(async () => { await rpc('my_news', { p_on: v === 'on' }); await refreshProfile(); }, t('saved'))} options={[['on', t('on')], ['off', t('off')]]} /></>
-          : <p className="muted">{t('notifsLogin')}</p>}
-      </Section>
+      {profile?.role === 'admin' && <Section title={t('testMode')}>
+        <p className="muted">{t('testModeHint')}</p>
+        <Seg<'on' | 'off'> label={t('testMode')} value={profile.test_mode ? 'on' : 'off'} onPick={(v) => void run(async () => { await rpc('my_test_mode', { p_on: v === 'on' }); await refreshProfile(); }, t('saved'))} options={[['on', t('on')], ['off', t('off')]]} />
+      </Section>}
       <RowLink icon="eyeOff" text={t('hideUi')} onClick={hideScreen} />
     </Sheet>
   );

@@ -191,3 +191,14 @@ describe('mashina', () => {
     expect(CARS.every((c) => c.uz && c.ru)).toBe(true);
   });
 });
+
+describe('mashinalar bitta manbadan', () => {
+  test('nom do‘kon (katalog) bilan bir xil; tezlik: oddiy < sedan < krossover < sport < jip < limuzin < superkar', async () => {
+    const { DECOR } = await import('../../../packages/shared/src/index.ts');
+    for (const c of CARS) if (c.decor) expect(c.uz).toBe(DECOR.find((d) => d.id === c.decor)!.uz);
+    const top = (id: string): number => carById(id).top;
+    const order = ['oddiy', 'yangi_sedan', 'krossover', 'yangi_sport', 'jip', 'limuzin', 'superkar'];
+    for (let i = 1; i < order.length; i++) expect(top(order[i]!)).toBeGreaterThan(top(order[i - 1]!));
+  });
+});
+

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PerspectiveCamera } from 'three';
-import { districtAt, hash01, inLake, sanitizeAvatar, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
+import { DEFAULT_AVATAR, districtAt, hash01, inLake, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
 import { camera as cam, city, director, here, player, remotes, session, snapshotters, transition } from '../app/runtime.ts';
 import { getApp, setApp, useApp } from '../app/store.ts';
 import { MIN_HEIGHT } from '../logic/cityCamera.ts';
@@ -33,10 +33,10 @@ interface PlayerLayerProps { readonly plan: MasterPlan; readonly kit: Kit }
 
 export function PlayerLayer({ plan, kit }: PlayerLayerProps): null {
   const { scene, camera, gl, size } = useThree();
-  const profile = useApp((s) => s.profile);
   const level = useApp((s) => s.quality);
   const boot = useApp((s) => s.boot);
-  const look = useMemo(() => sanitizeAvatar(profile?.avatar), [profile]);
+  // Avatar tanlash hozircha yo'q: hamma o'yinchi bir xil standart ko'rinishda (bazadagi qiymat qoladi).
+  const look = DEFAULT_AVATAR;
   const avatars = useMemo(() => new Avatars(), []);
   const names = useMemo(() => new Labels(), []);
   const cars = useMemo(() => new Pools(kit), [kit]);
@@ -102,7 +102,7 @@ export function PlayerLayer({ plan, kit }: PlayerLayerProps): null {
       const y = groundHeight(r.x, r.z, []);
       const spec = carOfAnim(r.anim);
       if (spec) vehicles.push(carItem(spec.model, spec.scale, r.x, y, r.z, r.yaw));
-      else bodies.push({ x: r.x, y, z: r.z, yaw: r.yaw, anim: r.anim, look: r.look, phase: hash01(r.id) * 10 });
+      else bodies.push({ x: r.x, y, z: r.z, yaw: r.yaw, anim: r.anim, look: DEFAULT_AVATAR, phase: hash01(r.id) * 10 });
     }
     if (isPeopleVisible()) for (const n of npcs) if (n.x < NPC_HIDDEN && !inLake(n.x, n.z)) bodies.push({ x: n.x, y: groundHeight(n.x, n.z, []), z: n.z, yaw: n.yaw, anim: n.pause > 0 ? 0 : 1, look: n.look, phase: n.seed, scale: 0.92 + (n.seed % 5) * 0.03 });
     avatars.update(bodies, seconds);

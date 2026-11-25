@@ -19,7 +19,8 @@ interface Rankings {
   readonly popular: readonly { readonly plot: string; readonly instagram: string; readonly hearts: number }[];
   readonly districts: readonly { readonly id: number; readonly active: number }[]; readonly inviters: readonly { readonly nick: string; readonly n: number }[];
 }
-interface Yards { readonly leaders: readonly { readonly plot: string; readonly instagram: string; readonly votes: number }[]; readonly winner: { readonly plot: string; readonly instagram: string; readonly votes: number } | null }
+interface YardWinner { readonly plot: string; readonly instagram: string; readonly votes: number; readonly week: string }
+interface Yards { readonly winners?: readonly YardWinner[] }
 export function RankPanel(): React.JSX.Element {
   const t = useT();
   const name = useDistrictName();
@@ -32,12 +33,11 @@ export function RankPanel(): React.JSX.Element {
       <LoadState of={loaded} />
       {!loaded.hasError && yardsLoaded.hasError && <LoadState of={yardsLoaded} />}
       {yards && <Section title={t('yardWeek')} icon="flower">
-        {yards.winner && <p>{t('lastWinner')}: <button type="button" className="link" onClick={() => yards.winner && goToPlot(yards.winner.plot)}>@{yards.winner.instagram}</button> · {yards.winner.votes} {t('votes')}</p>}
-        <ul className="list">{yards.leaders.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="muted">{h.votes} {t('votes')}</span></li>)}</ul>
-        {yards.leaders.length === 0 && <p className="muted">{t('yardHow')}</p>}
+        <p className="muted">{t('yardHow')}</p>
+        <ul className="list">{(yards.winners ?? []).map((h) => <li key={h.week}><span className="muted">{new Date(h.week).toLocaleDateString('ru-RU')}</span><button type="button" className="plain grow" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="muted">{h.votes} {t('votes')}</span></li>)}</ul>
       </Section>}
       <Section title={t('rankPopular')} icon="heart">{data?.popular.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.popular.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold with-icon"><Icon name="heart" />{h.hearts}</span></li>)}</ul></Section>
-      <Section title={t('rankHouses')}>{data?.houses.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.houses.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold">{h.score}</span></li>)}</ul></Section>
+      <Section title={t('rankHouses')}><p className="muted">{t('scoreHint')}</p>{data?.houses.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.houses.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold">{h.score}</span></li>)}</ul></Section>
       <Section title={t('rankDistricts')}><ul className="list">{data?.districts.map((d, i) => <li key={d.id}><span className="n">{i + 1}</span><span className="grow">{name(d.id)}</span><span className="muted">{d.active}</span></li>)}</ul></Section>
       <Section title={t('rankInviters')}>{data?.inviters.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.inviters.map((d, i) => <li key={d.nick}><span className="n">{i + 1}</span><span className="grow">{d.nick}</span><span className="muted">{d.n}</span></li>)}</ul></Section>
     </Sheet>
@@ -92,9 +92,12 @@ function ChannelBonus({ gain }: { readonly gain: number }): React.JSX.Element {
   );
 }
 
-interface Pack { readonly coins: number; readonly bonus: number; readonly uzs: number }
+interface Pack { readonly coins: number; readonly bonus: number; readonly uzs: number; readonly stars?: number | null; readonly tag?: 'best' | 'popular' }
 interface PremiumSettings { readonly packs?: readonly Pack[]; readonly salute?: { readonly uzs: number; readonly coins: number } }
-const PACKS: readonly Pack[] = [{ coins: 1000, bonus: 0, uzs: 10000 }, { coins: 3000, bonus: 300, uzs: 25000 }, { coins: 7000, bonus: 1000, uzs: 50000 }, { coins: 16000, bonus: 3000, uzs: 100000 }];
+const PACKS: readonly Pack[] = [
+  { coins: 500, bonus: 0, uzs: 3000, stars: null }, { coins: 1000, bonus: 200, uzs: 6000, stars: null }, { coins: 2500, bonus: 500, uzs: 12000, stars: 60 },
+  { coins: 5500, bonus: 1500, uzs: 25000, stars: 125, tag: 'popular' }, { coins: 12000, bonus: 4000, uzs: 50000, stars: 250, tag: 'best' },
+];
 
 function CoinPacks(): React.JSX.Element {
   const t = useT();
@@ -102,8 +105,8 @@ function CoinPacks(): React.JSX.Element {
   return (
     <Section title={t('buyCoins')} icon="coin">
       <ul className="list packs">{packs.map((p, i) => (
-        <li key={p.uzs}><span className="grow"><b>{money(p.coins)}</b>{p.bonus > 0 && <span className="tag gold">+{money(p.bonus)} {t('bonusWord')}</span>}</span>
-          <PayButtons kind="coins" payload={{ pack: i + 1 }} uzs={p.uzs} code={`pack${i + 1}`} /></li>))}</ul>
+        <li key={p.uzs}><span className="grow"><b>{money(p.coins)}</b>{p.bonus > 0 && <span className="tag gold">+{money(p.bonus)} {t('bonusWord')}</span>}{p.tag && <span className={`tag ${p.tag}`}>{t(p.tag === 'best' ? 'packBest' : 'packPopular')}</span>}{!p.stars && <span className="muted"> · {t('cardOnly')}</span>}</span>
+          <PayButtons kind="coins" payload={{ pack: i + 1 }} uzs={p.uzs} code={`pack${i + 1}`} stars={p.stars ?? null} /></li>))}</ul>
     </Section>
   );
 }

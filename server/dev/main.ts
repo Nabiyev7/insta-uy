@@ -29,7 +29,7 @@ const origins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://lo
 
 const env: Env = {
   ...(process.env as unknown as Env), SUPABASE_URL: base, SUPABASE_SERVICE_KEY: keys.service, SITE_URL: process.env.SITE_URL ?? 'http://localhost:5173', ADMIN_URL: process.env.ADMIN_URL ?? 'http://localhost:5174',
-  ALLOWED_ORIGINS: origins.join(','), HASH_SECRET: DEV_SECRET, DEV: '1',
+  ALLOWED_ORIGINS: origins.join(','), HASH_SECRET: DEV_SECRET, DEV: '1', DEV_CHANNEL_OK: process.env.DEV_CHANNEL_OK,
 };
 const emuFetch: typeof fetch = (input, init) => emulator(new Request(input as string, init));
 const backend = supabaseBackend(env, emuFetch);

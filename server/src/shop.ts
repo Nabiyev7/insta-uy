@@ -20,6 +20,8 @@ export const parseProduct = (code: string): Product | null => {
 const SOON = "⏳ To'lovlar tez kunda ochiladi. Hozircha tanga bilan oling. / Оплата скоро откроется. Пока используйте монеты.";
 const ERRORS: Readonly<Record<string, string>> = {
   payments_off: SOON,
+  stars_unavailable: 'Bu tovar Stars bilan sotilmaydi — saytda karta yoki tanga bilan oling. / Только картой или монетами на сайте.',
+  not_for_sale: 'Hozircha sotuvda emas. / Пока не продаётся.',
   user_not_found: 'Avval /start bosib akkaunt oching. / Сначала нажмите /start.',
   not_free: 'Bu joy band. Saytdan boshqasini tanlang. / Место занято.',
   too_many_orders: "Ochiq buyurtmalar ko'p — avval ularni tugating. / Слишком много открытых заказов.",
@@ -49,14 +51,18 @@ export const buyCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: nu
   return sendInvoice(ctx, tg, chat, telegram, p);
 };
 
-const PACK_BUTTONS: readonly TgButton[] = [
-  { text: '🪙 1 000 — 50⭐', data: 'buy:pack1' }, { text: '🪙 3 000 + 300 — 125⭐', data: 'buy:pack2' },
-  { text: '🪙 7 000 + 1 000 — 250⭐', data: 'buy:pack3' }, { text: '🪙 16 000 + 3 000 — 500⭐', data: 'buy:pack4' },
-  { text: '🎆 Salyut — 50⭐', data: 'buy:salute' },
-];
+interface Pack { readonly coins: number; readonly bonus?: number; readonly stars?: number | null; readonly tag?: string }
+interface Premium { readonly packs?: readonly Pack[]; readonly starsMin?: number }
+const fmt = (n: number): string => n.toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
+const TAGS: Readonly<Record<string, string>> = { best: ' · Eng foydali', popular: ' · Ommabop' };
+/** Faqat Stars narxi bor (≥ 50 ⭐) paketlar; 1–2-paket — faqat saytda karta bilan. */
+export const packButtons = (p: Premium): readonly TgButton[] => (p.packs ?? []).flatMap((pk, i) => (pk.stars && pk.stars >= (p.starsMin ?? 50)
+  ? [{ text: `🪙 ${fmt(pk.coins + (pk.bonus ?? 0))} — ${pk.stars}⭐${TAGS[pk.tag ?? ''] ?? ''}`, data: `buy:pack${i + 1}` }] : []));
 /** /dokon: tanga paketlari va salyut; uy va bezak — saytda tanlanadi. */
-export const shopMenu = (ctx: Ctx, tg: Telegram, chat: number): Promise<void> =>
-  tg.send(chat, "🛍 Do'kon / Магазин\nUy va bezaklarni saytda tanlang — \"Olish (Stars)\" tugmasi shu yerga olib keladi.", [...PACK_BUTTONS, { text: '🏙 Sayt / Сайт', url: ctx.env.SITE_URL }]);
+export const shopMenu = async (ctx: Ctx, tg: Telegram, chat: number): Promise<void> => {
+  const premium = await ctx.db.rpc<Premium | null>('svc_premium', {});
+  return tg.send(chat, "🛍 Do'kon / Магазин\nKichik paketlar va bezaklar — saytda (karta yoki tanga).", [...packButtons(premium ?? {}), { text: '🎆 Salyut — 50⭐', data: 'buy:salute' }, { text: '🏙 Sayt / Сайт', url: ctx.env.SITE_URL }]);
+};
 
 /** pre_checkout_query: buyurtma hali kutilmoqdami, summa va egasi to'g'rimi. */
 export const preCheckout = async (ctx: Ctx, tg: Telegram, q: { readonly id: string; readonly from: { readonly id: number }; readonly total_amount: number; readonly invoice_payload: string }): Promise<void> => {

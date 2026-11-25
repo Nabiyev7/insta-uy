@@ -5,7 +5,7 @@ import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareStory } from
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { forgetMe } from '../app/multiplayer.ts';
-import { openAuth, openPanel, openRoot, refreshProfile, toast, useApp } from '../app/store.ts';
+import { openAuth, openPanel, openRoot, refreshProfile, setting, toast, useApp } from '../app/store.ts';
 import { PaidExtras, UpgradeButton } from './HousePanels.tsx';
 import { Icon } from './icons.tsx';
 import { RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
@@ -56,6 +56,10 @@ export function MePanel(): React.JSX.Element {
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
   if (!profile) return <Sheet title={t('me')}><button type="button" className="btn" onClick={() => openAuth()}>{t('login')}</button></Sheet>;
+  // Buyurtma va reklama — to'lov yoqilganda (reklama joylari ham pulga sotiladi); admin sinov rejimida doim.
+  const isPaid = setting('payments_enabled', false);
+  const hasAds = isPaid;
+  const isTester = profile.test_mode === true;
   const findFree = (): void => {
     const id = nearestFree();
     if (id) goToPlot(id);
@@ -79,9 +83,8 @@ export function MePanel(): React.JSX.Element {
       </Section>
       <div className="menu-list">
         <RowLink icon="gift" text={t('giftsTitle')} note={profile.transfers.length > 0 && <i className="dot flat">{profile.transfers.length}</i>} onClick={() => openPanel({ kind: 'gifts' })} />
-        <RowLink icon="orders" text={t('myOrders')} onClick={() => openPanel({ kind: 'orders' })} />
-        <RowLink icon="ads" text={t('myAds2')} onClick={() => openPanel({ kind: 'ads' })} />
-        <RowLink icon="user" text={t('avatar')} onClick={() => openPanel({ kind: 'avatar' })} />
+        {(isPaid || isTester) && <RowLink icon="orders" text={t('myOrders')} onClick={() => openPanel({ kind: 'orders' })} />}
+        {(hasAds || isTester) && <RowLink icon="ads" text={t('myAds2')} onClick={() => openPanel({ kind: 'ads' })} />}
         <RowLink icon="settings" text={t('settings')} onClick={() => openPanel({ kind: 'settings' })} />
         <RowLink icon="logout" text={t('logout')} isDisabled={isBusy} onClick={() => void run(async () => { await signOut(); openRoot(null); })} />
       </div>

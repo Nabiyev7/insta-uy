@@ -25,7 +25,7 @@ const house = async (tier = 1): Promise<{ uid: string; plot: string }> => {
 const give = (uid: string, id: string, qty = 1): Promise<Row[]> => sql('insert into owned_decor (user_id, decor_id, qty) values ($1, $2, $3) on conflict (user_id, decor_id) do update set qty = $3', [uid, id, qty]);
 const placesOf = async (plot: string): Promise<Row> => (await sql('select places, decor from plot_state where plot_id = $1', [plot]))[0]!;
 
-beforeAll(async () => { db = await openDb(); });
+beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); });
 
 describe('katalog bazada', () => {
   test('boshlang‘ich bezaklar va nuqtalar koddagi bilan bir xil', async () => {

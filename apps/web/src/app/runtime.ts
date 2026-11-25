@@ -21,7 +21,12 @@ export const input: InputState = { moveX: 0, moveY: 0, isRunning: false, isBraki
 export const remotes = new Map<string, RemotePlayer>();
 
 /** Joriy rejim (React tomoni `store.mode` ni ko'radi; ikkalasi `setMode` da birga o'zgaradi). */
-export const session: { mode: Mode } = { mode: 'city' };
+export const session: { mode: Mode; buildTimer: ReturnType<typeof setTimeout> | null } = { mode: 'city', buildTimer: null };
+/** Uy qurilishi tabrigi taymeri bitta: yangisi yoki rejim almashganda eskisi bekor qilinadi. */
+export const cancelBuildTimer = (): void => {
+  if (session.buildTimer !== null) clearTimeout(session.buildTimer);
+  session.buildTimer = null;
+};
 export const city: { view: CityView; flight: Flight | null } = { view: START_VIEW, flight: null };
 export const car: { state: CarState; id: string } = { state: { x: 0, z: 140, yaw: 0, speed: 0 }, id: 'oddiy' };
 

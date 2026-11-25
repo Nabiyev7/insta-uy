@@ -8,6 +8,27 @@ interface PollRow { readonly id: number; readonly question: string; readonly opt
 interface MessagesData { readonly waitlist: number; readonly queued: number; readonly broadcasts: readonly BroadcastRow[]; readonly polls: readonly PollRow[] }
 const TARGETS: readonly (readonly [string, string])[] = [['all', 'Hammaga'], ['district', 'Bitta tumanga'], ['waitlist', 'Kutish ro‘yxatiga']];
 
+interface YardInfo { readonly candidates: readonly string[]; readonly current: { readonly week: string; readonly plots: readonly string[]; readonly status: string; readonly ends_at: string; readonly winner_plot: string | null } | null }
+/** "Haftaning hovlisi": nomzodlar (o'tgan hafta eng ko'p yurak) va qo'lda boshlash. */
+function YardPoll(): React.JSX.Element {
+  const { data, error, reload } = useLoad(() => rpc<YardInfo>('admin_yard'));
+  const { isBusy, run } = useAction();
+  const [plots, setPlots] = useState('');
+  const start = (): void => {
+    const list = plots.split(/[\s,]+/).map((s) => s.trim().toUpperCase()).filter(Boolean);
+    if (!confirm('So‘rovnoma hoziroq hammaga yuborilsinmi?')) return;
+    void run(() => rpc('admin_yard_start', { p_plots: list.length > 0 ? list : null }), 'Boshlandi').then(reload);
+  };
+  return (
+    <div className="card decor-form">
+      {error && <p className="error">{error}</p>}
+      {data && <p>Avtomatik nomzodlar: <b>{data.candidates.join(', ') || '—'}</b>{data.current && <> · oxirgisi: {data.current.week} ({data.current.status}, {data.current.plots.join(', ')}{data.current.winner_plot ? `, g‘olib ${data.current.winner_plot}` : ''})</>}</p>}
+      <label>Nomzodlar (uchastka ID, vergul bilan; bo‘sh — avtomatik)<input className="input" value={plots} onChange={(e) => setPlots(e.target.value)} placeholder="P0001, P0002" /></label>
+      <Btn kind="main" disabled={isBusy} onClick={start}>So‘rovnomani hoziroq boshlash</Btn>
+    </div>
+  );
+}
+
 export function Messages(): React.JSX.Element {
   const { data, error, reload } = useLoad(() => rpc<MessagesData>('admin_messages'));
   const { isBusy, run } = useAction();
@@ -37,6 +58,8 @@ export function Messages(): React.JSX.Element {
         <Btn kind="main" type="submit" disabled={isBusy || text.trim() === ''}>Yuborish</Btn>
         {target === 'waitlist' && <p className="muted">Shahar ochilganda: “Ochildi! Kirish uchun botga /start yozing” deb yozing.</p>}
       </form>
+      <h3>Haftaning hovlisi</h3>
+      <YardPoll />
       <h3>So‘rovnoma</h3>
       <form className="card decor-form" onSubmit={poll}>
         <label>Savol<input className="input" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={300} /></label>

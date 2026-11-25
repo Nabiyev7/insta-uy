@@ -59,10 +59,10 @@ describe('do‘kon tablari', () => {
     expect(ids('car')).toEqual(expect.arrayContaining(['avto_sedan', 'lux_limuzin']));
     expect(ids('gate')).toEqual(expect.arrayContaining(['fence_wood', 'gate_wood', 'path_stone', 'sign_nick', 'light_lamps', 'roof_solar']));
   });
-  test('mavsumi tugagani faqat "Maxsus" da, sotuvdan olingani hech qayerda', () => {
+  test('mavsumi tugagani va sotuvdan olingani do‘konda ko‘rinmaydi (admin panelda bor)', () => {
     const list = [row('light_hayit', { from: '2026-05-10', to: '2026-05-31', onSale: false, active: true }), row('light_lamps'), row('water_pool')];
     expect(ids('gate', list)).toEqual(['light_lamps']);
-    expect(ids('special', list)).toEqual(['light_hayit']);
+    expect(ids('special', list)).toEqual([]);
     expect(shopTabs(list, []).flatMap((t) => t.rows.map((c) => c.id))).not.toContain('water_pool');
   });
   test('kartochka holati', () => {

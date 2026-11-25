@@ -1,21 +1,27 @@
 /** "Mashina" rejimi: oddiy arkada fizikasi. Sof hisob. */
-import { ANIM, footprint, fromLocal, toLocal, type Plot, type Road } from '../../../../packages/shared/src/index.ts';
+import { ANIM, DECOR, footprint, fromLocal, toLocal, type Plot, type Road } from '../../../../packages/shared/src/index.ts';
 import type { Item, Solid } from './item.ts';
 import { movePlayer } from './motion.ts';
 
 export interface CarSpec { readonly id: string; readonly model: string; readonly scale: number; readonly top: number; readonly accel: number; /** null — hammaga bepul. */ readonly decor: string | null; readonly uz: string; readonly ru: string }
 /** Piyodadan (4.2 m/s) 4–5 barobar tez. Tartibi o'zgarmasin: indeks tarmoqda ishlatiladi; yangi qo'shilsa — shared `ANIM.cars` ham. */
+/** Nom va narx — katalogdan (do'kon bilan bir xil); tezlik narxga mos: oddiy < sedan < krossover < sport < jip < limuzin < superkar. */
+const nameOf = (decor: string | null, uz: string, ru: string): { readonly uz: string; readonly ru: string } => {
+  const d = decor ? DECOR.find((x) => x.id === decor) : undefined;
+  return d ? { uz: d.uz, ru: d.ru } : { uz, ru };
+};
+const spec = (id: string, model: string, scale: number, top: number, accel: number, decor: string | null, uz = '', ru = ''): CarSpec => ({ id, model, scale, top, accel, decor, ...nameOf(decor, uz, ru) });
 export const CARS: readonly CarSpec[] = [
-  { id: 'oddiy', model: 'car_van', scale: 0.85, top: 17, accel: 7, decor: null, uz: 'Oddiy mashina', ru: 'Простая машина' },
-  { id: 'furgon', model: 'car_van', scale: 1, top: 18.5, accel: 8, decor: 'car_van', uz: 'Oq furgon', ru: 'Белый фургон' },
-  { id: 'sedan', model: 'car_sedan', scale: 1, top: 19.5, accel: 9, decor: 'car_sedan', uz: 'Sedan', ru: 'Седан' },
-  { id: 'sport', model: 'car_sport', scale: 1, top: 21, accel: 13, decor: 'car_sport', uz: 'Sport mashina', ru: 'Спорткар' },
-  { id: 'yangi_sedan', model: 'avto_sedan', scale: 1, top: 19.5, accel: 9.5, decor: 'avto_sedan', uz: "Ko'k sedan", ru: 'Синий седан' },
-  { id: 'krossover', model: 'avto_krossover', scale: 1, top: 19, accel: 9, decor: 'avto_krossover', uz: 'Krossover', ru: 'Кроссовер' },
-  { id: 'yangi_sport', model: 'avto_sport', scale: 1, top: 21, accel: 13.5, decor: 'avto_sport', uz: 'Qizil sport', ru: 'Красный спорткар' },
-  { id: 'limuzin', model: 'lux_limuzin', scale: 1, top: 20, accel: 10, decor: 'lux_limuzin', uz: 'Limuzin', ru: 'Лимузин' },
-  { id: 'superkar', model: 'lux_superkar', scale: 1, top: 21, accel: 15, decor: 'lux_superkar', uz: 'Superkar', ru: 'Суперкар' },
-  { id: 'jip', model: 'lux_jip', scale: 1, top: 20, accel: 11, decor: 'lux_jip', uz: 'Lyuks jip', ru: 'Люкс-внедорожник' },
+  spec('oddiy', 'car_van', 0.85, 17, 7, null, 'Oddiy mashina', 'Простая машина'),
+  spec('furgon', 'car_van', 1, 17.4, 7.5, 'car_van'),
+  spec('sedan', 'car_sedan', 1, 17.8, 8.5, 'car_sedan'),
+  spec('sport', 'car_sport', 1, 19.6, 12, 'car_sport'),
+  spec('yangi_sedan', 'avto_sedan', 1, 18.2, 9, 'avto_sedan'),
+  spec('krossover', 'avto_krossover', 1, 18.8, 10, 'avto_krossover'),
+  spec('yangi_sport', 'avto_sport', 1, 20, 12.5, 'avto_sport'),
+  spec('limuzin', 'lux_limuzin', 1, 20.6, 13, 'lux_limuzin'),
+  spec('superkar', 'lux_superkar', 1, 21, 15, 'lux_superkar'),
+  spec('jip', 'lux_jip', 1, 20.3, 12.5, 'lux_jip'),
 ];
 export const carById = (id: string): CarSpec => CARS.find((c) => c.id === id) ?? CARS[0]!;
 /** Egalik qilingan mashinalar (bepuli doim bor). */

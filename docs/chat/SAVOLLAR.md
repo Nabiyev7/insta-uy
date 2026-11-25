@@ -165,3 +165,14 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 10. **Markaziy ko'cha nomini tangaga sotish** — hozircha so'mda (to'lov o'chiq). Tangaga o'tkazish — keyin.
 11. **Tijorat joylari (B001–B170)** — `commerce_closed` ro'yxatidagilar sotuvda emas; hammasini yopish admin → Sozlamalar orqali.
 12. **Xabar yuborish tezligi** — har cron'da 300 ta (taxminan soatiga 1 800); yuborilmay qolgan xabar qayta yuborilmaydi.
+
+### 6a — Tuzatish 1 (promtda javobi yo'q joylar: nimani tanladim va nega)
+1. **Premium uy** — kod o'chirilmadi, `premium_house_enabled=false` ortida (egasi shunday dedi). Villa/qasr uchastkasini pulga sotish ham shu bayroqcha ortida (bitta "pulga uchastka" yo'li). Admin sinov rejimida ochiq.
+2. **Sinov rejimidagi narx yozuvi** — har narx yoniga emas, ekran pastida bitta qizil "Sinov rejimi · Sinov — bepul" belgisi; pulli tugmalar "Sinov xaridi" bo'ladi. Sabab: kam joy, chalkashmaydi.
+3. **Sinov uylari** asoschilar joyini egallamaydi va `is_free=false` (bir nikka bir nechta sinov uyi). Tanga o'tkazmasida (send) sinovchidan ham tanga yechiladi — aks holda tanga "yo'qdan" paydo bo'lardi.
+4. **Chat "Onlayn" tabi** olib tashlangani bilan "jim qilinganlar" ro'yxati (qaytarish tugmasi) ham ketdi — jim qilish xabar menyusida qoladi. Kerak bo'lsa Sozlamalarga qaytaramiz.
+5. **Hovli so'rovnomasida uy rasmi yo'q** — bot xabarida har nomzodning nik va havolasi (rasm yuborish uchun uy rasmini serverda chizish kerak — keyin).
+6. **"Haftaning hovlisi" so'rovnomasi** dushanba kuni birinchi cron'da boshlanadi; nomzod 2 tadan kam bo'lsa — o'sha hafta so'rovnoma yo'q.
+7. **Gazeta va ko'cha oynasi** — faqat saytdan yashirildi, server va baza qoladi (promt: "UI'dan yashiriladi").
+8. **Interfeys kontrasti (WCAG AA)** — to'q rejim avvalgi to'q mavzu ranglarida; alohida o'lchov vositasi bilan tekshirilmadi.
+9. **Lokal admin tugmasi** — `import.meta.env.DEV` ortida (ishlab chiqarish yig'ilishida kod chiqib ketadi), endpoint esa `DEV=1` bo'lmasa 404 (test bor).

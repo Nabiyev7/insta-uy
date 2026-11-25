@@ -69,6 +69,9 @@ function BuyPlot({ plot }: InfoProps): React.JSX.Element {
   );
 }
 
+/** Admin sinov rejimida yopiq narsalar ham ochiq (server ham tekshiradi). */
+const profileTest = (): boolean => getApp().profile?.test_mode === true;
+
 const NEAR = 60;
 /** Yon-atrofdagi egali uylar. */
 const countNeighbours = (p: Plot): number => {
@@ -94,7 +97,7 @@ function FreePlot({ plot, full }: InfoProps & { readonly full: Plot }): React.JS
       {!plot.open && <p className="muted">{t('closed')}</p>}
       {plot.open && isFreeType(plot.type) && <ClaimForm plot={plot} />}
       {plot.open && plot.type === 'kvartira' && <p className="muted">{t('e_apartments_closed')}</p>}
-      {plot.open && isSale && <BuyPlot plot={plot} />}
+      {plot.open && isSale && (setting('premium_house_enabled', false) || profileTest()) && <BuyPlot plot={plot} />}
     </>
   );
 }
@@ -109,24 +112,14 @@ function Heart({ id, count, isDone, isMine, onDone }: { readonly id: string; rea
     if (!profile) { openAuth(); return; }
     void run(() => rpc('my_heart', { p_plot: id })).then((ok) => { if (ok) onDone(); });
   };
+  // Bitta tugma: ichida son; bosilgandan keyin yurak to'ldiriladi.
   return (
-    <div className="row between heart">
-      <span className="with-icon"><Icon name="heart" />{count}</span>
-      {!isMine && <button type="button" className={`btn small ${isDone ? 'soft' : 'gold'}`} disabled={isBusy || isDone} aria-pressed={isDone} onClick={press}><Icon name="heart" />{t(isDone ? 'hearted' : 'heartIt')}</button>}
+    <div className="row heart">
+      <button type="button" className={`btn small ${isDone ? 'gold' : 'soft'}`} disabled={isBusy || isDone || isMine} aria-pressed={isDone} aria-label={`${t(isDone ? 'hearted' : 'heartIt')}: ${count}`} onClick={press}><Icon name="heart" />{count}</button>
     </div>
   );
 }
 
-function YardVote({ id, votes, isMine, onDone }: { readonly id: string; readonly votes: number; readonly isMine: boolean; readonly onDone: () => void }): React.JSX.Element {
-  const t = useT();
-  const profile = useApp((s) => s.profile);
-  const { isBusy, run } = useAction();
-  const vote = (): void => {
-    if (!profile) { openAuth(); return; }
-    void run(() => rpc('my_yard_vote', { p_plot: id }), t('voted')).then((ok) => { if (ok) onDone(); });
-  };
-  return <div className="row between"><span className="muted with-icon"><Icon name="flower" />{t('yardWeek')}: {votes} {t('votes')}</span>{!isMine && <button type="button" className="btn small soft" disabled={isBusy} onClick={vote}>{t('vote')}</button>}</div>;
-}
 
 function Owner({ info, isMine }: { readonly info: PlotInfo; readonly isMine: boolean }): React.JSX.Element {
   const t = useT();
@@ -200,11 +193,9 @@ export function PlotPanel({ id }: PlotPanelProps): React.JSX.Element | null {
       {info && isFree && <FreePlot plot={info} full={full} />}
       {info && !isFree && <Owner info={info} isMine={mine !== undefined} />}
       {info?.status === 'owned' && <Heart id={id} count={info.hearts} isDone={info.hearted} isMine={mine !== undefined} onDone={loaded.reload} />}
-      {info?.status === 'owned' && full.type !== 'kvartira' && <YardVote id={id} votes={info.votes} isMine={mine !== undefined} onDone={loaded.reload} />}
       {info && mine && <MineActions mine={mine} full={full} />}
       {info && !isFree && !mine && <VisitorActions info={info} />}
       <div className="row links">
-        <button type="button" className="link" onClick={() => openPanel({ kind: 'street', id: full.streetId })}>{t('street')}</button>
         <button type="button" className="link" onClick={() => goToPlot(id)}>{t('goThere')}</button>
       </div>
     </Sheet>

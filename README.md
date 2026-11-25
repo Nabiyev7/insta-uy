@@ -62,7 +62,7 @@ Asosiy qarorlar:
 4. **Sayt/admin**: Cloudflare Pages. Build: `npm run build -w @shahar/web` → `apps/web/dist`; `npm run build -w @shahar/admin` → `apps/admin/dist`.
    O'zgaruvchilar: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL` (Worker), `VITE_REALTIME_URL`, `VITE_SITE_URL` (admin), ixtiyoriy `VITE_SENTRY_DSN`, `VITE_PAYME_MERCHANT`, `VITE_CLICK_MERCHANT`, `VITE_CLICK_SERVICE`.
 5. **Ko'p o'yinchi**: istalgan bepul Node xost → `node server/src/realtime/main.ts`. Bo'lmasa sayt yakka rejimda ishlayveradi.
-6. **Birinchi admin**: botga /start yozib akkaunt oching, so'ng SQL Editor'da: `update profiles set role='admin' where telegram_id=<TELEGRAM_ID>;`
+6. **Birinchi admin**: serverga `ADMIN_TELEGRAM_ID` (o'zingizning Telegram ID) yozing va botga /start yuboring — shu Telegram birinchi kirishdayoq avtomatik admin bo'ladi (SQL kerak emas). Admin panelga — botga `/admin`. Lokalda (`npm run dev`) kirish oynasida "Admin sifatida kirish (lokal)" tugmasi bor.
 7. Admin → Sozlamalar: `telegram_bot` (bot nomi, @ siz); keyin Tumanlar.
 
 ## Ochilishdan oldin

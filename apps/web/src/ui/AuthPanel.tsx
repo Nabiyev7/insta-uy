@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { parseLogin, parsePassword } from '../../../../packages/shared/src/index.ts';
 import { post, signIn } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
-import { finishAuth, getApp, setting } from '../app/store.ts';
+import { finishAuth, getApp, openPanel, setting } from '../app/store.ts';
 import { rememberPanel } from '../app/login.ts';
 import { Icon } from './icons.tsx';
-import { Field, Sheet, useAction } from './kit.tsx';
+import { Captcha } from './Captcha.tsx';
+import { Field, Seg, Sheet, useAction } from './kit.tsx';
 
 export const refCode = (): string | null => {
   try {
@@ -48,29 +50,78 @@ function DevLogin(): React.JSX.Element {
       <Field label="Telegram ID"><input value={id} onChange={(e) => setId(e.target.value)} inputMode="numeric" pattern="\d{1,12}" required /></Field>
       <Field label="Instagram nik"><input value={nick} onChange={(e) => setNick(e.target.value)} autoCapitalize="none" maxLength={30} /></Field>
       <button type="submit" className="btn block" disabled={isBusy}>Sinov kirish</button>
+      <button type="button" className="btn soft block" disabled={isBusy} onClick={() => void run(async () => {
+        const { token } = await post<{ token: string }>('/dev/admin', {});
+        location.assign(`${location.pathname}?kirish=${token}`);
+      })}>Admin sifatida kirish (lokal)</button>
     </form>
   );
 }
 
-/** Eski (parolli) akkauntlar uchun — Telegram ulanmaguncha faqat ko'rish mumkin. */
-function LegacyLogin(): React.JSX.Element {
+type Mode = 'login' | 'register' | 'reset';
+
+function ResetForm({ onDone }: { readonly onDone: () => void }): React.JSX.Element {
   const t = useT();
   const { isBusy, run } = useAction();
   const [login, setLogin] = useState('');
+  const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => { post<{ url: string | null }>('/auth/reset/start', { login: 'x' }).then((r) => setUrl(r.url), () => undefined); }, []);
   const submit = (e: FormEvent): void => {
     e.preventDefault();
-    void run(() => signIn(login, password)).then((ok) => ok && finishAuth());
+    void run(async () => {
+      await post('/auth/reset/finish', { login, code, password });
+      await signIn(login, password);
+    }, t('saved')).then((ok) => ok && onDone());
   };
   return (
-    <details className="section legacy-login">
-      <summary>{t('oldAccount')}</summary>
-      <form onSubmit={submit}>
-        <Field label={t('loginField')}><input value={login} onChange={(e) => setLogin(e.target.value)} autoCapitalize="none" autoComplete="username" required maxLength={24} /></Field>
-        <Field label={t('password')}><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" required minLength={8} /></Field>
-        <button type="submit" className="btn block" disabled={isBusy}>{t('login')}</button>
-      </form>
-    </details>
+    <form className="section" onSubmit={submit}>
+      <p>{t('resetHelp')}</p>
+      {url && <a className="btn soft" href={url} target="_blank" rel="noopener noreferrer">{t('openTg')}</a>}
+      <Field label={t('loginField')}><input value={login} onChange={(e) => setLogin(e.target.value)} autoCapitalize="none" required /></Field>
+      <Field label={t('code')}><input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" pattern="\d{6}" required /></Field>
+      <Field label={t('newPassword')}><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="new-password" minLength={8} required /></Field>
+      <button type="submit" className="btn" disabled={isBusy}>{t('save')}</button>
+    </form>
+  );
+}
+
+/** Login + parol (ro'yxat, kirish, tiklash). Faqat admin sozlamasi `password_login` yoqilganda ko'rinadi — server ham shuni tekshiradi. */
+function PasswordLogin(): React.JSX.Element {
+  const t = useT();
+  const { isBusy, run } = useAction();
+  const [mode, setMode] = useState<Mode>('login');
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [captcha, setCaptcha] = useState('');
+  const submit = (e: FormEvent): void => {
+    e.preventDefault();
+    void run(async () => {
+      if (mode === 'register') {
+        const l = parseLogin(login);
+        if (!l.ok) throw new Error(`login_${l.code}`);
+        const p = parsePassword(password);
+        if (!p.ok) throw new Error(`password_${p.code}`);
+        await post('/auth/register', { login: l.value, password, ref: refCode(), captcha });
+      }
+      await signIn(login, password);
+    }).then((ok) => ok && finishAuth());
+  };
+  return (
+    <div className="section password-login">
+      <Seg label={t('login')} value={mode} onPick={setMode} options={[['login', t('login')], ['register', t('register')]]} />
+      {mode === 'reset' ? <ResetForm onDone={finishAuth} /> : (
+        <form onSubmit={submit}>
+          <Field label={t('loginField')}><input value={login} onChange={(e) => setLogin(e.target.value)} autoCapitalize="none" autoComplete="username" required maxLength={24} /></Field>
+          <Field label={t('password')}><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={8} /></Field>
+          {mode === 'register' && <Captcha onToken={setCaptcha} />}
+          <button type="submit" className="btn block" disabled={isBusy}>{t(mode === 'register' ? 'register' : 'login')}</button>
+          {mode === 'login' && <button type="button" className="link" onClick={() => setMode('reset')}>{t('forgot')}</button>}
+          {mode === 'register' && <button type="button" className="link" onClick={() => openPanel({ kind: 'rules' })}>{t('rulesAgree')}</button>}
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -86,7 +137,7 @@ export function AuthPanel(): React.JSX.Element {
           : <button type="button" className="btn gold block big" disabled><Icon name="telegram" />{t('viaTelegram')} · {t('soon')}</button>}
       </div>
       {import.meta.env.DEV && !navigator.webdriver && <DevLogin />}
-      <LegacyLogin />
+      {setting('password_login', false) && <PasswordLogin />}
     </Sheet>
   );
 }

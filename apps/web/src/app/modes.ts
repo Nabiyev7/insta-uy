@@ -3,23 +3,21 @@ import type { Plot } from '../../../../packages/shared/src/index.ts';
 import { frontOf } from '../../../../packages/shared/src/index.ts';
 import { framed, startFlight, viewOfPlot, viewOfPoint, type CityView } from '../logic/cityCamera.ts';
 import { ownedCars, roadSpot, type CarState } from '../logic/drive.ts';
-import { movePlayer } from '../logic/motion.ts';
+import { CLEAR_AHEAD, clearDistance, openSpawn } from '../logic/spawn.ts';
 import { walkSolids, worldIndex } from '../logic/worldIndex.ts';
-import { camera, car, city, here, input, player, session, teleport, transition, type Mode } from './runtime.ts';
+import { camera, cancelBuildTimer, car, city, here, input, player, session, teleport, transition, type Mode } from './runtime.ts';
 import { getApp, read, setApp } from './store.ts';
 
 const RETURN_HEIGHT = 60;
 const WALK_DISTANCE = 6;
 const SPAWN_REACH = 60;
-const SPAWN_TRIES = 4;
 
-/** Devor ichida paydo bo'lmaslik uchun bo'sh nuqta. */
-const freeSpot = (x: number, z: number): { readonly x: number; readonly z: number } => {
+/** Ochiq joy va oldida kamida 8 m bo'sh yo'l (bino, favvora, daraxt, bezak ichida emas). */
+const openSpot = (x: number, z: number, yaw: number): { readonly x: number; readonly z: number; readonly yaw: number } => {
   const { plan, houses } = getApp();
-  if (!plan) return { x, z };
+  if (!plan) return { x, z, yaw };
   const near = worldIndex(plan).plots.query(x, z, SPAWN_REACH);
-  const solids = walkSolids(plan, houses, x, z, near);
-  return Array.from({ length: SPAWN_TRIES }).reduce<{ readonly x: number; readonly z: number }>((p) => movePlayer(p, 0, 0, solids), { x, z });
+  return openSpawn({ x, z }, yaw, walkSolids(plan, houses, x, z, near));
 };
 
 const placeCar = (s: CarState): void => {
@@ -29,14 +27,20 @@ const placeCar = (s: CarState): void => {
 };
 const spawnCar = (x: number, z: number): void => {
   const plan = getApp().plan;
-  if (plan) placeCar(roadSpot(plan.roads, x, z));
+  if (plan) {
+    const s = roadSpot(plan.roads, x, z);
+    // Yo'lda turadi; oldi to'siq bo'lsa — teskari tomonga qaraydi.
+    const solids = walkSolids(plan, getApp().houses, s.x, s.z, worldIndex(plan).plots.query(s.x, s.z, SPAWN_REACH));
+    const yaw = clearDistance(s, s.yaw, solids) >= CLEAR_AHEAD || clearDistance(s, s.yaw + Math.PI, solids) < CLEAR_AHEAD ? s.yaw : s.yaw + Math.PI;
+    placeCar({ ...s, yaw });
+  }
   const owned = ownedCars(getApp().profile?.decor);
   const saved = read('car');
   car.id = (owned.find((c) => c.id === saved) ?? owned.find((c) => c.id === car.id) ?? owned[0])?.id ?? 'oddiy';
 };
 const spawnPlayer = (x: number, z: number, yaw: number): void => {
-  const p = freeSpot(x, z);
-  teleport(p.x, p.z, yaw);
+  const p = openSpot(x, z, yaw);
+  teleport(p.x, p.z, p.yaw);
   camera.distance = WALK_DISTANCE;
 };
 
@@ -46,6 +50,7 @@ const resetInput = (): void => {
 
 export const setMode = (mode: Mode): void => {
   if (mode === session.mode) return;
+  cancelBuildTimer();
   const from = here();
   transition.from = transition.last;
   transition.at = performance.now();

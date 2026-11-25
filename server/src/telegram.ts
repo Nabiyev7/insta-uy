@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { parseBankMessage } from './payments/bank.ts';
 import { createAccount } from './auth.ts';
+import { sendReset } from './password.ts';
 import { buyCode, preCheckout, sendInvoice, shopMenu, starsPaid } from './shop.ts';
 import { HttpError, type Ctx, type Telegram, type TgButton } from './types.ts';
 import { json, keyed, limit, randomPassword, randomToken, readJson, requireUser, safeEqual } from './util.ts';
@@ -94,8 +95,14 @@ const sendLogin = async (ctx: Ctx, tg: Telegram, chat: number, user: string, isN
 };
 
 interface BotStart { readonly state: 'ready' | 'need_nick' | 'banned'; readonly user?: string }
+/** `ADMIN_TELEGRAM_ID` dagi Telegram birinchi kirishdayoq admin bo'ladi (SQL kerak emas). */
+const promoteOwner = async (ctx: Ctx, telegram: number): Promise<void> => {
+  if (ctx.env.ADMIN_TELEGRAM_ID && String(telegram) === ctx.env.ADMIN_TELEGRAM_ID.trim()) await ctx.db.rpc('svc_make_admin', { p_telegram: telegram });
+};
+
 const greet = async (ctx: Ctx, tg: Telegram, m: Message, ref: string | null): Promise<void> => {
   const from = m.from!;
+  await promoteOwner(ctx, from.id);
   const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: from.id, p_ref: ref, p_name: from.first_name });
   if (r.state === 'banned') return tg.send(m.chat.id, 'Akkaunt bloklangan. / Аккаунт заблокирован.');
   if (r.state === 'ready' && r.user) return sendLogin(ctx, tg, m.chat.id, r.user);
@@ -109,6 +116,7 @@ const takeNick = async (ctx: Ctx, tg: Telegram, m: Message, text: string): Promi
   try {
     const nick = await ctx.db.rpc<string>('svc_nick_check', { p_nick: text });
     const user = await createAccount(ctx, `tg${from.id}`, randomPassword(), null, from.id, nick);
+    await promoteOwner(ctx, from.id);
     return await sendLogin(ctx, tg, m.chat.id, user, true);
   } catch (error: unknown) {
     const code = error instanceof Error ? error.message : '';
@@ -151,6 +159,7 @@ const menu = (ctx: Ctx, tg: Telegram, chat: number): Promise<void> => {
 const onStart = async (ctx: Ctx, tg: Telegram, m: Message, param: string): Promise<void> => {
   const link = /^link_([0-9a-f]{32})$/.exec(param)?.[1];
   if (link) return confirmButton(ctx, tg, m.chat.id, link);
+  if (param === 'reset') return sendReset(ctx, tg, m.from!.id);
   if (param === 'wait') {
     const n = await ctx.db.rpc<number>('svc_tg_waitlist', { p_telegram: m.from!.id });
     return tg.send(m.chat.id, `✅ Ro'yxatga yozildingiz (${n}). Shahar ochilganda shu yerga xabar beramiz. / Вы в списке. Сообщим, когда город откроется.`);
@@ -179,6 +188,12 @@ const onMessage = async (ctx: Ctx, tg: Telegram, m: Message): Promise<void> => {
   if (session?.step === 'nick' && !text.startsWith('/')) return takeNick(ctx, tg, m, text);
   if (text === '/kirish') return greet(ctx, tg, m, null);
   if (text === '/admin') return adminLink(ctx, tg, m);
+  if (text === '/parol') return sendReset(ctx, tg, m.from.id);
+  if (text === '/stop' || text === '/xabar') {
+    const isOn = text === '/xabar';
+    await ctx.db.rpc('svc_news', { p_telegram: m.from.id, p_on: isOn });
+    return tg.send(m.chat.id, isOn ? '🔔 Xabarlar yoqildi. / Уведомления включены.' : '🔕 Umumiy xabarlar o‘chirildi (muhimlari keladi). Qayta yoqish: /xabar / Рассылка выключена. Включить: /xabar');
+  }
   if (text === '/dokon') return shopMenu(ctx, tg, m.chat.id);
   const salute = /^\/salyut\s+([\s\S]{1,200})$/.exec(text)?.[1];
   if (salute) return sendInvoice(ctx, tg, m.chat.id, m.from.id, { kind: 'salute', payload: { text: salute.trim() } });
@@ -189,6 +204,7 @@ const onCallback = async (ctx: Ctx, tg: Telegram, q: NonNullable<Update['callbac
   const vote = /^poll:(\d{1,9}):([1-6])$/.exec(q.data ?? '');
   if (vote) {
     const picked = await ctx.db.rpc<string>('svc_poll_vote', { p_telegram: q.from.id, p_poll: Number(vote[1]), p_option: Number(vote[2]) });
+    if (picked === 'own') return tg.answer(q.id, 'O‘z uyingizga ovoz berib bo‘lmaydi / Нельзя голосовать за свой дом');
     return tg.answer(q.id, picked === 'closed' ? 'So‘rovnoma yopilgan / Опрос закрыт' : `✅ ${picked}`);
   }
   if (q.data === 'shop') { await tg.answer(q.id, '🛍'); return shopMenu(ctx, tg, q.from.id); }
@@ -277,12 +293,17 @@ const channelBonus = async (ctx: Ctx, tg: Telegram, telegram: number): Promise<C
   return ctx.db.rpc<ChannelResult>('svc_channel_bonus', { p_telegram: telegram });
 };
 /** POST /coins/channel — saytdagi "Obunani tekshirish". */
+/** Lokal sinov uchun hech narsa yubormaydigan Telegram. */
+const DEV_TG: Telegram = { send: async () => undefined, answer: async () => undefined, video: async () => undefined, isMember: async () => false, invoice: async () => undefined, preCheckout: async () => undefined, refundStars: async () => undefined, document: async () => undefined };
 export const channelCheck = async (req: Request, ctx: Ctx): Promise<Response> => {
   const user = await requireUser(req, ctx);
-  if (!ctx.tg) throw new HttpError(503, 'telegram_off');
+  // Lokal sinov: bot tokeni yo'q, lekin DEV=1 va DEV_CHANNEL_OK=1 bo'lsa — obuna "bor".
+  const isFake = ctx.env.DEV === '1' && ctx.env.DEV_CHANNEL_OK === '1';
+  const tg = ctx.tg ?? (isFake ? { ...DEV_TG, isMember: async () => true } : null);
+  if (!tg) throw new HttpError(503, 'telegram_off');
   await limit(ctx, 'channel', 10, 3600, user.id);
   const telegram = await ctx.db.rpc<number>('svc_channel_target', { p_user: user.id });
-  return json(await channelBonus(ctx, ctx.tg, telegram));
+  return json(await channelBonus(ctx, tg, telegram));
 };
 /** Botdagi "Obuna bo'ldim" tugmasi. */
 async function channelButton(ctx: Ctx, tg: Telegram, callbackId: string, telegram: number): Promise<void> {
@@ -294,7 +315,9 @@ async function channelButton(ctx: Ctx, tg: Telegram, callbackId: string, telegra
   }
 }
 
-interface QueuedMessage { readonly chat: number; readonly text: string; readonly poll: number | null; readonly options: readonly string[] | null }
+interface QueuedMessage { readonly chat: number; readonly text: string; readonly poll: number | null; readonly options: readonly string[] | null; readonly plots?: readonly string[] | null }
+/** Hovli so'rovnomasi: har nomzodning uy havolasi matnga qo'shiladi. */
+const messageText = (ctx: Ctx, r: QueuedMessage): string => (r.plots && r.options ? `${r.text}\n\n${r.plots.map((p, i) => `${i + 1}. ${r.options?.[i] ?? ''} — ${ctx.env.SITE_URL}/?uy=${p}`).join('\n')}` : r.text);
 /** Telegram: sekundiga ~25 xabardan ko'p emas. */
 const BROADCAST_BATCH = 25;
 const BROADCAST_PER_RUN = 300;
@@ -306,8 +329,20 @@ export const flushBroadcast = async (ctx: Ctx, delayMs = 1100): Promise<number> 
   const rows = await ctx.db.rpc<readonly QueuedMessage[]>('svc_broadcast_next', { p_limit: BROADCAST_PER_RUN });
   for (let i = 0; i < rows.length; i += BROADCAST_BATCH) {
     if (i > 0) await pause(delayMs);
-    await Promise.allSettled(rows.slice(i, i + BROADCAST_BATCH).map((r) => tg.send(r.chat, r.text, r.poll && r.options ? r.options.map((o, k) => ({ text: o, data: `poll:${r.poll}:${k + 1}` })) : [{ text: '🏙', url: ctx.env.SITE_URL }])));
+    // chat = 0 — kanalga e'lon.
+    await Promise.allSettled(rows.slice(i, i + BROADCAST_BATCH).map((r) => tg.send(r.chat === 0 ? channelOf(ctx) : r.chat, messageText(ctx, r), r.poll && r.options ? r.options.map((o, k) => ({ text: o, data: `poll:${r.poll}:${k + 1}` })) : [{ text: '🏙', url: ctx.env.SITE_URL }])));
   }
   return rows.length;
+};
+
+const LOCAL_ADMIN_TG = 1;
+/** Faqat lokal (DEV=1): bot yo'q — "Admin sifatida kirish (lokal)" tugmasi admin akkauntiga bir martalik havola oladi. Ishlab chiqarishda 404. */
+export const devAdmin = async (_req: Request, ctx: Ctx): Promise<Response> => {
+  if (ctx.env.DEV !== '1') throw new HttpError(404, 'not_found');
+  const telegram = Number(ctx.env.ADMIN_TELEGRAM_ID) || LOCAL_ADMIN_TG;
+  const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: telegram, p_ref: null, p_name: 'Admin' });
+  const user = r.user ?? (await createAccount(ctx, `tg${telegram}`, randomPassword(), null, telegram, 'admin_lokal'));
+  await ctx.db.rpc('svc_make_admin', { p_telegram: telegram });
+  return json({ token: await issueLogin(ctx, user) });
 };
 

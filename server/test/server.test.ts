@@ -20,7 +20,7 @@ const ENV: Env = {
 };
 let db: PGlite;
 let emu: (req: Request) => Promise<Response>;
-const sent: { chat: number; text: string; buttons?: readonly TgButton[] }[] = [];
+const sent: { chat: number | string; text: string; buttons?: readonly TgButton[] }[] = [];
 const errors: unknown[] = [];
 const members = new Set<number>();
 const tg: Telegram = {
@@ -79,8 +79,9 @@ beforeAll(async () => {
 });
 
 describe('kirish faqat Telegram bot orqali', () => {
-  test('eski yo‘llar yopiq: ro‘yxat, parolni tiklash, so‘rov-kutish', async () => {
-    for (const p of ['/auth/register', '/auth/reset/start', '/auth/reset/finish', '/auth/telegram/start', '/auth/telegram/poll']) expect((await call(p, {})).status).toBe(404);
+  test('eski yo‘llar: so‘rov-kutish yo‘q (404); parol yo‘li bayroqcha ortida (403)', async () => {
+    for (const p of ['/auth/telegram/start', '/auth/telegram/poll']) expect((await call(p, {})).status).toBe(404);
+    for (const p of ['/auth/register', '/auth/reset/start', '/auth/reset/finish']) expect((await call(p, {})).status).toBe(403);
   });
   test('webhook siri majburiy', async () => {
     expect((await call('/telegram/webhook', message(5, '/start'))).status).toBe(403);
@@ -301,6 +302,13 @@ describe('kanalga obuna bonusi', () => {
     expect((await call('/coins/channel', {}, auth)).body).toMatchObject({ state: 'done' });
     expect((await call('/coins/channel', {})).status).toBe(401);
   });
+  test('lokalda bot yo‘q: 503; DEV_CHANNEL_OK=1 da obuna "bor" (faqat DEV=1)', async () => {
+    const jwt = await botUser(1402, 'kanal_odam3');
+    const auth = { authorization: `Bearer ${jwt}` };
+    expect((await call('/coins/channel', {}, auth, ctx({ tg: null }))).status).toBe(503);
+    expect((await call('/coins/channel', {}, auth, ctx({ tg: null, env: { ...ENV, DEV: undefined, DEV_CHANNEL_OK: '1' } }))).status).toBe(503);
+    expect((await call('/coins/channel', {}, auth, ctx({ tg: null, env: { ...ENV, DEV_CHANNEL_OK: '1' } }))).body).toMatchObject({ state: 'paid' });
+  });
   test('bot: "Obuna bo‘ldim" tugmasi', async () => {
     await botUser(1401, 'kanal_odam2');
     const press = (): Promise<unknown> => webhook({ update_id: 1, callback_query: { id: 'c1', from: { id: 1401, first_name: 'K' }, data: 'chan' } });
@@ -326,16 +334,20 @@ describe('Telegram Stars do‘koni', () => {
     await db.query("update settings set value = 'true' where key = 'payments_enabled'");
     await botUser(1501, 'yulduz_odam2');
     await webhook(message(1501, '/start buy_pack1'));
+    expect(sent.at(-1)!.text).toContain('karta');
+    await webhook(message(1501, '/dokon'));
+    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['buy:pack3', 'buy:pack4', 'buy:pack5', 'buy:salute', undefined]);
+    await webhook(message(1501, '/start buy_pack3'));
     const [, order, stars] = /^invoice:([0-9a-f-]{36}):(\d+):/.exec(sent.at(-1)!.text)!;
-    expect(stars).toBe('50');
-    await webhook(pre(1501, order!, 49));
+    expect(stars).toBe('60');
+    await webhook(pre(1501, order!, 59));
     expect(sent.at(-1)!.text).toBe('precheckout:false');
-    await webhook(pre(1501, order!, 50));
+    await webhook(pre(1501, order!, 60));
     expect(sent.at(-1)!.text).toBe('precheckout:true');
-    await webhook(paid(1501, order!, 50, 'ch_1'));
-    await webhook(paid(1501, order!, 50, 'ch_1'));
+    await webhook(paid(1501, order!, 60, 'ch_1'));
+    await webhook(paid(1501, order!, 60, 'ch_1'));
     const coins = async (): Promise<number> => (await db.query<{ coins: number }>('select coins from profiles where telegram_id = 1501')).rows[0]!.coins;
-    expect(await coins()).toBe(1000);
+    expect(await coins()).toBe(3000);
     // Qaytarish: faqat admin; Stars — Telegram orqali.
     const payment = (await db.query<{ id: number }>("select id from payments where provider = 'stars' and external_id = 'ch_1'")).rows[0]!.id;
     const jwt = await botUser(1502, 'yulduz_admin');
@@ -380,6 +392,48 @@ describe('xabar yuborish va so‘rovnoma', () => {
     await webhook({ update_id: 3, callback_query: { id: 'v1', from: { id: 1600, first_name: 'S' }, data: `poll:${poll}:2` } });
     expect(sent.at(-1)!.text).toContain('Anor');
     expect((await db.query('select option from poll_votes where poll_id = $1', [poll])).rows).toEqual([{ option: 2 }]);
+  });
+});
+
+describe('login + parol (password_login bayroqchasi)', () => {
+  test('o‘chiq (sukut): ro‘yxat va tiklash 403, bot /parol — "o‘chirilgan"', async () => {
+    expect(await call('/auth/register', { login: 'parolli_1', password: 'parol12345' })).toMatchObject({ status: 403, body: { error: 'password_off' } });
+    expect((await call('/auth/reset/start', { login: 'x' })).status).toBe(403);
+    expect((await call('/auth/reset/finish', { login: 'x', code: '123456', password: 'parol12345' })).status).toBe(403);
+    await webhook(message(1700, '/parol'));
+    expect(sent.at(-1)!.text).toContain('o‘chirilgan');
+  });
+  test('yoqiq: ro‘yxat, kirish, bot kodi bilan parol tiklash', async () => {
+    await db.query("update settings set value = 'true' where key = 'password_login'");
+    expect((await call('/auth/register', { login: 'parolli_2', password: 'parol12345' })).body).toEqual({ ok: true });
+    expect(await signIn('parolli_2', 'parol12345')).toBeTruthy();
+    expect((await call('/auth/register', { login: 'parolli_2', password: 'parol12345' })).status).toBe(409);
+    await db.query("update profiles set telegram_id = 1701 where login = 'parolli_2'");
+    await webhook(message(1701, '/parol'));
+    const code = /kodi: (\d{6})/.exec(sent.at(-1)!.text)![1]!;
+    expect((await call('/auth/reset/finish', { login: 'parolli_2', code, password: 'yangi_parol_9' })).body).toEqual({ ok: true });
+    expect(await signIn('parolli_2', 'yangi_parol_9')).toBeTruthy();
+    await db.query("update settings set value = 'false' where key = 'password_login'");
+  });
+});
+
+describe('admin qanday kiradi', () => {
+  test('ADMIN_TELEGRAM_ID birinchi kirishdayoq admin bo‘ladi', async () => {
+    const c = ctx({ env: { ...ENV, ADMIN_TELEGRAM_ID: '1800' } });
+    await call('/telegram/webhook', message(1800, '/start login'), { 'x-telegram-bot-api-secret-token': 'wh' }, c);
+    await call('/telegram/webhook', message(1800, 'egasi_nik'), { 'x-telegram-bot-api-secret-token': 'wh' }, c);
+    expect((await db.query("select role from profiles where telegram_id = 1800")).rows).toEqual([{ role: 'admin' }]);
+    await webhook(message(1801, '/start login'));
+    await webhook(message(1801, 'oddiy_nik'));
+    expect((await db.query("select role from profiles where telegram_id = 1801")).rows).toEqual([{ role: 'user' }]);
+  });
+  test('lokal "Admin sifatida kirish": faqat DEV=1, aks holda 404', async () => {
+    expect((await call('/dev/admin', {}, {}, ctx({ env: { ...ENV, DEV: undefined } }))).status).toBe(404);
+    const r = await call('/dev/admin', {}, {}, ctx({ env: { ...ENV, ADMIN_TELEGRAM_ID: '1802' } }));
+    const token = (r.body as { token: string }).token;
+    expect(token).toMatch(/^[0-9a-f]{32}$/);
+    expect(await redeem(token)).toBeTruthy();
+    expect((await db.query("select role from profiles where telegram_id = 1802")).rows).toEqual([{ role: 'admin' }]);
   });
 });
 

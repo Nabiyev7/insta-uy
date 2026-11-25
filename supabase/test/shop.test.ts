@@ -25,7 +25,7 @@ const house = async (tier = 5): Promise<{ uid: string; plot: string; nick: strin
 };
 const qty = async (uid: string, id: string): Promise<number> => Number((await sql('select qty from owned_decor where user_id = $1 and decor_id = $2', [uid, id]))[0]?.qty ?? 0);
 
-beforeAll(async () => { db = await openDb(); });
+beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); });
 
 describe('noyob raqamlangan bezaklar', () => {
   test('har nusxaga raqam beriladi va uy oynasida ko‘rinadi', async () => {
@@ -128,31 +128,38 @@ describe('yangilik xabari', () => {
 });
 
 describe('haftaning hovlisi', () => {
-  test('haftada bitta ovoz, o‘ziga emas, kvartiraga emas', async () => {
-    const [a, b] = [await house(), await house()];
-    expect(await as(a.uid, 'my_yard_vote', { p_plot: b.plot })).toBe(1);
-    await expect(as(a.uid, 'my_yard_vote', { p_plot: b.plot })).rejects.toThrow('already_voted');
-    await expect(as(b.uid, 'my_yard_vote', { p_plot: b.plot })).rejects.toThrow('own_house');
-    await expect(as(b.uid, 'my_yard_vote', { p_plot: 'P0999' })).rejects.toThrow('not_found');
-    const kv = (await sql("select id from plots where type = 'kvartira' limit 1"))[0]!.id as string;
-    await sql("insert into plot_state (plot_id, status, owner) values ($1, 'owned', $2)", [kv, a.uid]);
-    await expect(as(b.uid, 'my_yard_vote', { p_plot: kv })).rejects.toThrow('no_yard');
-    expect((await anon<{ leaders: Row[] }>('api_yards')).leaders[0]).toMatchObject({ plot: b.plot, votes: 1 });
-    expect(await anon('api_plot', { p_plot: b.plot })).toMatchObject({ votes: 1 });
-  });
-  test('hafta tugagach g‘olib: nishon, xabar, reels navbati — bir marta', async () => {
-    await sql('delete from yard_votes');
-    const [win, lose] = [await house(), await house()];
-    const voters = [await user(), await user(), await user()];
-    const last = (await sql("select private.this_week() - 7 as w"))[0]!.w;
-    for (const [i, v] of voters.entries()) await sql('insert into yard_votes (week, voter, plot_id) values ($1, $2, $3)', [last, v, i < 2 ? win.plot : lose.plot]);
+  test('dushanba: o‘tgan hafta eng ko‘p yurak olgan uylar bot so‘rovnomasiga; o‘ziga ovoz yo‘q; 48 soatdan keyin g‘olib — bir marta', async () => {
+    for (const t of ['yard_polls', 'yard_winners', 'broadcast_queue']) await sql(`delete from ${t}`);
+    const [a, b, c] = [await house(), await house(), await house()];
+    const fans = [await user(), await user(), await user()];
+    const lastWeek = "(private.this_week() - 5)::timestamp at time zone 'Asia/Tashkent'";
+    for (const [k, plot] of [[3, a.plot], [2, b.plot], [1, c.plot]] as const) for (const f of fans.slice(0, k)) await sql(`insert into hearts (plot_id, user_id, at) values ($1, $2, ${lastWeek})`, [plot, f]);
+    await svc('svc_tick');
+    const poll = (await sql('select poll_id, plots, status from yard_polls'))[0]!;
+    expect(poll).toMatchObject({ plots: [a.plot, b.plot, c.plot], status: 'open' });
+    expect((await sql('select count(*)::int n from broadcast_queue q join broadcasts br on br.id = q.broadcast_id where br.poll_id = $1', [poll.poll_id]))[0]!.n).toBeGreaterThan(0);
+    const tgOf = async (uid: string): Promise<number> => Number((await sql('select telegram_id from profiles where user_id = $1', [uid]))[0]!.telegram_id);
+    expect(await svc('svc_poll_vote', { p_telegram: await tgOf(a.uid), p_poll: poll.poll_id, p_option: 1 })).toBe('own');
+    for (const f of fans) await svc('svc_poll_vote', { p_telegram: await tgOf(f), p_poll: poll.poll_id, p_option: 2 });
+    await sql("update yard_polls set ends_at = now() - interval '1 minute'");
+    const coins = async (): Promise<number> => (await sql('select coins from profiles where user_id = $1', [b.uid]))[0]!.coins as number;
+    const before = await coins();
     await svc('svc_tick');
     await svc('svc_tick');
-    expect(await sql('select plot_id, votes from yard_winners')).toEqual([{ plot_id: win.plot, votes: 2 }]);
-    expect((await as<{ badges: string[] }>(win.uid, 'my_profile')).badges).toContain('hovli');
-    expect(await sql("select plots from video_jobs where status = 'queued'")).toEqual([{ plots: [win.plot] }]);
+    expect(await sql('select plot_id, votes from yard_winners')).toEqual([{ plot_id: b.plot, votes: 3 }]);
+    expect(await coins()).toBe(before + 2000);
+    expect((await as<{ badges: string[] }>(b.uid, 'my_profile')).badges).toContain('hovli');
     expect(await sql("select count(*)::int c from notifications where kind = 'yard_winner'")).toEqual([{ c: 1 }]);
-    expect((await anon<{ winner: Row }>('api_yards')).winner).toMatchObject({ plot: win.plot, instagram: win.nick, votes: 2 });
+    expect(await sql("select count(*)::int c from broadcast_queue where chat = 0")).toEqual([{ c: 1 }]);
+    expect((await anon<{ winners: Row[] }>('api_yards')).winners[0]).toMatchObject({ plot: b.plot, votes: 3 });
+  });
+  test('admin nomzodlarni qo‘lda almashtirib, so‘rovnomani boshlaydi', async () => {
+    const admin = await user();
+    await sql("update profiles set role = 'admin' where user_id = $1", [admin]);
+    const [a, b] = [await house(), await house()];
+    await expect(as(admin, 'admin_yard_start', { p_plots: [a.plot] })).rejects.toThrow('bad_format');
+    await as(admin, 'admin_yard_start', { p_plots: [a.plot, b.plot] });
+    expect((await sql("select plots, status from yard_polls order by week desc limit 1"))[0]).toEqual({ plots: [a.plot, b.plot], status: 'open' });
   });
   test('jadvallar yopiq, ichki funksiya chaqirilmaydi', async () => {
     const u = await user();

@@ -95,7 +95,8 @@ function PlacePill(): React.JSX.Element {
   const districtName = d ? (lang === 'uz' ? d.name_uz : d.name_ru) : t('outskirts');
   const streetName = street ? streetLabel(street, boot?.streets[String(street)], lang) : '';
   const place = isPlaza ? t('plaza') : zoneAt(at.x, at.z)?.[lang] ?? (streetName || districtName);
-  const open = (): void => openRoot(street ? { kind: 'street', id: street } : { kind: 'map' });
+  // Ko'cha oynasi yo'q: joy nomi xaritani ochadi.
+  const open = (): void => openRoot({ kind: 'map' });
   return <button type="button" className="pill place glass" aria-label={`${place}, ${districtName}`} title={districtName} onClick={open}><Icon name="pin" /><b>{place}</b></button>;
 }
 
@@ -189,6 +190,7 @@ export function Hud(): React.JSX.Element {
   const isOffline = useApp((s) => s.isOffline);
   const hasPanel = useApp((s) => s.panel !== null);
   const isMaintenance = useApp((s) => Boolean(s.boot?.settings.maintenance));
+  const isTester = useApp((s) => s.profile?.test_mode === true);
   if (isClean) return <CleanScreen />;
   if (isPhoto) return <PhotoBar />;
   return (
@@ -196,6 +198,7 @@ export function Hud(): React.JSX.Element {
       <TopRow />
       {(isOffline || isMaintenance) && <p className="banner" role="alert">{t(isOffline ? 'offline' : 'maintenance')}</p>}
       {!isOffline && !isMaintenance && <SaluteBanner />}
+      {isTester && <p className="test-chip" title={t('testModeHint')}>{t('testMode')} · {t('testFree')}</p>}
       {mode !== 'city' && <Joystick />}
       <div className="dock"><Rail /><PreviewBar /><BottomCard /><BottomBar /></div>
       <CoinFly />

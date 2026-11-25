@@ -15,9 +15,9 @@ const FILTERS: readonly (readonly [Exclude<ShopTab, 'set'>, (c: CatalogRow) => b
 ];
 
 export interface TabRows { readonly tab: ShopTab; readonly rows: readonly CatalogRow[]; readonly sets: readonly SetRow[] }
-/** Bo'sh tab ko'rsatilmaydi. Mavsumi tugagan tovar faqat "Maxsus" da (kulrang) turadi. */
+/** Bo'sh tab ko'rsatilmaydi. Mavsumi tugagan tovar do'konda ko'rinmaydi (admin panelda hammasi bor). */
 export const shopTabs = (catalog: readonly CatalogRow[], sets: readonly SetRow[]): readonly TabRows[] => {
-  const tabs = FILTERS.map(([tab, test]): TabRows => ({ tab, sets: [], rows: catalog.filter((c) => (tab === 'special' ? c.active : c.onSale) && test(c)) }));
+  const tabs = FILTERS.map(([tab, test]): TabRows => ({ tab, sets: [], rows: catalog.filter((c) => c.onSale && test(c)) }));
   const onSale = new Set(catalog.filter((c) => c.onSale).map((c) => c.id));
   const setTab: TabRows = { tab: 'set', rows: [], sets: sets.filter((s) => s.items.length > 0 && s.items.every((id) => onSale.has(id))) };
   return [...tabs.slice(0, -1), setTab, ...tabs.slice(-1)].filter((t) => t.rows.length > 0 || t.sets.length > 0);

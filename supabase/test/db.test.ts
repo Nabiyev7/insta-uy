@@ -34,7 +34,7 @@ const owner = async (): Promise<{ uid: string; plot: string }> => {
   return { uid, plot };
 };
 
-beforeAll(async () => { db = await openDb(); });
+beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); });
 
 describe('ruxsatlar', () => {
   test('anon jadvalga, my_*, admin_*, svc_* ga kira olmaydi', async () => {
@@ -168,16 +168,9 @@ describe('uy bezash va sovg‘a', () => {
     expect(await as(uid, 'my_profile')).toMatchObject({ coins: 96000 });
   });
 
-  test('sovg‘a: taklif → qabul, egasi almashadi', async () => {
-    const { uid, plot } = await owner();
-    const to = await user();
-    const login = (await sql('select login from profiles where user_id = $1', [to]))[0]!.login;
-    const id = await as(uid, 'my_transfer', { p_plot: plot, p_to: login, p_message: 'Tabriklayman' });
-    await expect(as(uid, 'my_transfer_answer', { p_id: id, p_accept: true })).rejects.toThrow('not_found');
-    await as(to, 'my_transfer_answer', { p_id: id, p_accept: true, p_instagram: 'sovga_nik' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ instagram: 'sovga_nik' });
-    await expect(as(uid, 'my_edit_bio', { p_plot: plot, p_bio: '' })).rejects.toThrow('not_owner');
-    expect(await as(uid, 'my_profile')).toMatchObject({ free_used: true });
+  test('uyni sovg‘a qilish yo‘q (faqat bezak sovg‘asi)', async () => {
+    expect(await sql("select proname from pg_proc where proname in ('my_transfer', 'my_transfer_answer')")).toEqual([]);
+    expect(await sql("select 1 from pg_proc where proname = 'my_gift_decor'")).toHaveLength(1);
   });
 });
 

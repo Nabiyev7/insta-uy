@@ -64,6 +64,35 @@ Egasi saytni o'zi to'liq sinashi kerak. `role='admin'` akkauntda **"Sinov rejimi
 - **Internetda:** sayt — hamma kabi bot orqali (`/start` → nik → havola). `ADMIN_TELEGRAM_ID` dagi Telegram akkaunt birinchi kirishdayoq **avtomatik admin** bo'ladi (SQL kerak emas; README 6-bandini shunga moslab yangila). Admin panel — botga `/admin` → 15 daqiqalik bir martalik havola (hozirgidek).
 - **Lokalda (kompyuterda sinash):** bot ishlamaydi, shuning uchun faqat `DEV=1` da kirish oynasida **"Admin sifatida kirish (lokal)"** tugmasi — bosilsa admin akkauntiga kiradi. Ishlab chiqarish yig'ilishida bu tugma va uning endpointi umuman yo'q (test bilan tekshir).
 
+## 10. Interfeys — skrinshotlardan (egasi bilan ko'rib chiqildi, 2026-11-25)
+Manba: `docs/chat/ui-*.png` (16:45). Har biri tuzatilgach `npm run screens` bilan qayta suratga ol.
+1. **"Xush kelibsiz!" xabari "Uy qurish" tugmasini yopib turibdi** (`ui-uy-qurish.png`). Toast hech qachon pastki oyna tugmalari ustiga tushmasin: oyna ochiq bo'lsa — ekran tepasiga chiqsin.
+2. **Kirish oynasi:** "Eski akkaunt (login va parol)" qatori `password_login=false` da ko'rinmasin (5-band).
+3. **"Uy yozuvi" oynasidagi matn** "Uy har levelda o'zining chiroyli standart rangida" — ranglar olib tashlanganidan qolgan, yozuvga aloqasi yo'q. Olib tashla; o'rniga: "Yozuv uyni bosganda ko'rinadi. 60 belgigacha."
+4. **Mehmon kartasi:** "Birinchi 100 kishiga markazdan joy" — noto'g'ri. To'g'risi: "Bepul uy oling · birinchi 100 kishi — «Shahar asoschisi» va 1 000 tanga" (uz + ru).
+5. **Yordam:** "Qo'shimcha uylar — pulga" — premium uy yashirilgani uchun olib tashla. Yordam matnini amaldagi qoidalarga (tanga narxlari, 5-level, bezak 5-leveldan) moslab tekshir.
+6. **Uyni sovg'a qilish olib tashlanadi** (egasi): Sovg'alar bo'limida faqat bezak sovg'a qilish qoladi; server RPC'si ham o'chadi (test).
+7. **Mashinalar faqat Do'konda** (egasi): Menyu → "Mashinalarim" faqat egadagi mashinalarni ko'rsatadi (tanlash) va pastda "Do'konda yana mashinalar" tugmasi. Nom, narx va tezlik **bitta manbadan** (`catalog.ts` / `drive.ts`) — hozir "Ko'k sedan"/"Sedan", "Qizil sport"/"Sport mashina" farq qiladi. Tezlik narxga mos o'ssin: oddiy < sedan < krossover < sport < jip < limuzin < superkar (superkar eng tez). Test: do'kon va "Mashinalarim" nomlari bir xil.
+8. **Mavsumi tugagan bezaklar yashirinsin** (egasi): Do'kon "Maxsus" va "Yangi" da faqat mavsumi ochiq bo'lganlar. Admin panelda hammasi ko'rinadi.
+9. **"Reklamalarim" va "Buyurtmalarim" yashirinsin** (egasi), funksiya yoqilganda (`payments_enabled`, reklama joylari sotuvda) o'zi paydo bo'ladi. Admin sinov rejimida ko'rinadi.
+10. **Do'kon tablari** (`ui-dokon-lyuks.png`): suriladigan tab qatorida chetdagi tablar kesilib, ustma-ust ko'rinyapti ("Lyuks" va "Yangi" ustma-ust). Chetlarda yumshoq so'nish (fade) va tanlangan tab avtomatik ko'rinadigan joyga surilsin.
+11. **Boshqa uy oynasi:** "♡ 0" va "Yoqdi" tugmasi ikki marta — bittasi qolsin: tugmaning o'zida son ("♡ 12"), bosilgandan keyin to'ldirilgan yurak.
+12. **Reyting → "Eng hashamatli uylar"** dagi raqam (484, 480…) nimaligi yozilmagan. Yoniga qisqa izoh ("ball: level + bezaklar") yoki belgi.
+
+## 11. Funksiyalarni soddalashtirish (egasi, 2026-11-25)
+Olib tashlanadigan narsalar **UI'dan yashiriladi**, server/baza qismi qoladi (keyin qaytarish oson). Yordam matni va ko'rsatma ham moslansin.
+1. **Avatar** — menyu va Uyim'dan olinadi; hamma bir xil standart avatarda. Keyin qo'shiladi.
+2. **Sozlamalarda faqat Til va Ovoz.** Olib tashlanadi: Sifat (doim "Avto"), Tun rejimi tanlovi, Chap qo'l, Telegram xabarlari tugmasi (bot xabarlari doim yoqiq; botda /stop bilan o'chiriladi).
+3. **Interfeys doim to'q (tungi) rejimda** — panellar, tugmalar, oynalar to'q rangda (`ui-tun-uyim.png` dagidek). Kunduzgi panel uslubi ishlatilmaydi. Shahar (3D) kun-tun aylanishi o'zgarmaydi. Kontrast WCAG AA (matn o'qilishi) tekshirilsin, `npm run screens` hammasi to'q rejimda.
+4. **Chat:** "Onlayn" tab olib tashlanadi. "Mahalla" tabi faqat o'sha mahallada uyi borlarga ko'rinadi (uyi yo'q yoki mehmon — faqat "Umumiy"). Bir nechta uyi bo'lsa — eng birinchi olingan uyining mahallasi.
+5. **Shahar gazetasi** va **Ko'cha oynasi** (ko'chani bosganda chiqadigan) — olib tashlanadi. Ko'chani bosganda hech narsa ochilmaydi.
+6. **Faqat yurak qoladi.** Uy oynasidagi "Ovoz berish" va Reyting'dagi "Haftaning hovlisi" ovoz bo'limi olib tashlanadi.
+7. **Hamma tanlovlar Telegram bot orqali** (egasi): "Haftaning hovlisi" va boshqa saylovlar (ko'cha nomi, mahalla raisi va h.k.) botdagi so'rovnoma bilan:
+   - Har dushanba cron hafta davomida **eng ko'p yurak** olgan 5 ta uyni tanlaydi → bot hamma foydalanuvchiga so'rovnoma yuboradi (uy rasmi + nik + havola) → 48 soatdan keyin g'olib aniqlanadi → 2 000 tanga + nishon, botda va kanalda e'lon.
+   - Bitta Telegram — bitta ovoz; o'z uyiga ovoz yo'q. 6-qadamdagi so'rovnoma tizimi (`0024_messages.sql`) ishlatilsin.
+   - Saytda Top → "Haftaning hovlisi" faqat o'tgan haftalar g'oliblari ro'yxati.
+   - Admin panelda: nomzodlarni qo'lda almashtirish, so'rovnomani qo'lda boshlash.
+
 ## Qabul sharti
 - Yuqoridagi testlar, `npm test`, `npm run typecheck`, `npm run e2e` o'tadi; tekshiruvchi ✅.
-- `PLAN.md` "Holat", commit: `fix: tuzatish 1 — tabrik oynani yopmaydi, piyoda ochiq joyda, kanal xabari, tarjima testi, parol yo'li bayroqcha ortida, premium uy olib tashlandi, yangi paketlar, admin sinov rejimi`.
+- `PLAN.md` "Holat", commit: `fix: tuzatish 1 — tabrik oynani yopmaydi, piyoda ochiq joyda, kanal xabari, tarjima testi, parol yo'li bayroqcha ortida, premium uy olib tashlandi, yangi paketlar, admin sinov rejimi, interfeys tuzatishlari, soddalashtirish`.

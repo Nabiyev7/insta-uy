@@ -26,6 +26,7 @@ const claim = async (uid: string, nick: string): Promise<string> => {
 let admin = '';
 beforeAll(async () => {
   db = await openDb();
+  await db.query("update settings set value = 'true' where key = 'premium_house_enabled'");
   admin = await user('admin');
   await sql("update settings set value = 'true' where key = 'payments_enabled'");
 });
@@ -42,11 +43,7 @@ describe('nik egaligi', () => {
     await claim(c, 'mashhur_nik');
     const plot = await claim(a, 'egasi_a');
     expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'egasi_a' });
-    const login = (await sql('select login from profiles where user_id = $1', [b]))[0]!.login;
-    const id = await as(a, 'my_transfer', { p_plot: plot, p_to: login });
-    await expect(as(b, 'my_transfer_answer', { p_id: id, p_accept: true, p_instagram: 'mashhur_nik' })).rejects.toThrow('nick_taken');
-    await as(b, 'my_transfer_answer', { p_id: id, p_accept: true, p_instagram: 'yangi_nik' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'yangi_nik' });
+    void b;
     await expect(as(admin, 'admin_plot', { p_plot: plot, p_action: 'approve' })).rejects.toThrow('bad_format');
   });
   test('pullik uyda begona nik rad etiladi; to‘lov orasida band bo‘lsa uy niksiz beriladi', async () => {

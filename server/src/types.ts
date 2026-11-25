@@ -10,6 +10,8 @@ export interface Env {
   readonly TELEGRAM_CHANNEL?: string;
   /** Admin panel manzili (botning /admin havolasi uchun). */
   readonly ADMIN_URL?: string;
+  /** Cloudflare Turnstile (faqat parol yo'li yoqilganda kerak). */
+  readonly TURNSTILE_SECRET?: string;
   readonly TELEGRAM_WEBHOOK_SECRET?: string;
   readonly ADMIN_TELEGRAM_ID?: string;
   readonly BANK_BOT?: string;
@@ -23,6 +25,8 @@ export interface Env {
   readonly HASH_SECRET: string;
   /** Faqat lokal: Telegram'siz sinash. */
   readonly DEV?: string;
+  /** Faqat lokal (DEV=1): kanal obunasi tekshiruvi "bor" deb qaytadi. */
+  readonly DEV_CHANNEL_OK?: string;
 }
 
 export interface AuthUser { readonly id: string; readonly email: string }
@@ -40,7 +44,7 @@ export interface Backend {
 }
 
 export interface Telegram {
-  send(chat: number, text: string, buttons?: readonly TgButton[]): Promise<void>;
+  send(chat: number | string, text: string, buttons?: readonly TgButton[]): Promise<void>;
   answer(callbackId: string, text: string): Promise<void>;
   video(chat: number, url: string, caption: string): Promise<void>;
   /** Kanal a'zosimi (bot kanalda admin bo'lishi kerak). */

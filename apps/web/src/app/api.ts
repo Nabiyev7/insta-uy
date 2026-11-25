@@ -72,12 +72,13 @@ export interface Boot {
   readonly hero: { readonly nick: string; readonly total: number } | null;
 }
 export interface MyPlot {
+  readonly is_test?: boolean;
   readonly plot: string; readonly status: string; readonly address: string; readonly instagram: string | null; readonly bio: string; readonly tier: number; readonly wall: number; readonly roof: number;
   readonly decor: readonly string[]; readonly places: Readonly<Record<string, string>>; readonly material: number; readonly frame: number; readonly door: number; readonly label: string; readonly has_expansion: boolean; readonly expansion: string | null;
 }
 export interface Profile {
   readonly id: string; readonly login: string; readonly instagram: string | null; readonly role: string; readonly perms: readonly string[]; readonly badges: readonly string[]; readonly avatar: unknown; readonly telegram: boolean; readonly coins: number;
-  readonly ref: string; readonly free_used: boolean; readonly wants_news: boolean; readonly serials: Readonly<Record<string, readonly number[]>>; readonly streak: number; readonly daily_done: boolean; /** Bugun olinsa ketma-ket nechanchi kun bo'ladi (1–7). */ readonly daily_next: number; readonly channel_paid: boolean; readonly sent_today: number; readonly treasures_today: number; readonly invited: number; readonly plots: readonly MyPlot[]; readonly decor: Readonly<Record<string, number>>;
+  readonly ref: string; readonly free_used: boolean; readonly wants_news: boolean; readonly serials: Readonly<Record<string, readonly number[]>>; readonly streak: number; readonly daily_done: boolean; /** Bugun olinsa ketma-ket nechanchi kun bo'ladi (1–7). */ readonly daily_next: number; readonly channel_paid: boolean; /** Admin sinov rejimi (serverda hisoblanadi). */ readonly test_mode?: boolean; readonly sent_today: number; readonly treasures_today: number; readonly invited: number; readonly plots: readonly MyPlot[]; readonly decor: Readonly<Record<string, number>>;
   readonly transfers: readonly { readonly id: string; readonly plot: string; readonly from: string; readonly message: string }[];
   readonly notes: readonly { readonly id: number; readonly kind: string; readonly data: Readonly<Record<string, unknown>>; readonly at: string }[];
 }

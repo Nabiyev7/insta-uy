@@ -3,7 +3,6 @@ import { rpc } from '../app/api.ts';
 import { hasKey, useT } from '../app/i18n.ts';
 import { openAuth, refreshProfile, useApp } from '../app/store.ts';
 import { decorOf } from '../logic/decorCatalog.ts';
-import { Transfers } from './HousePanels.tsx';
 import { Icon } from './icons.tsx';
 import { Sheet, useAction } from './kit.tsx';
 
@@ -18,7 +17,6 @@ export function NotesPanel(): React.JSX.Element {
   return (
     <Sheet title={t('notes')} variant="half" footer={readAll}>
       {isEmpty && <p className="state muted"><Icon name="bell" />{t('notesEmpty')}</p>}
-      <Transfers />
       <ul className="list">
         {profile.notes.map((n) => {
           const key = `n_${n.kind}`;

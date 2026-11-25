@@ -25,6 +25,8 @@ export interface HouseState {
   readonly expanded: boolean;
   /** Yuraklar soni (yorliqda). */
   readonly hearts?: number;
+  /** Admin sinov uyi — yorliqda "SINOV" (faqat adminning o'ziga). */
+  readonly isTest?: boolean;
 }
 /** Uy modellari 25×34 m hovliga chizilgan: villa va qasrda uchastka o'lchamiga qarab kattalashadi. */
 const HOUSE_BACK = 7.5;

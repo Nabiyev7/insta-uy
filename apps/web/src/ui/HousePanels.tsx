@@ -62,7 +62,10 @@ export function UpgradeButton({ plot }: PlotProps): React.JSX.Element | null {
   const { isBusy, run } = useAction();
   const prices = setting<Prices | null>('prices', null);
   const coins = setting<CoinPrices>('coins', {});
-  if (plot.tier >= MAX_TIER) return <p className="max-level with-icon"><Icon name="star" />{t('maxLevel')}</p>;
+  const isTester = useApp((s) => s.profile?.test_mode === true);
+  const setTier = (tier: number): void => { void run(async () => { await rpc('my_test_tier', { p_plot: plot.plot, p_tier: tier }); await refreshMine(); if (full && tier > plot.tier) startConstruction(full, tier); }); };
+  const testTiers = isTester && <div className="seg test-tiers" role="group" aria-label={t('testMode')}>{TIERS.map((x) => <button type="button" key={x.id} aria-pressed={x.id === plot.tier} disabled={isBusy} onClick={() => setTier(x.id)}>{x.id}</button>)}</div>;
+  if (plot.tier >= MAX_TIER) return <>{testTiers}<p className="max-level with-icon"><Icon name="star" />{t('maxLevel')}</p></>;
   const next = (plot.tier + 1) as TierId;
   const name = TIERS.find((x) => x.id === next)?.[lang] ?? '';
   const price = coins.tier?.[next] ?? TIER_COINS[next] ?? 0;
@@ -78,6 +81,7 @@ export function UpgradeButton({ plot }: PlotProps): React.JSX.Element | null {
   };
   return (
     <>
+      {testTiers}
       {canCoins && balance >= price && <button type="button" className="btn gold block big upgrade" disabled={isBusy} onClick={() => void raise()}>{label}</button>}
       {canCoins && balance < price && <div className="upgrade-need">
         <button type="button" className="btn block big upgrade" disabled>{label}</button>
@@ -102,51 +106,15 @@ export function PaidExtras({ plot }: PlotProps): React.JSX.Element | null {
   );
 }
 
-function GiftHouse({ plot }: PlotProps): React.JSX.Element {
-  const t = useT();
-  const { isBusy, run } = useAction();
-  const [to, setTo] = useState('');
-  const [msg, setMsg] = useState('');
-  return (
-    <details className="section">
-      <summary className="with-icon"><Icon name="home" />{t('gift')}: {plot.address}</summary>
-      <form className="stack" onSubmit={(e) => { e.preventDefault(); void run(() => rpc('my_transfer', { p_plot: plot.plot, p_to: to, p_message: msg }), t('sent')); }}>
-        <Field label={t('giftTo')}><input value={to} onChange={(e) => setTo(e.target.value)} required autoCapitalize="none" /></Field>
-        <Field label={t('giftMsg')}><input value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={100} /></Field>
-        <button type="submit" className="btn small" disabled={isBusy}>{t('gift')}</button>
-      </form>
-    </details>
-  );
-}
 
-/** Kelgan o'tkazma (uy sovg'asi): qabul qilish yoki rad etish. */
-export function Transfers(): React.JSX.Element | null {
-  const t = useT();
-  const profile = useApp((s) => s.profile);
-  const { isBusy, run } = useAction();
-  if (!profile || profile.transfers.length === 0) return null;
-  const answer = (id: string, isYes: boolean): void => { void run(async () => { await rpc('my_transfer_answer', { p_id: id, p_accept: isYes, p_instagram: profile.instagram }); await refreshMine(); }); };
-  return (
-    <>
-      {profile.transfers.map((tr) => (
-        <div className="quote" key={tr.id}><b>{tr.from}</b> {t('giftIn')}: {tr.message}
-          <div className="row"><button type="button" className="btn small" disabled={isBusy} onClick={() => answer(tr.id, true)}>{t('accept')}</button><button type="button" className="btn small soft" disabled={isBusy} onClick={() => answer(tr.id, false)}>{t('decline')}</button></div>
-        </div>
-      ))}
-    </>
-  );
-}
 
 interface GiftsProps { readonly to?: string }
 export function GiftsPanel({ to = '' }: GiftsProps): React.JSX.Element {
   const t = useT();
-  const plots = useApp((s) => s.profile?.plots) ?? [];
   return (
     <Sheet title={to ? `${t('giftTitle')}: @${to}` : t('giftsTitle')}>
       <p className="muted">{t('giftsHint')}</p>
-      <Transfers />
       <Section title={t('giftDecor')} icon="gift"><GiftDecor to={to} /></Section>
-      {!to && plots.filter((p) => p.status === 'owned').map((p) => <GiftHouse key={p.plot} plot={p} />)}
     </Sheet>
   );
 }

@@ -42,7 +42,6 @@ const detectQuality = (): QualityLevel => {
 };
 
 export type Theme = 'auto' | 'light' | 'dark';
-const readTheme = (): Theme => { const v = read('theme'); return v === 'light' || v === 'dark' ? v : 'auto'; };
 
 const isMuted = (x: unknown): x is Muted => typeof x === 'object' && x !== null && typeof (x as Muted).author === 'string' && typeof (x as Muted).nick === 'string';
 const readMuted = (): readonly Muted[] => {
@@ -107,7 +106,7 @@ export interface AppState {
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, trail: [], toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: !read('quality'), isSound: read('sound') === '1', theme: readTheme(), isLeftHand: read('hand') === 'left', isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: true, isSound: read('sound') === '1', theme: 'dark', isLeftHand: false, isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;
@@ -173,7 +172,9 @@ export const refreshHouses = async (): Promise<void> => {
   const text = JSON.stringify(rows);
   if (text === lastRows) return;
   lastRows = text;
-  setApp({ houses: new Map(rows.map((r) => [r[0], toHouse(r)])) });
+  const profile = getApp().profile;
+  const testPlots = new Set(profile?.role === 'admin' ? profile.plots.filter((p) => p.is_test).map((p) => p.plot) : []);
+  setApp({ houses: new Map(rows.map((r) => [r[0], { ...toHouse(r), isTest: testPlots.has(r[0]) }])) });
 };
 export const refreshProfile = async (): Promise<void> => {
   try {
