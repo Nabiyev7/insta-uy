@@ -9,8 +9,8 @@ Dizayn **Farg'ona yoki boshqa bir hududga bog'lanmaydi** — **umumiy, universal
 - 1-qadamda `PLAN.md` §3 dagi "Farg'ona vodiysi ruhi" va `CHAT-UCHUN.md` dagi shunga o'xshash qatorlar "umumiy, universal uslub" ga almashtirilsin.
 - Promtlarda milliy uslub talab qilingan joy qolgan bo'lsa — bu bo'lim ustun turadi.
 
-## ⏸ TO'XTATILDI (2026-11-24)
-Egasi ishni bosqichlarga bo'ldi: `docs/chat/BOSQICHLAR.md`. Bu ro'yxatdagi **6 va 7-qadamlar hozir bajarilmaydi** (keyingi bosqichlarda). Yangi vazifa — 1-bosqich (xarita), uning promti alohida beriladi.
+## Joriy vazifa
+Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. **10-qadamni bajar, keyin 11-qadamni.** 6 va 7-qadamlar keyingi bosqichlarda — hozir tegma.
 
 ## Ro'yxat
 
@@ -24,8 +24,8 @@ Egasi ishni bosqichlarga bo'ldi: `docs/chat/BOSQICHLAR.md`. Bu ro'yxatdagi **6 v
 - [ ] **7. Yuklamani taqsimlash** — `docs/chat/YUKLAMA-PROMT.md`
 - [x] **8. Xarita: shaharni qurish (CityLand UZ)** — `docs/chat/XARITA-PROMT.md`
 - [x] **9. Bo'sh uchastkalar, yangi uylar 1–5, bezaklar** — `docs/chat/UYLAR-BEZAK-PROMT.md`
-- [x] **10. Lyuks bezaklar (7-leveldan)** — `docs/chat/BEZAK-LYUKS-PROMT.md`
-- [x] **11. Yangi interfeys** — `docs/chat/INTERFEYS-PROMT.md`
+- [ ] **10. Lyuks bezaklar (7-leveldan)** — `docs/chat/BEZAK-LYUKS-PROMT.md`
+- [ ] **11. Yangi interfeys** — `docs/chat/INTERFEYS-PROMT.md`
 
 ## Har qadamdan keyin
 
