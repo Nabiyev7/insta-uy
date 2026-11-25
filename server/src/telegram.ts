@@ -98,7 +98,8 @@ const sendLogin = async (ctx: Ctx, tg: Telegram, chat: number, user: string, isN
   ]);
 };
 
-interface BotStart { readonly state: 'ready' | 'need_nick' | 'banned'; readonly user?: string }
+interface BotStart { readonly state: 'ready' | 'need_nick' | 'banned' | 'renick'; readonly user?: string }
+const RENICK = 'Nikingiz uning haqiqiy egasiga o‘tgan. Yangi Instagram nikingizni yozing — uyingiz va tangalaringiz o‘zingizda. / Напишите новый ник Instagram.';
 /** `ADMIN_TELEGRAM_ID` dagi Telegram birinchi kirishdayoq admin bo'ladi (SQL kerak emas). */
 const promoteOwner = async (ctx: Ctx, telegram: number): Promise<void> => {
   if (ctx.env.ADMIN_TELEGRAM_ID && String(telegram) === ctx.env.ADMIN_TELEGRAM_ID.trim()) await ctx.db.rpc('svc_make_admin', { p_telegram: telegram });
@@ -109,6 +110,7 @@ const greet = async (ctx: Ctx, tg: Telegram, m: Message, ref: string | null): Pr
   await promoteOwner(ctx, from.id);
   const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: from.id, p_ref: ref, p_name: from.first_name });
   if (r.state === 'banned') return tg.send(m.chat.id, 'Akkaunt bloklangan. / Аккаунт заблокирован.');
+  if (r.state === 'renick') return tg.send(m.chat.id, RENICK);
   if (r.state === 'ready' && r.user) {
     // /start — eslatma va xabarlar yana yoqiladi (/stop bilan o'chirilgan bo'lsa).
     await ctx.db.rpc('svc_news', { p_telegram: from.id, p_on: true });
@@ -264,6 +266,7 @@ const onCallback = async (ctx: Ctx, tg: Telegram, q: NonNullable<Update['callbac
   if (q.data === 'open') {
     await tg.answer(q.id, '🏙');
     const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: q.from.id, p_ref: null, p_name: q.from.first_name });
+    if (r.state === 'renick') return tg.send(q.from.id, RENICK);
     if (r.state === 'ready' && r.user) return sendLogin(ctx, tg, q.from.id, r.user);
     return tg.send(q.from.id, r.state === 'banned' ? 'Akkaunt bloklangan. / Аккаунт заблокирован.' : await askNick(ctx));
   }

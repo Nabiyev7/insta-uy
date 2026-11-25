@@ -66,3 +66,21 @@ Hal qilinmagan savollar: `SAVOLLAR.md` (8–11-qadam bo'limlari). Haqiqiy Redmi 
   - Skrinshotlar `docs/chat/ui-*.png`.
 
 Hal qilinmagan savollar: `SAVOLLAR.md` (6-qadam: A, B+C, D, E, F, eski IQTISOD bo'limlari).
+
+## 6a — Tuzatish 1 (2026-11-25)
+- Tabrik endi ochiq oynani yopmaydi. Piyoda va mashina ochiq joyda, oldi bo'sh tomonga qarab paydo bo'ladi.
+- Parol bilan kirish kodda qoldi, lekin o'chiq ("password_login"). Premium uy yashirildi. Tanga paketlari 5 ta: 3 000 so'mdan, Stars kamida 50 ⭐.
+- Admin uchun sinov rejimi: cheklov yo'q, tanga yechilmaydi, pulli narsalar bepul; hammasi "sinov" belgili, bitta tugma bilan tozalanadi.
+- Sizning Telegram'ingiz (ADMIN_TELEGRAM_ID) birinchi kirishdayoq admin bo'ladi; kompyuterda "Admin sifatida kirish (lokal)" tugmasi.
+- Interfeys: doim to'q; sozlamada faqat til va ovoz; avatar, gazeta, ko'cha oynasi, "Onlayn" chat, uy sovg'asi olib tashlandi; yurak — bitta tugma.
+- "Haftaning hovlisi" endi Telegram botdagi so'rovnoma: eng ko'p yurak olgan 5 uy, 48 soat, g'olibga 2 000 tanga.
+
+## 6b — Qo'shimcha 1 (2026-11-25)
+- Bot nikni tekshiradi (xato bo'lsa aniq sababi bilan) va "Shu to'g'rimi?" deb so'raydi.
+- Nikni kimdir olib qo'ygan bo'lsa: "Bu nik meniki" → skrinshot → admin panelda "Nik nizolari".
+- Kechqurun 19:00 da bonus eslatmasi (kuniga 1 ta, /stop bilan o'chadi).
+- Uyim'da do'st taklifi shkalasi (1 → 3 → 10 sovg'a), kirishda kamera animatsiyasi, "Yangi qo'shningiz" xabari, "Bosh ekranga qo'shish" kartasi.
+- Shahar loyihalari: 3D taxta (nomi va foiz), to'lganda botda va kanalda e'lon, eng ko'p qo'shgan 3 kishi.
+- Botda "✍️ Adminga yozish": siz Telegram'da "Javob berish" qilsangiz — javob odamga boradi; admin panelda "Murojaatlar".
+
+Sinov: 368 ta unit test, tur tekshiruvi toza, e2e 88/88, skrinshotlar yangilandi. Ochiq savollar: `SAVOLLAR.md` (6a, 6b bo'limlari).

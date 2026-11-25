@@ -67,6 +67,7 @@ export const openDispute = async (ctx: Ctx, tg: Telegram, chat: number, telegram
     const code = error instanceof Error ? error.message : '';
     if (code.includes('already_claimed')) return tg.send(chat, 'Bu nik bo‘yicha ariza allaqachon ko‘rib chiqilmoqda. / По этому нику уже есть заявка.');
     if (code.includes('rate_limited')) return tg.send(chat, 'Bugun ariza chegarasi tugadi (kuniga 3 ta). / Лимит заявок на сегодня.');
+    if (code.includes('has_account')) return tg.send(chat, 'Sizda allaqachon nikli akkaunt bor — nik o‘zgarmaydi. Savol bo‘lsa: /yordam. / У вас уже есть аккаунт.');
     throw error;
   }
 };

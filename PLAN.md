@@ -133,7 +133,7 @@ Texnologiya: **Remotion** yoki headless brauzer (Playwright) bilan 3D sahnani yo
 - Variant B (rasmiy): Payme/Click biznes — YaTT yoki firma kerak, % komissiya.
 - Kod boshidanoq ikkala variantni qo'llashi kerak (payment provider interfeysi).
 - **Telegram Stars** (bot orqali): `/dokon` yoki saytdagi yulduzli tugma (`?start=buy_<kod>`) → hisob-faktura → `successful_payment` → darhol bajariladi. Narx yulduzda: so'm / `premium.starsRate` (200).
-- Pulga sotiladi: tanga paketlari, premium uy (darhol 1–5-level, bir nechta), bezaklar **level cheklovisiz** (1–4-level uylarda pulli bezak nuqtalari: garaj oldi, old hovli, darvoza yoni, burchaklar), salyut (24 soat), noyob nik joylari (keyin). Hamma to'lov avtomatik tasdiqlanadi, `payments` jadvalida; admin qaytaradi (Stars — Telegram orqali).
+- Pulga sotiladi: tanga paketlari (5 ta; 1–2-paket faqat karta, Stars kamida 50 ⭐), premium uy (**hozircha yopiq** — `premium_house_enabled=false`, keyin egasi bilan qayta loyihalanadi), bezaklar **level cheklovisiz** (1–4-level uylarda pulli bezak nuqtalari: garaj oldi, old hovli, darvoza yoni, burchaklar), salyut (24 soat), noyob nik joylari (keyin). Hamma to'lov avtomatik tasdiqlanadi, `payments` jadvalida; admin qaytaradi (Stars — Telegram orqali).
 - **`payments_enabled=false`** turganida saytdagi pul tugmalari "Tez kunda", bot "tez kunda" deydi.
 - Yosh chegarasi qo'yilmaydi.
 

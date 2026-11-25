@@ -491,3 +491,23 @@ describe('adminga yozish va nik nizosi (bot)', () => {
   });
 });
 
+describe('nizodan keyin eski egasi', () => {
+  test('/start bossa ham yangi nik so‘raladi, yozgach uy ustida yangi nik', async () => {
+    await botUser(2300, 'eski_egasi_nik');
+    const owner = (await db.query<{ user_id: string }>('select user_id from profiles where telegram_id = 2300')).rows[0]!.user_id;
+    await db.query("insert into nick_disputes (nick, claimant_tg, owner, status) values ('eski_egasi_nik', 2301, $1, 'sent')", [owner]);
+    const id = (await db.query<{ id: number }>("select id from nick_disputes where nick = 'eski_egasi_nik'")).rows[0]!.id;
+    await db.query('select private.dispute_grant($1, null)', [id]);
+    await webhook(message(2300, '/start'));
+    expect(sent.at(-1)!.text).toContain('Yangi Instagram nikingizni');
+    await webhook(message(2300, 'yangi_egasi_nik'));
+    expect(sent.at(-1)!.text).toContain('@yangi_egasi_nik');
+    expect((await db.query('select instagram from profiles where telegram_id = 2300')).rows).toEqual([{ instagram: 'yangi_egasi_nik' }]);
+    await webhook(message(2302, '/start'));
+    await webhook(message(2302, 'boshqa_nik'));
+    await confirmNick(2302);
+    await webhook(message(2302, '/start'));
+    expect(sent.at(-1)!.buttons![0]!.url).toContain('kirish=');
+  });
+});
+

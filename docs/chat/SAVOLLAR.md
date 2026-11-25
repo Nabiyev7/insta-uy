@@ -184,3 +184,10 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 4. **Kirish animatsiyasi** admin "Video" (reels) uchun hali ishlatilmadi — video o'z kamera yo'lidan foydalanadi. Kirishdan oldin profil yuklanmagan bo'lsa, kamera markazga (o'z uyiga emas) tushadi.
 5. **Shahar loyihalari**: ko'prik uchun bosh rejada joy yo'q — taxta chiqmaydi (loyiha bazada qoladi). Bog' taxtasi hovuz yonida. Loyiha to'lganda yangi 3D obyekt (stadion modeli va h.k.) hali yo'q — faqat taxta 100% bo'ladi va xabar boradi.
 6. **Eslatma soati** 19:00 (sozlama `reminder_hour`); xabar uy egasi bo'lgan va bonusni olmaganlarga.
+
+### Yakuniy tekshiruvdan (6a + 6b)
+1. **Nik da'vogarga band qilinmaydi**: nik bo'shagach da'vogar /start yozguncha boshqa odam olib qo'yishi mumkin (ehtimoli kam). Kerak bo'lsa — 7 kunlik band qilish qo'shamiz.
+2. **Akkaunti bor odam** boshqa nikka da'vo qila olmaydi (nik o'zgarmaydi qoidasi) — bot shuni aytadi.
+3. **Sinov rejimi**: shahar loyihasiga hissa va salyut sinovchidan ham haqiqiy tanga yechadi (hammaga ta'sir qiladi). Sinov xaridida olingan tanga paketi admin balansiga haqiqiy tanga qo'shadi; tozalash uni olib tashlamaydi.
+4. **Kechki eslatma kuni** Toshkent vaqti bo'yicha, "bonus olinganmi" esa server kuni bo'yicha — 19:00 da farq yo'q; `reminder_hour` ni tun yarmiga qo'ymang.
+5. **Lokal admin tugmasi** ishlab chiqarish yig'ilishida yo'qligi alohida build testi bilan tekshirilmagan (endpoint 404 — test bor).
