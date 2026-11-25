@@ -1,27 +1,24 @@
 import type { SpotKind } from './anchors.ts';
 import type { Plot, PlotType } from './types.ts';
 
-/** Uy levellari: ko'pi bilan 2 qavat (5-leveldan), asosan hashamatga o'sadi (PLAN.md §1). Har level oldingisidan kuchli. */
+/** Uy levellari 1–5: ko'pi bilan 2 qavat (5-level), asosan hashamatga o'sadi (PLAN.md §1). Har level oldingisidan kuchli.
+ * 6–10 keyin qaytadi (egasi, 2026-11-25): shu ro'yxatga qator, `kit_levels.py` dagi MAX_LEVEL va bazadagi `private.max_tier()` birga o'zgaradi. */
 export const TIERS = [
   { id: 1, key: 'kichik', uz: 'Kichik uy', ru: 'Маленький дом' },
   { id: 2, key: 'ayvonli', uz: 'Shinam uy', ru: 'Уютный дом' },
   { id: 3, key: 'hovli', uz: 'Hovli uy', ru: 'Дом с двором' },
   { id: 4, key: 'chiroyli', uz: 'Bezakli uy', ru: 'Нарядный дом' },
   { id: 5, key: 'katta', uz: 'Katta uy', ru: 'Большой дом' },
-  { id: 6, key: 'boy', uz: 'Boy uy', ru: 'Богатый дом' },
-  { id: 7, key: 'villa', uz: 'Villa', ru: 'Вилла' },
-  { id: 8, key: 'lux_villa', uz: 'Hashamatli villa', ru: 'Роскошная вилла' },
-  { id: 9, key: 'qasr', uz: 'Qasr', ru: 'Особняк' },
-  { id: 10, key: 'saroy', uz: 'Saroy', ru: 'Дворец' },
 ] as const;
 export type TierId = (typeof TIERS)[number]['id'];
 export const MAX_TIER = TIERS.length;
 /** Bezaklar shu leveldan ochiladi (nik lavhasi bundan mustasno). */
 export const DECOR_LEVEL = 5;
-/** Lyuks bezaklar shu leveldan ochiladi. */
-export const LUXE_LEVEL = 7;
+/** Lyuks bezaklar tanga bilan shu leveldan ochiladi (pulga — levelsiz). */
+export const LUXE_LEVEL = 5;
 
-export const MIN_TIER: Readonly<Record<PlotType, TierId>> = { hovli: 1, kvartira: 1, villa: 7, qasr: 9 };
+/** Villa va qasr uchastkasida ham 1–5-level uylar turadi (uchastkasi katta). */
+export const MIN_TIER: Readonly<Record<PlotType, TierId>> = { hovli: 1, kvartira: 1, villa: 1, qasr: 1 };
 /** Bepul olinadigan turlar (kvartira hozircha berilmaydi — docs/chat/BOSQICH-2.md). */
 export const FREE_TYPES: readonly PlotType[] = ['hovli'];
 export const isFreeType = (t: PlotType): boolean => FREE_TYPES.includes(t);
@@ -30,7 +27,7 @@ export const canUpgrade = (t: PlotType): boolean => t !== 'kvartira';
 /** Boshlang'ich narxlar (so'm). Amaldagi qiymatlar bazadagi `settings`da — admin o'zgartiradi. */
 export const DEFAULT_PRICES = {
   base: { hovli: 30_000, kvartira: 20_000, villa: 150_000, qasr: 400_000 } satisfies Record<PlotType, number>,
-  tierUp: { 2: 15_000, 3: 25_000, 4: 30_000, 5: 40_000, 6: 60_000, 7: 90_000, 8: 130_000, 9: 200_000, 10: 300_000 } as Readonly<Record<number, number>>,
+  tierUp: { 2: 15_000, 3: 25_000, 4: 30_000, 5: 40_000 } as Readonly<Record<number, number>>,
   expansion: 80_000,
   streetName: 200_000,
   label: { silver: 15_000, gold: 40_000 },
@@ -82,7 +79,7 @@ const SLOT_SPOTS: Readonly<Record<DecorSlot, readonly SpotKind[]>> = {
 };
 interface ItemOptions { readonly stock?: number; readonly spots?: readonly SpotKind[]; readonly minLevel?: number; readonly isActive?: boolean }
 const item = (id: string, slot: DecorSlot, uz: string, ru: string, priceUzs: number, priceCoins: number, { stock, spots, minLevel = DECOR_LEVEL, isActive = true }: ItemOptions = {}): DecorItem =>
-  ({ id, slot, uz, ru, priceUzs, priceCoins, stock: stock ?? null, model: id, spots: spots ?? SLOT_SPOTS[slot], minLevel, tint: null, isActive });
+  ({ id, slot, uz, ru, priceUzs, priceCoins, stock: stock ?? null, model: id, spots: spots ?? SLOT_SPOTS[slot], minLevel: Math.min(minLevel, MAX_TIER), tint: null, isActive });
 
 export const DECOR: readonly DecorItem[] = [
   item('fence_wood', 'fence', "Yog'och panjara", 'Деревянный забор', 5_000, 100),
@@ -165,6 +162,9 @@ export const DECOR: readonly DecorItem[] = [
 /** Tarmoqdagi holat kodi: 0–5 odam, 6 — shaharga tepadan qarayapti, `carBase` dan boshlab mashinalar. `cars` — `drive.ts` dagi CARS soni (test tekshiradi). */
 export const ANIM = { away: 6, carBase: 10, cars: 10 } as const;
 export const MAX_ANIM = ANIM.carBase + ANIM.cars - 1;
+/** Kuchaytirish narxi (tanga): kalit — keyingi level. Amaldagisi bazada (`coins.tier`, admin "Iqtisod"). */
+export const TIER_COINS: Readonly<Record<number, number>> = { 2: 300, 3: 1000, 4: 2000, 5: 3500 };
+
 export const decorById = (id: string): DecorItem | undefined => DECOR.find((d) => d.id === id);
 
 /** Uzoq shakli (`_lod`) bor lyuks modellar. */
@@ -173,21 +173,17 @@ export const LUXE_MODELS: ReadonlySet<string> = new Set(DECOR.filter((d) => d.id
 /** Level bilan tekin keladigan hovli bezaklari: indeks = level. 1–5 — standart hovli; bezak joylari hisobiga kirmaydi. */
 const GARDEN = ['path_stone', 'tree_round', 'tree_wide', 'tree_tall', 'tree_slim'] as const;
 const LAMP_GARDEN = [...GARDEN, 'light_lamps'] as const;
-const FLOWER_GARDEN = [...LAMP_GARDEN, 'gul_zor'] as const;
-const LUXE_GARDEN = [...FLOWER_GARDEN, 'light_luxe'] as const;
-const LEVEL_YARD: readonly (readonly string[])[] = [
-  [], GARDEN, GARDEN, GARDEN, GARDEN, GARDEN, LAMP_GARDEN, FLOWER_GARDEN, LUXE_GARDEN, LUXE_GARDEN, [...LUXE_GARDEN, 'water_fountain'],
-];
-/** Avtomobil yo'li (indeks = level): 2–4 bitta, 5 ikki mashinalik, 6–10 maydoncha. */
-export const LEVEL_DRIVE: readonly (string | null)[] = [null, null, 'drive_narrow', 'drive_narrow', 'drive_narrow', 'drive_wide', 'drive_pad', 'drive_pad', 'drive_pad', 'drive_pad', 'drive_pad'];
-/** Levelning o'z panjara va darvozasi (indeks = level): har biri oldingisidan yomon emas. Oltin darvoza faqat 9 dan. */
+const LEVEL_YARD: readonly (readonly string[])[] = [[], GARDEN, GARDEN, GARDEN, GARDEN, LAMP_GARDEN];
+/** Avtomobil yo'li (indeks = level): 2–4 bitta, 5 ikki mashinalik. */
+export const LEVEL_DRIVE: readonly (string | null)[] = [null, null, 'drive_narrow', 'drive_narrow', 'drive_narrow', 'drive_wide'];
+/** Levelning o'z panjara va darvozasi (indeks = level): har biri oldingisidan yomon emas. Temir panjara va oltin darvoza — bezak sifatida. */
 export const FENCE_RANK = ['fence_low', 'fence_basic', 'fence_brick', 'fence_ornate'] as const;
 export const GATE_RANK = ['gate_open', 'gate_basic', 'gate_wood', 'gate_slat', 'gate_carved', 'gate_naqsh', 'gate_gold'] as const;
 export const LEVEL_FENCE: readonly (typeof FENCE_RANK)[number][] = [
-  'fence_low', 'fence_low', 'fence_basic', 'fence_basic', 'fence_brick', 'fence_brick', 'fence_brick', 'fence_ornate', 'fence_ornate', 'fence_ornate', 'fence_ornate',
+  'fence_low', 'fence_low', 'fence_basic', 'fence_basic', 'fence_brick', 'fence_brick',
 ];
 export const LEVEL_GATE: readonly (typeof GATE_RANK)[number][] = [
-  'gate_open', 'gate_open', 'gate_basic', 'gate_wood', 'gate_slat', 'gate_slat', 'gate_carved', 'gate_naqsh', 'gate_naqsh', 'gate_gold', 'gate_gold',
+  'gate_open', 'gate_open', 'gate_basic', 'gate_wood', 'gate_slat', 'gate_slat',
 ];
 export const levelYard = (tier: number): readonly string[] => LEVEL_YARD[tier] ?? [];
 

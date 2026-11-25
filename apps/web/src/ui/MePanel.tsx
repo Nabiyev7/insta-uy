@@ -1,6 +1,6 @@
 /** Uyim: uy kartasi va bo'limlar; avatar. */
 import { useState } from 'react';
-import { AVATAR_OPTIONS, MAX_TIER, TIERS, sanitizeAvatar, type AvatarLook } from '../../../../packages/shared/src/index.ts';
+import { MAX_TIER, TIERS, sanitizeAvatar, type AvatarLook } from '../../../../packages/shared/src/index.ts';
 import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareStory } from '../app/actions.ts';
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
@@ -8,7 +8,7 @@ import { forgetMe } from '../app/multiplayer.ts';
 import { openAuth, openPanel, openRoot, refreshProfile, toast, useApp } from '../app/store.ts';
 import { NickForm, PaidExtras, UpgradeButton } from './HousePanels.tsx';
 import { Icon } from './icons.tsx';
-import { RowLink, Section, Seg, Sheet, Swatches, askConfirm, useAction } from './kit.tsx';
+import { RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
 
 function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
   const t = useT();
@@ -19,14 +19,14 @@ function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
   const isOwned = plot.status === 'owned';
   return (
     <section className="house-card">
-      <div className="row between"><span className="tag"><Icon name="star" />{plot.tier}/{MAX_TIER} · {tier}</span><span className={`tag ${isOwned ? 'free' : 'gold'}`}>{t(isOwned ? 'owned' : 'pending')}</span></div>
+      <div className="row between"><span className="tag"><Icon name="star" />{plot.tier}/{MAX_TIER} · {tier}</span><span className="tag free">{t('owned')}</span></div>
       {plot.instagram ? <p className="nick">@{plot.instagram}</p> : <NickForm plot={plot} />}
       <p className="muted with-icon"><Icon name="pin" />{plot.address}</p>
       <button type="button" className="btn block" onClick={() => goToPlot(plot.plot)}><Icon name="home" />{t('goHome')}</button>
       {isYard && isOwned && <UpgradeButton plot={plot} />}
       <div className="tiles">
         {isYard && isOwned && <button type="button" onClick={() => openPanel({ kind: 'yard', id: plot.plot })}><Icon name="tools" />{t('decorate')}</button>}
-        <button type="button" onClick={() => openPanel({ kind: 'looks', id: plot.plot })}><Icon name="palette" />{t('looks')}</button>
+        <button type="button" onClick={() => openPanel({ kind: 'bio', id: plot.plot })}><Icon name="rules" />{t('bioTitle')}</button>
         <button type="button" disabled={isBusy} onClick={() => run(() => shareStory(plot.plot, plot.instagram ?? ''))}><Icon name="story" />{t('stories')}</button>
         <button type="button" disabled={isBusy} onClick={() => run(() => copyText(houseUrl(plot.plot)), t('copied'))}><Icon name="share" />{t('share')}</button>
       </div>
@@ -94,6 +94,7 @@ export function MePanel(): React.JSX.Element {
   );
 }
 
+/** Avatar: faqat bosh kiyim va libos (ranglar tanlanmaydi — odamga qarab o'zgarmas). */
 export function AvatarPanel(): React.JSX.Element {
   const t = useT();
   const profile = useApp((s) => s.profile);
@@ -101,15 +102,10 @@ export function AvatarPanel(): React.JSX.Element {
   const look = sanitizeAvatar(profile?.avatar);
   const set = (patch: Partial<AvatarLook>): void => {
     if (!profile) { openAuth(); return; }
-    void run(async () => { await rpc('my_avatar', { p_avatar: { ...look, ...patch } }); await refreshProfile(); });
-  };
-  const colors = (key: 'skin' | 'hair' | 'top' | 'pants'): React.JSX.Element => {
-    const list: readonly string[] = AVATAR_OPTIONS[key];
-    return <><span className="muted">{t(key)}</span><Swatches label={t(key)} colors={list} value={list.indexOf(look[key])} onPick={(i) => set({ [key]: list[i] })} /></>;
+    void run(async () => { await rpc('my_avatar', { p_avatar: { hat: look.hat, outfit: look.outfit, ...patch } }); await refreshProfile(); });
   };
   return (
-    <Sheet title={t('avatar')}>
-      {colors('skin')}{colors('hair')}{colors('top')}{colors('pants')}
+    <Sheet title={t('avatar')} variant="half">
       <span className="muted">{t('hat')}</span><Seg label={t('hat')} value={look.hat} onPick={(hat) => set({ hat })} options={[['none', t('o_none')], ['doppi', t('o_doppi')], ['kepka', t('o_kepka')]]} />
       <span className="muted">{t('outfit')}</span><Seg label={t('outfit')} value={look.outfit} onPick={(outfit) => set({ outfit })} options={[['oddiy', t('o_oddiy')], ['chopon', t('o_chopon')]]} />
       {!profile && <button type="button" className="btn" onClick={() => openAuth()}>{t('login')}</button>}

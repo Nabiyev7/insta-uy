@@ -1,59 +1,46 @@
 /** O'z uyim ishlari: ranglar va material, level, nik, bezash, sovg'alar. */
 import { useState, type FormEvent } from 'react';
-import { DOOR_COLORS, FRAME_COLORS, MAX_TIER, ROOF_COLORS, TIERS, WALL_COLORS, WALL_MATERIALS, frameIndex, parseBio, parseInstagram, roofColor, type TierId } from '../../../../packages/shared/src/index.ts';
-import { cheerLevel } from '../app/actions.ts';
+import { MAX_TIER, TIERS, TIER_COINS, parseBio, parseInstagram, type TierId } from '../../../../packages/shared/src/index.ts';
+import { startConstruction } from '../app/actions.ts';
 import { rpc, type MyPlot } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
 import { openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
 import { GiftDecor, YardEditor } from './YardEditor.tsx';
 import { createOrder } from './OrderPanels.tsx';
 import { Icon } from './icons.tsx';
-import { Field, Section, Seg, Sheet, Swatches, useAction } from './kit.tsx';
+import { Field, Section, Sheet, askConfirm, useAction } from './kit.tsx';
 
 export const refreshMine = async (): Promise<void> => { await Promise.all([refreshProfile(), refreshHouses()]); };
 interface PlotProps { readonly plot: MyPlot }
 interface IdProps { readonly id: string }
 const useMine = (id: string): MyPlot | undefined => useApp((s) => s.profile?.plots.find((p) => p.plot === id));
 
-function LooksForm({ plot }: PlotProps): React.JSX.Element {
+function BioForm({ plot }: PlotProps): React.JSX.Element {
   const t = useT();
   const { isBusy, run } = useAction();
-  const hasHouse = useApp((x) => x.plotById.get(plot.plot)?.type !== 'kvartira');
   const [bio, setBio] = useState(plot.bio);
-  const [wall, setWall] = useState(plot.wall);
-  const [roof, setRoof] = useState(plot.roof);
-  const [material, setMaterial] = useState(plot.material);
-  const [frame, setFrame] = useState(plot.frame);
-  const [door, setDoor] = useState(plot.door);
-  const lang = useApp((x) => x.lang);
   const submit = (e: FormEvent): void => {
     e.preventDefault();
     void run(async () => {
       const text = parseBio(bio);
       if (!text.ok) throw new Error(text.code);
-      await rpc('my_edit_house', { p_plot: plot.plot, p_bio: text.value, p_wall: wall, p_roof: roof, p_material: material, p_frame: frame, p_door: door });
+      await rpc('my_edit_bio', { p_plot: plot.plot, p_bio: text.value });
       await refreshMine();
     }, t('saved'));
   };
   return (
     <form className="stack" onSubmit={submit}>
-      <span className="muted">{t('wallColor')}</span><Swatches label={t('wallColor')} colors={WALL_COLORS} value={wall} onPick={setWall} />
-      <span className="muted">{t('roofColor')}</span><Swatches label={t('roofColor')} colors={ROOF_COLORS.map((c, i) => (i === 0 ? roofColor(plot.tier, 0) : c))} value={roof} onPick={setRoof} />
-      {hasHouse && <>
-        <span className="muted">{t('wallMaterial')}</span><Seg label={t('wallMaterial')} value={String(material)} onPick={(v) => setMaterial(Number(v))} options={WALL_MATERIALS.map((m, i) => [String(i), m[lang]] as const)} />
-        <span className="muted">{t('frameColor')}</span><Swatches label={t('frameColor')} colors={FRAME_COLORS.map((c, i) => FRAME_COLORS[frameIndex(plot.tier, i)] ?? c)} value={frame} onPick={setFrame} />
-        <span className="muted">{t('doorColor')}</span><Swatches label={t('doorColor')} colors={DOOR_COLORS} value={door} onPick={setDoor} />
-      </>}
+      <p className="muted">{t('bioHint')}</p>
       <Field label={t('bio')}><input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} /></Field>
       <button type="submit" className="btn block" disabled={isBusy}>{t('save')}</button>
     </form>
   );
 }
-export function LooksPanel({ id }: IdProps): React.JSX.Element | null {
+export function BioPanel({ id }: IdProps): React.JSX.Element | null {
   const t = useT();
   const plot = useMine(id);
   if (!plot) return null;
-  return <Sheet title={t('looks')}><LooksForm key={`${plot.plot}${plot.bio}${plot.wall}${plot.roof}${plot.material}${plot.frame}${plot.door}`} plot={plot} /></Sheet>;
+  return <Sheet title={t('bioTitle')} variant="half"><BioForm key={`${plot.plot}${plot.bio}`} plot={plot} /></Sheet>;
 }
 
 export function YardPanel({ id }: IdProps): React.JSX.Element | null {
@@ -64,29 +51,38 @@ export function YardPanel({ id }: IdProps): React.JSX.Element | null {
 }
 
 interface Prices { readonly tierUp: Readonly<Record<string, number>>; readonly expansion: number; readonly label: Readonly<Record<string, number>> }
-interface CoinPrices { readonly tierBase: number; readonly maxTier: number }
-/** Levelni ko'tarish: tanga bilan, chegaradan keyin — "Tez kunda" (to'lov yoqilsa — pulga). */
+interface CoinPrices { readonly maxTier?: number; readonly tier?: Readonly<Record<string, number>> }
+/** Kuchaytirish: tanga yetsa — tasdiq, qurilish effekti, tabrik; yetmasa — qancha kerakligi va "Tanga olish"; 5-levelda — "Eng yuqori level". */
 export function UpgradeButton({ plot }: PlotProps): React.JSX.Element | null {
   const t = useT();
   const lang = useApp((s) => s.lang);
+  const balance = useApp((s) => s.profile?.coins ?? 0);
+  const full = useApp((s) => s.plotById.get(plot.plot));
   const { isBusy, run } = useAction();
   const isPaid = setting('payments_enabled', false);
   const prices = setting<Prices | null>('prices', null);
-  const coins = setting<CoinPrices | null>('coins', null);
-  if (plot.tier >= MAX_TIER) return null;
+  const coins = setting<CoinPrices>('coins', {});
+  if (plot.tier >= MAX_TIER) return <p className="max-level with-icon"><Icon name="star" />{t('maxLevel')}</p>;
   const next = (plot.tier + 1) as TierId;
   const name = TIERS.find((x) => x.id === next)?.[lang] ?? '';
-  const canCoins = coins !== null && plot.tier < coins.maxTier && setting('coins_enabled', true);
-  const raise = (): void => {
-    void run(async () => {
+  const price = coins.tier?.[next] ?? TIER_COINS[next] ?? 0;
+  const canCoins = plot.tier < Math.min(MAX_TIER, coins.maxTier ?? MAX_TIER) && setting('coins_enabled', true);
+  const label = <>{t('raise')}<Icon name="next" />{next}-{t('levelWord')}<span className="price"><Icon name="coin" />{money(price)}</span></>;
+  const raise = async (): Promise<void> => {
+    if (!(await askConfirm(`${next}. ${name} — ${money(price)} ${t('coinsWord')}`))) return;
+    await run(async () => {
       await rpc('my_tier_coins', { p_plot: plot.plot });
       await refreshMine();
-      cheerLevel(plot.plot, next);
+      if (full) startConstruction(full, next);
     });
   };
   return (
     <>
-      {canCoins && <button type="button" className="btn gold block" disabled={isBusy} onClick={raise}><Icon name="up" />{t('raise')}: {next}. {name}<span className="price"><Icon name="coin" />{money(coins.tierBase * plot.tier)}</span></button>}
+      {canCoins && balance >= price && <button type="button" className="btn gold block big upgrade" disabled={isBusy} onClick={() => void raise()}>{label}</button>}
+      {canCoins && balance < price && <div className="upgrade-need">
+        <button type="button" className="btn block big upgrade" disabled>{label}</button>
+        <div className="row between"><span className="muted">{t('needMore').replace('{n}', money(price - balance))}</span><button type="button" className="btn small gold" onClick={() => openPanel({ kind: 'coins' })}><Icon name="coin" />{t('addCoins')}</button></div>
+      </div>}
       {!canCoins && !isPaid && <p className="muted with-icon"><Icon name="lock" />{next}. {name} · {t('soon')}</p>}
       {isPaid && prices && <button type="button" className="btn block" disabled={isBusy} onClick={() => run(() => createOrder('tier', { plot: plot.plot, tier: next }))}><Icon name="up" />{next}. {name} · {money(prices.tierUp[next] ?? 0)} {t('som')}</button>}
     </>

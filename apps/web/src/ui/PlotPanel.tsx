@@ -7,7 +7,6 @@ import { money, useT } from '../app/i18n.ts';
 import { getApp, openAuth, openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
 import { UpgradeButton } from './HousePanels.tsx';
 import { createOrder } from './OrderPanels.tsx';
-import { ReportForm } from './ReportForm.tsx';
 import { BADGE_ICONS } from './badges.ts';
 import { Icon } from './icons.tsx';
 import { Field, LoadState, RowLink, Sheet, useAction, useLoad } from './kit.tsx';
@@ -147,7 +146,7 @@ function MineActions({ mine, full }: { readonly mine: MyPlot; readonly full: Plo
       {hasYard && <UpgradeButton plot={mine} />}
       <div className="tiles">
         {hasYard && <button type="button" onClick={() => openPanel({ kind: 'yard', id: mine.plot })}><Icon name="plus" />{t('decorate')}</button>}
-        <button type="button" onClick={() => openPanel({ kind: 'looks', id: mine.plot })}><Icon name="palette" />{t('looksShort')}</button>
+        <button type="button" onClick={() => openPanel({ kind: 'bio', id: mine.plot })}><Icon name="rules" />{t('bioTitle')}</button>
         <button type="button" disabled={isBusy} onClick={() => run(() => shareStory(mine.plot, mine.instagram ?? ''))}><Icon name="story" />{t('stories')}</button>
         <button type="button" disabled={isBusy} onClick={() => run(() => copyText(houseUrl(mine.plot)), t('copied'))}><Icon name="share" />{t('share')}</button>
       </div>
@@ -170,7 +169,6 @@ function VisitorActions({ info }: { readonly info: PlotInfo }): React.JSX.Elemen
         <button type="button" className="btn" onClick={() => walkTo(info.id)}><Icon name="walk" />{t('closeLook')}</button>
         {info.instagram && info.status === 'owned' && <button type="button" className="btn soft" onClick={gift}><Icon name="gift" />{t('giftTitle')}</button>}
       </div>
-      <ReportForm kind="plot" target={info.id} />
     </>
   );
 }

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { setMuted } from '../app/chat.ts';
 import { useT } from '../app/i18n.ts';
 import { goToPoint } from '../app/modes.ts';
-import { loadOnline, moderateMessage, reportMessage, sendChat, type OnlinePerson } from '../app/multiplayer.ts';
+import { loadOnline, moderateMessage, sendChat, type OnlinePerson } from '../app/multiplayer.ts';
 import { openAuth, setApp, toast, useApp, type ChatLine } from '../app/store.ts';
 import { Icon } from './icons.tsx';
 import { Seg, Sheet, askConfirm } from './kit.tsx';
@@ -30,7 +30,6 @@ function MessageTools({ line, onClose }: { readonly line: ChatLine; readonly onC
   };
   return (
     <div className="row tools">
-      {!isMine && <button type="button" className="btn small soft" onClick={act(() => reportMessage(line.id))}><Icon name="flag" />{t('report')}</button>}
       {!isMine && <button type="button" className="btn small soft" onClick={act(() => { setMuted(line, true); toast(t('mutedDone')); })}><Icon name="mute" />{t('mute')}</button>}
       {canModerate && <button type="button" className="btn small soft" onClick={act(() => moderateMessage(line.id, false))}><Icon name="trash" />{t('chatDelete')}</button>}
       {canModerate && !isMine && <button type="button" className="btn small danger" onClick={act(() => { void askConfirm(t('chatBanSure'), true).then((ok) => { if (ok) moderateMessage(line.id, true); }); })}><Icon name="ban" />{t('chatBan')}</button>}

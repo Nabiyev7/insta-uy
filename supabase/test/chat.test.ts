@@ -37,13 +37,8 @@ describe('chat bazasi', () => {
     expect(await svc('svc_player', { p_id: bad })).toMatchObject({ is_banned: true });
     expect((await db.query("select 1 from audit_log where action = 'chat:ban'")).rows).toHaveLength(1);
   });
-  test('shikoyat: adminga haqiqiy login ko‘rinadi, kuniga 10 ta', async () => {
-    const [me, bad] = [await user(), await user()];
-    await svc('svc_chat_report', { p_reporter: me, p_user: bad, p_text: 'yomon gap' });
-    const { rows } = await db.query<{ target_id: string }>("select target_id from reports where target_kind = 'chat' and reason = 'yomon gap'");
-    expect(rows[0]!.target_id).toMatch(/^chatchi/);
-    for (let i = 0; i < 9; i++) await svc('svc_chat_report', { p_reporter: me, p_user: bad, p_text: `x${i}` });
-    await expect(svc('svc_chat_report', { p_reporter: me, p_user: bad, p_text: 'y' })).rejects.toThrow('rate_limited');
+  test('shikoyat yo‘q: so‘z filtri va bloklash qoladi', async () => {
+    expect((await db.query("select 1 from pg_proc where proname = 'svc_chat_report'")).rows).toEqual([]);
   });
   test('foydalanuvchi svc_* ni chaqira olmaydi', async () => {
     const u = await user();

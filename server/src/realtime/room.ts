@@ -111,11 +111,6 @@ export class Room {
     return this.chatLog.post({ userId: p.userId, nick: p.nick, homes: p.homes ?? [], isModerator: p.isModerator ?? false, canWrite: p.canWrite ?? true }, raw, now);
   }
 
-  /** Shikoyat uchun: xabar va uning haqiqiy muallifi (faqat serverda). */
-  reported(id: string, messageId: unknown): (ChatMessage & { readonly userId: string }) | null {
-    return this.players.get(id)?.userId && typeof messageId === 'string' ? this.chatLog.find(messageId) : null;
-  }
-
   /** Moderator xabarni o'chiradi; muallifini bilish uchun xabar qaytadi. */
   removeMessage(id: string, messageId: unknown): (ChatMessage & { readonly userId: string }) | null {
     const p = this.players.get(id);

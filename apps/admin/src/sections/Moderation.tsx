@@ -1,8 +1,7 @@
-import { FILES, rpc, SITE_URL } from '../api.ts';
-import { Btn, Table, useAction, useLoad, when } from '../ui.tsx';
+import { FILES, rpc } from '../api.ts';
+import { Btn, Table, useAction, useLoad } from '../ui.tsx';
 
 interface Queue {
-  readonly reports: readonly { readonly id: number; readonly target_kind: string; readonly target_id: string; readonly reason: string; readonly created_at: string; readonly login: string | null }[] | null;
   readonly streets: readonly { readonly id: number; readonly old: string | null; readonly name: string; readonly kind: string; readonly by: string | null }[] | null;
   readonly ads: readonly { readonly id: string; readonly title: string; readonly image: string | null; readonly link: string | null; readonly by: string | null }[] | null;
 }
@@ -30,11 +29,6 @@ export function Moderation(): React.JSX.Element {
             <div><Btn kind="main" disabled={isBusy} onClick={() => act('admin_ad', { p_id: a.id, p_approve: true })}>Chiqarish</Btn><Btn kind="danger" disabled={isBusy} onClick={() => act('admin_ad', { p_id: a.id, p_approve: false, p_note: prompt('Sabab:') ?? '' })}>Rad</Btn></div>
           </div>
         ))}</div></>}
-      {data?.reports && <><h3>Shikoyatlar</h3><Table rows={data.reports} rowKey={(r) => r.id} columns={[
-        { head: 'Nima', cell: (r) => (r.target_kind === 'plot' ? <a href={`${SITE_URL}/?uy=${encodeURIComponent(r.target_id)}`} target="_blank" rel="noopener noreferrer">{r.target_id}</a> : `${r.target_kind}: ${r.target_id}`) },
-        { head: 'Sabab', cell: (r) => r.reason }, { head: 'Kim', cell: (r) => r.login }, { head: 'Vaqt', cell: (r) => when(r.created_at) },
-        { head: '', cell: (r) => <><Btn kind="main" disabled={isBusy} onClick={() => act('admin_report', { p_id: r.id, p_status: 'resolved' })}>Hal qilindi</Btn><Btn disabled={isBusy} onClick={() => act('admin_report', { p_id: r.id, p_status: 'rejected' })}>Asossiz</Btn></> },
-      ]} /></>}
     </>
   );
 }

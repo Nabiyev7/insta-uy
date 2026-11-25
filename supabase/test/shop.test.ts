@@ -48,11 +48,11 @@ describe('noyob raqamlangan bezaklar', () => {
   });
   test('o‘chgan raqam boshqaga qayta berilmaydi', async () => {
     const before = Number((await sql("select coalesce(max(serial), 0) m from decor_serials where decor_id = 'special_statue'"))[0]!.m);
-    const a = await house(6);
+    const a = await house(5);
     await as(a.uid, 'my_buy_decor_coins', { p_id: 'special_statue' });
     expect(await sql('select serial from decor_serials where owner = $1 and decor_id = $2', [a.uid, 'special_statue'])).toEqual([{ serial: before + 1 }]);
     await svc('svc_delete_account', { p_user: a.uid });
-    const b = await house(6);
+    const b = await house(5);
     await as(b.uid, 'my_buy_decor_coins', { p_id: 'special_statue' });
     expect(await sql('select serial from decor_serials where owner = $1', [b.uid])).toEqual([{ serial: before + 2 }]);
   });

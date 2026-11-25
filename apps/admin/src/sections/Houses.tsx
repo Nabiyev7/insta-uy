@@ -5,11 +5,11 @@ import { Btn, Table, useAction, useLoad, when } from '../ui.tsx';
 interface HouseRow {
   readonly id: string; readonly type: string; readonly address: string; readonly status: string; readonly instagram: string | null; readonly bio: string | null; readonly claimed_at: string | null; readonly login: string | null;
 }
-const STATUSES = [['pending', 'Tasdiq kutmoqda'], ['owned', 'Egali'], ['reserved', 'Band'], ['free', "Bo'sh"], ['', 'Hammasi']] as const;
+const STATUSES = [['owned', 'Egali'], ['reserved', 'Band'], ['free', "Bo'sh"], ['', 'Hammasi']] as const;
 const PAGE = 50;
 
 export function Houses(): React.JSX.Element {
-  const [status, setStatus] = useState('pending');
+  const [status, setStatus] = useState('owned');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(0);
   const { isBusy, run } = useAction();
@@ -22,9 +22,9 @@ export function Houses(): React.JSX.Element {
   };
   const actions = (r: HouseRow): React.JSX.Element => (
     <>
-      {r.status === 'pending' && <><Btn kind="main" disabled={isBusy} onClick={() => act(r.id, 'approve')}>✓ Tasdiqlash</Btn><Btn kind="danger" disabled={isBusy} onClick={() => act(r.id, 'reject')}>✕ Rad</Btn></>}
       {r.status === 'owned' && <><Btn disabled={isBusy} onClick={() => act(r.id, 'clear_bio')}>Yozuvni o'chirish</Btn><Btn kind="danger" disabled={isBusy} onClick={() => { if (confirm(`${r.id} bo'shatilsinmi?`)) act(r.id, 'release'); }}>Bo'shatish</Btn></>}
       <Btn disabled={isBusy} onClick={() => assign(r.id)}>Egasi…</Btn>
+      {r.status === 'owned' && <Btn disabled={isBusy} onClick={() => { const n = Number(prompt('Level (1–5):')); if (n >= 1 && n <= 5) act(r.id, 'tier', { tier: n }); }}>Level…</Btn>}
     </>
   );
   return (

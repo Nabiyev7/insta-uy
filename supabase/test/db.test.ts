@@ -87,7 +87,7 @@ describe('bepul uy', () => {
   test('olish, takror, band, yopiq tuman, pullik', async () => {
     const u = await user();
     const plot = await freePlot();
-    expect(await as(u, 'my_claim', { p_plot: plot, p_instagram: '@Ali_01', p_bio: 'Salom' })).toMatchObject({ status: 'pending' });
+    expect(await as(u, 'my_claim', { p_plot: plot, p_instagram: '@Ali_01', p_bio: 'Salom' })).toMatchObject({ status: 'owned' });
     await expect(as(u, 'my_claim', { p_plot: await freePlot(), p_instagram: 'ali_02' })).rejects.toThrow('free_used');
     const u2 = await user();
     await expect(as(u2, 'my_claim', { p_plot: plot, p_instagram: 'vali_1' })).rejects.toThrow('not_free');
@@ -104,16 +104,17 @@ describe('bepul uy', () => {
     expect(await anon('api_search', { p_q: '%' })).toEqual([]);
   });
 
-  test('tasdiqlash, rad etish — rad etilsa bepul huquq qaytadi', async () => {
+  test('nik tasdig‘i yo‘q: uy darhol egali; admin bo‘shatsa bepul huquq qaytadi', async () => {
     const a = await admin();
     const u = await user();
     const plot = await freePlot();
     await as(u, 'my_claim', { p_plot: plot, p_instagram: 'rad_1' });
-    await as(a, 'admin_plot', { p_plot: plot, p_action: 'reject' });
+    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'rad_1' });
+    for (const action of ['approve', 'reject']) await expect(as(a, 'admin_plot', { p_plot: plot, p_action: action })).rejects.toThrow('bad_format');
+    await as(a, 'admin_plot', { p_plot: plot, p_action: 'release' });
     expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'free' });
     await as(u, 'my_claim', { p_plot: plot, p_instagram: 'rad_1' });
-    await as(a, 'admin_plot', { p_plot: plot, p_action: 'approve' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'rad_1' });
+    expect((await sql("select value from settings where key = 'require_approval'"))).toEqual([]);
     const city = (await anon('api_city', { p_districts: [1] })) as unknown[][];
     expect(city.find((r) => r[0] === plot)?.[8]).toBe('owned');
     expect(await anon('api_city', { p_districts: [7] })).toEqual([]);
@@ -125,7 +126,6 @@ describe('bepul uy', () => {
     const guest = await user(ref);
     const plot = await freePlot();
     await as(guest, 'my_claim', { p_plot: plot, p_instagram: 'mehmon_1' });
-    await as(await admin(), 'admin_plot', { p_plot: plot, p_action: 'approve' });
     expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 50, invited: 1 });
   });
 });
@@ -134,20 +134,28 @@ describe('uy bezash va sovg‘a', () => {
   test('faqat o‘z uyi va o‘z bezagi', async () => {
     const { uid, plot } = await owner();
     const other = await owner();
-    await as(uid, 'my_edit_house', { p_plot: plot, p_bio: 'Yangi', p_wall: 3, p_roof: 2 });
-    await expect(as(other.uid, 'my_edit_house', { p_plot: plot, p_bio: 'x', p_wall: 1, p_roof: 1 })).rejects.toThrow('not_owner');
-    await expect(as(uid, 'my_edit_house', { p_plot: plot, p_bio: '', p_wall: 99, p_roof: 1 })).rejects.toThrow('bad_format');
+    await as(uid, 'my_edit_bio', { p_plot: plot, p_bio: 'Yangi' });
+    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ bio: 'Yangi' });
+    await expect(as(other.uid, 'my_edit_bio', { p_plot: plot, p_bio: 'x' })).rejects.toThrow('not_owner');
+    await expect(as(uid, 'my_edit_bio', { p_plot: plot, p_bio: 't.me/reklama' })).rejects.toThrow('bad_format');
+    // Rang tanlash yo'q: eski funksiya olib tashlangan.
+    await expect(as(uid, 'my_edit_house', { p_plot: plot, p_bio: '', p_wall: 3, p_roof: 2 })).rejects.toThrow(/my_edit_house/);
     await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } })).rejects.toThrow('not_owned');
     await sql('update profiles set coins = 1000 where user_id = $1', [uid]);
     expect(await as(uid, 'my_buy_decor_coins', { p_id: 'sign_nick' })).toBe(900);
     await as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } });
     for (const id of ['gate_wood', 'tree_anor', 'daraxt_olma', 'avto_sedan']) await expect(as(uid, 'my_buy_decor_coins', { p_id: id })).rejects.toThrow('level_low');
     await sql('update profiles set coins = 350 where user_id = $1', [uid]);
-    await sql('update plot_state set tier = 6 where plot_id = $1', [plot]);
+    await sql('update plot_state set tier = 5 where plot_id = $1', [plot]);
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_statue' })).rejects.toThrow('not_enough_coins');
     await sql('update plot_state set tier = 1 where plot_id = $1', [plot]);
-    expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(100);
+    // Kuchaytirish narxi: 2-level 300, 3-level 1 000 (docs/chat/TANGA-NARXLAR.md).
+    expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(50);
     expect(await as(uid, 'my_tier_coins', { p_plot: plot }).catch((e: Error) => e.message)).toBe('not_enough_coins');
+    await sql('update profiles set coins = 6500 where user_id = $1', [uid]);
+    for (const left of [5500, 3500, 0]) expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(left);
+    await expect(as(uid, 'my_tier_coins', { p_plot: plot })).rejects.toThrow('max_tier');
+    await expect(sql('update plot_state set tier = 6 where plot_id = $1', [plot])).rejects.toThrow(/tier_check/);
   });
 
   test('noyob bezak soni cheklangan', async () => {
@@ -168,7 +176,7 @@ describe('uy bezash va sovg‘a', () => {
     await expect(as(uid, 'my_transfer_answer', { p_id: id, p_accept: true })).rejects.toThrow('not_found');
     await as(to, 'my_transfer_answer', { p_id: id, p_accept: true, p_instagram: 'sovga_nik' });
     expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ instagram: 'sovga_nik' });
-    await expect(as(uid, 'my_edit_house', { p_plot: plot, p_bio: '', p_wall: 1, p_roof: 1 })).rejects.toThrow('not_owner');
+    await expect(as(uid, 'my_edit_bio', { p_plot: plot, p_bio: '' })).rejects.toThrow('not_owner');
     expect(await as(uid, 'my_profile')).toMatchObject({ free_used: true });
   });
 });
@@ -188,7 +196,7 @@ describe('buyurtma va to‘lov', () => {
     expect(await svc('svc_payment', { p_provider: 'card', p_external: 'tx1', p_amount: 777 })).toMatchObject({ result: 'unmatched' });
     expect(await svc('svc_payment', { p_provider: 'card', p_external: 'tx2', p_amount: o.amount })).toMatchObject({ result: 'paid', order: o.id });
     expect(await svc('svc_payment', { p_provider: 'card', p_external: 'tx2', p_amount: o.amount })).toEqual({ result: 'duplicate' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'pending', instagram: 'boy_1' });
+    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'boy_1' });
   });
 
   test('muddati o‘tgach kelgan to‘lov: joy bo‘sh bo‘lsa beriladi, band bo‘lsa adminga', async () => {
@@ -217,7 +225,8 @@ describe('buyurtma va to‘lov', () => {
     };
     expect(await as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 3 } })).toBe(40000);
     await expect(as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 11 } })).rejects.toThrow('bad_format');
-    expect(await as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 10 } })).toBe(890000);
+    await expect(as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 6 } })).rejects.toThrow('bad_format');
+    expect(await as(uid, 'my_quote', { p_kind: 'tier', p_payload: { plot, tier: 5 } })).toBe(110000);
     expect(await pay('tier', { plot, tier: 3 })).toBe('paid');
     await expect(as(uid, 'my_order', { p_kind: 'tier', p_payload: { plot, tier: 2 } })).rejects.toThrow('bad_format');
     expect(await pay('label', { plot, label: 'gold' })).toBe('paid');
@@ -264,7 +273,6 @@ describe('ko‘cha nomi', () => {
       const u = await user();
       us.push(u);
       await as(u, 'my_claim', { p_plot: p.id, p_instagram: `kocha_${n}` });
-      await as(a, 'admin_plot', { p_plot: p.id, p_action: 'approve' });
     }
     await sql("update plot_state set claimed_at = claimed_at - interval '1 hour' where plot_id = $1", [plots[0]!.id]);
     const firstOwner = (await sql('select st.owner from plot_state st join plots p on p.id = st.plot_id where p.street_id = $1 order by st.claimed_at limit 1', [street]))[0]!.owner as string;
@@ -390,12 +398,11 @@ describe('admin', () => {
     await expect(as(m, 'admin_orders')).rejects.toThrow('forbidden');
     await expect(as(m, 'admin_user', { p_id: m, p_action: 'role', p_data: { role: 'admin' } })).rejects.toThrow('forbidden');
     await expect(as(m, 'admin_user', { p_id: a, p_action: 'ban' })).rejects.toThrow('forbidden');
-    const u = await user();
-    await as(u, 'my_report', { p_kind: 'plot', p_target: 'P0001', p_reason: 'Yomon soz' });
-    const q = (await as(m, 'admin_queue')) as { reports: { id: number }[]; ads: unknown };
-    expect(q.reports).toHaveLength(1);
+    const q = (await as(m, 'admin_queue')) as Row;
+    expect(q).not.toHaveProperty('reports');
     expect(q.ads).toBeNull();
-    await as(m, 'admin_report', { p_id: q.reports[0]!.id, p_status: 'resolved' });
+    // Shikoyat bo'limi yo'q.
+    for (const fn of ['my_report', 'admin_report']) expect(await sql('select 1 from pg_proc where proname = $1', [fn])).toEqual([]);
     expect(await as(m, 'admin_stats')).toMatchObject({ revenue: null });
   });
 

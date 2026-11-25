@@ -10,7 +10,7 @@ import type { Item } from '../src/logic/item.ts';
 import { houseItem, plotItems, type HouseState } from '../src/logic/placement.ts';
 
 const plan = decodePlan(JSON.parse(readFileSync(new URL('../../../packages/shared/data/masterplan.json', import.meta.url), 'utf8')) as EncodedPlan);
-const state = (over: Partial<HouseState> = {}): HouseState => ({ plot: 'P0001', nick: 'ali', tier: 10, wall: 0, roof: 0, decor: [], material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false, ...over });
+const state = (over: Partial<HouseState> = {}): HouseState => ({ plot: 'P0001', nick: 'ali', tier: 5, wall: 0, roof: 0, decor: [], material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false, ...over });
 const sample = (type: string): Plot => plan.plots.find((p) => p.type === type && p.rot === 0)!;
 type Box = readonly [x0: number, x1: number, z0: number, z1: number];
 let boxes: Map<string, Box>;
@@ -51,11 +51,11 @@ describe('joy nuqtalari', () => {
     });
     for (const [model, id] of Object.entries(FREE_ANCHOR)) expect(anchorById(id), model).toBeDefined();
   });
-  test('har uchastka turida 10-level uyga ham tegmaydi', () => {
+  test('har uchastka turida 5-level uyga tegmaydi', () => {
     for (const type of ['hovli', 'villa', 'qasr']) {
       const p = sample(type);
       const [kx, kz] = [p.w / REF_YARD.w, p.d / REF_YARD.d];
-      for (const { id: tier } of TIERS.filter((t) => type === 'hovli' || t.id >= 7)) {
+      for (const { id: tier } of TIERS) {
         const [x0, x1, z0, z1] = boxOf(houseItem(p, state({ tier }), false));
         for (const a of openAnchors(tier).filter((q) => isSized(q) && q.kind !== 'sign')) {
           const [ax, az] = [p.x + a.x * kx, p.z + a.z * kz];
@@ -73,8 +73,9 @@ describe('joy nuqtalari', () => {
       expect(openAnchors(level).filter((a) => a.kind !== 'sign').length, `level ${level}`).toBeGreaterThanOrEqual(decorSlots(level));
       if (level >= DECOR_LEVEL) expect(decorSlots(level)).toBeGreaterThan(decorSlots(level - 1));
     }
-    expect([...DEFAULT_DECOR_SLOTS]).toEqual([0, 0, 0, 0, 8, 10, 12, 14, 15, 16]);
-    expect(decorSlots(10, [1, 1, 1, 1, 1, 1, 1, 1, 1, 99])).toBe(MAX_DECOR_SLOTS);
+    expect([...DEFAULT_DECOR_SLOTS]).toEqual([0, 0, 0, 0, 16]);
+    expect(DEFAULT_DECOR_SLOTS).toHaveLength(MAX_TIER);
+    expect(decorSlots(5, [1, 1, 1, 1, 99])).toBe(MAX_DECOR_SLOTS);
     expect(decorSlots(99)).toBe(16);
     expect(decorSlots(0)).toBe(0);
     expect(usedSlots({ sign: 'sign_nick', burchak_1: 'daraxt_olma', yoq: 'x' })).toBe(2);
@@ -84,9 +85,9 @@ describe('joy nuqtalari', () => {
     for (const d of DECOR) expect(d.spots.every((s) => kinds.has(s)) && d.spots.length > 0, d.id).toBe(true);
     for (const a of ANCHORS) expect(DECOR.some((d) => d.spots.includes(a.kind)) || a.kind === 'roof', a.id).toBe(true);
   });
-  test('tekin daraxtlar 1–6-levelda uyga kirmaydi', () => {
+  test('tekin daraxtlar har levelda uyga kirmaydi', () => {
     const p = sample('hovli');
-    for (let tier = 1; tier <= 6; tier++) {
+    for (let tier = 1; tier <= MAX_TIER; tier++) {
       const items = plotItems(p, state({ tier }), true);
       const house = items[0]!;
       const at = points.get(house.model)!.map(([x, y, z]) => [house.x + x, y, house.z + z] as const);
@@ -131,7 +132,7 @@ describe('bezak uchastkadan chiqmaydi', () => {
     expect(decor).toHaveLength(ANCHORS.length);
     // uy, panjara, darvoza, avtomobil yo‘li + panjara va darvozadan boshqa hamma nuqta
     expect(items).toHaveLength(4 + ANCHORS.length - 2);
-    expect(levelYard(10).length).toBeGreaterThan(0);
+    expect(levelYard(5).length).toBeGreaterThan(0);
     expect(items.filter((i) => i.model === 'tree_round')).toEqual([]);
   });
 });
@@ -155,7 +156,7 @@ describe('yangi bezaklar', () => {
     range(['avto_sedan', 'avto_krossover', 'avto_sport', 'dam_basseyn'], 1000, 2500);
   });
   test('mashina avtomobil yo‘li ustida turadi', () => {
-    for (const tier of [5, 6, 10]) {
+    for (const tier of [5]) {
       const items = plotItems(sample('hovli'), state({ tier, decor: ['garaj_oldi:avto_krossover'] }), true);
       const [cx0, cx1, cz0, cz1] = boxOf(items.find((i) => i.model === 'avto_krossover')!);
       const [x0, x1, z0, z1] = boxOf(items.find((i) => i.model === LEVEL_DRIVE[tier])!);
@@ -167,8 +168,8 @@ describe('yangi bezaklar', () => {
 describe('lyuks bezaklar', () => {
   const luxe = DECOR.filter((d) => LUXE_MODELS.has(d.model));
   const PRICES = { lux_pavilyon: 8000, lux_gril: 4000, lux_basseyn: 10_000, lux_favvora: 6000, lux_bog: 5000, lux_limuzin: 12_000, lux_superkar: 15_000, lux_jip: 10_000, lux_daraxt: 3000 };
-  test('9 tasi katalogda, faqat 7-leveldan, promtdagi narxda', () => {
-    expect(LUXE_LEVEL).toBe(7);
+  test('9 tasi katalogda, tanga bilan 5-leveldan, promtdagi narxda', () => {
+    expect(LUXE_LEVEL).toBe(5);
     expect(Object.fromEntries(luxe.map((d) => [d.id, d.priceCoins]))).toEqual(PRICES);
     for (const d of luxe) expect(d, d.id).toMatchObject({ minLevel: LUXE_LEVEL, isActive: true, stock: null });
   });
@@ -180,7 +181,7 @@ describe('lyuks bezaklar', () => {
   test('har biri uchun uzoq shakl bor', () => {
     for (const d of luxe) { expect(boxes.has(d.model), d.id).toBe(true); expect(boxes.has(`${d.model}_lod`), d.id).toBe(true); }
   });
-  test('7–10-levelda uyga, tekin bezaklarga va bir-biriga tegmaydi (har tur hovlida)', () => {
+  test('5-levelda uyga, tekin bezaklarga va bir-biriga tegmaydi (har tur hovlida)', () => {
     const SETS = [
       ['garaj_oldi:lux_limuzin', 'old_hovli_chap:lux_basseyn', 'old_hovli_ong:lux_gril'], ['garaj_oldi:lux_superkar', 'old_hovli_chap:lux_pavilyon', 'old_hovli_ong:lux_favvora'],
       ['garaj_oldi:lux_jip', 'old_hovli_chap:lux_bog', 'old_hovli_ong:lux_bog'], ['garaj_oldi:lux_jip', 'old_hovli_chap:lux_favvora', 'old_hovli_ong:lux_favvora'],
@@ -215,9 +216,9 @@ describe('katalog', () => {
     setCatalog(DECOR.map((d): CatalogRow => ({ id: d.id, slot: d.slot, model: d.model, uz: d.uz, ru: d.ru, uzs: d.priceUzs, coins: d.priceCoins, left: d.stock, spots: d.spots, min: d.minLevel, from: null, to: null, set: null, isNew: false, tint: null, onSale: true, active: true })));
   });
   test('devor materiali, ramka va eshik rangi modelga uzatiladi', () => {
-    const i = houseItem(sample('hovli'), state({ material: 1, frame: 3, door: 5 }), false);
+    const i = houseItem(sample('hovli'), state({ tier: 3, material: 1, frame: 3, door: 5 }), false);
     expect(i.mat).toBe(2 + 16 * 3);
     expect(i.door).toBe(5);
-    expect(houseItem(sample('hovli'), state(), true).mat).toBe(1);
+    expect(houseItem(sample('hovli'), state({ tier: 3 }), true).mat).toBe(1);
   });
 });

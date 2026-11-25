@@ -6,7 +6,7 @@ import { BUILD_MS, FLIGHT_MS } from '../logic/construction.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { flyTo, goToHouse, setMode } from './modes.ts';
 import { director, here, session, snapshotters } from './runtime.ts';
-import { getApp, openPanel, openRoot, setApp } from './store.ts';
+import { getApp, openRoot, setApp } from './store.ts';
 
 export const goToPlot = (id: string, isInstant = false): void => {
   const p = getApp().plotById.get(id);
@@ -49,13 +49,15 @@ export const tryDecor = (row: CatalogRow): boolean => {
 };
 
 /** Uy olindi: kamera uchastkaga uchadi, uy quriladi, so'ng "Tabriklaymiz". */
-export const startConstruction = (p: Plot): void => {
+/** Uy qurilishi (yangi uy yoki kuchaytirilgan level): kamera uchadi, uy ko'tariladi, so'ng tabrik. */
+export const startConstruction = (p: Plot, tier?: number): void => {
   setApp({ building: { plot: p.id, at: performance.now() + FLIGHT_MS }, panel: null });
   if (session.mode !== 'city') setMode('city');
   flyTo(viewOfPlot(p));
   setTimeout(() => {
     buzz(BUZZ.big);
-    setApp({ building: null, cheer: { plot: p.id, tier: 1, isBuilt: true }, panel: { kind: 'congrats', id: p.id }, trail: [] });
+    const panel = tier ? { kind: 'congrats', id: p.id, tier } as const : { kind: 'congrats', id: p.id } as const;
+    setApp({ building: null, cheer: { plot: p.id, tier: tier ?? 1, isBuilt: !tier }, panel, trail: [] });
   }, FLIGHT_MS + BUILD_MS);
 };
 
@@ -64,13 +66,6 @@ export const BUZZ = { tap: 10, coin: [12, 40, 12], big: [20, 60, 20, 60, 40] } a
 export const buzz = (pattern: number | readonly number[]): void => {
   // Foydalanuvchi hali tegmagan bo'lsa brauzer rad etadi va konsolga yozadi.
   if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(typeof pattern === 'number' ? pattern : [...pattern]);
-};
-
-/** Level oshdi: tabrik oynasi va karta. */
-export const cheerLevel = (plot: string, tier: number): void => {
-  buzz(BUZZ.big);
-  setApp({ cheer: { plot, tier, isBuilt: false } });
-  openPanel({ kind: 'congrats', id: plot, tier });
 };
 
 /** Uyni yaqindan ko'rish: piyoda eshik oldida. */

@@ -44,7 +44,7 @@ const freePlot = (page) => page.evaluate(() => {
   return s.plan.plots.filter((p) => p.districtId === 1 && p.type === 'hovli' && p.rot === 0 && !s.houses.has(p.id)).sort((a, b) => taken(b) - taken(a))[0].id;
 });
 const PANELS = (id) => [
-  ['ui-uyim', { kind: 'me' }], ['ui-mening-uyim', { kind: 'plot', id }], ['ui-bezash', { kind: 'yard', id }], ['ui-ranglar', { kind: 'looks', id }], ['ui-menyu', { kind: 'menu' }], ['ui-sozlamalar', { kind: 'settings' }],
+  ['ui-uyim', { kind: 'me' }], ['ui-mening-uyim', { kind: 'plot', id }], ['ui-bezash', { kind: 'yard', id }], ['ui-yozuv', { kind: 'bio', id }], ['ui-menyu', { kind: 'menu' }], ['ui-sozlamalar', { kind: 'settings' }],
   ['ui-xabarlar', { kind: 'notes' }], ['ui-tanga', { kind: 'coins' }], ['ui-xarita', { kind: 'map' }], ['ui-chat', { kind: 'chat' }], ['ui-top', { kind: 'rank' }], ['ui-boshqa-uy', { kind: 'plot', id: 'P0001' }],
   ['ui-mashinalar', { kind: 'cars' }], ['ui-sovga', { kind: 'gifts' }], ['ui-davlat-binosi', { kind: 'civic', id: 'hokimiyat' }], ['ui-kocha', { kind: 'street', id: 3 }], ['ui-yordam', { kind: 'help' }],
 ];
@@ -76,7 +76,7 @@ const guestScreens = async () => {
   await guest.locator('.sheet form button[type=submit]').click();
   await guest.getByRole('heading', { name: /Tabriklaymiz/ }).waitFor({ timeout: 20_000 });
   await shot(guest, 'ui-tabrik');
-  await raise(guest, LOGIN, 7, 1250);
+  await raise(guest, LOGIN, 5, 1250);
   const storage = await guest.context().storageState();
   await guest.context().close();
   return { id, storage };
@@ -85,7 +85,7 @@ const guestScreens = async () => {
 const ownerScreens = async ({ id, storage }) => {
   const me = await make(PHONE, { storage });
   await open(me);
-  await me.waitForFunction(() => window.__app.getState().profile?.plots[0]?.tier === 7);
+  await me.waitForFunction(() => window.__app.getState().profile?.plots[0]?.tier === 5);
   await day(me);
   await lookAt(me, id, 26);
   await shot(me, 'ui-egasi', 3000);

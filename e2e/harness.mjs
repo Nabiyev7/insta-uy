@@ -14,7 +14,7 @@ export const waitFor = async (fn, what, ms = 30_000) => {
   for (;;) {
     const v = await Promise.resolve().then(fn).catch(() => false);
     if (v) return v;
-    if (Date.now() > end) throw new Error(`Kutildi: ${what}`);
+    if (Date.now() > end) throw new Error(`Kutildi: ${typeof what === 'function' ? await what() : what}`);
     await new Promise((r) => { setTimeout(r, 200); });
   }
 };
@@ -81,14 +81,13 @@ export const helpers = ({ SITE, call, tokenOf, adminToken }) => {
     await page.waitForFunction(() => window.__app.getState().profile !== null);
   };
   /** Uyni shu levelgacha ko'taradi va tanga beradi (admin sozlamasi orqali). */
-  const raise = async (page, login, tier, coins = 0) => {
+  const raise = async (page, login, tier, coins = 100) => {
     const token = await adminToken();
     const me = (await call('admin_users', { p_q: login }, token))[0];
     const state = await page.evaluate(() => ({ coins: window.__app.getState().boot.settings.coins, plots: window.__app.getState().profile.plots }));
-    await call('admin_setting', { p_key: 'coins', p_value: { ...state.coins, tierBase: 1, maxTier: 10 } }, token);
-    await call('admin_user', { p_id: me.id, p_action: 'coins', p_data: { delta: coins + 100 } }, token);
+    await call('admin_setting', { p_key: 'coins', p_value: { ...state.coins, tier: { 2: 1, 3: 1, 4: 1, 5: 1 }, maxTier: 5 } }, token);
+    await call('admin_user', { p_id: me.id, p_action: 'coins', p_data: { delta: coins } }, token);
     const plot = state.plots[0];
-    if (plot.status !== 'owned') await call('admin_plot', { p_plot: plot.plot, p_action: 'approve', p_data: {} }, token);
     const mine = await tokenOf(login, 'parol12345');
     for (let t = plot.tier; t < tier; t++) await call('my_tier_coins', { p_plot: plot.plot }, mine);
     await call('admin_setting', { p_key: 'coins', p_value: state.coins }, token);

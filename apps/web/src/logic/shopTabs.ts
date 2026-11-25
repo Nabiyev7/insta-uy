@@ -1,5 +1,5 @@
 /** Do'kon tablari va kartochka holati. Sof hisob. */
-import { LUXE_LEVEL, type DecorSlot } from '../../../../packages/shared/src/index.ts';
+import { LUXE_MODELS, type DecorSlot } from '../../../../packages/shared/src/index.ts';
 import type { CatalogRow, SetRow } from './decorCatalog.ts';
 
 export type ShopTab = 'new' | 'yard' | 'garden' | 'car' | 'luxe' | 'gate' | 'pet' | 'set' | 'special';
@@ -10,7 +10,7 @@ const isFlower = (c: CatalogRow): boolean => c.slot === 'yard' && c.spots.includ
 const isSpecial = (c: CatalogRow): boolean => c.slot === 'special' || c.from !== null || c.left !== null;
 
 const FILTERS: readonly (readonly [Exclude<ShopTab, 'set'>, (c: CatalogRow) => boolean])[] = [
-  ['new', (c) => c.isNew], ['yard', (c) => inSlots('yard', 'water')(c) && !isFlower(c)], ['garden', (c) => c.slot === 'tree' || isFlower(c)], ['car', inSlots('car')], ['luxe', (c) => c.min >= LUXE_LEVEL],
+  ['new', (c) => c.isNew], ['yard', (c) => inSlots('yard', 'water')(c) && !isFlower(c)], ['garden', (c) => c.slot === 'tree' || isFlower(c)], ['car', inSlots('car')], ['luxe', (c) => LUXE_MODELS.has(c.model)],
   ['gate', inSlots('fence', 'gate', 'path', 'sign', 'light', 'roof')], ['pet', inSlots('pet')], ['special', isSpecial],
 ];
 

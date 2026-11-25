@@ -1,7 +1,7 @@
 import type { Socket } from 'socket.io-client';
 import { sanitizeAvatar } from '../../../../packages/shared/src/index.ts';
 import { REALTIME_URL, supabase } from './api.ts';
-import { errorText, translate } from './i18n.ts';
+import { errorText } from './i18n.ts';
 import { ANIM_AWAY } from '../logic/drive.ts';
 import { city, here, player, remotes, session } from './runtime.ts';
 import { getApp, setApp, setting, toast, useApp, type ChatLine } from './store.ts';
@@ -52,7 +52,6 @@ export const connectMultiplayer = async (): Promise<void> => {
   socket.on('chat_history', (list: readonly ChatLine[]) => addMessages(list, false));
   socket.on('chat_deleted', dropMessage);
   socket.on('me', (myAuthor: string) => setApp({ myAuthor }));
-  socket.on('chat_reported', () => toast(translate('sent', getApp().lang)));
   socket.on('chat_error', (code: string) => toast(errorText(new Error(code), getApp().lang), true));
   socket.on('disconnect', () => {
     remotes.clear();
@@ -84,7 +83,6 @@ export const disconnectMultiplayer = (): void => {
   remotes.clear();
 };
 export const sendChat = (channel: number, text: string): void => { socket?.emit('chat', { channel, text }); };
-export const reportMessage = (id: string): void => { socket?.emit('chat_report', id); };
 /** Akkaunt o'chirilganda chatdagi xabarlar ham o'chadi. */
 export const forgetMe = (): void => { socket?.emit('forget_me'); };
 export interface OnlinePerson { readonly author: string; readonly nick: string; readonly district: number; readonly x: number; readonly z: number }

@@ -6,7 +6,6 @@ import { rpc } from '../app/api.ts';
 import { money, useT, type Key } from '../app/i18n.ts';
 import { openAuth, openPanel, setting, useApp } from '../app/store.ts';
 import { createOrder } from './OrderPanels.tsx';
-import { ReportForm } from './ReportForm.tsx';
 import type { IconName } from './icons.tsx';
 import { LoadState, RowLink, Section, Sheet, useAction, useLoad } from './kit.tsx';
 
@@ -78,7 +77,6 @@ export function CommercePanel({ id }: IdProps): React.JSX.Element {
         <div className="row between"><span className="tag free">{t('free')}</span><b>{money(data.price)} {t('som')} / {t('perMonth')}</b></div>
         <button type="button" className="btn block" disabled={isBusy} onClick={() => (profile ? void run(() => createOrder('commerce', { id })) : openAuth())}>{t('rent')}</button>
       </>}
-      {data?.title && <ReportForm kind="ad" target={id} />}
     </Sheet>
   );
 }
@@ -125,7 +123,6 @@ export function StreetPanel({ id }: { readonly id: number }): React.JSX.Element 
         <p><b>{money(data.price)} {t('som')}</b></p>
         {canPay ? nameForm(t('buy'), (v) => createOrder('street_name', { street: id, name: v })) : <p className="muted">{t('paidSoon')}</p>}
       </Section>}
-      {data?.name && <ReportForm kind="street" target={String(id)} />}
     </Sheet>
   );
 }

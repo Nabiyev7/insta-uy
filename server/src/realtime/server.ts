@@ -87,11 +87,6 @@ export const attachRealtime = (http: HttpServer, db: Backend, origins: readonly 
       else socket.emit('chat_error', r.code);
     }));
     socket.on('forget_me', () => { if (who.userId) for (const id of room.chatLog.forget(who.userId)) io.emit('chat_deleted', id); });
-    socket.on('chat_report', (messageId: unknown) => {
-      const m = room.reported(socket.id, messageId);
-      if (!m || !who.userId) return;
-      db.rpc('svc_chat_report', { p_reporter: who.userId, p_user: m.userId, p_text: m.text }).then(() => socket.emit('chat_reported'), (error: unknown) => socket.emit('chat_error', error instanceof Error ? error.message : 'server_error'));
-    });
     let refreshedAt = 0;
     socket.on('refresh', () => {
       if (Date.now() - refreshedAt < REFRESH_GAP_MS) return;

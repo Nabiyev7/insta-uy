@@ -9,7 +9,7 @@ import type { Kit } from '../world/kit.ts';
 import { rpc, type Boot, type CityRow, type Profile } from './api.ts';
 
 export type Panel =
-  | { readonly kind: 'plot' | 'looks' | 'yard'; readonly id: string } | { readonly kind: 'congrats'; readonly id: string; /** Bor bo'lsa — level oshdi, aks holda uy qurildi. */ readonly tier?: number }
+  | { readonly kind: 'plot' | 'bio' | 'yard'; readonly id: string } | { readonly kind: 'congrats'; readonly id: string; /** Bor bo'lsa — level oshdi, aks holda uy qurildi. */ readonly tier?: number }
   | { readonly kind: 'civic'; readonly id: string } | { readonly kind: 'gifts'; readonly to?: string } | { readonly kind: 'building'; readonly id: number } | { readonly kind: 'commerce'; readonly id: string } | { readonly kind: 'street'; readonly id: number }
   | { readonly kind: 'auth' | 'me' | 'map' | 'rank' | 'coins' | 'notes' | 'city' | 'gazette' | 'settings' | 'help' | 'rules' | 'avatar' | 'orders' | 'menu' | 'ads' | 'privacy' | 'chat' | 'shop' | 'cars' };
 export type Stage = 'loading' | 'intro' | 'play' | 'error';
@@ -147,7 +147,8 @@ export const markNewSeen = (ids: readonly string[]): void => setApp((s) => {
   return { seenNew };
 });
 
-const toHouse = (r: CityRow): HouseState => ({ plot: r[0], nick: r[1], tier: r[2], wall: r[3], roof: r[4], decor: r[5], label: r[6], badge: r[7], status: r[8], expanded: r[9], material: r[10], frame: r[11], door: r[12] });
+/** Uy ranglari tanlanmaydi: har level o'z standart rangida (bazadagi eski qiymatlar e'tiborsiz). */
+const toHouse = (r: CityRow): HouseState => ({ plot: r[0], nick: r[1], tier: r[2], wall: 0, roof: 0, decor: r[5], label: r[6], badge: r[7], status: r[8], expanded: r[9], material: 0, frame: 0, door: 0 });
 
 export const loadPlan = async (): Promise<void> => {
   const res = await fetch('/assets/masterplan.json');

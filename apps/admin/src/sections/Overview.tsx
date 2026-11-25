@@ -3,7 +3,7 @@ import { Btn, Table, money, useAction, useLoad } from '../ui.tsx';
 
 interface DistrictRow { readonly id: number; readonly name: string; readonly open: boolean; readonly total: number; readonly taken: number }
 interface StatsData {
-  readonly users: number; readonly owned: number; readonly pending: number; readonly reports: number; readonly streets: number; readonly ads: number; readonly waitlist: number; readonly telegram: number; readonly revenue: number | null;
+  readonly users: number; readonly owned: number; readonly streets: number; readonly ads: number; readonly waitlist: number; readonly telegram: number; readonly revenue: number | null;
   readonly days: readonly { readonly day: string; readonly active: number; readonly signups: number; readonly claims: number }[]; readonly districts: readonly DistrictRow[];
 }
 
@@ -32,7 +32,7 @@ export function Stats(): React.JSX.Element {
   if (!s) return <p className="muted">Yuklanmoqda…</p>;
   const days = s.days.map((d) => d.day);
   const kpis: readonly (readonly [string, string | number])[] = [
-    ['Uy egalari', s.owned], ['Tasdiq kutmoqda', s.pending], ['Foydalanuvchi', s.users], ['Telegram ulagan', s.telegram], ['Shikoyat', s.reports], ["Ko'cha nomi", s.streets], ['Reklama', s.ads], ["Kutish ro'yxati", s.waitlist],
+    ['Uy egalari', s.owned], ['Foydalanuvchi', s.users], ['Telegram ulagan', s.telegram], ["Ko'cha nomi", s.streets], ['Reklama', s.ads], ["Kutish ro'yxati", s.waitlist],
     ...(s.revenue === null ? [] : [['Tushum', money(s.revenue)] as const]),
   ];
   return (

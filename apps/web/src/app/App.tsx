@@ -8,7 +8,7 @@ import { ErrorBoundary } from '../ui/ErrorBoundary.tsx';
 import { Hud } from '../ui/Hud.tsx';
 import { AuthPanel } from '../ui/AuthPanel.tsx';
 import { HelpPanel, MenuPanel, PrivacyPanel, RulesPanel, SettingsPanel } from '../ui/InfoPanels.tsx';
-import { GiftsPanel, LooksPanel, YardPanel } from '../ui/HousePanels.tsx';
+import { BioPanel, GiftsPanel, YardPanel } from '../ui/HousePanels.tsx';
 import { ConfirmDialog } from '../ui/kit.tsx';
 import { MapPanel } from '../ui/MapPanel.tsx';
 import { AvatarPanel, MePanel } from '../ui/MePanel.tsx';
@@ -25,7 +25,7 @@ function PanelView({ panel }: { readonly panel: Panel }): React.JSX.Element {
   switch (panel.kind) {
     case 'congrats': return <CongratsPanel key={panel.id} id={panel.id} {...(panel.tier ? { tier: panel.tier } : {})} />;
     case 'plot': return <PlotPanel key={panel.id} id={panel.id} />;
-    case 'looks': return <LooksPanel id={panel.id} />;
+    case 'bio': return <BioPanel id={panel.id} />;
     case 'yard': return <YardPanel id={panel.id} />;
     case 'gifts': return <GiftsPanel {...(panel.to ? { to: panel.to } : {})} />;
     case 'civic': return <CivicPanel id={panel.id} />;

@@ -24,12 +24,11 @@ export interface HouseState {
   readonly status: 'pending' | 'owned';
   readonly expanded: boolean;
 }
-const HOUSE: Readonly<Record<Plot['type'], { readonly scale: number; readonly back: number }>> = {
-  hovli: { scale: 1.2, back: 7.5 }, kvartira: { scale: 1, back: 0 }, villa: { scale: 1.3, back: 11 }, qasr: { scale: 1.9, back: 14 },
-};
-/** 1–6 level modellari hovliga to'liq o'lchamda chizilgan, 7–10 esa uchastka turiga qarab kattalashadi. */
-const OWN_SIZE_TIERS = 6;
-const houseScale = (p: Plot, tier: number): number => (p.type === 'hovli' && tier <= OWN_SIZE_TIERS ? 1 : HOUSE[p.type].scale);
+/** Uy modellari 25×34 m hovliga chizilgan: villa va qasrda uchastka o'lchamiga qarab kattalashadi. */
+const HOUSE_BACK = 7.5;
+const houseScale = (p: Plot, _tier?: number): number => (p.type === 'hovli' || p.type === 'kvartira' ? 1 : Math.min(p.w / REF_YARD.w, p.d / REF_YARD.d));
+/** Uy markazi uchastka markazidan orqaga shuncha suriladi. */
+const houseBack = (p: Plot): number => (p.type === 'kvartira' ? 0 : HOUSE_BACK * (p.type === 'hovli' ? 1 : p.d / REF_YARD.d));
 /** Panjara va bezaklar shu o'lchamdagi uchastkaga chizilgan, boshqalariga masshtablanadi. */
 /** 1–4-levelda orqa chap daraxt uy yonidagi hovlida: bu uylar orqa burchakka juda yaqin. */
 const LOW_SPOT: Readonly<Record<string, readonly [number, number]>> = { tree_tall: [-10.4, 3.8] };
@@ -53,21 +52,19 @@ const yardItem = (p: Plot, model: string, at: readonly [number, number], y: numb
 };
 /** Uy atrofidagi yer chiroqlari uy bilan birga kattalashadi. */
 const luxeItem = (p: Plot, model: string, y: number): Item => {
-  const { scale, back } = HOUSE[p.type];
-  const [x, z] = toWorld(p, 0, -back);
+  const scale = houseScale(p);
+  const [x, z] = toWorld(p, 0, -houseBack(p));
   return item(model, x, z, { y, yaw: yawOf(p.rot), sx: scale, sz: scale });
 };
 const LUXE = 'light_luxe';
 /** Darvoza soyaboni ham uchastka ichida qolsin. */
 const GATE_INSET = 0.65;
 /** Tomdagi joy (indeks = level): model o'lchamida x, balandlik, z (old +). */
-const ROOF_MOUNT: readonly (readonly [number, number, number])[] = [
-  [0, 4, 1.2], [0, 4.4, 2], [1, 4.4, -1], [0, 4.9, -2.4], [-2.5, 4.85, 3.4], [-2.5, 8.05, 4], [0, 4.75, 0.2], [0.25, 7.3, 0.6], [0.25, 7.3, 0.6], [0, 8.1, 1.6], [0, 8.1, 1.6],
-];
+const ROOF_MOUNT: readonly (readonly [number, number, number])[] = [[0, 4, 1.2], [0, 4.4, 2], [1, 4.4, -1], [0, 4.9, -2.4], [-2.5, 4.85, 3.4], [-2.5, 8.05, 4]];
 const roofItem = (p: Plot, tier: number, model: string, y: number, tint: string | null): Item => {
   const [rx, ry, rz] = ROOF_MOUNT[tier] ?? [0, 4, 0];
   const scale = houseScale(p, tier);
-  const [x, z] = toWorld(p, rx * scale, rz * scale - HOUSE[p.type].back);
+  const [x, z] = toWorld(p, rx * scale, rz * scale - houseBack(p));
   return item(model, x, z, { y: y + ry * houseGrow(p, scale), yaw: yawOf(p.rot), tint });
 };
 const anchorItem = (p: Plot, anchor: Anchor, d: DecorItem, y: number, tier: number): Item | null => {
@@ -78,16 +75,16 @@ const anchorItem = (p: Plot, anchor: Anchor, d: DecorItem, y: number, tier: numb
 };
 
 /** Tungi yoritish: indeks = level. */
-const LEVEL_GLOW = [0, 0, 0, 0.05, 0.1, 0.18, 0.28, 0.4, 0.55, 0.7, 0.85] as const;
+const LEVEL_GLOW = [0, 0, 0.05, 0.12, 0.22, 0.35] as const;
 const houseGlow = (s: HouseState): number => (LEVEL_GLOW[s.tier] ?? 0) + (s.decor.some((x) => x.endsWith(`:${LUXE}`)) ? 0.3 : 0);
-/** Kuchsiz telefonda shakli o'xshash qo'shni levellar bitta uzoq shaklda (draw call kamayadi). 3–6 bir-biriga o'xshamaydi. */
-const SIMPLE_LOD: Readonly<Record<number, number>> = { 2: 1, 8: 7, 10: 9 };
+/** Kuchsiz telefonda shakli o'xshash qo'shni levellar bitta uzoq shaklda (draw call kamayadi). 3–5 bir-biriga o'xshamaydi. */
+const SIMPLE_LOD: Readonly<Record<number, number>> = { 2: 1 };
 const lodOf = (tier: number, isSimple: boolean): string => `house${(isSimple ? SIMPLE_LOD[tier] : undefined) ?? tier}_lod`;
 
 const FRAME_STRIDE = 16;
 export const houseItem = (p: Plot, s: HouseState, isFar: boolean, isSimple = false): Item => {
   const scale = houseScale(p, s.tier);
-  const [x, z] = toWorld(p, 0, -HOUSE[p.type].back);
+  const [x, z] = toWorld(p, 0, -houseBack(p));
   return item(isFar ? lodOf(s.tier, isSimple) : `house${s.tier}`, x, z, {
     y: padHeight(p), yaw: yawOf(p.rot), sx: scale, sy: houseGrow(p, scale), sz: scale,
     wall: WALL_COLORS[s.wall] ?? WALL_COLORS[0], roof: roofColor(s.tier, s.roof), glow: Math.min(1, houseGlow(s)), seed: hash01(p.id), mat: (WALL_MATERIALS[s.material]?.layer ?? 1) + FRAME_STRIDE * frameIndex(s.tier, s.frame), door: s.door,
@@ -201,22 +198,21 @@ export const projectItems = (projects: readonly ProjectInfo[]): Item[] => projec
 });
 
 /** Devorlar: yarim eni, yarim chuqurligi va (garajli uylarda) o'rtasining yon siljishi. */
-const HALF: Readonly<Record<number, readonly [number, number, number?]>> = { 1: [5.3, 4.4], 2: [7.5, 6.5, -1.6], 3: [10.1, 7], 4: [9.5, 6.5, 0.8], 5: [10.2, 5.9, 0.7], 6: [7.9, 6.9], 7: [6.5, 5.2], 8: [6.9, 5.4], 9: [6.8, 5.9], 10: [7.2, 6.2] };
+const HALF: Readonly<Record<number, readonly [number, number, number?]>> = { 1: [5.3, 4.4], 2: [7.5, 6.5, -1.6], 3: [10.1, 7], 4: [9.5, 6.5, 0.8], 5: [10.2, 5.9, 0.7] };
 export const houseSolid = (p: Plot, s: HouseState): Solid | null => {
   if (p.type === 'kvartira') return null;
   const scale = houseScale(p, s.tier);
   const [a, b, shift = 0] = HALF[s.tier] ?? [6, 5];
-  const [x, z] = toWorld(p, shift * scale, -HOUSE[p.type].back);
+  const [x, z] = toWorld(p, shift * scale, -houseBack(p));
   const [hx, hz] = p.rot % 2 === 0 ? [a * scale, b * scale] : [b * scale, a * scale];
   return { x, z, hx, hz, h: 5 };
 };
 /** Bosish qutisining balandligi: indeks = level (bo'sh uchastka — belgi bo'yi). */
-const TIER_HEIGHT = [1.2, 5.5, 5.8, 6, 6.4, 9.3, 7.5, 8.5, 9, 12, 13] as const;
-const PALACE_PICK = 1.54;
-export const pickHeight = (p: Plot, s: HouseState | undefined): number => (TIER_HEIGHT[s?.tier ?? 0] ?? 6) * (p.type === 'qasr' && s ? PALACE_PICK : 1);
+const TIER_HEIGHT = [1.2, 5.5, 5.8, 6, 6.4, 9.3] as const;
+export const pickHeight = (p: Plot, s: HouseState | undefined): number => (TIER_HEIGHT[s?.tier ?? 0] ?? 6) * (s ? houseGrow(p, houseScale(p)) : 1);
 /** Uy tomining ustki nuqtasi: nik yorlig'i shu yerda turadi. */
 export const houseTop = (p: Plot, s: HouseState): { readonly x: number; readonly y: number; readonly z: number } => {
-  const [x, z] = toWorld(p, 0, -HOUSE[p.type].back);
+  const [x, z] = toWorld(p, 0, -houseBack(p));
   return { x, y: padHeight(p) + pickHeight(p, s), z };
 };
 export const buildingSolid = (b: Building): Solid => ({ x: b.x, z: b.z, hx: 22.2, hz: 8.2, h: b.floors * 3 + 2 });

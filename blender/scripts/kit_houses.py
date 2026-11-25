@@ -111,7 +111,8 @@ def lod(name, body, h, roof_h, gable=False, wing=None, portico=False, grand=Fals
 
 
 def house_lods():
-    """Har levelga bitta uzoq ko'rinish: shakli tepadan ham farqlanadi."""
+    """Har levelga bitta uzoq ko'rinish (faqat eksport qilinadigan levellar): shakli tepadan ham farqlanadi."""
+    from kit_levels import MAX_LEVEL
     return [
         *first_lods(),
         *modern_lods(),
@@ -120,7 +121,7 @@ def house_lods():
         lod('house8_lod', (-5.5, -3, 5.5, 5.2), 6.4, 2.2, wing=(-6.6, -5.2, 6.5, -2)),
         lod('house9_lod', (-6.2, -3.7, 6.2, 5.6), 7.1, 2.0, portico=True),
         lod('house10_lod', (-6.2, -3.7, 6.2, 5.6), 7.1, 2.0, portico=True, grand=True),
-    ]
+    ][:MAX_LEVEL]
 
 
 def apartment(floors):

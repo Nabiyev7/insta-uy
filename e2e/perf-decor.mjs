@@ -21,7 +21,7 @@ for (const mode of ['walk', 'city']) {
       const s = window.__app.getState();
       const near = s.plan.plots.filter((p) => p.type === 'hovli').sort((a, b) => Math.hypot(a.x - s.plotById.get('P0030').x, a.z - s.plotById.get('P0030').z) - Math.hypot(b.x - s.plotById.get('P0030').x, b.z - s.plotById.get('P0030').z)).slice(0, 50);
       const houses = new Map(s.houses);
-      for (const p of near) houses.set(p.id, { plot: p.id, nick: `n_${p.id}`, tier: 10, wall: 2, roof: 1, decor: list, material: 1, frame: 4, door: 6, label: 'plain', badge: null, status: 'owned', expanded: false });
+      for (const p of near) houses.set(p.id, { plot: p.id, nick: `n_${p.id}`, tier: 5, wall: 0, roof: 0, decor: list, material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false });
       window.__app.setState({ houses, panel: null });
     }, list);
     await page.evaluate((m) => window.__setMode(m), mode);

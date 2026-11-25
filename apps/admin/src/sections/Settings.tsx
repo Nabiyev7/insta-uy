@@ -3,9 +3,9 @@ import { rpc } from '../api.ts';
 import { Btn, Table, useAction, useLoad, when } from '../ui.tsx';
 
 const TITLES: Readonly<Record<string, string>> = {
-  city_name: 'Shahar nomi', maintenance: 'Texnik ishlar rejimi', require_approval: 'Uylarni admin tasdiqlaydi', free_claim_enabled: 'Bepul uy tarqatish', payments_enabled: "To'lovlar yoqilgan", payment_provider: "To'lov usuli (card/payme/click)", pay_card: "To'lov kartasi", reserve_minutes: 'Band qilish (daqiqa)',
+  city_name: 'Shahar nomi', maintenance: 'Texnik ishlar rejimi', free_claim_enabled: 'Bepul uy tarqatish', payments_enabled: "To'lovlar yoqilgan", payment_provider: "To'lov usuli (card/payme/click)", pay_card: "To'lov kartasi", reserve_minutes: 'Band qilish (daqiqa)',
   discount_pct: 'Chegirma (%)', coins_enabled: 'Tangalar', elections_enabled: 'Saylovlar', multiplayer_enabled: "Ko'p o'yinchi", release_inactive: "Faolsiz uylarni bo'shatish", inactive_days: 'Faolsizlik (kun)', founder_limit: 'Asoschi nishoni soni', sponsor_threshold: "Homiy chegarasi (so'm)",
-  street_vote_min: "Ko'cha ovozi uchun uy egasi", commerce_days: 'Biznes ijarasi (kun)', decor_slots: 'Level bo‘yicha hovli bezaklari joyi, nik lavhasisiz (10 ta son, 20 dan oshmaydi)', chat_slow_seconds: 'Chat sekin rejimi (soniya, 0 = o‘chiq)', commerce_closed: 'Sotuvdan olingan tijorat joylari', day_minutes: 'Kun uzunligi (daqiqa, 0 = haqiqiy)', telegram_bot: 'Telegram bot (nomi; bo‘sh bo‘lsa — kirish tugmasi «Tez kunda»)', telegram_channel: 'Telegram kanal (@siz)', support_url: 'Yordam havolasi', prices: 'Narxlar', coins: 'Tanga iqtisodi',
+  street_vote_min: "Ko'cha ovozi uchun uy egasi", commerce_days: 'Biznes ijarasi (kun)', decor_slots: 'Level bo‘yicha hovli bezaklari joyi, nik lavhasisiz (5 ta son, 20 dan oshmaydi)', chat_slow_seconds: 'Chat sekin rejimi (soniya, 0 = o‘chiq)', commerce_closed: 'Sotuvdan olingan tijorat joylari', day_minutes: 'Kun uzunligi (daqiqa, 0 = haqiqiy)', telegram_bot: 'Telegram bot (nomi; bo‘sh bo‘lsa — kirish tugmasi «Tez kunda»)', telegram_channel: 'Telegram kanal (@siz)', support_url: 'Yordam havolasi', prices: 'Narxlar', coins: 'Tanga iqtisodi',
 };
 const ORDER = Object.keys(TITLES);
 

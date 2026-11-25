@@ -18,13 +18,13 @@ export interface Anchor {
 }
 const anchor = (id: string, kind: SpotKind, minLevel: number, x: number, z: number, w: number, d: number, uz: string, ru: string): Anchor => ({ id, kind, x, z, w, d, minLevel, uz, ru });
 
-/** 5–10-levelda bir xil nuqtalar; koordinatalari shu levellarning hech birida uyga, yo'lakka va avtomobil yo'liga tegmaydi. */
+/** 5-level (va villa, qasr) uchun nuqtalar; koordinatalari uyga, yo'lakka va avtomobil yo'liga tegmaydi. */
 export const ANCHORS: readonly Anchor[] = [
   anchor('fence', 'fence', DECOR_LEVEL, 0, 0, 0, 0, 'Panjara', 'Забор'),
   anchor('gate', 'gate', DECOR_LEVEL, 0, 17, 0, 0, 'Darvoza', 'Ворота'),
   anchor('path', 'path', DECOR_LEVEL, 0, 7.8, 0, 0, "Yo'lak", 'Дорожка'),
   anchor('lamps', 'lamps', DECOR_LEVEL, 0, 9.3, 0, 0, "Yo'lak chiroqlari", 'Фонари у дорожки'),
-  anchor('luxe', 'luxe', 6, 0, -7.5, 0, 0, 'Uy atrofi yoritilishi', 'Подсветка дома'),
+  anchor('luxe', 'luxe', DECOR_LEVEL, 0, -7.5, 0, 0, 'Uy atrofi yoritilishi', 'Подсветка дома'),
   anchor('roof', 'roof', DECOR_LEVEL, 0, -7.5, 0, 0, 'Tom', 'Крыша'),
   anchor('sign', 'sign', 1, -2.8, 16.2, 1, 0.5, 'Darvoza yoni: lavha', 'У ворот: табличка'),
   anchor('garaj_oldi', 'car', DECOR_LEVEL, 8, 6.7, 3, 5.6, 'Garaj oldi: mashina', 'У гаража: машина'),
@@ -36,7 +36,7 @@ export const ANCHORS: readonly Anchor[] = [
   anchor('burchak_3', 'corner', DECOR_LEVEL, -10.5, -15.1, 2.2, 2.2, 'Orqa burchak, chapda', 'Задний угол, слева'),
   anchor('burchak_4', 'corner', DECOR_LEVEL, 10.5, -15.1, 2.2, 2.2, "Orqa burchak, o'ngda", 'Задний угол, справа'),
   anchor('p1', 'pet', DECOR_LEVEL, -2.6, 3.6, 1.2, 1.2, 'Eshik oldi', 'У двери'),
-  anchor('p2', 'pet', 6, 2.6, 3.6, 1.2, 1.2, 'Eshik oldi, o‘ngda', 'У двери, справа'),
+  anchor('p2', 'pet', DECOR_LEVEL, 2.6, 3.6, 1.2, 1.2, 'Eshik oldi, o‘ngda', 'У двери, справа'),
 ];
 /** Nuqtalar chizilgan hovli o'lchami, m. */
 export const REF_YARD = { w: 25, d: 34 } as const;
@@ -44,7 +44,7 @@ export const anchorById = (id: string): Anchor | undefined => ANCHORS.find((a) =
 export const openAnchors = (level: number): readonly Anchor[] => ANCHORS.filter((a) => a.minLevel <= level);
 
 /** Level bo'yicha hovli bezaklari soni (indeks = level − 1), nik lavhasisiz. Amaldagi qiymat bazada (`decor_slots`); ikkalasi bir xilligini test tekshiradi. */
-export const DEFAULT_DECOR_SLOTS = [0, 0, 0, 0, 8, 10, 12, 14, 15, 16] as const;
+export const DEFAULT_DECOR_SLOTS = [0, 0, 0, 0, 16] as const;
 export const MAX_DECOR_SLOTS = 20;
 export const decorSlots = (level: number, custom: readonly number[] = DEFAULT_DECOR_SLOTS): number =>
   Math.min(MAX_DECOR_SLOTS, custom[Math.max(1, Math.min(MAX_TIER, level)) - 1] ?? DEFAULT_DECOR_SLOTS[0]);

@@ -107,3 +107,11 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 9. **Pastki panelda 5 ta bo'lim** promtdagidek; qidiruv xarita ichida (nik va manzil).
 10. **Oynalar (pastdan chiqadigan)** namunadagidek shaffof emas, oq (tunda to'q) — matn yaxshi o'qilishi uchun; shaffof "oyna" faqat ekrandagi tugma va panellarda. Istasangiz ularni ham shaffof qilamiz.
 11. **Uy tepasidagi yorliqda** yulduzcha o'rniga "L5" yoziladi; nishonlar emoji emas, belgi.
+
+## 6-qadam: kirish, uy olish, tanga, premium (BOSQICH-2-3-PROMT)
+### A qismi
+1. **5-level bezak joyi** — 16 ta (nik lavhasisiz hamma nuqta): 5-level endi eng yuqori level. Admin o'zgartiradi.
+2. **Villa va qasr uchastkasida** 1–5-level uylar uchastka o'lchamiga qarab kattalashib turadi (villa 1,2, qasr 1,6 baravar).
+3. **Avatar ranglari** odamga qarab avtomatik (bir xil odam — doim bir xil rang), tanlanmaydi.
+4. **Temir panjara va oltin darvoza** endi levelga tekin berilmaydi (eski 7–10-levelniki edi) — do'kondagi bezak sifatida 5-leveldan.
+5. **Kunduzgi tun yorug'ligi** 5-levelda ham yaxshi ko'rinadi (eski 10-levelnikidan kamroq).

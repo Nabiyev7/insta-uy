@@ -53,7 +53,8 @@ describe('do‘kon tablari', () => {
     expect(ids('garden')).toEqual(expect.arrayContaining(['gul_zor', 'gul_kamar', 'daraxt_olma', 'lux_daraxt']));
     expect(ids('yard')).not.toContain('gul_zor');
     expect(ids('yard')).toEqual(expect.arrayContaining(['dam_basseyn', 'dam_mangal', 'suv_hovuz', 'lux_pavilyon']));
-    expect(ids('luxe')).toEqual(expect.arrayContaining(['lux_pavilyon', 'lux_superkar', 'gate_gold']));
+    expect(ids('luxe')).toEqual(expect.arrayContaining(['lux_pavilyon', 'lux_superkar', 'lux_daraxt']));
+    expect(ids('luxe')).not.toContain('gate_gold');
     expect(ids('luxe')).not.toContain('dam_basseyn');
     expect(ids('car')).toEqual(expect.arrayContaining(['avto_sedan', 'lux_limuzin']));
     expect(ids('gate')).toEqual(expect.arrayContaining(['fence_wood', 'gate_wood', 'path_stone', 'sign_nick', 'light_lamps', 'roof_solar']));
@@ -67,8 +68,8 @@ describe('do‘kon tablari', () => {
   test('kartochka holati', () => {
     expect(goodState(row('dam_basseyn'), 5)).toBe('free');
     expect(goodState(row('dam_basseyn'), 4)).toBe('locked');
-    expect(goodState(row('lux_jip'), 6)).toBe('locked');
-    expect(goodState(row('lux_jip'), 7)).toBe('free');
+    expect(goodState(row('lux_jip'), 4)).toBe('locked');
+    expect(goodState(row('lux_jip'), 5)).toBe('free');
     expect(goodState(row('special_peacock', { left: 0 }), 10)).toBe('soldOut');
     expect(goodState(row('light_hayit', { onSale: false }), 10)).toBe('seasonOver');
   });

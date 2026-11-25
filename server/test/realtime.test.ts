@@ -101,10 +101,6 @@ describe('Room', () => {
     expect(new Set(r.online().map((p) => p.author)).size).toBe(2);
     expect(r.chatLog.forget('u-2')).toHaveLength(1);
     expect(r.chatLog.messages().map((m) => m.text)).toEqual(['bir']);
-    r.join('g', who(null));
-    expect(r.reported('b', x.ok ? x.message.id : '')).toMatchObject({ userId: 'u-1', text: 'bir' });
-    expect(r.reported('g', x.ok ? x.message.id : '')).toBeNull();
-    expect(r.reported('b', 5)).toBeNull();
   });
   test('moderator xabarni o‘chiradi, boshqasi o‘chirolmaydi', () => {
     const r = new Room();
@@ -130,7 +126,7 @@ describe('Socket.io', () => {
     userByJwt: async (t: string) => (t.startsWith('u') ? { id: t, email: '' } : null),
     rpc: async (fn: string, a: { p_id: string }) => {
       if (fn === 'svc_chat_config') return { slow: 0 };
-      if (fn === 'svc_chat_ban' || fn === 'svc_chat_report') return null;
+      if (fn === 'svc_chat_ban') return null;
       return { instagram: a.p_id, login: 'l', is_banned: a.p_id === 'uban', avatar: {}, homes: [2], is_moderator: a.p_id === 'umod' };
     },
   } as unknown as Backend;
@@ -180,9 +176,6 @@ describe('Socket.io', () => {
     const late = io(url, { auth: { token: 'u8' }, transports: ['websocket'], forceNew: true, reconnection: false });
     open.push(late);
     expect((await new Promise<{ id: string }[]>((r) => { late.once('chat_history', r); })).map((m) => m.id)).toContain(id);
-    const reported = new Promise((r) => { late.once('chat_reported', () => r(true)); });
-    late.emit('chat_report', id);
-    expect(await reported).toBe(true);
     const denied = new Promise<string>((r) => { bad.once('chat_error', r); });
     bad.emit('chat_delete', id);
     expect(await denied).toBe('forbidden');

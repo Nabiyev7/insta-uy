@@ -118,7 +118,7 @@ try {
   });
 
   const admin = await open({ viewport: { width: 1280, height: 800 } });
-  await step('admin kiradi va uyni tasdiqlaydi', async () => {
+  await step('admin kiradi, uy darhol egali (tasdiq yo‘q)', async () => {
     await admin.goto(ADMIN);
     await admin.getByLabel('Login').fill('admin');
     await admin.getByLabel('Parol').fill('admin12345');
@@ -127,8 +127,7 @@ try {
     await shot(admin, 'admin');
     await admin.getByRole('button', { name: 'Uylar' }).click();
     await admin.getByText('@sinov.nik').waitFor();
-    await admin.getByRole('button', { name: /Tasdiqlash/ }).click();
-    await admin.getByText('Bajarildi').waitFor();
+    assert.equal(await admin.getByRole('button', { name: /Tasdiqlash/ }).count(), 0);
   });
   await step('oddiy foydalanuvchi admin panelga kirolmaydi', async () => {
     const p = await open({});
@@ -153,11 +152,11 @@ try {
     assert.ok(after.height < 30, 'uyga yaqinlashmadi');
     await shot(desk, 'plot');
   });
-  await step('mening uyim: rang saqlanadi, tanga bonusi', async () => {
+  await step('mening uyim: yozuv saqlanadi, tanga bonusi', async () => {
     await desk.keyboard.press('Escape');
     await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
-    await desk.getByRole('button', { name: 'Ranglar va material' }).click();
-    await desk.getByRole('button', { name: 'Devor rangi 5' }).click();
+    await desk.getByRole('button', { name: 'Uy yozuvi' }).click();
+    await desk.getByLabel('Qisqa yozuv (ixtiyoriy)').fill('Xush kelibsiz');
     await desk.getByRole('button', { name: 'Saqlash' }).click();
     await desk.getByText('Saqlandi').first().waitFor();
     await desk.keyboard.press('Escape');
@@ -179,7 +178,7 @@ try {
     assert.ok(await desk.getByRole('button', { name: /^Olma daraxti: 5-levelda/ }).isDisabled(), '1-levelda bezak sotilmasin');
     const plot = await desk.evaluate(() => window.__app.getState().profile.plots[0].plot);
     const coins = await desk.evaluate(() => window.__app.getState().boot.settings.coins);
-    await call('admin_setting', { p_key: 'coins', p_value: { ...coins, tierBase: 1, maxTier: 5 } }, token);
+    await call('admin_setting', { p_key: 'coins', p_value: { ...coins, tier: { 2: 1, 3: 1, 4: 1, 5: 1 }, maxTier: 5 } }, token);
     const mine = await tokenOf('sinov_odam', 'parol12345');
     for (let tier = 2; tier <= 5; tier++) await call('my_tier_coins', { p_plot: plot }, mine);
     await desk.reload();
@@ -195,13 +194,6 @@ try {
     await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('burchak_1:daraxt_olma'))), 'bezak qo‘yildi');
     await desk.locator('.spot-panel select').selectOption('burchak_2');
     await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.decor.includes('burchak_2:daraxt_olma'))), 'bezak ko‘chdi');
-    await desk.keyboard.press('Escape');
-    await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
-    await desk.getByRole('button', { name: 'Ranglar va material' }).click();
-    await desk.getByRole('button', { name: "G'isht" }).click();
-    await desk.getByRole('button', { name: 'Eshik rangi 4' }).click();
-    await desk.getByRole('button', { name: 'Saqlash' }).click();
-    await waitFor(() => desk.evaluate(() => [...window.__app.getState().houses.values()].some((h) => h.nick === 'sinov.nik' && h.material === 1 && h.door === 3)), 'material saqlandi');
     await shot(desk, 'yard');
     await desk.keyboard.press('Escape');
   });
@@ -286,6 +278,8 @@ try {
     await shot(phone, 'phone');
   });
   await step('video: navbat → render → MP4', async () => {
+    // Ochiq 3D sahifalar videokartani band qilmasin (render sekinlashib qolmasin).
+    for (const p of [desk, admin, phone]) await p.context().close();
     const token = await adminToken();
     const id = await call('admin_video_create', { p_kind: 'houses', p_plots: ['P0001', 'P0002'], p_style: { title: 'Yangi uylar!', seconds: 4 } }, token);
     execFileSync(process.execPath, ['video/src/main.ts', '--once'], { cwd: root, env: { ...process.env, SUPABASE_URL: API, SUPABASE_SERVICE_KEY: service, SITE_URL: SITE }, stdio: 'inherit', timeout: 240_000 });

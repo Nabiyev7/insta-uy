@@ -88,7 +88,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await sheet.getByRole('button', { name: T.buildFree }).click();
     await page.getByLabel(T.igNick).fill(`@${login}`);
     await sheet.locator('form button[type=submit]').click();
-    await waitFor(() => app(() => window.__app.getState().building !== null), 'qurilish');
+    await waitFor(() => app(() => window.__app.getState().building !== null), async () => `qurilish: ${await page.locator('.toasts').innerText().catch(() => '')}`);
     await heading(T.congrats);
     await sheet.getByRole('button', { name: T.stories }).waitFor();
     assert.ok(await app((nick) => { const s = window.__app.getState(); return s.houses.get(s.profile.plots[0].plot)?.nick === nick; }, login), 'uyda nik yo‘q');
@@ -188,7 +188,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
       [{ kind: 'plot', id: 'P0001' }, async () => {
         for (const name of [T.closeLook, T.giftTitle, T.vote]) await sheet.getByRole('button', { name, exact: true }).waitFor();
         await sheet.getByRole('link', { name: 'Instagram' }).waitFor();
-        await sheet.getByText(T.report).first().waitFor();
+        assert.equal(await sheet.getByText(T.claimBtn).count(), 0);
       }],
     ]) {
       const real = panel.kind === 'commerce' ? { ...panel, id: await app(() => window.__app.getState().plan.commerce.find((c) => c.type === 'dokon').id) } : panel;
@@ -215,20 +215,44 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await tab.click();
     await page.locator('.good').first().waitFor();
   };
-  await at('5. do‘kon: tablar, qulf (1, 5, 7-level), sotib olish → hovlida', async () => {
+  await at('4c. kuchaytirish: tanga yetmasa — qancha kerak, yetsa — tasdiq, qurilish, tabrik', async () => {
+    const openMine = async () => {
+      await nav.getByRole('button', { name: T.myHouse, exact: true }).click();
+      await heading(T.me);
+    };
+    await openMine();
+    const coins = await app(() => window.__app.getState().profile.coins);
+    await raise(page, login, 1, -coins);
+    await reload(1);
+    await openMine();
+    await sheet.getByText(T.needMore.replace('{n}', '300')).waitFor();
+    await sheet.getByRole('button', { name: T.addCoins }).click();
+    await heading(T.coins);
+    await raise(page, login, 1, 300);
+    await reload(1);
+    await openMine();
+    await sheet.locator('.upgrade').click();
+    await page.locator('.modal').getByRole('button', { name: T.yes, exact: true }).click();
+    await waitFor(() => app(() => window.__app.getState().building !== null), async () => `qurilish effekti: ${await page.locator('.toasts').innerText()}`);
+    await heading(T.levelUp);
+    assert.equal(await app(() => window.__app.getState().profile.plots[0].tier), 2);
+    await closeAll();
+  });
+
+  await at('5. do‘kon: tablar, qulf (1, 5-level), sotib olish → hovlida', async () => {
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
     for (const key of TABS) await openTab(key);
     await openTab('tabYard');
     await goods('dam_basseyn').getByText(`5-${T.atLevel}`).waitFor();
-    await goods('lux_pavilyon').getByText(`7-${T.atLevel}`).waitFor();
+    await goods('lux_pavilyon').getByText(`5-${T.atLevel}`).waitFor();
     await goods('dam_basseyn').click();
     assert.ok(await sheet.locator('footer .btn').last().isDisabled(), '1-levelda bezak sotilmasin');
-    await raise(page, login, 5, ENOUGH);
+    await raise(page, login, 5, ENOUGH + 10);
     await reload(5);
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
     await openTab('tabYard');
     assert.equal(await goods('dam_basseyn').locator('em').count(), 0, '5-levelda basseyn ochiq bo‘lsin');
-    await goods('lux_pavilyon').getByText(`7-${T.atLevel}`).waitFor();
+    assert.equal(await goods('lux_pavilyon').locator('em').count(), 0, '5-levelda lyuks ochiq bo‘lsin');
     await openTab('tabGarden');
     await goods('daraxt_olma').click();
     const before = await app(() => window.__app.getState().profile.coins);
@@ -246,11 +270,8 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await sheet.getByRole('button', { name: T.place, exact: true }).first().click();
     await waitFor(() => app((nick) => [...window.__app.getState().houses.values()].some((h) => h.nick === nick && h.decor.includes('burchak_1:daraxt_olma')), login), 'bezak hovlida');
     await closeAll();
-    await raise(page, login, 7);
-    await reload(7);
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
     await openTab('tabLuxe');
-    assert.equal(await goods('lux_pavilyon').locator('em').count(), 0, '7-levelda lyuks ochiq bo‘lsin');
     await noEmoji(page, 'do‘kon');
     await goods('lux_pavilyon').click();
     await sheet.locator('footer .btn').first().click();
@@ -262,18 +283,19 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
   await at('6. Uyim: har bo‘lim, akkauntni o‘chirish tasdig‘i', async () => {
     const openMe = async () => { await nav.getByRole('button', { name: T.myHouse, exact: true }).click(); await heading(T.me); };
     await openMe();
-    for (const [button, title] of [['decorate', 'decorate'], ['looks', 'looks'], ['giftsTitle', 'giftsTitle'], ['myOrders', 'myOrders'], ['myAds2', 'myAds2'], ['avatar', 'avatar'], ['settings', 'settings']]) {
+    for (const [button, title] of [['decorate', 'decorate'], ['bioTitle', 'bioTitle'], ['giftsTitle', 'giftsTitle'], ['myOrders', 'myOrders'], ['myAds2', 'myAds2'], ['avatar', 'avatar'], ['settings', 'settings']]) {
       await sheet.getByRole('button', { name: T[button], exact: true }).click();
       await heading(T[title]);
       await noEmoji(page, title);
       await page.goBack();
       await heading(T.me);
     }
-    await sheet.getByRole('button', { name: T.looks, exact: true }).click();
-    await sheet.getByRole('button', { name: `${T.wallColor} 5` }).click();
+    await sheet.getByRole('button', { name: T.bioTitle, exact: true }).click();
+    await page.getByLabel(T.bio).fill('Salom');
     await sheet.getByRole('button', { name: T.save, exact: true }).click();
-    await waitFor(() => app(() => window.__app.getState().profile.plots[0].wall === 4), 'rang saqlanishi');
+    await waitFor(() => app(() => window.__app.getState().profile.plots[0].bio === 'Salom'), 'yozuv saqlanishi');
     await page.goBack();
+    await sheet.getByText(T.maxLevel).waitFor();
     await sheet.getByRole('button', { name: T.deleteAcc }).click();
     await page.locator('.modal').getByRole('button', { name: T.no, exact: true }).click();
     assert.equal(await page.locator('.modal').count(), 0);
@@ -286,7 +308,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     assert.ok(await app(() => window.__app.getState().profile !== null), 'tasdiqsiz o‘chmasin');
     await sheet.getByRole('button', { name: T.goHome }).click();
     await waitFor(() => app(() => window.__app.getState().panel?.kind === 'plot'), 'uyga borish');
-    for (const key of ['decorate', 'looksShort', 'stories', 'share']) await sheet.getByRole('button', { name: T[key], exact: true }).waitFor();
+    for (const key of ['decorate', 'bioTitle', 'stories', 'share']) await sheet.getByRole('button', { name: T[key], exact: true }).waitFor();
     await closeAll();
   });
 
@@ -296,7 +318,8 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await closeAll();
     await page.locator('.bell').click();
     await heading(T.notes);
-    await sheet.getByRole('button', { name: T.readAll }).click();
+    // Xabar bo'lsa o'qiladi (nik tasdig'i yo'q — yangi odamda xabar bo'lmasligi mumkin).
+    if (await sheet.getByRole('button', { name: T.readAll }).count()) await sheet.getByRole('button', { name: T.readAll }).click();
     await sheet.getByText(T.notesEmpty).waitFor();
     await closeAll();
     await page.locator('.card').getByText(T.daily).waitFor();
@@ -324,7 +347,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await sheet.getByRole('button', { name: T.handLeft, exact: true }).click();
     await sheet.getByRole('button', { name: T.low, exact: true }).click();
     assert.equal(await app(() => document.documentElement.dataset.theme), 'dark');
-    await reload(7);
+    await reload(5);
     assert.deepEqual(await app(() => ({ ...document.documentElement.dataset })), { theme: 'dark', quality: 'low', hand: 'left' });
     await page.locator('.modes').getByRole('button', { name: T.modeDrive, exact: true }).click();
     await page.waitForTimeout(400);

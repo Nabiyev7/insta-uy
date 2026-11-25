@@ -20,7 +20,7 @@ export function CongratsPanel({ id, tier }: CongratsProps): React.JSX.Element | 
     <Sheet title={t(tier ? 'levelUp' : 'congrats')} variant="half" extra={<span className="party" aria-hidden="true"><Icon name="confetti" /></span>}>
       {nick && <p className="nick">@{nick}</p>}
       <p className="muted with-icon"><Icon name="pin" />{addressOf(plot)}</p>
-      <p>{tier ? `${t('levelUpText')} — ${tier}. ${name ?? ''}` : t(house?.status === 'pending' ? 'congratsPending' : 'congratsText')}</p>
+      <p>{tier ? `${t('levelUpText')} — ${tier}. ${name ?? ''}` : t('congratsText')}</p>
       <div className="row two">
         <button type="button" className="btn gold" disabled={isBusy} onClick={() => run(() => shareStory(id, nick))}><Icon name="story" />{t('stories')}</button>
         <button type="button" className="btn soft" disabled={isBusy} onClick={() => run(() => copyText(houseUrl(id)), t('copied'))}><Icon name="share" />{t('share')}</button>

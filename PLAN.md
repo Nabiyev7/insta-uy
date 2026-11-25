@@ -23,8 +23,9 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual s
 5. Har bir uchastka eng yuqori uy darajasiga (qasr) sig'adigan o'lchamda chiziladi — uy kattalashsa qo'shniga tegmaydi.
 6. Kuchsiz telefonlarda ishlashi shart. Har bir funksiya arzon Android'da (Redmi A seriyasi) sinaladi.
 7. Xarajat hozircha **0$**. Faqat bepul tariflar.
-8. **Uy ko'pi bilan 2 qavat** — 1–4-level bir qavat, 2 qavat 5-leveldan. Cheksiz qavat yo'q.
-9. **Egasi yo'q uchastkada uy chizilmaydi**: bo'sh joy — maysa, daraxt va "Bo'sh joy — oling!" taxtachasi. Bezaklar faqat 5-leveldan (uy ranglari va nik lavhasi bundan mustasno).
+8. **Uy leveli 1–5, ko'pi bilan 2 qavat** — 1–4-level bir qavat, 5-level ikki qavat. 6–10 keyin (egasi, 2026-11-25). Kuchaytirish tanga bilan: 300 / 1 000 / 2 000 / 3 500.
+9. **Egasi yo'q uchastkada uy chizilmaydi**: bo'sh joy — maysa, daraxt va "Bo'sh joy — oling!" taxtachasi. Bezaklar (lyukslar ham) tanga bilan faqat 5-leveldan (nik lavhasi bundan mustasno).
+10. **Uy va avatar ranglari tanlanmaydi** — uy har levelda o'z standart rangida; avatarda faqat bosh kiyim va libos. **Shikoyat bo'limi yo'q** (so'z filtri, havola taqiqi, admin bloklashi qoladi). **Nik tasdig'i yo'q** — uy darhol tayyor.
 
 ## 3. Shahar (bosh reja)
 
@@ -101,14 +102,13 @@ Instagram obunachilari uchun **to'liq 3D, ichida yurish mumkin bo'lgan virtual s
 
 ## 6. Admin panel (faqat admin, parol + rol)
 
-- Uylar: tasdiqlash, egasini o'zgartirish, bo'shatish
+- Uylar: egasini o'zgartirish, levelini o'rnatish, bo'shatish
 - Tumanlarni ochish/yopish, narxlar, chegirmalar
 - Xarita muharriri: yangi bino/bezaklarni kodsiz qo'yish (faqat bo'sh joylarga; qulflangan uchastkalarga tegmaydi)
 - Xarita versiyalari + sinov rejimi + bir tugma bilan orqaga qaytish
 - Buyurtmalar va to'lovlar
 - Bilbord reklamalarini yuklash va moderatsiya
 - Ko'cha nomlarini tasdiqlash
-- Shikoyatlar
 - Yordamchi moderatorlar (cheklangan huquq)
 - Texnik ishlar rejimi
 - Statistika
@@ -235,8 +235,9 @@ cityland-uz/
 
 ## Holat
 
-> Oxirgi yangilanish: 2026-11-24. Ishga tushirish va internetga chiqarish: README.md.
+> Oxirgi yangilanish: 2026-11-25. Ishga tushirish va internetga chiqarish: README.md.
 
+- [x] **6-qadam, A (2026-11-25): tozalash va qoidalar** — uy leveli 1–5 (`MAX_TIER`, bazada `private.max_tier()`, `kit_levels.py` `MAX_LEVEL`; 6–10 modellari kodda qoladi), kuchaytirish 300/1 000/2 000/3 500 tanga va katta "Kuchaytirish" tugmasi (tasdiq → qurilish → tabrik), lyuks 5-leveldan, villa/qasrda ham 1–5-level uylar; uy/avatar ranglari, shikoyat va nik tasdig'i olib tashlandi (`0019_levels5.sql`)
 - [x] Reja tuzildi (2026-11-23)
 - [x] Mahalla prototipi — kompyuterda tayyor; **haqiqiy Redmi A telefonda hali sinalmagan**
 - [x] Bosh reja: 5 000 uchastka, 12 tuman — qulflangan (`packages/shared/data/masterplan.lock`)

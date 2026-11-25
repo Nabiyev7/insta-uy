@@ -37,22 +37,17 @@ test('xazina: NULL koordinata tanga bermaydi', async () => {
 });
 
 describe('nik egaligi', () => {
-  test('sovg‘ada begona nik olinmaydi, yangi nik tasdiqqa tushadi, rad etilsa uy saqlanadi', async () => {
+  test('sovg‘ada begona nik olinmaydi, nik tasdig‘i yo‘q', async () => {
     const [a, b, c] = [await user(), await user(), await user()];
     await claim(c, 'mashhur_nik');
     const plot = await claim(a, 'egasi_a');
-    await as(admin, 'admin_plot', { p_plot: plot, p_action: 'approve' });
+    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'egasi_a' });
     const login = (await sql('select login from profiles where user_id = $1', [b]))[0]!.login;
     const id = await as(a, 'my_transfer', { p_plot: plot, p_to: login });
     await expect(as(b, 'my_transfer_answer', { p_id: id, p_accept: true, p_instagram: 'mashhur_nik' })).rejects.toThrow('nick_taken');
     await as(b, 'my_transfer_answer', { p_id: id, p_accept: true, p_instagram: 'yangi_nik' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'pending', instagram: 'yangi_nik' });
-    await as(admin, 'admin_plot', { p_plot: plot, p_action: 'reject' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: null });
-    await expect(as(b, 'my_set_nick', { p_plot: plot, p_instagram: 'mashhur_nik' })).rejects.toThrow('nick_taken');
-    await as(b, 'my_set_nick', { p_plot: plot, p_instagram: 'haqiqiy_b' });
-    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'pending', instagram: 'haqiqiy_b' });
-    await expect(as(a, 'my_set_nick', { p_plot: plot, p_instagram: 'x_y' })).rejects.toThrow('not_owner');
+    expect(await anon('api_plot', { p_plot: plot })).toMatchObject({ status: 'owned', instagram: 'yangi_nik' });
+    await expect(as(admin, 'admin_plot', { p_plot: plot, p_action: 'approve' })).rejects.toThrow('bad_format');
   });
   test('pullik uyda begona nik rad etiladi; to‘lov orasida band bo‘lsa uy niksiz beriladi', async () => {
     const [a, b] = [await user(), await user()];
@@ -67,19 +62,15 @@ describe('nik egaligi', () => {
 });
 
 describe('tanga fermasi', () => {
-  test('taklif mukofoti faqat uy tasdiqlangach, bir marta', async () => {
+  test('taklif mukofoti uy olinganda darhol, bir marta', async () => {
     const inviter = await user();
     const ref = (await sql('select ref_code from profiles where user_id = $1', [inviter]))[0]!.ref_code as string;
     const guest = await user('user', [], ref);
-    const plot = await claim(guest, 'mehmon_x');
     expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 0, invited: 0 });
-    await as(admin, 'admin_plot', { p_plot: plot, p_action: 'reject' });
-    const plot2 = await claim(guest, 'mehmon_x');
-    await as(admin, 'admin_plot', { p_plot: plot2, p_action: 'approve' });
+    const plot = await claim(guest, 'mehmon_x');
     expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 50, invited: 1 });
-    await as(admin, 'admin_plot', { p_plot: plot2, p_action: 'release' });
-    const plot3 = await claim(guest, 'mehmon_x');
-    await as(admin, 'admin_plot', { p_plot: plot3, p_action: 'approve' });
+    await as(admin, 'admin_plot', { p_plot: plot, p_action: 'release' });
+    await claim(guest, 'mehmon_x');
     expect(await as(inviter, 'my_profile')).toMatchObject({ coins: 50 });
   });
   test('telegram topshirig‘i bitta Telegram uchun bir marta', async () => {
@@ -113,7 +104,8 @@ test('moderator pul va mulk amallarini bajara olmaydi', async () => {
   await expect(as(m, 'admin_plot', { p_plot: plot, p_action: 'assign', p_data: { login, instagram: 'mod_nik' } })).rejects.toThrow('forbidden');
   await expect(as(m, 'admin_catalog', { p_id: 'tree_anor', p_uzs: 0 })).rejects.toThrow('forbidden');
   expect(((await as(m, 'admin_catalog')) as Row[]).length).toBeGreaterThan(5);
-  await as(m, 'admin_plot', { p_plot: plot, p_action: 'approve' });
+  await expect(as(m, 'admin_plot', { p_plot: plot, p_action: 'tier', p_data: { tier: 5 } })).rejects.toThrow('forbidden');
+  await as(m, 'admin_plot', { p_plot: plot, p_action: 'clear_bio' });
 });
 
 test('login nomi ochiq ko‘rinmaydi', async () => {
@@ -126,7 +118,6 @@ test('login nomi ochiq ko‘rinmaydi', async () => {
 test('yorliqsiz buyurtma rad etiladi; bittadan ortiq uy band qilinmaydi', async () => {
   const u = await user();
   const plot = await claim(u, 'yorliq_n');
-  await as(admin, 'admin_plot', { p_plot: plot, p_action: 'approve' });
   await expect(as(u, 'my_order', { p_kind: 'label', p_payload: { plot } })).rejects.toThrow('bad_format');
   await as(u, 'my_order', { p_kind: 'plot', p_payload: { plot: await freePlot(), instagram: 'yorliq_n' } });
   await expect(as(u, 'my_order', { p_kind: 'plot', p_payload: { plot: await freePlot(), instagram: 'yorliq_n' } })).rejects.toThrow('too_many_orders');

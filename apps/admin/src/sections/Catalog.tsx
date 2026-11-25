@@ -29,7 +29,7 @@ function Editor({ draft, isNew, models, onDone, onCancel }: EditorProps): React.
       <label className="field">3D model<select className="input" value={form.model_id} disabled={!isNew} onChange={(e) => set({ model_id: e.target.value })} required><option value="" disabled>Tanlang</option>{models.map((m) => <option key={m}>{m}</option>)}</select></label>
       <label className="field">Nomi (uz)<input className="input" value={form.name_uz} maxLength={40} onChange={(e) => set({ name_uz: e.target.value })} required /></label>
       <label className="field">Nomi (ru)<input className="input" value={form.name_ru} maxLength={40} onChange={(e) => set({ name_ru: e.target.value })} required /></label>
-      {number('price_uzs', "Narx (so'm)")}{number('price_coins', 'Narx (tanga)')}{number('min_level', 'Qaysi leveldan', 10)}{number('sort', 'Tartib raqami')}
+      {number('price_uzs', "Narx (so'm)")}{number('price_coins', 'Narx (tanga)')}{number('min_level', 'Qaysi leveldan', 5)}{number('sort', 'Tartib raqami')}
       <label className="field">Jami soni (bo'sh = cheksiz)<input className="input" type="number" min={1} value={form.stock ?? ''} onChange={(e) => set({ stock: e.target.value ? Number(e.target.value) : null })} /></label>
       {date('season_from', 'Mavsum boshi (har yili)')}{date('season_to', 'Mavsum oxiri')}
       <label className="field">To'plam ID<input className="input" value={form.set_id ?? ''} onChange={(e) => set({ set_id: e.target.value || null })} /></label>

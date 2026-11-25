@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { CITY_HALF, DECOR, FRAME_COLORS, HILL, LAKE, LUXE_MODELS, MIN_TIER, REF_YARD, ROOF_COLORS, TIERS, WALL_COLORS, ZONES, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
+import { CITY_HALF, DECOR, FRAME_COLORS, HILL, LAKE, LUXE_MODELS, REF_YARD, ROOF_COLORS, TIERS, WALL_COLORS, ZONES, decodePlan, hash01, terrainHeight } from '../packages/shared/src/index.ts';
 import { buildingItem, commerceItem, houseItem, plotItems } from '../apps/web/src/logic/placement.ts';
 import { staticItems } from '../apps/web/src/logic/streets.ts';
 import { toWorld } from '../apps/web/src/logic/item.ts';
@@ -21,8 +21,8 @@ const TEX_LAYERS = 16;
 const state = (plot, tier, wall, roof, decor = []) => ({ plot, nick: null, tier, wall, roof, decor, material: 0, frame: 0, door: 0, label: 'plain', badge: null, status: 'owned', expanded: false });
 const demoState = (p) => {
   const h = (k) => hash01(`show${k}${p.id}`);
-  const tier = { qasr: h('t') < 0.6 ? 9 : 10, villa: h('t') < 0.6 ? 7 : 8 }[p.type] ?? 1 + Math.floor(h('t') * 3);
-  return state(p.id, tier, Math.floor(h('w') * 8), Math.floor(h('r') * 6));
+  const tier = { qasr: 5, villa: h('t') < 0.6 ? 4 : 5 }[p.type] ?? 1 + Math.floor(h('t') * 3);
+  return state(p.id, tier, 0, 0);
 };
 const pack = (i) => [i.model, ...[i.x, i.y, i.z, i.yaw, i.sx, i.sy, i.sz].map((v) => Number(v.toFixed(3))), i.wall, i.roof, FRAME_COLORS[Math.floor((i.mat ?? 0) / 16)] ?? '#ffffff'];
 
@@ -56,7 +56,8 @@ const region = (name, x, z, radius, camera, isLake = false) => {
 };
 
 /** Uchastka o'lchami level bo'yicha: oddiy hovli, villa, qasr. */
-const sampleOf = (tier) => (tier >= MIN_TIER.qasr ? [40, 56, 'qasr'] : tier >= MIN_TIER.villa ? [30, 42, 'villa'] : [24, REF_YARD.d, 'hovli']);
+/** Levellar 1–5 hovlida; villa va qasr — o'sha uylar katta uchastkada (luxeScene). */
+const sampleOf = () => [24, REF_YARD.d, 'hovli'];
 const BIG = [['apt5', 'K1. 5 qavatli'], ['apt9', 'K2. 9 qavatli'], ['office', 'K3. Ofis minora'], ['office_low', 'K4. Ofis past'], ['shop', "K5. Do'kon"], ['maktab', 'K6. Maktab'], ['kafe', 'K7. Kafe'],
   ['prezident', 'K8. Prezident saroyi'], ['hokimiyat', 'K9. Shahar hokimiyati'], ['sud', 'K10. Shahar sudi'], ['bank', 'K11. Shahar banki'], ['agentlik', 'K12. Agentlik'], ['novostroyka', 'K13. Yangi turar-joy'],
   ['kasalxona', 'K14. Kasalxona'], ['masjid', 'K15. Masjid'], ['otochirish', "K16. O't o'chirish"], ['teatr', 'K17. Teatr va muzey'], ['univermag', 'K18. Univermag'], ['bozor', 'K19. Bozor'], ['sport', 'K20. Sport maydoni'], ['bolalar', 'K21. Bolalar maydonchasi']];
@@ -110,17 +111,20 @@ const newDecorScene = () => {
     labels: fresh.map((d, i) => [d.uz, (i % 5) * 9, 0.1, 4 - Math.floor(i / 5) * 12 + 4.9, 0, 1.1]), floor: [40, 0, 400], camera: [[36, 54, 66], [36, 0, -6]],
   };
 };
-/** Lyuks bezaklar (7-leveldan) va ular bilan to'la 7-, 8- va 10-level hovlilar. */
+/** Lyuks bezaklar (tanga bilan 5-leveldan) va ular bilan to'la 5-level hovli, villa va qasr. */
 const LUXE_YARD = ['garaj_oldi:lux_superkar', 'old_hovli_chap:lux_basseyn', 'old_hovli_ong:lux_favvora', 'burchak_1:lux_daraxt', 'burchak_2:lux_daraxt', 'burchak_3:lux_daraxt', 'burchak_4:lux_daraxt', 'p1:lux_daraxt', 'p2:lux_daraxt'];
 const LUXE_YARD_2 = ['garaj_oldi:lux_limuzin', 'old_hovli_chap:lux_pavilyon', 'old_hovli_ong:lux_gril', 'burchak_1:lux_daraxt', 'burchak_2:lux_daraxt', 'p1:lux_daraxt', 'p2:lux_daraxt'];
 const LUXE_YARD_3 = ['garaj_oldi:lux_jip', 'old_hovli_chap:lux_bog', 'old_hovli_ong:lux_favvora', 'burchak_1:lux_daraxt', 'burchak_2:lux_daraxt'];
 const luxeScene = () => {
   const list = DECOR.filter((d) => LUXE_MODELS.has(d.model));
   const at = (i) => [(i % 5) * 14, 34 - Math.floor(i / 5) * 12];
-  const yards = [[7, LUXE_YARD], [8, LUXE_YARD_2], [10, LUXE_YARD_3]].flatMap(([tier, yard], i) => { const p = nearPlot(TIERS[tier - 1], i * 28, -10, 0); return plotItems(p, state(p.id, tier, 0, 0, yard), true); });
+  const yards = [['hovli', 24, 34, 0, LUXE_YARD], ['villa', 30, 42, 29, LUXE_YARD_2], ['qasr', 40, 56, 66, LUXE_YARD_3]].flatMap(([type, w, d, x, yard]) => {
+    const p = { id: `L${type}`, x, z: -10 - (d - 34) / 2, w, d, rot: 0, type };
+    return plotItems(p, state(p.id, 5, 0, 0, yard), true);
+  });
   return {
     name: '9d Lyuks bezaklar', items: [...list.map((d, i) => plain(d.model, ...at(i))), ...yards].map(pack),
-    labels: list.map((d, i) => [`${d.uz} — ${d.priceCoins}`, at(i)[0], 0.1, at(i)[1] + 5, 0, 0.9]), floor: [28, 0, 400], camera: [[28, 48, 80], [28, 0, 8]],
+    labels: list.map((d, i) => [`${d.uz} — ${d.priceCoins}`, at(i)[0], 0.1, at(i)[1] + 5, 0, 0.9]), floor: [33, 0, 400], camera: [[33, 58, 92], [33, 0, 4]],
   };
 };
 /** Yangi jamoat binolari yaqindan. */
@@ -214,7 +218,7 @@ const saveDocs = async () => {
     const tops = parts.map((_, k) => parts.slice(0, k).reduce((n, p) => n + p[2], 0));
     return sharp({ create: { width: W, height: parts.reduce((n, p) => n + p[2], 0), channels: 3, background: '#fff' } }).composite(cuts.map((input, k) => ({ input, left: 0, top: tops[k] })));
   };
-  await jpg(await stack([[7, 300, 480], [9, 60, 1000], [0, 40, 980]]), 'levellar.jpg');
+  await jpg(await stack([[7, 300, 480], [9, 60, 1000], [0, 420, 500]]), 'levellar.jpg');
   await jpg(sharp(shot(6)), 'xarita.jpg');
   await jpg(sharp(shot(3)), 'markaz-3d.jpg');
   await jpg(sharp({ create: { width: W, height: H * 2, channels: 3, background: '#fff' } }).composite([{ input: shot(8), left: 0, top: 0 }, { input: shot(2), left: 0, top: H }]), 'binolar.jpg');

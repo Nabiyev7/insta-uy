@@ -1,4 +1,5 @@
-"""Yuqori levellar (7–10): villa va qasrlar. Hovlida 1.2, villada 1.3, qasrda 1.9 baravar kattalashadi. Oltin rang shu yerdan boshlanadi."""
+"""Uy levellari. Hozir faqat 1–5 eksport qilinadi (egasi, 2026-11-25); 6–10 modellari shu yerda qoladi — keyin MAX_LEVEL ni oshirish kifoya
+(saytda `TIERS`, bazada `private.max_tier()` bilan birga)."""
 from kit_core import GLASS, PLAIN, SOIL, STONE, WOOD, Model
 from kit_houses import house4, moulding
 from kit_levels_low import finial as plain_finial
@@ -6,6 +7,7 @@ from kit_levels_low import lantern, low_levels, planter, steps
 from kit_palace import grand_palace, palace
 
 GOLD = '#d9a93f'
+MAX_LEVEL = 5
 
 
 def finial(m: Model, x: float, y: float, z: float, h: float = 0.8) -> None:
@@ -48,5 +50,5 @@ def level8() -> Model:
 
 
 def all_levels() -> list[Model]:
-    """Uy levellari 1..10."""
-    return [*low_levels(), house4('house7'), level8(), palace('house9'), grand_palace('house10')]
+    """Eksport qilinadigan uy levellari: 1..MAX_LEVEL."""
+    return [*low_levels(), house4('house7'), level8(), palace('house9'), grand_palace('house10')][:MAX_LEVEL]
