@@ -214,7 +214,7 @@ try {
     await desk.getByText(/Sotib olindi/).first().waitFor();
     await desk.keyboard.press('Escape');
     await desk.locator('.nav5').getByRole('button', { name: 'Uyim' }).click();
-    await desk.getByRole('button', { name: 'Sovg‘alar va o‘tkazmalar' }).click();
+    await desk.getByRole('button', { name: 'Sovg‘alar', exact: true }).click();
     await desk.locator('.sheet select').selectOption('gul_zor');
     await desk.getByPlaceholder('@nik').fill('@demo_0001');
     await desk.locator('.sheet form').first().locator('button[type=submit]').click();
@@ -222,8 +222,8 @@ try {
     await desk.getByText('Yuborildi').first().waitFor();
     await desk.keyboard.press('Escape');
     await desk.goto(`${SITE}/?uy=P0001`);
-    await desk.locator('.sheet').getByRole('button', { name: 'Ovoz berish' }).click();
-    await desk.getByText(/Haftaning hovlisi: 1/).waitFor();
+    await desk.locator('.sheet .heart').getByRole('button', { name: /^Yoqdi/ }).click();
+    await desk.locator('.sheet .heart').getByRole('button', { name: /^Yoqtirdingiz: 1/ }).waitFor();
     await desk.keyboard.press('Escape');
     await desk.locator('.topbar').getByRole('button', { name: 'Menyu', exact: true }).click();
     await desk.getByRole('button', { name: 'Ekranni tozalash' }).click();
@@ -274,10 +274,10 @@ try {
     await phone.locator('.message', { hasText: 'Salom shahar' }).waitFor();
     const sheet = await phone.locator('.sheet').boundingBox();
     assert.ok(sheet.y > 380, 'chat ekranning pastki yarmida emas');
-    await phone.getByRole('button', { name: 'Mahalla', exact: true }).click();
+    // Mehmonda faqat "Umumiy" (Mahalla — uyi borlarga; "Onlayn" tabi yo'q).
+    assert.equal(await phone.getByRole('button', { name: 'Mahalla', exact: true }).count(), 0);
+    assert.equal(await phone.getByRole('button', { name: /^Onlayn/ }).count(), 0);
     await phone.getByRole('button', { name: 'Yozish uchun kiring' }).waitFor();
-    await phone.getByRole('button', { name: /^Onlayn/ }).click();
-    await phone.getByText('sinov.nik').waitFor();
     await phone.locator('.sheet').getByRole('button', { name: 'Yopish' }).click();
     await shot(phone, 'phone');
   });

@@ -7,7 +7,7 @@ const SCREENS = [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wid
 const LANDSCAPE = { width: 640, height: 360 };
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
 const MIN_TAP = 44;
-const MENU = [['cityWorks'], ['gazette'], ['avatar'], ['myCars'], ['coins'], ['settings'], ['help'], ['rules'], ['privacy']];
+const MENU = [['cityWorks'], ['myCars'], ['coins'], ['settings'], ['help'], ['rules'], ['privacy']];
 const TABS = ['tabNew', 'tabYard', 'tabGarden', 'tabCar', 'tabLuxe', 'tabGate', 'tabPet', 'tabSet', 'tabSpecial'];
 const ENOUGH = 3000;
 
@@ -184,9 +184,9 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     for (const [panel, check] of [
       [{ kind: 'civic', id: 'hokimiyat' }, () => sheet.getByRole('button', { name: T.cityWorks }).click().then(() => heading(T.cityWorks))],
       [{ kind: 'commerce', id: 'BB' }, null],
-      [{ kind: 'street', id: 3 }, () => sheet.getByText(T.streetOwners).first().waitFor()],
       [{ kind: 'plot', id: 'P0001' }, async () => {
-        for (const name of [T.closeLook, T.giftTitle, T.vote]) await sheet.getByRole('button', { name, exact: true }).waitFor();
+        for (const name of [T.closeLook, T.giftTitle]) await sheet.getByRole('button', { name, exact: true }).waitFor();
+        assert.equal(await sheet.getByRole('button', { name: T.vote, exact: true }).count(), 0, 'faqat yurak qoladi');
         await sheet.getByRole('link', { name: 'Instagram' }).waitFor();
         assert.equal(await sheet.getByText(T.claimBtn).count(), 0);
         const heart = sheet.locator('.heart').getByRole('button', { name: T.heartIt });
@@ -286,7 +286,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
   await at('6. Uyim: har bo‘lim, akkauntni o‘chirish tasdig‘i', async () => {
     const openMe = async () => { await nav.getByRole('button', { name: T.myHouse, exact: true }).click(); await heading(T.me); };
     await openMe();
-    for (const [button, title] of [['decorate', 'decorate'], ['bioTitle', 'bioTitle'], ['giftsTitle', 'giftsTitle'], ['myOrders', 'myOrders'], ['myAds2', 'myAds2'], ['avatar', 'avatar'], ['settings', 'settings']]) {
+    for (const [button, title] of [['decorate', 'decorate'], ['bioTitle', 'bioTitle'], ['giftsTitle', 'giftsTitle'], ['settings', 'settings']]) {
       await sheet.getByRole('button', { name: T[button], exact: true }).click();
       await heading(T[title]);
       await noEmoji(page, title);
@@ -355,18 +355,12 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await nav.waitFor();
     await menu();
     await sheet.getByRole('button', { name: T.settings, exact: true }).click();
-    await sheet.getByRole('button', { name: T.dark, exact: true }).click();
-    await sheet.getByRole('button', { name: T.handLeft, exact: true }).click();
-    await sheet.getByRole('button', { name: T.low, exact: true }).click();
+    // Sozlamalarda faqat Til va Ovoz; interfeys doim to'q.
+    for (const gone of [T.dark, T.handLeft, T.low]) assert.equal(await sheet.getByRole('button', { name: gone, exact: true }).count(), 0, `sozlamada ${gone} yo‘q`);
+    await sheet.getByRole('button', { name: T.off, exact: true }).first().waitFor();
     assert.equal(await app(() => document.documentElement.dataset.theme), 'dark');
-    await reload(5);
-    assert.deepEqual(await app(() => ({ ...document.documentElement.dataset })), { theme: 'dark', quality: 'low', hand: 'left' });
-    await page.locator('.modes').getByRole('button', { name: T.modeDrive, exact: true }).click();
-    await page.waitForTimeout(400);
-    const [stick, rail] = [await page.locator('.joystick').boundingBox(), await page.locator('.rail').boundingBox()];
-    assert.ok(rail.x < viewport.width / 2 && (!stick || stick.x > viewport.width / 2), 'chap qo‘l rejimi');
-    await checkLayout(page, 'chap qo‘l');
-    await page.locator('.modes').getByRole('button', { name: T.modeCity, exact: true }).click();
+    await checkLayout(page, 'sozlamalar');
+    await closeAll();
   });
 
   await at('9. qidiruv, internet yo‘q, mehmon do‘koni, chiqish', async () => {

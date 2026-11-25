@@ -44,10 +44,17 @@ export const startServers = async ({ base = 8797, site = 5183, hasDemo = true } 
   await waitFor(async () => (await fetch(SITE)).ok && (await fetch(ADMIN)).ok, 'vite');
   const call = (fn, args, token) => fetch(`${API}/rest/v1/rpc/${fn}`, { method: 'POST', headers: token ? { authorization: `Bearer ${token}` } : {}, body: JSON.stringify(args) }).then((r) => r.json());
   /** Bot bilan lokal suhbat (/dev/telegram): javobdagi kirish tokeni. */
-  const botSay = async (id, text) => {
-    const r = await fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify({ message: { message_id: 1, from: { id, first_name: 'Sinov' }, chat: { id, type: 'private' }, text } }) }).then((x) => x.json());
+  const tokenIn = (r) => {
     const url = r.sent.flatMap((m) => m.buttons).find((b) => b.url?.includes('kirish='))?.url;
     return url ? new URL(url).searchParams.get('kirish') : null;
+  };
+  const botPost = (update) => fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify(update) }).then((x) => x.json());
+  /** Matn yuboradi; nik yozilsa — tasdiq ("Ha, to'g'ri") ham bosiladi. Kirish havolasi tokenini qaytaradi. */
+  const botSay = async (id, text) => {
+    const r = await botPost({ message: { message_id: 1, from: { id, first_name: 'Sinov' }, chat: { id, type: 'private' }, text } });
+    const token = tokenIn(r);
+    if (token || !r.sent.some((m) => m.buttons.some((b) => b.data === 'nick_ok'))) return token;
+    return tokenIn(await botPost({ callback_query: { id: 'n', from: { id, first_name: 'Sinov' }, data: 'nick_ok' } }));
   };
   /** Telegram ID bo'yicha sessiya (akkaunt bo'lmasa nik bilan ochiladi). */
   const tgToken = async (id, nick = `tg_${id}`) => {
