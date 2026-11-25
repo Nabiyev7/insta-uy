@@ -365,3 +365,21 @@ describe('zaxira Telegramga', () => {
   });
 });
 
+describe('xabar yuborish va so‘rovnoma', () => {
+  test('admin so‘rovnomasi navbat bilan boradi, tugma bilan ovoz', async () => {
+    const { flushBroadcast } = await import('../src/telegram.ts');
+    await botUser(1600, 'sorov_odam');
+    const admin = (await db.query<{ user_id: string }>('select user_id from profiles where telegram_id = 1600')).rows[0]!.user_id;
+    await db.query("update profiles set role = 'admin' where user_id = $1", [admin]);
+    const { rpc } = await import('../dev/db.ts');
+    const poll = await rpc(db, 'authenticated', admin, 'admin_poll', { p_question: 'Qaysi bog‘?', p_options: ['Olma', 'Anor'] }) as number;
+    const before = sent.length;
+    expect(await flushBroadcast(ctx(), 0)).toBeGreaterThan(0);
+    const msg = sent.slice(before).find((m) => m.chat === 1600)!;
+    expect(msg.buttons!.map((b) => b.data)).toEqual([`poll:${poll}:1`, `poll:${poll}:2`]);
+    await webhook({ update_id: 3, callback_query: { id: 'v1', from: { id: 1600, first_name: 'S' }, data: `poll:${poll}:2` } });
+    expect(sent.at(-1)!.text).toContain('Anor');
+    expect((await db.query('select option from poll_votes where poll_id = $1', [poll])).rows).toEqual([{ option: 2 }]);
+  });
+});
+

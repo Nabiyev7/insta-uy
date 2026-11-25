@@ -194,6 +194,9 @@ export const BADGES = {
   hokim: { uz: 'Shahar hokimi', ru: 'Хоким города' },
   hovli: { uz: 'Haftaning hovlisi', ru: 'Двор недели' },
   rais: { uz: 'Mahalla raisi', ru: 'Председатель махалли' },
+  elchi10: { uz: 'Elchi (10 do‘st)', ru: 'Посол (10 друзей)' },
+  elchi50: { uz: 'Elchi (50 do‘st)', ru: 'Посол (50 друзей)' },
+  elchi100: { uz: 'Elchi (100 do‘st)', ru: 'Посол (100 друзей)' },
 } as const;
 export type BadgeId = keyof typeof BADGES;
 export type LabelKind = 'plain' | 'silver' | 'gold';

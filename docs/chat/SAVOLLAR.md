@@ -149,3 +149,19 @@ Har biri: savol → nimani tanladim → nega. Egasi o'zgartirmoqchi bo'lsa, ayts
 4. **Bezaklarning so'mdagi narxi** promtga moslab qayta hisoblandi: oddiy — 5 000–20 000 so'm (tanga × 25), lyuks — 15 000–60 000 so'm (tanga × 5). Avvalgi so'm narxlari (masalan lyuks 750 000) bekor.
 5. **Pul qaytarilganda** faqat tanga paketining tangasi avtomatik olinadi; uy, bezak, level, salyut odamda qoladi (admin kerak bo'lsa Uylar/Foydalanuvchilar bo'limidan qo'lda oladi).
 6. **Saytdagi salyut + Stars**: Telegram havolasi matnni olib o'tolmaydi — bot "/salyut matn" deb yozishni so'raydi. Karta yoki tanga bilan to'lashda matn saytdan olinadi.
+
+### Eski IQTISOD-PROMT
+Bajarildi: Telegram orqali kirish, asoschi 100 (aniq), 1 kishiga 1 bepul uy, referal (vaqt sharti yo'q), "Iqtisod" sahifasi, zaxira Telegramga, 3 oy qoidasi + ogohlantirish, xabar yuborish, so'rovnoma, Elchi nishoni, kutish ro'yxatiga xabar, qoidalar matni.
+Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
+1. **Tanga narxi = so'm / 50**, "Telegram ulash 200", "taklif bilan kelganga 200", "3-levelgacha" — yangi promt (TANGA-NARXLAR, level 1–5) bilan almashtirildi.
+2. **So'rovnomada tanga mukofoti** — yo'q (D: "topish faqat shulardan").
+3. **"Pul bilan sotib olish tugmalari ko'rinmaydi"** — E bo'yicha endi "Tez kunda" bo'lib ko'rinadi.
+4. **Gazetani kanalga post qilish** — hali yo'q (kanal ID va botni kanalga admin qilish kerak).
+5. **Kunlik tanga grafigi** — "Iqtisod"da faqat 7 kunlik jadval (grafik keyin).
+6. **Zaxira yuborilmasa qayta urinish va Sentry** — cron keyingi kuni yana yuboradi; xato cron natijasida ko'rinadi, Sentry ulanmagan.
+7. **Bir qurilmadan referal** — qurilma aniqlanmaydi (faqat bir Telegram).
+8. **Zaxiradan tiklash yo'riqnomasi** — faqat README'da (admin panelda emas).
+9. **Maxfiylikda server mintaqasi** yozilmadi — Supabase loyihasi qaysi mintaqada ochilishi hali noma'lum (12-qadamda aniqlanadi).
+10. **Markaziy ko'cha nomini tangaga sotish** — hozircha so'mda (to'lov o'chiq). Tangaga o'tkazish — keyin.
+11. **Tijorat joylari (B001–B170)** — `commerce_closed` ro'yxatidagilar sotuvda emas; hammasini yopish admin → Sozlamalar orqali.
+12. **Xabar yuborish tezligi** — har cron'da 300 ta (taxminan soatiga 1 800); yuborilmay qolgan xabar qayta yuborilmaydi.

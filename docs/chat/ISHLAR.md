@@ -20,7 +20,7 @@ Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. **6-qadamni bajar: `docs/
 - [x] **3. Harakat va ekran** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 1-bosqich
 - [x] **4. Bezaklar tizimi** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 2-bosqich
 - [x] **5. Yangi bezaklar va sotuv** — `docs/chat/BEZAK-HARAKAT-PROMT.md`, faqat 3-bosqich
-- [ ] **6. Kirish (bot), uy olish, tanga, premium** — `docs/chat/BOSQICH-2-3-PROMT.md` (eski `IQTISOD-PROMT.md` o'rniga; zid joyda yangisi ustun)
+- [x] **6. Kirish (bot), uy olish, tanga, premium** — `docs/chat/BOSQICH-2-3-PROMT.md` (eski `IQTISOD-PROMT.md` o'rniga; zid joyda yangisi ustun)
 - [ ] **7. Yuklamani taqsimlash** — `docs/chat/YUKLAMA-PROMT.md`
 - [x] **8. Xarita: shaharni qurish (CityLand UZ)** — `docs/chat/XARITA-PROMT.md`
 - [x] **9. Bo'sh uchastkalar, yangi uylar 1–5, bezaklar** — `docs/chat/UYLAR-BEZAK-PROMT.md`

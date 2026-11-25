@@ -145,7 +145,7 @@ const bankForward = async (ctx: Ctx, tg: Telegram, m: Message): Promise<boolean>
 
 const menu = (ctx: Ctx, tg: Telegram, chat: number): Promise<void> => {
   const channel = ctx.env.TELEGRAM_CHANNEL ?? 'citylanduz';
-  return tg.send(chat, HELP, [{ text: '🏙 Shaharni ochish / Открыть город', data: 'open' }, { text: '📣 Yangiliklar kanali / Канал новостей', url: `https://t.me/${channel}` }, { text: '✅ Obuna bo‘ldim — tanga olish / Я подписался', data: 'chan' }, { text: '🛍 Do‘kon / Магазин', data: 'shop' }]);
+  return tg.send(chat, HELP, [{ text: '🏙 Shaharni ochish / Открыть город', data: 'open' }, { text: '🏠 Mening uyim / Мой дом', data: 'open' }, { text: '📣 Yangiliklar kanali / Канал новостей', url: `https://t.me/${channel}` }, { text: '✅ Obuna bo‘ldim — tanga olish / Я подписался', data: 'chan' }, { text: '🛍 Do‘kon / Магазин', data: 'shop' }]);
 };
 
 const onStart = async (ctx: Ctx, tg: Telegram, m: Message, param: string): Promise<void> => {
@@ -186,6 +186,11 @@ const onMessage = async (ctx: Ctx, tg: Telegram, m: Message): Promise<void> => {
 };
 
 const onCallback = async (ctx: Ctx, tg: Telegram, q: NonNullable<Update['callback_query']>): Promise<void> => {
+  const vote = /^poll:(\d{1,9}):([1-6])$/.exec(q.data ?? '');
+  if (vote) {
+    const picked = await ctx.db.rpc<string>('svc_poll_vote', { p_telegram: q.from.id, p_poll: Number(vote[1]), p_option: Number(vote[2]) });
+    return tg.answer(q.id, picked === 'closed' ? 'So‘rovnoma yopilgan / Опрос закрыт' : `✅ ${picked}`);
+  }
   if (q.data === 'shop') { await tg.answer(q.id, '🛍'); return shopMenu(ctx, tg, q.from.id); }
   if (q.data === 'chan') return channelButton(ctx, tg, q.id, q.from.id);
   const buy = /^buy:([A-Za-z0-9_]{1,60})$/.exec(q.data ?? '')?.[1];
@@ -288,3 +293,21 @@ async function channelButton(ctx: Ctx, tg: Telegram, callbackId: string, telegra
     await tg.answer(callbackId, error instanceof HttpError && error.message === 'not_subscribed' ? 'Avval kanalga obuna bo‘ling / Сначала подпишитесь' : 'Xato / Ошибка');
   }
 }
+
+interface QueuedMessage { readonly chat: number; readonly text: string; readonly poll: number | null; readonly options: readonly string[] | null }
+/** Telegram: sekundiga ~25 xabardan ko'p emas. */
+const BROADCAST_BATCH = 25;
+const BROADCAST_PER_RUN = 300;
+const pause = (ms: number): Promise<void> => new Promise((r) => { setTimeout(r, ms); });
+/** Cron: admin yuborgan xabar va so'rovnomalarni navbat bilan jo'natadi. */
+export const flushBroadcast = async (ctx: Ctx, delayMs = 1100): Promise<number> => {
+  if (!ctx.tg) return 0;
+  const tg = ctx.tg;
+  const rows = await ctx.db.rpc<readonly QueuedMessage[]>('svc_broadcast_next', { p_limit: BROADCAST_PER_RUN });
+  for (let i = 0; i < rows.length; i += BROADCAST_BATCH) {
+    if (i > 0) await pause(delayMs);
+    await Promise.allSettled(rows.slice(i, i + BROADCAST_BATCH).map((r) => tg.send(r.chat, r.text, r.poll && r.options ? r.options.map((o, k) => ({ text: o, data: `poll:${r.poll}:${k + 1}` })) : [{ text: '🏙', url: ctx.env.SITE_URL }])));
+  }
+  return rows.length;
+};
+

@@ -49,3 +49,47 @@ describe('referal sovg‘alari', () => {
     expect((await sql('select coins from profiles where user_id = $1', [host]))[0]!.coins).toBe(1500);
   });
 });
+
+describe('Elchi nishoni', () => {
+  test('10-do‘st uy olganda — "elchi10"', async () => {
+    const host = await user();
+    const ref = (await sql('select ref_code from profiles where user_id = $1', [host]))[0]!.ref_code as string;
+    for (let i = 0; i < 9; i++) await sql('update profiles set referred_by = $1, referral_paid = true where user_id = $2', [host, await user()]);
+    await claim(await user(ref));
+    expect((await sql('select badges from profiles where user_id = $1', [host]))[0]!.badges).toContain('elchi10');
+  });
+});
+
+describe('xabar yuborish va so‘rovnoma (baza)', () => {
+  const queued = async (): Promise<number[]> => (await sql('select chat from broadcast_queue order by id')).map((r) => Number(r.chat));
+  test('faqat admin; bildirishnomani o‘chirganlarga umumiy xabar bormaydi; tuman va kutish ro‘yxati', async () => {
+    const admin = await user();
+    const plain = await user();
+    await expect(as(plain, 'admin_broadcast', { p_text: 'Salom', p_target: 'all' })).rejects.toThrow();
+    await sql("update profiles set role = 'admin' where user_id = $1", [admin]);
+    await sql('update profiles set wants_news = false where user_id = $1', [plain]);
+    await sql('delete from broadcast_queue');
+    await as(admin, 'admin_broadcast', { p_text: 'Salom', p_target: 'all' });
+    const tgOf = async (u: string): Promise<number> => Number((await sql('select telegram_id from profiles where user_id = $1', [u]))[0]!.telegram_id);
+    expect(await queued()).toContain(await tgOf(admin));
+    expect(await queued()).not.toContain(await tgOf(plain));
+    await sql('delete from broadcast_queue');
+    const owner = await user();
+    const plot = await claim(owner);
+    const district = (await sql('select district_id from plots where id = $1', [plot]))[0]!.district_id as number;
+    await as(admin, 'admin_broadcast', { p_text: 'Mahalla', p_target: 'district', p_district: district });
+    expect(await queued()).toContain(await tgOf(owner));
+    expect(await queued()).not.toContain(await tgOf(admin)); // uyi yo'q — tuman xabari bormaydi
+    await sql('delete from broadcast_queue');
+    await sql('insert into tg_waitlist (telegram_id) values (77777) on conflict do nothing');
+    await as(admin, 'admin_broadcast', { p_text: 'Ochildi!', p_target: 'waitlist' });
+    expect(await queued()).toContain(77777);
+    await expect(as(admin, 'admin_poll', { p_question: 'Savol', p_options: ['Bitta'] })).rejects.toThrow('bad_format');
+    await expect(as(admin, 'admin_poll', { p_question: 'Savol', p_options: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] })).rejects.toThrow('bad_format');
+    await expect(as(admin, 'admin_poll', { p_question: 'Savol', p_options: ['a', 'b'], p_target: 'hech' })).rejects.toThrow('bad_format');
+    const poll = await as<number>(admin, 'admin_poll', { p_question: 'Savol', p_options: ['a', 'b'] });
+    await as(admin, 'admin_poll_close', { p_id: poll });
+    expect(await svc('svc_poll_vote', { p_telegram: 77777, p_poll: poll, p_option: 1 })).toBe('closed');
+  });
+});
+

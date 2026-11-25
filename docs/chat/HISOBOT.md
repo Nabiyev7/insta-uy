@@ -21,3 +21,48 @@ To'rt markaz, yashil bulvarlar, halqa va diagonal yo'llar; yangi yorug' uslub; k
 - Sinov: 3 ekran o'lchami × 2 til, har tugma va har oyna (60 oqim).
 
 Hal qilinmagan savollar: `SAVOLLAR.md` (8–11-qadam bo'limlari). Haqiqiy Redmi A telefonda hali sinalmagan.
+
+## 6-qadam — kirish bot orqali, uy olish, tanga, premium (2026-11-25)
+- **Tozalash:** uy levellari 1–5 (5-level ikki qavat), katta "Kuchaytirish" tugmasi. Uy va avatar ranglari, shikoyat va nik tasdig'i olib tashlandi.
+- **Kirish faqat Telegram bot orqali:** bot nikni so'raydi va bir martalik havola yuboradi (15 daqiqa amal qiladi). Parol va ro'yxat formasi yo'q.
+  - Nikni faqat admin o'zgartiradi.
+  - Admin panelga kirish ham bot orqali: botga `/admin` yoziladi.
+  - Bot nomi hali kiritilmagan, shuning uchun tugmada "Tez kunda" turibdi.
+- **Uy olish:**
+  - Har kimga 1 ta bepul uy.
+  - Birinchi 100 kishi — "Shahar asoschisi" (bir vaqtda kelsa ham aniq 100).
+  - 3 oy kirmagan odamning bepul uyi bo'shaydi; bot 2 hafta oldin ogohlantiradi.
+- **Tanga:**
+  - Topish yo'llari:
+    - asoschi — 1 000;
+    - har kuni kirish — 100 (7-kuni +300);
+    - kanalga obuna — 300;
+    - do'st taklifi — 500;
+    - "Haftaning hovlisi" — 2 000;
+    - xazina — 50 (kuniga 3 ta).
+  - Topshiriqlar olib tashlandi.
+  - Tanga o'tkazish mumkin: kuniga 500 gacha yuborish, 1 000 gacha olish.
+  - Admin panelda "Iqtisod" sahifasi qo'shildi.
+- **Premium (kod tayyor, to'lov o'chiq):**
+  - Sotuvga tayyor: tanga paketlari, darhol 1–5-level premium uy, pulga bezak (1-level uyga ham), salyut.
+  - To'lov usullari: Telegram Stars (botdagi "Do'kon") va karta.
+  - Pulni qaytarish admin panelda.
+  - Hozir saytdagi hamma pul tugmalarida "Tez kunda" turibdi.
+- **Raqobatdan:**
+  - Boshqaning uyiga yurak bosish (uy ustida soni ko'rinadi) va "Eng mashhur uylar" ro'yxati.
+  - Stories rasmida logo va taklif havolasi.
+  - Do'st taklifi uchun sovg'alar: 1 do'st — gulzor, 3 — besedka, 10 — sedan.
+  - Kunlik zaxira adminning Telegramiga keladi.
+- **Eski IQTISOD qoldiqlari:**
+  - Admin panelda bot orqali xabar va so'rovnoma yuborish.
+  - "Elchi" nishoni.
+  - Qoidalar matni yangilandi.
+  - README'ga zaxiradan tiklash yo'riqnomasi yozildi.
+- **Sinov:**
+  - 336 ta unit test o'tdi.
+  - Tur tekshiruvi xatosiz.
+  - E2e: 88 ta qadam (3 ekran × 2 til) o'tdi.
+  - Tezlik eski versiya bilan bir xil (`PERF.md`).
+  - Skrinshotlar `docs/chat/ui-*.png`.
+
+Hal qilinmagan savollar: `SAVOLLAR.md` (6-qadam: A, B+C, D, E, F, eski IQTISOD bo'limlari).
