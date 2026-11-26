@@ -166,6 +166,8 @@ Sinov: 368 ta unit test, tur tekshiruvi toza, e2e 88/88, skrinshotlar yangilandi
 - 434 ta unit test o'tdi, tur tekshiruvi xatosiz.
 - E2e 88/88 o'tdi.
 - Yuklama: 500/500 ulanish, xato yo'q.
+- Ishlab chiqarish (`e2e/prod.mjs`): sayt 1,9 s da ochildi, xato yo'q.
+- Cron loglari: `*/10` 16:30 va 16:40 da "Ok" (sog'liq tekshiruvi — ogohlantirishsiz, Render ping ishlayapti).
 
 **Siz bosishingiz kerak bo'lgan tugmalar** (batafsil — `OCHILISH-ROYXAT.md`):
 1. Botni @citylanduz kanaliga admin qilish.
