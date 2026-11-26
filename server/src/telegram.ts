@@ -159,6 +159,7 @@ const confirmNick = async (ctx: Ctx, tg: Telegram, chat: number, from: From, nic
     const free = await ctx.db.rpc<string>('svc_nick_check', { p_nick: nick });
     const user = await createAccount(ctx, `tg${from.id}`, randomPassword(), null, from.id, free);
     await ctx.db.rpc('svc_bot_lang', { p_telegram: from.id, p_lang: lang });
+    await ctx.db.rpc('svc_bot_source', { p_telegram: from.id, p_source: null });
     await promoteOwner(ctx, from.id);
     return await sendHome(ctx, tg, chat, lang, { user, nick: free, hasHouse: false, isNew: true });
   } catch (error: unknown) {
@@ -214,12 +215,12 @@ const sendSettings = (tg: Telegram, chat: number, lang: Lang, isNewsOn: boolean)
   tg.send(chat, bt(lang, 'settings', { lang: bt(lang, 'langName'), news: bt(lang, isNewsOn ? 'on' : 'off') }), [...langButtons(), { text: bt(lang, isNewsOn ? 'btnNewsOff' : 'btnNewsOn'), data: isNewsOn ? 'news:off' : 'news:on' }]);
 
 // ---------- 6. Egasining buyruqlari ----------
-interface Stat { readonly users: readonly number[]; readonly houses: readonly number[]; readonly active: readonly number[]; readonly given: readonly number[]; readonly spent: readonly number[]; readonly tickets: number; readonly disputes: number; readonly revenue: readonly number[] | null }
+interface Stat { readonly users: readonly number[]; readonly houses: readonly number[]; readonly active: readonly number[]; readonly given: readonly number[]; readonly spent: readonly number[]; readonly tickets: number; readonly disputes: number; readonly revenue: readonly number[] | null; readonly db_mb?: number; readonly db_pct?: number }
 const fmt = (n: number | undefined): string => (n ?? 0).toLocaleString('ru-RU').replace(/ /g, ' ');
 export const statText = (lang: Lang, s: Stat): string => bt(lang, 'stat', {
   u1: fmt(s.users[0]), u7: fmt(s.users[1]), h1: fmt(s.houses[0]), h7: fmt(s.houses[1]), a1: fmt(s.active[0]), a7: fmt(s.active[1]), g1: fmt(s.given[0]), g7: fmt(s.given[1]), s1: fmt(s.spent[0]), s7: fmt(s.spent[1]),
   t: s.tickets, d: s.disputes, revenue: s.revenue ? bt(lang, 'statRevenue', { r1: fmt(s.revenue[0]), r7: fmt(s.revenue[1]) }) : '',
-});
+}) + (s.db_mb === undefined ? '' : bt(lang, 'statDb', { mb: s.db_mb, pct: s.db_pct ?? 0 }));
 interface OpenCounts { readonly tickets: number; readonly disputes: number; readonly districts: readonly { readonly id: number; readonly uz: string; readonly ru: string }[] }
 const panelButton = (ctx: Ctx, lang: Lang, hash: string): readonly TgButton[] => (ctx.env.ADMIN_URL ? [{ text: bt(lang, 'btnPanel'), url: `${ctx.env.ADMIN_URL}/#${hash}` }] : []);
 const ownerCommand = async (ctx: Ctx, tg: Telegram, m: Message, text: string, lang: Lang): Promise<boolean> => {
@@ -306,6 +307,9 @@ const onStart = async (ctx: Ctx, tg: Telegram, m: Message, param: string, lang: 
   }
   const buy = /^buy_([A-Za-z0-9_]{1,60})$/.exec(param)?.[1];
   if (buy) return buyCode(ctx, tg, m.chat.id, from.id, buy, lang);
+  // Instagram bio va reels havolalari: ?start=from_bio | from_reels — manba hisobga olinadi.
+  const source = /^from_([a-z0-9_]{1,20})$/.exec(param)?.[1];
+  if (source) await ctx.db.rpc('svc_bot_source', { p_telegram: from.id, p_source: source });
   const ref = /^r_([0-9a-f]{6,16})$/.exec(param)?.[1] ?? null;
   return greet(ctx, tg, m, ref);
 };

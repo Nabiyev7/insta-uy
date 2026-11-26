@@ -20,6 +20,19 @@ export const rpc = async <T>(fn: string, args: Readonly<Record<string, unknown>>
   return data as T;
 };
 
+const SNAP_TIMEOUT_MS = 8000;
+/** Ommaviy ma'lumot serverning 1 daqiqalik snapshotidan (brauzer ETag bilan qayta tekshiradi — o'zgarmasa 304).
+ *  Server javob bermasa — to'g'ridan-to'g'ri bazadan (sayt ishlayveradi). */
+export const snap = async <T>(name: 'city' | 'boot' | 'catalog' | 'sets', fn: string): Promise<T> => {
+  try {
+    const res = await fetch(`${API_URL}/snap/${name}`, { signal: AbortSignal.timeout(SNAP_TIMEOUT_MS) });
+    if (res.ok) return (await res.json()) as T;
+  } catch {
+    // tarmoq yoki server — pastdagi zaxira yo'l
+  }
+  return rpc<T>(fn);
+};
+
 export const post = async <T>(path: string, body: unknown, isAuthed = false): Promise<T> => {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (isAuthed) {

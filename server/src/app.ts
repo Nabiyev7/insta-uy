@@ -7,6 +7,8 @@ import { disputeProof, panelReply } from './support.ts';
 import { channelCheck, devAdmin, devTelegram, handleTelegram } from './telegram.ts';
 import { HttpError, type Ctx } from './types.ts';
 import { webappLogin } from './webapp.ts';
+import { snapshot } from './snapshot.ts';
+import { clientLog } from './health.ts';
 import { setupRoute } from './botSetup.ts';
 import { json } from './util.ts';
 
@@ -22,6 +24,7 @@ const POST: Readonly<Record<string, Handler>> = {
   '/auth/delete': deleteAccount,
   '/waitlist': waitlist,
   '/telegram/webhook': handleTelegram,
+  '/log': clientLog,
   '/bot/setup': setupRoute,
   '/dev/telegram': devTelegram,
   '/dev/admin': devAdmin,
@@ -37,6 +40,8 @@ const route = async (req: Request, ctx: Ctx, path: string): Promise<Response> =>
     if (path === '/health') return json({ ok: true });
     const house = /^\/uy\/([A-Z0-9]{1,8})$/.exec(path)?.[1];
     if (house) return housePage(req, ctx, house);
+    const snap = /^\/snap\/([a-z]{1,12})$/.exec(path)?.[1];
+    if (snap) return snapshot(req, ctx, snap);
     throw new HttpError(404, 'not_found');
   }
   if (req.method !== 'POST') throw new HttpError(405, 'method');
@@ -54,7 +59,7 @@ const route = async (req: Request, ctx: Ctx, path: string): Promise<Response> =>
 const corsHeaders = (req: Request, ctx: Ctx): Record<string, string> => {
   const origin = req.headers.get('origin');
   const isAllowed = origin !== null && ctx.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).includes(origin);
-  return isAllowed ? { 'access-control-allow-origin': origin, vary: 'origin', 'access-control-allow-headers': 'content-type,authorization', 'access-control-allow-methods': 'GET,POST,OPTIONS' } : {};
+  return isAllowed ? { 'access-control-allow-origin': origin, vary: 'origin', 'access-control-allow-headers': 'content-type,authorization', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-expose-headers': 'etag' } : {};
 };
 
 export type ErrorLog = (message: string, error: unknown) => void;

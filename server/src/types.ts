@@ -10,6 +10,8 @@ export interface Env {
   readonly TELEGRAM_CHANNEL?: string;
   /** Admin panel manzili (botning /admin havolasi uchun). */
   readonly ADMIN_URL?: string;
+  /** Jonli server (Render) — sog'liq tekshiruvi va uyg'oq tutish. */
+  readonly REALTIME_URL?: string;
   /** Cloudflare Turnstile (faqat parol yo'li yoqilganda kerak). */
   readonly TURNSTILE_SECRET?: string;
   readonly TELEGRAM_WEBHOOK_SECRET?: string;

@@ -77,15 +77,9 @@ Asosiy qarorlar:
 
 ## Zaxiradan tiklash
 
-Har kuni soat 22:10 (UTC) zaxira ikki joyga yoziladi: Supabase Storage `backups/<sana>.json` va adminning shaxsiy Telegramiga (`ADMIN_TELEGRAM_ID`) `cityland-<sana>.json.gz`. 45 MB dan katta bo'lsa, `.part1`, `.part2` … bo'laklari keladi.
+Har kuni 22:10 UTC (Toshkent 03:10) zaxira ikki joyga yoziladi: Supabase Storage `backups/<sana>.json` va egasining Telegramiga `cityland-<sana>.json.gz` (45 MB dan katta bo'lsa `.part1`, `.part2` …).
 
-1. Telegramdagi faylni yuklab oling. Bo'laklar bo'lsa, birlashtiring: `cat cityland-<sana>.json.gz.part* > cityland-<sana>.json.gz`.
-2. Oching: `gunzip cityland-<sana>.json.gz` → `cityland-<sana>.json` (ichida `settings`, `profiles`, `plot_state`, `owned_decor`, `orders`, `payments` va boshqa jadvallar).
-3. Bo'sh bazaga migratsiyalarni qo'llang (`supabase db push`), so'ng har jadvalni JSON'dan yuklang, masalan `psql`da:
-   `insert into public.plot_state select * from jsonb_populate_recordset(null::public.plot_state, '<fayldagi plot_state massivi>'::jsonb);`
-   `id` avtomatik raqamlanadigan jadvallarda (`payments`, `projects`, `map_versions`, `map_objects`, `ownership_log`, `project_contributions` va h.k.) `insert into ... overriding system value select ...` deb yozing.
-   Tartib: `settings` → `districts` → `profiles` → `plot_state` → `owned_decor` → `orders` → `payments` → qolganlari.
-4. Zaxirada hamma jadval yo'q (masalan `hearts`, `coin_transfers`, `channel_bonus`, `salutes`, `polls`) — ular bo'sh boshlanadi.
-5. Diqqat: kirish akkauntlari (`auth.users`) bu zaxirada yo'q. Ularni Supabase'ning o'z kunlik zaxirasidan tiklang (pullik tarifda) yoki `auth.users` ni alohida eksport qilib qo'ying — aks holda profillar tiklanadi, lekin bot bergan kirish havolasi ishlamaydi.
+**Bir buyruq:** `npm run restore -- cityland-<sana>.json.gz` → yonida `…json.tiklash.sql` paydo bo'ladi. Uni Supabase → **SQL Editor** ga qo'yib **Run** bosing (bo'sh bazaga, `supabase db push` dan keyin; mavjud qatorlarga tegmaydi).
+Bo'laklar bo'lsa avval birlashtiring: `cat cityland-<sana>.json.gz.part* > cityland-<sana>.json.gz`.
 
-Tiklashni avval sinov bazasida sinab ko'ring.
+Diqqat: kirish akkauntlari (`auth.users`) bu zaxirada yo'q — ular Supabase'ning o'z zaxirasidan (pullik tarif) tiklanadi; aks holda profillar tiklanadi, lekin odamlar botda `/start` bilan qayta kiradi. Avval sinov bazasida sinab ko'ring.

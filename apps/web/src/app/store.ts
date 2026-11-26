@@ -6,7 +6,7 @@ import type { HouseState } from '../logic/placement.ts';
 import type { Mode } from './runtime.ts';
 import { initialQuality, type QualityLevel } from '../logic/quality.ts';
 import type { Kit } from '../world/kit.ts';
-import { rpc, type Boot, type CityRow, type Profile } from './api.ts';
+import { rpc, type Boot, type CityRow, type Profile, snap } from './api.ts';
 
 export type Panel =
   | { readonly kind: 'plot' | 'bio' | 'yard'; readonly id: string } | { readonly kind: 'congrats'; readonly id: string; /** Bor bo'lsa — level oshdi, aks holda uy qurildi. */ readonly tier?: number }
@@ -158,19 +158,19 @@ export const loadPlan = async (): Promise<void> => {
   setApp({ plan, plotById: new Map(plan.plots.map((p) => [p.id, p])) });
 };
 export const refreshBoot = async (): Promise<Boot> => {
-  const boot = await rpc<Boot>('api_boot');
+  const boot = await snap<Boot>('boot', 'api_boot');
   // O'zgarmagan bo'lsa eski obyekt qoladi — bilbord va xarita bekorga qayta qurilmasin.
   if (JSON.stringify(boot) !== JSON.stringify(getApp().boot)) setApp({ boot });
   return getApp().boot ?? boot;
 };
 export const refreshCatalog = async (): Promise<void> => {
-  const [catalog, sets] = await Promise.all([rpc<readonly CatalogRow[]>('api_catalog'), rpc<readonly SetRow[]>('api_sets')]);
+  const [catalog, sets] = await Promise.all([snap<readonly CatalogRow[]>('catalog', 'api_catalog'), snap<readonly SetRow[]>('sets', 'api_sets')]);
   setCatalog(catalog);
   setApp({ catalog, sets });
 };
 let lastRows = '';
 export const refreshHouses = async (): Promise<void> => {
-  const rows = await rpc<readonly CityRow[]>('api_city');
+  const rows = await snap<readonly CityRow[]>('city', 'api_city');
   const text = JSON.stringify(rows);
   if (text === lastRows) return;
   lastRows = text;

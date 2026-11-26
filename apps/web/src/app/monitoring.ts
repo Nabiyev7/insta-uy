@@ -1,12 +1,16 @@
-/** Xatolar monitoringi: Sentry "envelope" API — kutubxonasiz (DSN bo'lmasa o'chiq). */
+/** Xatolar monitoringi: o'z serverimizga (/log — admin panel "Xatolar") va ixtiyoriy Sentry "envelope" API (DSN bo'lsa). Sahifada ko'pi bilan 10 ta. */
+import { API_URL } from './api.ts';
 const DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 const MAX_REPORTS = 10;
 let sent = 0;
 
 const report = (message: string, stack: string | undefined): void => {
-  const m = /^https:\/\/([^@]+)@([^/]+)\/(\d+)$/.exec(DSN ?? '');
-  if (!m || sent >= MAX_REPORTS) return;
+  if (sent >= MAX_REPORTS) return;
   sent += 1;
+  const own = JSON.stringify({ message: `${message}${stack ? `\n${stack}` : ''}`.slice(0, 1900), place: location.pathname + location.search.slice(0, 80), ua: navigator.userAgent.slice(0, 250) });
+  navigator.sendBeacon(`${API_URL}/log`, new Blob([own], { type: 'application/json' }));
+  const m = /^https:\/\/([^@]+)@([^/]+)\/(\d+)$/.exec(DSN ?? '');
+  if (!m) return;
   const [, key, host, project] = m;
   const id = crypto.randomUUID().replaceAll('-', '');
   const event = { event_id: id, level: 'error', platform: 'javascript', message: message.slice(0, 500), extra: { stack: stack?.slice(0, 2000) }, request: { url: location.pathname }, tags: { ua: navigator.userAgent.slice(0, 120) } };

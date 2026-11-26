@@ -29,6 +29,8 @@
     "og": "node scripts/build-og.mjs",
     "screens": "node e2e/screens.mjs",
     "bot:setup": "node server/scripts/bot-setup.ts",
+    "restore": "node scripts/restore.mjs",
+    "load": "node e2e/load.mjs",
     "screens:empty": "node e2e/empty.mjs",
     "chat-images": "node scripts/build-chat-images.mjs",
     "icons": "node scripts/build-icons.mjs",

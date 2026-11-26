@@ -13,12 +13,13 @@ import { Videos } from './sections/Videos.tsx';
 import { Economy } from './sections/Economy.tsx';
 import { Messages } from './sections/Messages.tsx';
 import { Disputes, Tickets } from './sections/Support.tsx';
+import { Errors } from './sections/Errors.tsx';
 
 type SectionDef = readonly [id: string, title: string, perm: string | null, view: () => React.JSX.Element];
 const SECTIONS: readonly SectionDef[] = [
   ['stats', 'Statistika', null, Stats], ['houses', 'Uylar', 'plots', Houses], ['mod', 'Moderatsiya', null, Moderation], ['districts', 'Tumanlar', 'settings', Districts], ['map', 'Xarita', 'map', MapEditor],
   ['orders', "Buyurtma va to'lov", 'orders', Orders], ['video', 'Video', 'video', Videos], ['users', 'Foydalanuvchilar', 'users', Users], ['catalog', 'Bezaklar', 'settings', Catalog], ['economy', 'Iqtisod', 'admin', Economy], ['messages', 'Xabarlar', 'admin', Messages], ['tickets', 'Murojaatlar', 'admin', Tickets], ['disputes', 'Nik nizolari', 'admin', Disputes],
-  ['projects', 'Loyihalar', 'settings', Projects], ['settings', 'Sozlamalar', 'settings', Settings], ['audit', 'Jurnal', 'admin', Audit],
+  ['projects', 'Loyihalar', 'settings', Projects], ['settings', 'Sozlamalar', 'settings', Settings], ['errors', 'Xatolar', 'admin', Errors], ['audit', 'Jurnal', 'admin', Audit],
 ];
 
 /** Ishlab chiqarishda login + parol shakli yo'q: kirish faqat botdagi /admin havolasi orqali. */

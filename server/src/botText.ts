@@ -138,6 +138,7 @@ const T = {
   sideOwner: ['egasi', 'владелец'],
   sideClaimant: ['da’vogar', 'заявитель'],
   stat: ['📊 Statistika (bugun / 7 kun)\n👤 Yangi foydalanuvchi: {u1} / {u7}\n🏠 Yangi uy: {h1} / {h7}\n🙂 Faol odam: {a1} / {a7}\n🪙 Tanga berildi: {g1} / {g7}\n🪙 Tanga sarflandi: {s1} / {s7}\n🆘 Ochiq murojaat: {t}\n🧾 Ochiq nik nizosi: {d}{revenue}', '📊 Статистика (сегодня / 7 дней)\n👤 Новых пользователей: {u1} / {u7}\n🏠 Новых домов: {h1} / {h7}\n🙂 Активных: {a1} / {a7}\n🪙 Монет выдано: {g1} / {g7}\n🪙 Монет потрачено: {s1} / {s7}\n🆘 Открытых обращений: {t}\n🧾 Открытых споров: {d}{revenue}'],
+  statDb: ['\n💾 Baza: {mb} MB ({pct}% / 500 MB bepul)', '\n💾 База: {mb} МБ ({pct}% / 500 МБ бесплатно)'],
   statRevenue: ['\n💰 Tushum: {r1} / {r7} so‘m', '\n💰 Выручка: {r1} / {r7} сум'],
   openTickets: ['🆘 Ochiq murojaatlar: {n}', '🆘 Открытых обращений: {n}'],
   openDisputes: ['🧾 Ochiq nik nizolari: {n}', '🧾 Открытых споров о нике: {n}'],
