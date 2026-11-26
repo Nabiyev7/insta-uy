@@ -32,8 +32,17 @@
 - Kirish faqat Telegram bot orqali (Instagram bio → bot → shaxsiy havola). Bot username hali egasidan olinmagan.
 - Tanga — asosiy valyuta; pul (Stars + so'm) ochilgandan 2–4 hafta keyin yoqiladi.
 
+## Holat (2026-11-26, 07:20)
+Bajarilgan: 6-qadam (A–F), 6a `TUZATISH-1`, 6b `QOSHIMCHA-1`, 6c `BOT-PROMT` (Mini App, til, menyu, kanal postlari, admin buyruqlari), 6d `TUZATISH-2` (do'kon 2 qator, so'm narxi yo'q, ⭐ Premium bo'lim, admin faqat egasi Telegram orqali, katta nik, analitika). Render sozlamasi (`render.yaml`) qo'shilgan.
+
+Egasidan: bot **@Citylanduz_bot**, egasi Telegram ID **680462045**, kanal **@citylanduz**. Cloudflare, Supabase, Render akkauntlari ochilgan (GitHub orqali). Jonli server — Render bepul.
+
 ## Keyingi navbat
-1. 6-qadam (`BOSQICH-2-3-PROMT.md`) — Claude Code'da. Hujjatlar unga moslandi (2026-11-25): `ISHLAR.md` joriy vazifasi, `CLAUDE.md`, `TANGA-NARXLAR.md`, `BOSQICH-2.md`, `BOSQICHLAR.md`.
-2. Telegram bot va kanal **ochilgan** (egasi, 2026-11-25) — bot username'ni egasidan olib, `telegram_bot` sozlamasiga yozish.
-3. 7-qadam (yuklama), keyin internetga chiqarish, Redmi telefonda sinash, beta, reels.
-4. 6–10-level uylar — **keyinga qoldirildi** (egasi, 2026-11-25): uslub, o'sish va chizish tartibi o'shanda so'raladi.
+1. **6e `TUZATISH-3.md`** — uyi borlarga "+" belgilari ko'rinmasin; reyting oynasi yiqilmasin (himoyali mijoz, ErrorBoundary). Avval lokal `npm run dev` ni qayta ishga tushirish (eski migratsiyalar bilan ishlab turgan edi).
+2. **12-qadam `INTERNET-PROMT.md`** — internetga chiqarish (beta). Egasi yonida: brauzer tasdiqlari, bot tokenini o'zi kiritadi, botni kanalga admin qiladi. Oxirida `SINOV-TELEFON.md` va telefonda sinov.
+3. Beta 20–50 kishi → 7-qadam yuklama → ochilish.
+4. Keyin (egasi bilan, Blender): premium uylar/bezaklar/mashinalar dizayni va narxi; 6–10-level uylar; avatar qaytarish; login+parol qaytarish (sayt yaxshi ishlay boshlagach). Hammasi `KEYINGI.md`.
+
+## Ishlash tartibi (egasining talabi)
+- Egasi bilan sodda o'zbekcha, qisqa; savollar variantli. Vizual narsadan oldin dizayn yo'nalishini so'ra.
+- Claude Code: har qadamdan keyin faqat `npm test` + `typecheck` + commit; **tekshiruvchi agent faqat oxirida bir marta**.

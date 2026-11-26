@@ -10,6 +10,7 @@ import { PayButtons } from './PayButtons.tsx';
 import { BADGE_ICONS } from './badges.ts';
 import { Icon } from './icons.tsx';
 import { Field, LoadState, RowLink, Sheet, useAction, useLoad } from './kit.tsx';
+import { listOf } from '../logic/safe.ts';
 
 interface InfoProps { readonly plot: PlotInfo }
 
@@ -132,8 +133,8 @@ function Owner({ info, isMine }: { readonly info: PlotInfo; readonly isMine: boo
       <div className="row between"><p className="nick">{info.instagram ? `@${info.instagram}` : t(info.status)}</p>{info.instagram && !isMine && <a className="btn small" href={instagramUrl(info.instagram)} target="_blank" rel="noopener noreferrer"><Icon name="instagram" />Instagram</a>}</div>
       <div className="row tags">
         {tier && info.type !== 'kvartira' && <span className="tag"><Icon name="star" />{tier.id} · {tier[lang]}</span>}
-        {info.badges.filter((b): b is BadgeId => b in BADGES).map((b) => <span className="tag gold" key={b}><Icon name={BADGE_ICONS[b]} />{BADGES[b][lang]}</span>)}
-        {info.rare.map((r) => <span className="tag gold" key={`${r.id}${r.serial}`}><Icon name="diamond" />{catalog.find((c) => c.id === r.id)?.[lang].replace(/ \(.*\)$/, '') ?? r.id} №{r.serial} / {r.stock}</span>)}
+        {listOf<string>(info.badges).filter((b): b is BadgeId => b in BADGES).map((b) => <span className="tag gold" key={b}><Icon name={BADGE_ICONS[b]} />{BADGES[b][lang]}</span>)}
+        {listOf<PlotInfo['rare'][number]>(info.rare).map((r) => <span className="tag gold" key={`${r.id}${r.serial}`}><Icon name="diamond" />{catalog.find((c) => c.id === r.id)?.[lang].replace(/ \(.*\)$/, '') ?? r.id} №{r.serial} / {r.stock}</span>)}
       </div>
       {info.bio && <p className="quote">{info.bio}</p>}
       {info.since && <p className="muted">{t('sinceDate')}: {new Date(info.since).toLocaleDateString('ru-RU')}</p>}

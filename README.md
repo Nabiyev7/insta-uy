@@ -15,6 +15,9 @@ npm run dev -- --host  # telefondan (bir xil Wi-Fi) sinash uchun
 Lokal admin: `admin` / `admin12345`. Baza `.dev-data/` da saqlanadi (o'chirsangiz noldan boshlanadi; shahar bo'sh ochiladi; sinov uchun demo aholi: `DEMO=1`).
 Lokal muhitda haqiqiy Postgres (PGlite) ishlaydi va aynan `supabase/migrations/` qo'llanadi.
 
+**Yangi kod tortilgandan keyin `npm run dev` ni qayta ishga tushiring** — yangi migratsiyalar faqat ishga tushganda qo'llanadi (aks holda eski baza bilan ba'zi oynalar bo'sh chiqadi).
+Serverni to'xtatishda terminalda **Ctrl + C** bosing (jarayonni majburan o'ldirmang — `.dev-data/` bazasi buzilishi mumkin; buzilsa, papkani boshqa nomga o'tkazing, yangisi noldan yaratiladi).
+
 ## Buyruqlar
 
 | Buyruq | Vazifa |

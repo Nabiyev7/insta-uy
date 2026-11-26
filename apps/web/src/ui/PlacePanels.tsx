@@ -8,6 +8,7 @@ import { openAuth, openPanel, setting, useApp } from '../app/store.ts';
 import { createOrder } from './OrderPanels.tsx';
 import type { IconName } from './icons.tsx';
 import { LoadState, RowLink, Section, Sheet, useAction, useLoad } from './kit.tsx';
+import { listOf } from '../logic/safe.ts';
 
 interface IdProps { readonly id: string }
 
@@ -109,7 +110,7 @@ export function StreetPanel({ id }: { readonly id: number }): React.JSX.Element 
       {data && <p className="muted">{data.owners} {t('streetOwners')}</p>}
       {data?.pending && <span className="tag gold">{t('streetPending')}</span>}
       {data?.vote && <Section title={`${t('vote')} · ${new Date(data.vote.closes).toLocaleDateString('ru-RU')} ${t('until')}`}>
-        <ul className="list">{data.vote.proposals.map((p) => (
+        <ul className="list">{listOf<NonNullable<StreetInfo['vote']>['proposals'][number]>(data.vote?.proposals).map((p) => (
           <li key={p.id}><b className="grow">{p.name}</b><span className="muted">{p.votes} {t('votes')}</span>
             {data.vote?.mine === p.id ? <span className="tag">{t('voted')}</span> : data.lives && <button type="button" className="btn small soft" disabled={isBusy} onClick={() => act(() => rpc('my_street_vote', { p_proposal: p.id }))}>{t('vote')}</button>}
           </li>))}</ul>

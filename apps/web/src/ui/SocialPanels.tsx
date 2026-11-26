@@ -8,6 +8,7 @@ import { openAuth, refreshBoot, refreshProfile, setApp, setting, toast, useApp }
 import { Icon } from './icons.tsx';
 import { PayButtons } from './PayButtons.tsx';
 import { LoadState, Section, Sheet, useAction, useLoad } from './kit.tsx';
+import { listOf } from '../logic/safe.ts';
 
 const useDistrictName = (): ((id: number) => string) => {
   const boot = useApp((s) => s.boot);
@@ -29,18 +30,24 @@ export function RankPanel(): React.JSX.Element {
   const { data } = loaded;
   const yardsLoaded = useLoad(() => rpc<Yards>('api_yards'), 'yards');
   const yards = yardsLoaded.data;
+  // Maydon yo'q bo'lsa (eski server) — bo'sh ro'yxat, oyna yiqilmaydi.
+  const popular = listOf<Rankings['popular'][number]>(data?.popular);
+  const houses = listOf<Rankings['houses'][number]>(data?.houses);
+  const districts = listOf<Rankings['districts'][number]>(data?.districts);
+  const inviters = listOf<Rankings['inviters'][number]>(data?.inviters);
+  const isEmpty = (list: readonly unknown[]): boolean => data !== undefined && data !== null && list.length === 0;
   return (
     <Sheet title={t('rank')}>
       <LoadState of={loaded} />
       {!loaded.hasError && yardsLoaded.hasError && <LoadState of={yardsLoaded} />}
       {yards && <Section title={t('yardWeek')} icon="flower">
         <p className="muted">{t('yardHow')}</p>
-        <ul className="list">{(yards.winners ?? []).map((h) => <li key={h.week}><span className="muted">{new Date(h.week).toLocaleDateString('ru-RU')}</span><button type="button" className="plain grow" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="muted">{h.votes} {t('votes')}</span></li>)}</ul>
+        <ul className="list">{listOf<NonNullable<Yards['winners']>[number]>(yards.winners).map((h) => <li key={h.week}><span className="muted">{new Date(h.week).toLocaleDateString('ru-RU')}</span><button type="button" className="plain grow" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="muted">{h.votes} {t('votes')}</span></li>)}</ul>
       </Section>}
-      <Section title={t('rankPopular')} icon="heart">{data?.popular.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.popular.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold with-icon"><Icon name="heart" />{h.hearts}</span></li>)}</ul></Section>
-      <Section title={t('rankHouses')}><p className="muted">{t('scoreHint')}</p>{data?.houses.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.houses.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold">{h.score}</span></li>)}</ul></Section>
-      <Section title={t('rankDistricts')}><ul className="list">{data?.districts.map((d, i) => <li key={d.id}><span className="n">{i + 1}</span><span className="grow">{name(d.id)}</span><span className="muted">{d.active}</span></li>)}</ul></Section>
-      <Section title={t('rankInviters')}>{data?.inviters.length === 0 && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{data?.inviters.map((d, i) => <li key={d.nick}><span className="n">{i + 1}</span><span className="grow">{d.nick}</span><span className="muted">{d.n}</span></li>)}</ul></Section>
+      <Section title={t('rankPopular')} icon="heart">{isEmpty(popular) && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{popular.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold with-icon"><Icon name="heart" />{h.hearts}</span></li>)}</ul></Section>
+      <Section title={t('rankHouses')}><p className="muted">{t('scoreHint')}</p>{isEmpty(houses) && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{houses.map((h, i) => <li key={h.plot}><span className="n">{i + 1}</span><button type="button" className="plain" onClick={() => goToPlot(h.plot)}><b>@{h.instagram}</b></button><span className="tag gold">{h.score}</span></li>)}</ul></Section>
+      <Section title={t('rankDistricts')}><ul className="list">{districts.map((d, i) => <li key={d.id}><span className="n">{i + 1}</span><span className="grow">{name(d.id)}</span><span className="muted">{d.active}</span></li>)}</ul></Section>
+      <Section title={t('rankInviters')}>{isEmpty(inviters) && <p className="muted">{t('listEmpty')}</p>}<ul className="list">{inviters.map((d, i) => <li key={d.nick}><span className="n">{i + 1}</span><span className="grow">{d.nick}</span><span className="muted">{d.n}</span></li>)}</ul></Section>
     </Sheet>
   );
 }
@@ -163,7 +170,7 @@ function ElectionCard({ e, onChange }: { readonly e: Election; readonly onChange
   return (
     <details className="section">
       <summary><b>{t(e.kind)}</b>{e.district ? ` — ${name(e.district)}` : ''} · {new Date(e.ends).toLocaleDateString('ru-RU')} {t('until')}</summary>
-      <ul className="list">{e.candidates.map((c) => (
+      <ul className="list">{listOf<Election['candidates'][number]>(e.candidates).map((c) => (
         <li key={c.id}><span className="grow"><b>{c.nick}</b><br /><span className="muted">{c.slogan}</span></span><span className="muted">{c.votes} {t('votes')}</span>
           {e.mine === c.id ? <span className="tag">{t('voted')}</span> : <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(async () => { await rpc('my_vote', { p_election: e.id, p_candidate: c.id }); onChange(); }, t('saved'))}>{t('vote')}</button>}
         </li>))}</ul>
@@ -190,7 +197,7 @@ export function CityPanel(): React.JSX.Element {
       <Section title={t('projects')}>
         <p className="muted">{t('projHow')}</p>
         {boot?.projects.length === 0 && <p className="muted">{t('listEmpty')}</p>}
-        {boot?.projects.map((p) => (
+        {listOf<NonNullable<typeof boot>['projects'][number]>(boot?.projects).map((p) => (
           <div key={p.id} className="field">
             <div className="row between"><b>{lang === 'uz' ? p.uz : p.ru}</b><span className="muted">{p.raised} / {p.goal}</span></div>
             <div className="bar"><i style={{ width: `${Math.min(100, (p.raised / p.goal) * 100)}%` }} /></div>
@@ -218,7 +225,7 @@ export function GazettePanel(): React.JSX.Element {
       <LoadState of={loaded} isEmpty={data?.length === 0} />
       {data?.map(({ week, content: c }) => (
         <Section key={week} title={new Date(week).toLocaleDateString('ru-RU')}>
-          <p><b>{t('gNew')}:</b> {c.new_count} — {c.new.map((n) => `@${n}`).join(', ')}</p>
+          <p><b>{t('gNew')}:</b> {c.new_count} — {listOf<string>(c.new).map((n) => `@${n}`).join(', ')}</p>
           {c.top && <p><b>{t('gTop')}:</b> <button type="button" className="link" onClick={() => c.top && goToPlot(c.top.plot)}>@{c.top.instagram}</button></p>}
           {c.streets.length > 0 && <p><b>{t('gStreets')}:</b> {c.streets.join(', ')}</p>}
           <p className="muted">{t('gTotal')}: {c.total}</p>

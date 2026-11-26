@@ -20,6 +20,7 @@ import { CongratsPanel } from '../ui/CongratsPanel.tsx';
 import { BuildingPanel, CivicPanel, CommercePanel, StreetPanel } from '../ui/PlacePanels.tsx';
 import { PlotPanel } from '../ui/PlotPanel.tsx';
 import { CityPanel, CoinsPanel, GazettePanel, RankPanel } from '../ui/SocialPanels.tsx';
+import { PanelCrash } from '../ui/kit.tsx';
 
 function PanelView({ panel }: { readonly panel: Panel }): React.JSX.Element {
   switch (panel.kind) {
@@ -101,7 +102,7 @@ export function App(): React.JSX.Element {
       <ErrorBoundary fallback={<Crash />}><World /></ErrorBoundary>
       {stage === 'play' && <Hud />}
       {stage !== 'play' && <Cover />}
-      {panel && stage === 'play' && <ErrorBoundary key={JSON.stringify(panel)} fallback={null}><PanelView panel={panel} /></ErrorBoundary>}
+      {panel && stage === 'play' && <ErrorBoundary key={JSON.stringify(panel)} fallback={(retry) => <PanelCrash onRetry={retry} />}><PanelView panel={panel} /></ErrorBoundary>}
       <Toasts />
       <ConfirmDialog />
     </main>

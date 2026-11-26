@@ -149,3 +149,15 @@ export function ConfirmDialog(): React.JSX.Element | null {
     </div>
   );
 }
+
+/** Bitta oyna xato bersa — butun ilova emas, faqat shu oyna: "Yuklab bo'lmadi · Qayta urinish". */
+export function PanelCrash({ onRetry }: { readonly onRetry: () => void }): React.JSX.Element {
+  const t = useT();
+  return (
+    <Sheet title={t('loadFailed')}>
+      <p className="muted">{t('loadFailed')}</p>
+      <button type="button" className="btn block" onClick={onRetry}><Icon name="refresh" />{t('retry')}</button>
+    </Sheet>
+  );
+}
+

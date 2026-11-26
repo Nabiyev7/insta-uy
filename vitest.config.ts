@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     include: ['packages/*/test/**/*.test.ts', 'server/test/**/*.test.ts', 'supabase/test/**/*.test.ts', 'apps/*/test/**/*.test.ts', 'video/test/**/*.test.ts'],
     testTimeout: 60_000,
+    // Har baza testi o'z PGlite'ini ochadi: ko'p parallel ishchi xotirani to'ldirib, ishchini yiqitardi (exit 2147483651).
+    maxWorkers: 3,
     hookTimeout: 120_000,
     coverage: {
       provider: 'v8',
