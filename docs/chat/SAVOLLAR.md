@@ -245,3 +245,13 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 ### 6f — tekshiruvchi eslatmalari (egasi qaror qiladi)
 1. **1–2-tanga paketlari** (500 va 1 200 tanga) faqat karta bilan sotilardi; endi xarid botda, botda esa hozircha faqat Stars bor — bu ikki paketni hech qayerda olib bo'lmaydi. Variantlar: (a) ularga ham Stars narxi qo'yish (50 ⭐ dan kam bo'lmasin — masalan, 500 tanga = 50 ⭐); (b) to'lov yoqilganda botga karta to'lovi qo'shish; (c) ikkisini ro'yxatdan olib tashlash. **Hozir:** saytda ko'rinadi, botda "Stars bilan sotilmaydi" deyiladi.
 2. **Oddiy do'kondagi so'mli bezak, uy/level va salyut** hali saytda (to'lov yoqilganda) karta/Stars bilan to'lanadi — 3-band faqat Premium va tanga paketlarini so'ragan edi. Hammasini botga ko'chiraylikmi?
+
+### 13-qadam — ochilish (nimani tanladim va nega; egasi qarori kerak bo'lganlari)
+1. **`nabiyev_7` akkaunti** (ishlab chiqarishda: haqiqiy bepul uy P0003, "Asoschi" №1, 41 100 tanga) — tozalash tugmasi unga tegmaydi (sinov belgisi yo'q). Egasi hal qiladi: o'chirish (akkauntni o'chirish) yoki qoldirish. `OCHILISH-ROYXAT.md` 1-bo'lim.
+2. **Sinov xaridlaridan kelgan tangalar** (sizning `citylanduz` akkauntingizda 29 800) tozalashda olib tashlanmaydi (avvalgi qaror, 6a). Kerak bo'lsa admin → Foydalanuvchilar → Tanga (manfiy) bilan nolga tushiring.
+3. **Stars test muhiti**: Telegram test serveri alohida bot va test akkaunt talab qiladi — bu yerda qilinmadi. To'liq yo'l (invoice → pre_checkout → successful_payment → tanga → refund) avtomatik testda soxta Telegram bilan tekshirildi (`server/test/server.test.ts`). Haqiqiy muhitda — egasi 60 ⭐ lik paket bilan bir marta.
+4. **Oddiy do'kondagi bezaklar pulga sotilmaydi** (faqat tanga). Pulli bezaklar — faqat Premium bo'limida (hozircha yo'q, "Tayyorlanmoqda"). Nik yorlig'i, hovlini kengaytirish, ijara va ko'cha nomi faqat karta bilan sotilardi — karta o'chiq, shuning uchun saytdan yashirildi (kod qoladi).
+5. **Yangilash oralig'i**: uylar 2 daqiqa, sozlamalar 5 daqiqa (bepul Workers limiti uchun). "@nik hozirgina uy oldi" xabari 2 daqiqagacha kechikadi.
+6. **Sog'liq tekshiruvi** 15 emas, **10 daqiqada** (mavjud cron'ga qo'shildi — bepul tarifda cron soni cheklangan). Tekshiruv ichida 20 soniyadan keyin qayta tekshiriladi ("2 marta ketma-ket").
+7. **Render trafigi** (100 GB/oy) — eng tez tugaydigan bepul chegara bo'lishi mumkin (YUKLAMA-HISOBOT.md). Oshsa: Render Starter ($7/oy) yoki harakat tikini kamaytirish.
+8. **Zaxiradan tiklash** "bir buyruq" — `npm run restore -- fayl.json.gz` SQL tayyorlaydi; uni Supabase SQL Editor'ga qo'yish qo'lda (Supabase CLI'da to'g'ridan-to'g'ri SQL bajarish buyrug'i yo'q, parol so'ramasligi uchun).

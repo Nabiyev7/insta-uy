@@ -36,3 +36,13 @@ describe('snapshot', () => {
     expect(calls).toEqual([]);
   });
 });
+
+describe('lokal (DEV=1)', () => {
+  test('kesh yo‘q — har so‘rov yangi ma‘lumot (e2e va admin sozlamalari darhol)', async () => {
+    const dev = { ...ctx, env: { DEV: '1' } } as unknown as Ctx;
+    await snapshot(get('boot'), dev, 'boot', 0);
+    await snapshot(get('boot'), dev, 'boot', 1);
+    expect(calls).toEqual(['api_boot', 'api_boot']);
+  });
+});
+

@@ -68,6 +68,18 @@ Asosiy qarorlar:
 6. **Birinchi admin**: serverga `ADMIN_TELEGRAM_ID` (o'zingizning Telegram ID) yozing va botga /start yuboring — shu Telegram birinchi kirishdayoq avtomatik admin bo'ladi (SQL kerak emas). Admin panelga — botga `/admin`. Lokalda (`npm run dev`) kirish oynasida "Admin sifatida kirish (lokal)" tugmasi bor.
 7. Admin → Sozlamalar: `telegram_bot` (bot nomi, @ siz); keyin Tumanlar.
 
+## Ishlab chiqarishdagi holat (2026-11-26)
+
+| Qism | Manzil | Bepul tarif |
+|---|---|---|
+| Sayt / admin | `citylanduz.pages.dev`, `citylanduz-admin.pages.dev` (GitHub `main` → avtomatik) | Pages — cheklovsiz statik |
+| API (Worker) | `citylanduz-api.wallpaper-2ac50803.workers.dev` | 100 000 so'rov/kun |
+| Baza | Supabase `citylanduz` (Frankfurt) | 500 MB, 5 GB trafik/oy |
+| Jonli server | Render `citylanduz-realtime` (`render.yaml`, avtomatik) | 750 soat/oy, 100 GB trafik/oy |
+
+**Render bepul soatlari:** bitta servis 24/7 = 31 × 24 = **744 soat < 750** — yetadi (ikkinchi bepul servis qo'shilsa yetmaydi). Bepul servis 15 daqiqa so'rovsiz qolsa uxlaydi; Worker cron har **10 daqiqada** uni tekshiradi (`server/src/health.ts`), shuning uchun uxlamaydi. Ishlamay qolsa — egasiga botda "⚠️" (soatiga ko'pi bilan 1 ta).
+Yuklama va limitlar hisobi: `docs/chat/YUKLAMA-HISOBOT.md`. Ochilish ro'yxati: `docs/chat/OCHILISH-ROYXAT.md`.
+
 ## Ochilishdan oldin
 
 - Haqiqiy Redmi A telefonda sinash (kompyuterdagi o'lchov GPU'ni ko'rsatmaydi).

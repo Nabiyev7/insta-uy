@@ -8,7 +8,12 @@ const report = (message: string, stack: string | undefined): void => {
   if (sent >= MAX_REPORTS) return;
   sent += 1;
   const own = JSON.stringify({ message: `${message}${stack ? `\n${stack}` : ''}`.slice(0, 1900), place: location.pathname + location.search.slice(0, 80), ua: navigator.userAgent.slice(0, 250) });
-  navigator.sendBeacon(`${API_URL}/log`, new Blob([own], { type: 'application/json' }));
+  // text/plain — "oddiy" so'rov: boshqa domenga CORS preflight'siz boradi (server content-type'ga qaramaydi).
+  try {
+    navigator.sendBeacon(`${API_URL}/log`, new Blob([own], { type: 'text/plain' }));
+  } catch {
+    // yuborib bo'lmadi — sayt ishlayveradi
+  }
   const m = /^https:\/\/([^@]+)@([^/]+)\/(\d+)$/.exec(DSN ?? '');
   if (!m) return;
   const [, key, host, project] = m;

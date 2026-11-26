@@ -20,17 +20,17 @@ export const targets = (ctx: Ctx): readonly Target[] => [
 const isUp = async (t: Target): Promise<boolean> => { try { return await t.check(); } catch { return false; } };
 const pause = (ms: number): Promise<void> => new Promise((r) => { setTimeout(r, ms); });
 
-/** Bir soatda bitta ogohlantirish: Cache API (Cloudflare) yoki xotira (lokal). */
+/** Bir soatda bitta ogohlantirish: bazada (workers.dev'da Cache API ishlamaydi). Baza o'zi ishlamasa — shu isolate xotirasi. */
 const sentAt = new Map<string, number>();
-const canAlert = async (name: string, now: number): Promise<boolean> => {
-  const cache = typeof caches !== 'undefined' && 'default' in caches ? (caches as unknown as { default: Cache }).default : null;
-  const key = new Request(`https://health.alert/${encodeURIComponent(name)}`);
-  const last = sentAt.get(name);
-  const isRecent = cache ? Boolean(await cache.match(key)) : last !== undefined && now - last < ALERT_EVERY_S * 1000;
-  if (isRecent) return false;
-  sentAt.set(name, now);
-  if (cache) await cache.put(key, new Response('1', { headers: { 'cache-control': `max-age=${ALERT_EVERY_S}` } }));
-  return true;
+const canAlert = async (ctx: Ctx, name: string, now: number): Promise<boolean> => {
+  try {
+    return await ctx.db.rpc<boolean>('svc_health_alert', { p_name: name });
+  } catch {
+    const last = sentAt.get(name);
+    if (last !== undefined && now - last < ALERT_EVERY_S * 1000) return false;
+    sentAt.set(name, now);
+    return true;
+  }
 };
 
 /** Natija: ishlamayotganlar ro'yxati (cron logida ko'rinadi). */
@@ -42,7 +42,7 @@ export const healthCheck = async (ctx: Ctx, list: readonly Target[] = targets(ct
   const down = (await Promise.all(failed.map(async (t) => ((await isUp(t)) ? null : t.name)))).filter((n): n is string => n !== null);
   const owner = Number(ctx.env.ADMIN_TELEGRAM_ID);
   for (const name of down) {
-    if (ctx.tg && owner && (await canAlert(name, now))) await ctx.tg.send(owner, `⚠️ ${name} ishlamayapti (2 marta ketma-ket tekshirildi). / ${name} не работает.`);
+    if (ctx.tg && owner && (await canAlert(ctx, name, now))) await ctx.tg.send(owner, `⚠️ ${name} ishlamayapti (2 marta ketma-ket tekshirildi). / ${name} не работает.`);
   }
   return down;
 };

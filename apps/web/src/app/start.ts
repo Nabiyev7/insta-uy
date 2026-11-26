@@ -90,7 +90,7 @@ export const start = async (): Promise<void> => {
   }
   try {
     const [kit] = await Promise.all([
-      loadKit(() => bump(0.28)), loadPlan().then(() => bump(0.16)), refreshBoot().then(() => bump(0.08)), refreshCatalog().then(() => bump(0.04)), refreshHouses().then(() => bump(0.16)),
+      loadKit(() => bump(0.28)), loadPlan().then(() => bump(0.16)), refreshBoot().then(() => bump(0.08)), refreshCatalog().then(() => bump(0.04)), refreshHouses('snap').then(() => bump(0.16)),
     ]);
     applyLink();
     let seen = false;
@@ -117,7 +117,7 @@ const NEWS_SHOW_MS = 3000;
 /** Yangi uy qurilganda boshqalar ekranida qisqa xabar (daqiqasiga ko'pi bilan 1 ta; admin sozlamasida o'chadi). */
 const refreshCity = async (): Promise<void> => {
   const before = getApp().houses;
-  await refreshHouses();
+  await refreshHouses('snap');
   const s = getApp();
   if (!setting('lively_start', true) || s.isClean || s.isPhoto) return;
   const nick = newNeighbourNick(before, s.houses, new Set(s.profile?.plots.map((p) => p.plot) ?? []), newsAt, Date.now());
@@ -141,7 +141,8 @@ const runBackground = async (): Promise<void> => {
   onSession((s) => {
     // Supabase qulfi ichida so'rov yubormaslik uchun navbatga qo'yiladi.
     setTimeout(() => {
-      void (s ? refreshProfile().then(sendSource) : Promise.resolve(setApp({ profile: null }))).then(() => applyDraftMap().catch(() => undefined));
+      // Kirgan odamga uylar bir marta bazadan to'g'ridan-to'g'ri (o'z uyi darhol ko'rinsin); mehmon — snapshotdan.
+      void (s ? refreshProfile().then(sendSource).then(() => refreshHouses('live')) : Promise.resolve(setApp({ profile: null }))).then(() => applyDraftMap().catch(() => undefined));
       void connectMultiplayer().catch(() => undefined);
     }, 0);
   });

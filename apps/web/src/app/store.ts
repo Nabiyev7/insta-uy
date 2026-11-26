@@ -169,8 +169,9 @@ export const refreshCatalog = async (): Promise<void> => {
   setApp({ catalog, sets });
 };
 let lastRows = '';
-export const refreshHouses = async (): Promise<void> => {
-  const rows = await snap<readonly CityRow[]>('city', 'api_city');
+/** `snap` — davriy yangilash va birinchi yuklash (1 daqiqalik snapshot); sukut — o'z amalimizdan keyin to'g'ridan-to'g'ri bazadan (yangi uy darhol ko'rinsin). */
+export const refreshHouses = async (source: 'snap' | 'live' = 'live'): Promise<void> => {
+  const rows = source === 'snap' ? await snap<readonly CityRow[]>('city', 'api_city') : await rpc<readonly CityRow[]>('api_city');
   const text = JSON.stringify(rows);
   if (text === lastRows) return;
   lastRows = text;

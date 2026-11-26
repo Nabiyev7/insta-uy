@@ -125,3 +125,55 @@ Sinov: 368 ta unit test, tur tekshiruvi toza, e2e 88/88, skrinshotlar yangilandi
 - Premium "Uylar" bo'limi hozircha bo'sh.
 - So'm narxi to'lov yoqilganda qaytadi.
 
+
+## 6e, 6f — Tuzatish 3 va 4 (2026-11-26)
+- Uyi bor odamga (sinov rejimi o'chiq bo'lsa, admin ham) bo'sh joylarda "+" va "Uy qurish" chiqmaydi. Reyting va boshqa oynalar eski server javobida yiqilmaydi.
+- Tanga yuborish va xazina ovi olib tashlandi (kod qoladi, bayroqcha ortida).
+- Premium va tanga paketlari xaridi botda.
+
+## 13-qadam — Haqiqiy ochilish (2026-11-26)
+**Nima qilindi:**
+- **To'lov — faqat Telegram Stars, faqat botda:**
+  - saytda pul to'lovi oynasi umuman yo'q (test bilan tekshirilgan);
+  - salyut, tanga paketlari, premium va level — "Botda sotib olish" tugmasi;
+  - kichik paketlar olib tashlandi — 3 ta qoldi: 3 000 (60 ⭐), 7 000 (125 ⭐), 16 000 (250 ⭐);
+  - botda `/paysupport` (to'lov muammosi → sizga "💳 [to'lov]" belgili murojaat) va `/terms` (qoidalar);
+  - qoidalarga Stars bandi qo'shildi.
+- **Tozalash:** "Sinov ma'lumotlarini tozalash" tugmasi endi sinov rejimini ham o'chiradi. Ishlab chiqarish bazasining zaxirasi olindi.
+- **Yuklama:**
+  - sayt ommaviy ma'lumotni serverning 1 daqiqalik snapshotidan oladi — Supabase yuki odamlar soniga bog'liq emas;
+  - yangilash oralig'i kattalashtirildi;
+  - kunlik faollik yozuvi kuniga bir marta;
+  - 500 kishilik 5 daqiqalik sinov xatosiz o'tdi (`YUKLAMA-HISOBOT.md`).
+- **Kuzatuv:**
+  - server har 10 daqiqada sayt, baza va jonli serverni tekshiradi — Render uxlamaydi; 2 marta ketma-ket xato bo'lsa, sizga botda "⚠️" (soatiga ko'pi bilan 1 ta);
+  - saytdagi xatolar admin → **Xatolar** bo'limida;
+  - `/stat` da baza hajmi;
+  - zaxiradan tiklash bitta buyruq: `npm run restore`.
+- **Ochilish kuni:**
+  - bot `?start=from_bio` / `from_reels` ni hisobga oladi;
+  - ochiq tumanlar 80% to'lsa, keyingisi o'zi ochiladi va sizga xabar keladi.
+
+**Tekshiruvchi:**
+- 13-qadam bandlarining hammasi bajarilgan.
+- 2 ta jiddiy eslatmasi tuzatildi:
+  - ogohlantirish chastotasi endi bazada saqlanadi (`workers.dev` da kesh ishlamaydi);
+  - saytdan xato yuborish boshqa domenga brauzer to'sig'isiz boradi.
+- Hujjatdagi qoldiqlar (PLAN, ISHLAR, README'da Render hisobi) tuzatildi.
+- E2e paytida yana bitta haqiqiy xato topildi va tuzatildi: uy olingandan keyin uy darhol ko'rinmay qolishi mumkin edi.
+
+**Sinov:**
+- 434 ta unit test o'tdi, tur tekshiruvi xatosiz.
+- E2e 88/88 o'tdi.
+- Yuklama: 500/500 ulanish, xato yo'q.
+
+**Siz bosishingiz kerak bo'lgan tugmalar** (batafsil — `OCHILISH-ROYXAT.md`):
+1. Botni @citylanduz kanaliga admin qilish.
+2. Supabase → Authentication → "Allow new users to sign up" — o'chirish.
+3. `nabiyev_7` akkaunti haqida qaror: o'chirish yoki qoldirish (unda haqiqiy uy va "Asoschi" №1 bor).
+4. Admin panel → Iqtisod → **"Sinov ma'lumotlarini tozalash"**.
+5. Botda 60 ⭐ lik paketni bir marta sotib olib tekshirish (xohlasangiz, admin panelda qaytarish).
+6. O'z bepul uyingizni olish.
+7. Instagram bio: `https://t.me/Citylanduz_bot?start=from_bio`.
+8. `/hammaga` → kutish ro'yxatiga xabar (matn tayyor).
+9. Kanalga e'lon (matn va rasm tayyor).

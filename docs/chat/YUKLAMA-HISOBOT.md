@@ -6,6 +6,7 @@
    - Sayt shundan oladi; ma'lumot o'zgarmasa **304** qaytadi va qayta yuborilmaydi.
    - Server javob bermasa, sayt to'g'ridan-to'g'ri bazaga o'tadi.
    - Natija: **Supabase'ga yuk odamlar soniga bog'liq emas.**
+   - Aniqlik (tekshiruvdan): `*.workers.dev` manzilida Cloudflare Cache API ishlamaydi, shuning uchun hozir kesh har Worker nusxasining (isolate) xotirasida turadi. Bazaga so'rovlar soni "1 / daqiqa × Worker nusxalari soni" bo'ladi — baribir odamlar soniga bog'liq emas. O'z domeni ulansa, Cache API ham ishlaydi.
 2. **Yangilash oralig'i:** uylar 2 daqiqada, umumiy sozlamalar 5 daqiqada bir (oldin ikkalasi ham har daqiqada).
 3. **`my_ping`** (kunlik faollik): oldin har 45 soniyada edi, endi kuniga har tuman uchun **1 marta**.
 4. **Chat** xonalarga bo'lingan: 0 — umumiy, 1–12 — mahalla (`server/src/realtime/chat.ts`) — tekshirildi.
