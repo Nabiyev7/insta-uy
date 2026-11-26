@@ -301,6 +301,11 @@ describe('sahifalar va cron', () => {
   test('cron: tick, xabarlar, zaxira, kommentlar, video', async () => {
     expect(await runCron(ctx(), '*/10 * * * *')).toEqual([]);
     expect(await backup(ctx(), new Date('2026-11-23T00:00:00Z'))).toBe('2026-11-23.json');
+    // 14-qadam: zaxira hozir — faqat maxfiy kalit bilan.
+    expect((await call('/bot/backup', {})).status).toBe(403);
+    expect((await call('/bot/backup', {}, { 'x-setup-secret': 'notogri' })).status).toBe(403);
+    const now = await call('/bot/backup', {}, { 'x-setup-secret': String(ENV.TELEGRAM_WEBHOOK_SECRET) });
+    expect(now.body).toMatchObject({ ok: true, path: expect.stringMatching(/^\d{4}-\d{2}-\d{2}\.json$/) });
     const meta: typeof fetch = async () => new Response(JSON.stringify({ data: [{ username: 'komment_1' }, { username: 'komment_1' }, {}] }));
     expect(await collectComments(ctx({ fetch: meta }))).toBe(1);
     expect(await collectComments(ctx({ env: { ...ENV, META_TOKEN: '' } }))).toBe(0);

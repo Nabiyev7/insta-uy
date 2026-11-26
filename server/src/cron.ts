@@ -2,6 +2,7 @@ import { flushTgOutbox } from './support.ts';
 import { flushBroadcast, flushChannel, flushOutbox } from './telegram.ts';
 import { healthCheck } from './health.ts';
 import type { Ctx } from './types.ts';
+import { json, safeEqual } from './util.ts';
 
 /** Instagram kommentlaridan niklar — faqat rasmiy Meta Graph API (PLAN §4 v3). */
 export const collectComments = async (ctx: Ctx): Promise<number> => {
@@ -49,6 +50,14 @@ export const backup = async (ctx: Ctx, now = new Date()): Promise<string> => {
     }
   }
   return path;
+};
+
+/** POST /bot/backup — zaxira hozir (masalan, ma'lumot o'chirishdan oldin): omborga va egasining Telegramiga.
+ *  Faqat `x-setup-secret: <TELEGRAM_WEBHOOK_SECRET>` bilan (kalit faqat egasining kompyuterida). */
+export const backupRoute = async (req: Request, ctx: Ctx): Promise<Response> => {
+  const secret = ctx.env.TELEGRAM_WEBHOOK_SECRET;
+  if (!secret || !safeEqual(req.headers.get('x-setup-secret') ?? '', secret)) return json({ error: 'forbidden' }, 403);
+  return json({ ok: true, path: await backup(ctx), telegram: Boolean(ctx.tg && Number(ctx.env.ADMIN_TELEGRAM_ID)) });
 };
 
 const DAILY = '10 22 * * *';
