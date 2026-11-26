@@ -9,7 +9,7 @@ import { backup, collectComments, runCron, sendVideos } from '../src/cron.ts';
 import { parseBankMessage } from '../src/payments/bank.ts';
 import { supabaseBackend } from '../src/supabase.ts';
 import { telegramApi } from '../src/telegram.ts';
-import type { Ctx, Env, Telegram, TgButton } from '../src/types.ts';
+import type { Ctx, Env, ReplyMenu, Telegram, TgButton } from '../src/types.ts';
 import { md5 } from '../src/util.ts';
 
 const keys = makeKeys('test-secret');
@@ -20,11 +20,11 @@ const ENV: Env = {
 };
 let db: PGlite;
 let emu: (req: Request) => Promise<Response>;
-const sent: { chat: number | string; text: string; buttons?: readonly TgButton[] }[] = [];
+const sent: { chat: number | string; text: string; buttons?: readonly TgButton[]; menu?: ReplyMenu }[] = [];
 const errors: unknown[] = [];
 const members = new Set<number>();
 const tg: Telegram = {
-  send: async (chat, text, buttons) => { sent.push({ chat, text, ...(buttons ? { buttons } : {}) }); },
+  send: async (chat, text, buttons, menu) => { sent.push({ chat, text, ...(buttons ? { buttons } : {}), ...(menu ? { menu } : {}) }); },
   answer: async (_id, text) => { sent.push({ chat: 0, text }); },
   video: async (chat, url) => { sent.push({ chat, text: url }); },
   isMember: async (_channel, user) => members.has(user),
@@ -108,7 +108,7 @@ describe('kirish faqat Telegram bot orqali', () => {
     expect((await db.query("select 1 from profiles where telegram_id = 700")).rows).toHaveLength(0);
     await confirmNick(700);
     const token = linkToken();
-    expect(sent.at(-1)!.buttons![0]!.url).toBe(`https://shahar.test/?kirish=${token}`);
+    expect(sent.at(-1)!.buttons![0]!.url).toBe(`https://shahar.test/?kirish=${token}&til=uz`);
     const jwt = await redeem(token);
     expect(await userRpc(jwt, 'my_profile')).toMatchObject({ login: 'tg700', instagram: 'ali.karimov', telegram: true });
     expect((await call('/auth/telegram/redeem', { token })).body).toEqual({ error: 'expired' });
@@ -147,10 +147,13 @@ describe('kirish faqat Telegram bot orqali', () => {
   test('kutish ro‘yxati, yordam adminga, noma’lum matn — menyu', async () => {
     await webhook(message(900, '/start wait'));
     expect(sent.at(-1)!.text).toContain('(1)');
-    await webhook(message(900, '/yordam Uyim qani?'));
+    // Eski "/yordam matn" yo'q: avval /yordam, keyin xabar.
+    await webhook(message(900, '/yordam'));
+    await webhook(message(900, 'Uyim qani?'));
     expect(sent.some((m) => m.chat === 1 && m.text.includes('Uyim qani?'))).toBe(true);
     await webhook(message(700, 'salom'));
-    expect(sent.at(-1)!.text).toContain('/yordam');
+    expect(sent.at(-1)!.text).toBe('Menyudan tanlang 👇');
+    expect(sent.at(-1)!.menu?.flat().map((b) => b.text)).toEqual(['🏙 Shahar', '🏡 Uy olish', '🛍 Do‘kon', '👥 Do‘st taklif', '✍️ Adminga yozish', '⚙️ Sozlamalar']);
   });
   test('/admin: faqat egasi (ADMIN_TELEGRAM_ID + admin roli); boshqalarga "Bunday buyruq yo‘q"', async () => {
     await webhook(message(700, '/admin'));
@@ -425,8 +428,9 @@ describe('login + parol (password_login bayroqchasi)', () => {
     expect(await call('/auth/register', { login: 'parolli_1', password: 'parol12345' })).toMatchObject({ status: 403, body: { error: 'password_off' } });
     expect((await call('/auth/reset/start', { login: 'x' })).status).toBe(403);
     expect((await call('/auth/reset/finish', { login: 'x', code: '123456', password: 'parol12345' })).status).toBe(403);
+    // Bayroqcha o'chiq — /parol buyrug'i yo'q (oddiy matn kabi), kod yuborilmaydi.
     await webhook(message(1700, '/parol'));
-    expect(sent.at(-1)!.text).toContain('o‘chirilgan');
+    expect(sent.at(-1)!.text).not.toContain('kodi');
   });
   test('yoqiq: ro‘yxat, kirish, bot kodi bilan parol tiklash', async () => {
     await db.query("update settings set value = 'true' where key = 'password_login'");

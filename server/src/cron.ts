@@ -1,5 +1,5 @@
 import { flushTgOutbox } from './support.ts';
-import { flushBroadcast, flushOutbox } from './telegram.ts';
+import { flushBroadcast, flushChannel, flushOutbox } from './telegram.ts';
 import type { Ctx } from './types.ts';
 
 /** Instagram kommentlaridan niklar — faqat rasmiy Meta Graph API (PLAN §4 v3). */
@@ -64,7 +64,7 @@ export const syncOwner = async (ctx: Ctx): Promise<boolean> => {
 export const runCron = async (ctx: Ctx, cron: string): Promise<readonly string[]> => {
   const jobs: readonly (readonly [string, () => Promise<unknown>])[] = cron === DAILY
     ? [['backup', () => backup(ctx)], ['comments', () => collectComments(ctx)]]
-    : [['owner', () => syncOwner(ctx)], ['tick', () => ctx.db.rpc('svc_tick', {})], ['outbox', () => flushOutbox(ctx)], ['broadcast', () => flushBroadcast(ctx)], ['tg_outbox', () => flushTgOutbox(ctx)], ['videos', () => sendVideos(ctx)]];
+    : [['owner', () => syncOwner(ctx)], ['tick', () => ctx.db.rpc('svc_tick', {})], ['outbox', () => flushOutbox(ctx)], ['broadcast', () => flushBroadcast(ctx)], ['tg_outbox', () => flushTgOutbox(ctx)], ['channel', () => flushChannel(ctx)], ['videos', () => sendVideos(ctx)]];
   const results = await Promise.allSettled(jobs.map(([, run]) => run()));
   return results.flatMap((r, i) => (r.status === 'rejected' ? [`${jobs[i]?.[0]}: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`] : []));
 };

@@ -105,7 +105,9 @@ describe('eslatma, qo‘shni, loyiha, murojaat', () => {
     await as(a.uid, 'my_contribute', { p_project: p.id, p_amount: 10 });
     await as(b.uid, 'my_contribute', { p_project: p.id, p_amount: Number(p.goal) });
     expect((await sql('select status from projects where id = $1', [p.id]))[0]!.status).toBe('done');
-    expect((await sql("select count(*)::int n from broadcasts where target = 'channel' and text like '%loyihasi tayyor%'"))[0]!.n).toBe(1);
+    // Kanalga — post navbati orqali (6c); hammaga — har kim o'z tilida.
+    expect((await sql("select count(*)::int n from channel_posts where kind = 'project' and data ->> 'key' = $1", [String(p.id)]))[0]!.n).toBe(1);
+    expect((await sql("select count(*)::int n from broadcasts where target = 'all' and text like '%loyihasi tayyor%' and text_ru like '%проект готов%'"))[0]!.n).toBe(1);
     const proj = ((await svc<Row[]>('api_projects')).find((x) => x.id === p.id))!;
     expect((proj.top as Row[])[0]).toMatchObject({ nick: b.nick });
   });

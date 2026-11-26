@@ -43,8 +43,13 @@ export interface Backend {
   putFile(bucket: string, path: string, body: string, contentType: string): Promise<void>;
 }
 
+/** Pastdagi doimiy menyu tugmasi (reply keyboard); webApp — sayt Mini App sifatida ochiladi. */
+export interface MenuButton { readonly text: string; readonly webApp?: string }
+export type ReplyMenu = readonly (readonly MenuButton[])[];
+
 export interface Telegram {
-  send(chat: number | string, text: string, buttons?: readonly TgButton[]): Promise<void>;
+  /** `menu` berilsa — xabar bilan pastdagi doimiy menyu yuboriladi (inline tugmalar o'rniga). */
+  send(chat: number | string, text: string, buttons?: readonly TgButton[], menu?: ReplyMenu): Promise<void>;
   answer(callbackId: string, text: string): Promise<void>;
   video(chat: number, url: string, caption: string): Promise<void>;
   /** Kanal a'zosimi (bot kanalda admin bo'lishi kerak). */
@@ -60,8 +65,13 @@ export interface Telegram {
   photo(chat: number, fileId: string, caption: string): Promise<number | null>;
   /** Telegram'dagi faylni yuklab olish (nizo dalili). */
   download(fileId: string): Promise<Uint8Array | null>;
+  /** Mini App ichida to'lash uchun Stars hisob havolasi (openInvoice). */
+  invoiceLink?(title: string, description: string, payload: string, stars: number): Promise<string | null>;
+  /** Rasm (fayl ID yoki URL) bilan xabar, inline tugmalar bilan. */
+  photoButtons?(chat: number | string, photo: string, caption: string, buttons: readonly TgButton[]): Promise<void>;
 }
-export interface TgButton { readonly text: string; readonly data?: string; readonly url?: string }
+/** Inline tugma: data (callback), url yoki webApp (Mini App). `row` — bir qatorda yonma-yon. */
+export interface TgButton { readonly text: string; readonly data?: string; readonly url?: string; readonly webApp?: string; readonly row?: number }
 
 export interface Ctx {
   readonly env: Env;

@@ -203,3 +203,16 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 8. **Uzoqdagi uylar** (yorliq masofasidan keyin): nuqta qo'yilmadi — hozirgi LOD qoidasi saqlandi (yorliq ko'rinmaydi). Sabab: tezlik.
 9. **Kelish manbai** faqat yangi akkauntga (1 kun ichida) yoziladi; bot havolasi orqali kelganlar (`t.me/...?start=`) hozircha "Belgisiz".
 10. **"Hozirgina uy oldi"** xabari uylar ro'yxati har daqiqada yangilanganda chiqadi (realtime emas) — kechikish 1 daqiqagacha.
+
+### 6c — Telegram bot (nimani tanladim va nega)
+1. **Pastdagi menyu (reply keyboard) Mini App tugmalari**: Telegram'ning ba'zi ilovalarida bunday tugmadan ochilgan Mini App'ga `initData` (kim ekanligi) kelmaydi. Shunda sayt "Menu → Shahar tugmasini bosing" deydi; bot profilidagi **Menu** tugmasi va xabardagi tugmalar `initData` beradi. Haqiqiy telefonda 12-qadamda tekshiriladi (`SINOV-TELEFON.md`). Kerak bo'lsa pastdagi tugmalarni oddiy matn tugmasiga o'tkazamiz (bosilganda bot Mini App tugmasini yuboradi).
+2. **Haftaning hovlisi kanal postida uy rasmi yo'q** — server uy rasmini chiza olmaydi (stories rasmi saytda chiziladi). Hozir: nik, ovozlar soni va uyga havola. Rasmni keyinroq (masalan, sayt chizib omborga yuklagan rasm) qo'shamiz.
+3. **Kanal postlari tili** — `channel_lang` sozlamasi (sukut: o'zbekcha). Har tur admin → Sozlamalar → `channel_posts` da yoqiladi/o'chiriladi.
+4. **Bazada yozilgan eski xabarlar** (nik nizosi, eslatma, so'rovnoma) "o'zbekcha / ruscha" ko'rinishida edi — endi yuborishda oluvchi tiliga qarab bittasi olinadi (`oneLang`). Yangi tizim xabarlari (haftaning hovlisi, loyiha) ikki alohida matn bilan.
+5. **/hammaga** — matn yoki bitta rasm (izoh bilan). Kimga: hammaga / tumanga (ochiq tumanlar ro'yxati) / kutish ro'yxatiga. Xabarni o'chirganlarga (`/stop`) umumiy xabar bormaydi.
+6. **Admin buyruqlari** (`/admin`, `/stat`, `/hammaga`, `/murojaatlar`, `/nizolar`) — faqat `ADMIN_TELEGRAM_ID` va bazada egasi bo'lsa; boshqalarga "Bunday buyruq yo'q" (admin borligi ham bildirilmaydi).
+7. **Eski `/yordam matn`** olib tashlandi: «✍️ Adminga yozish» (yoki `/yordam`) → keyin xabar. `/parol` va `start=reset` faqat `password_login=true` bo'lsa ishlaydi, aks holda oddiy matn kabi.
+8. **Akkaunti yo'q odam** noma'lum matn yozsa — "Menyudan tanlang" emas, nik so'raladi (menyu hali yo'q).
+9. **Telegram Web (brauzerdagi Telegram)** Mini App'ni iframe ichida ochadi — shuning uchun saytda `X-Frame-Options: DENY` olib tashlandi, `frame-ancestors` faqat `*.telegram.org` ga ruxsat beradi.
+10. **Sayt tili = bot tili**: botdagi havolalarda `?til=`; saytda til almashtirilsa profilga yoziladi (`my_lang`) va bot ham shu tilda yozadi.
+11. **"🏡 Uy olish"** — saytda xarita oynasi ochiladi, kamera eng yaqin bo'sh joyga turadi.

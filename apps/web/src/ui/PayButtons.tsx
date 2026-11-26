@@ -5,6 +5,7 @@ import { openAuth, refreshProfile, setting, useApp } from '../app/store.ts';
 import { Icon } from './icons.tsx';
 import { useAction } from './kit.tsx';
 import { createOrder } from './OrderPanels.tsx';
+import { miniApp, payStars } from '../app/telegram.ts';
 
 interface Premium { readonly starsRate?: number; readonly starsMin?: number }
 /** Narx yulduzda (serverdagi `private.stars_of` bilan bir xil). */
@@ -38,7 +39,8 @@ export function PayButtons({ kind, payload, uzs, code, label, isDisabled = false
   return (
     <div className="row pay">
       <button type="button" className="btn gold" disabled={isBusy || isDisabled} onClick={() => run(() => createOrder(kind, payload))}>{label ? `${label} · ` : ''}{price}</button>
-      {code && bot && !isDisabled && hasStars && <a className="btn soft" href={`https://t.me/${bot}?start=buy_${code}`} target="_blank" rel="noopener noreferrer"><Icon name="telegram" /><Icon name="star" />{starPrice}</a>}
+      {code && !isDisabled && hasStars && miniApp()?.openInvoice && <button type="button" className="btn soft" disabled={isBusy} onClick={() => run(async () => { await payStars(code); })}><Icon name="star" />{starPrice}</button>}
+      {code && bot && !isDisabled && hasStars && !miniApp()?.openInvoice && <a className="btn soft" href={`https://t.me/${bot}?start=buy_${code}`} target="_blank" rel="noopener noreferrer"><Icon name="telegram" /><Icon name="star" />{starPrice}</a>}
     </div>
   );
 }

@@ -150,7 +150,7 @@ describe('haftaning hovlisi', () => {
     expect(await coins()).toBe(before + 2000);
     expect((await as<{ badges: string[] }>(b.uid, 'my_profile')).badges).toContain('hovli');
     expect(await sql("select count(*)::int c from notifications where kind = 'yard_winner'")).toEqual([{ c: 1 }]);
-    expect(await sql("select count(*)::int c from broadcast_queue where chat = 0")).toEqual([{ c: 1 }]);
+    expect(await sql("select count(*)::int c from channel_posts where kind = 'yard'")).toEqual([{ c: 1 }]);
     expect((await anon<{ winners: Row[] }>('api_yards')).winners[0]).toMatchObject({ plot: b.plot, votes: 3 });
   });
   test('admin nomzodlarni qo‘lda almashtirib, so‘rovnomani boshlaydi', async () => {

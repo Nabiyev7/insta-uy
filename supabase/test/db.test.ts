@@ -453,7 +453,7 @@ describe('xizmat funksiyalari', () => {
   });
 
   test('bot: yangi odamdan nik so‘raladi, nik bir xil bo‘lmaydi, kirish havolasi bir martalik', async () => {
-    expect(await svc('svc_bot_start', { p_telegram: 4001, p_ref: null, p_name: 'Vali' })).toEqual({ state: 'need_nick' });
+    expect(await svc('svc_bot_start', { p_telegram: 4001, p_ref: null, p_name: 'Vali' })).toMatchObject({ state: 'need_nick', lang: 'uz', is_first: true });
     expect(await svc('svc_bot_session', { p_telegram: 4001 })).toMatchObject({ step: 'nick' });
     expect(await svc('svc_nick_check', { p_nick: '@Vali.Uz' })).toBe('vali.uz');
     const id = randomUUID();

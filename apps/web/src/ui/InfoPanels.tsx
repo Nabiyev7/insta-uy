@@ -3,7 +3,7 @@ import type { Lang } from '../../../../packages/shared/src/index.ts';
 import { rpc, signOut } from '../app/api.ts';
 import { startAudio, stopAudio } from '../app/audio.ts';
 import { useT, type Key } from '../app/i18n.ts';
-import { openPanel, openRoot, refreshProfile, setApp, setting, useApp, write } from '../app/store.ts';
+import { getApp, openPanel, openRoot, refreshProfile, setApp, setting, useApp, write } from '../app/store.ts';
 import { Icon, type IconName } from './icons.tsx';
 import { RowLink, Section, Seg, Sheet, useAction } from './kit.tsx';
 import { FAQ, PRIVACY, RULES, type Doc } from './legal.ts';
@@ -17,10 +17,12 @@ const hideScreen = (): void => {
 };
 
 const LANGS = [['uz', "O'zbekcha"], ['ru', 'Русский']] as const;
+/** Sayt tili = bot tili (profilda bitta maydon). */
 const pickLang = (v: Lang): void => {
   write('lang', v);
   document.documentElement.lang = v;
   setApp({ lang: v });
+  if (getApp().profile) void rpc('my_lang', { p_lang: v }).catch(() => undefined);
 };
 
 type MenuKind = 'city' | 'gazette' | 'avatar' | 'cars' | 'coins' | 'settings' | 'help' | 'rules' | 'privacy';

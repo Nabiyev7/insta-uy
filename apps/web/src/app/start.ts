@@ -1,11 +1,12 @@
 /** Yuklash ketma-ketligi va fon ishlari. */
 import { loadKit } from '../world/kit.ts';
-import { goToPlot } from './actions.ts';
+import { goToPlot, nearestFree } from './actions.ts';
+import { startMiniApp } from './telegram.ts';
 import { onSession, rpc, supabase } from './api.ts';
 import { startAudio } from './audio.ts';
 import { applyLoginLink } from './login.ts';
 import { connectMultiplayer } from './multiplayer.ts';
-import { getApp, loadPlan, refreshBoot, refreshCatalog, refreshHouses, refreshProfile, setApp, setting, toast } from './store.ts';
+import { getApp, loadPlan, openPanel, refreshBoot, refreshCatalog, refreshHouses, refreshProfile, setApp, setting, toast, write } from './store.ts';
 import { newNeighbourNick } from '../logic/lively.ts';
 import { translate } from './i18n.ts';
 import { exposeVideoApi } from './videoMode.ts';
@@ -24,8 +25,35 @@ import { playIntro } from './intro.ts';
 const params = new URLSearchParams(location.search);
 export const isVideoMode = params.has('video');
 
+/** Bot havolalari: ?til=uz|ru — bot tili (sayt tili shu bo'ladi). */
+const applyLang = (): void => {
+  const til = params.get('til');
+  if (til !== 'uz' && til !== 'ru') return;
+  write('lang', til);
+  document.documentElement.lang = til;
+  setApp({ lang: til });
+};
+/** Bot menyusidagi Mini App tugmalari: ?panel=uyim | dokon | uyolish. */
+const openWanted = (): void => {
+  const wanted = params.get('panel');
+  const s = getApp();
+  if (wanted === 'dokon') openPanel({ kind: 'shop' });
+  if (wanted === 'uyim') {
+    const plot = s.profile?.plots[0]?.plot;
+    if (plot) goToPlot(plot);
+    else openPanel({ kind: 'me' });
+  }
+  // Uyi yo'q odam: bo'sh joylar xaritasi (eng yaqin bo'sh joy belgilangan).
+  if (wanted === 'uyolish') {
+    const id = nearestFree();
+    if (id) goToPlot(id, true);
+    openPanel({ kind: 'map' });
+  }
+};
+
 /** ?uy=P0001 — o'sha uyga teleport; ?ref= — taklif kodi. */
 const applyLink = (): void => {
+  applyLang();
   const ref = params.get('ref');
   if (ref && /^[0-9a-f]{6,16}$/.test(ref)) {
     try {
@@ -70,6 +98,8 @@ export const start = async (): Promise<void> => {
     setApp({ kit, stage: isVideoMode || seen ? 'play' : 'intro' });
     if (isVideoMode) { exposeVideoApi(); return; }
     void applyLoginLink();
+    // Telegram ichida (Mini App) — avtomatik kirish; keyin bot tugmasidagi oyna ochiladi.
+    void startMiniApp(() => { void refreshProfile().then(openWanted); });
     startAnalytics();
     await runBackground();
   } catch (error: unknown) {

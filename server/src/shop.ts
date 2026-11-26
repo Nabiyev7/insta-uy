@@ -1,4 +1,5 @@
 /** Bot do'koni: Telegram Stars bilan to'lov (tanga paketlari, premium uy, bezak, level, salyut) va qaytarish. */
+import { bt, type Lang, type TextKey } from './botText.ts';
 import { HttpError, type Ctx, type Telegram, type TgButton } from './types.ts';
 import { json, readJson, requireUser } from './util.ts';
 import { z } from 'zod';
@@ -17,65 +18,78 @@ export const parseProduct = (code: string): Product | null => {
   return null;
 };
 
-const SOON = "⏳ To'lovlar tez kunda ochiladi. Hozircha tanga bilan oling. / Оплата скоро откроется. Пока используйте монеты.";
-const ERRORS: Readonly<Record<string, string>> = {
-  payments_off: SOON,
-  stars_unavailable: 'Bu tovar Stars bilan sotilmaydi — saytda karta yoki tanga bilan oling. / Только картой или монетами на сайте.',
-  not_for_sale: 'Hozircha sotuvda emas. / Пока не продаётся.',
-  user_not_found: 'Avval /start bosib akkaunt oching. / Сначала нажмите /start.',
-  not_free: 'Bu joy band. Saytdan boshqasini tanlang. / Место занято.',
-  too_many_orders: "Ochiq buyurtmalar ko'p — avval ularni tugating. / Слишком много открытых заказов.",
-  no_links: 'Salyutda havola bo‘lmasin. / Без ссылок.',
-  banned_word: "Nomaqbul so'z bor. / Недопустимое слово.",
-  too_long: 'Juda uzun (80 belgigacha). / Слишком длинно.',
-};
-const errorText = (error: unknown): string => {
+const ERRORS: readonly (readonly [string, TextKey])[] = [
+  ['payments_off', 'payOff'], ['stars_unavailable', 'starsUnavailable'], ['not_for_sale', 'notForSale'], ['user_not_found', 'userMissing'], ['not_free', 'placeTaken'],
+  ['too_many_orders', 'tooManyOrders'], ['no_links', 'noLinks'], ['banned_word', 'badWord'], ['too_long', 'tooLong'],
+];
+const errorKey = (error: unknown): TextKey => {
   const code = error instanceof Error ? error.message : '';
-  return Object.entries(ERRORS).find(([k]) => code.includes(k))?.[1] ?? 'Xatolik, keyinroq urinib ko‘ring. / Ошибка, попробуйте позже.';
+  return ERRORS.find(([k]) => code.includes(k))?.[1] ?? 'error';
 };
 
 /** Buyurtma ochib, Stars hisob-fakturasini yuboradi. */
-export const sendInvoice = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, p: Product): Promise<void> => {
+export const sendInvoice = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, p: Product, lang: Lang = 'uz'): Promise<void> => {
   try {
     const o = await ctx.db.rpc<StarsOrder>('svc_stars_order', { p_telegram: telegram, p_kind: p.kind, p_payload: p.payload });
-    await tg.invoice(chat, o.title, `CityLand UZ — ${o.title}. To'langach saytda darhol paydo bo'ladi.`, o.id, o.stars);
+    await tg.invoice(chat, o.title, bt(lang, 'invoiceDesc', { title: o.title }), o.id, o.stars);
   } catch (error: unknown) {
-    await tg.send(chat, errorText(error));
+    await tg.send(chat, bt(lang, errorKey(error)));
   }
 };
 
-export const buyCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string): Promise<void> => {
-  if (code === 'salute') return tg.send(chat, "🎆 Salyut matnini shunday yozing: /salyut Tug'ilgan kuning bilan! / Напишите: /salyut Текст");
+export const buyCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
+  if (code === 'salute') return tg.send(chat, bt(lang, 'saluteHow'));
   const p = parseProduct(code);
-  if (!p) return tg.send(chat, 'Tovar topilmadi. / Товар не найден.');
-  return sendInvoice(ctx, tg, chat, telegram, p);
+  if (!p) return tg.send(chat, bt(lang, 'productMissing'));
+  return sendInvoice(ctx, tg, chat, telegram, p, lang);
+};
+
+const linkSchema = z.object({ code: z.string().regex(/^[A-Za-z0-9_]{1,60}$/) });
+/** POST /pay/stars/link — Mini App ichida to'lash (Telegram.WebApp.openInvoice): botga chiqib ketmasdan. */
+export const starsLink = async (req: Request, ctx: Ctx): Promise<Response> => {
+  const user = await requireUser(req, ctx);
+  const { code } = await readJson(req, linkSchema);
+  const p = parseProduct(code);
+  if (!p) throw new HttpError(400, 'bad_format');
+  if (!ctx.tg?.invoiceLink) throw new HttpError(503, 'telegram_off');
+  const telegram = await ctx.db.rpc<number>('svc_channel_target', { p_user: user.id });
+  const o = await ctx.db.rpc<StarsOrder>('svc_stars_order', { p_telegram: telegram, p_kind: p.kind, p_payload: p.payload });
+  const url = await ctx.tg.invoiceLink(o.title, bt('uz', 'invoiceDesc', { title: o.title }), o.id, o.stars);
+  if (!url) throw new HttpError(502, 'telegram_failed');
+  return json({ url });
 };
 
 interface Pack { readonly coins: number; readonly bonus?: number; readonly stars?: number | null; readonly tag?: string }
-interface Premium { readonly packs?: readonly Pack[]; readonly starsMin?: number }
+interface Premium { readonly packs?: readonly Pack[]; readonly starsMin?: number; readonly starsRate?: number }
+interface CatalogItem { readonly id: string; readonly uz: string; readonly ru: string; readonly uzs: number; readonly premium?: boolean; readonly onSale: boolean }
 const fmt = (n: number): string => n.toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
-const TAGS: Readonly<Record<string, string>> = { best: ' · Eng foydali', popular: ' · Ommabop' };
+const TAGS: Readonly<Record<string, TextKey>> = { best: 'packBest', popular: 'packPopular' };
 /** Faqat Stars narxi bor (≥ 50 ⭐) paketlar; 1–2-paket — faqat saytda karta bilan. */
-export const packButtons = (p: Premium): readonly TgButton[] => (p.packs ?? []).flatMap((pk, i) => (pk.stars && pk.stars >= (p.starsMin ?? 50)
-  ? [{ text: `🪙 ${fmt(pk.coins + (pk.bonus ?? 0))} — ${pk.stars}⭐${TAGS[pk.tag ?? ''] ?? ''}`, data: `buy:pack${i + 1}` }] : []));
-/** /dokon: tanga paketlari va salyut; uy va bezak — saytda tanlanadi. */
-export const shopMenu = async (ctx: Ctx, tg: Telegram, chat: number): Promise<void> => {
-  const premium = await ctx.db.rpc<Premium | null>('svc_premium', {});
-  return tg.send(chat, "🛍 Do'kon / Магазин\nKichik paketlar va bezaklar — saytda (karta yoki tanga).", [...packButtons(premium ?? {}), { text: '🎆 Salyut — 50⭐', data: 'buy:salute' }, { text: '🏙 Sayt / Сайт', url: ctx.env.SITE_URL }]);
+export const packButtons = (p: Premium, lang: Lang = 'uz'): readonly TgButton[] => (p.packs ?? []).flatMap((pk, i) => (pk.stars && pk.stars >= (p.starsMin ?? 50)
+  ? [{ text: `🪙 ${fmt(pk.coins + (pk.bonus ?? 0))} — ${pk.stars}⭐${pk.tag && TAGS[pk.tag] ? bt(lang, TAGS[pk.tag] ?? 'packBest') : ''}`, data: `buy:pack${i + 1}` }] : []));
+/** Premium bezak va mashinalar (faqat pulga) — Stars narxi kurs bo'yicha, ≥ 50 ⭐ bo'lsa. */
+export const premiumButtons = (items: readonly CatalogItem[], p: Premium, lang: Lang = 'uz'): readonly TgButton[] => items.flatMap((c) => {
+  const stars = Math.max(1, Math.ceil(c.uzs / Math.max(1, p.starsRate ?? 200)));
+  return c.premium && c.onSale && c.uzs > 0 && stars >= (p.starsMin ?? 50) ? [{ text: `⭐ ${c[lang]} — ${stars}⭐`, data: `buy:d_${c.id}` }] : [];
+});
+/** Do'kon: tanga paketlari, premium tovarlar va salyut; oddiy bezak va uy — saytda (Mini App). */
+export const shopMenu = async (ctx: Ctx, tg: Telegram, chat: number, lang: Lang = 'uz'): Promise<void> => {
+  const [premium, catalog] = await Promise.all([ctx.db.rpc<Premium | null>('svc_premium', {}), ctx.db.rpc<readonly CatalogItem[]>('api_catalog', {}).catch(() => [])]);
+  return tg.send(chat, bt(lang, 'shop'), [...packButtons(premium ?? {}, lang), ...premiumButtons(catalog, premium ?? {}, lang), { text: bt(lang, 'btnSalute'), data: 'buy:salute' },
+    { text: bt(lang, 'btnShop'), webApp: `${ctx.env.SITE_URL}/?panel=dokon&til=${lang}` }]);
 };
 
 /** pre_checkout_query: buyurtma hali kutilmoqdami, summa va egasi to'g'rimi. */
-export const preCheckout = async (ctx: Ctx, tg: Telegram, q: { readonly id: string; readonly from: { readonly id: number }; readonly total_amount: number; readonly invoice_payload: string }): Promise<void> => {
+export const preCheckout = async (ctx: Ctx, tg: Telegram, q: { readonly id: string; readonly from: { readonly id: number }; readonly total_amount: number; readonly invoice_payload: string }, lang: Lang = 'uz'): Promise<void> => {
   const isOk = /^[0-9a-f-]{36}$/.test(q.invoice_payload)
     && await ctx.db.rpc<boolean>('svc_stars_check', { p_order: q.invoice_payload, p_telegram: q.from.id, p_stars: q.total_amount });
-  await tg.preCheckout(q.id, isOk, isOk ? undefined : 'Buyurtma muddati tugagan — qaytadan oching. / Заказ устарел.');
+  await tg.preCheckout(q.id, isOk, isOk ? undefined : bt(lang, 'orderOld'));
 };
 
 /** successful_payment: to'lov yozilib, buyurtma darhol bajariladi (idempotent). */
-export const starsPaid = async (ctx: Ctx, tg: Telegram, chat: number, p: { readonly total_amount: number; readonly invoice_payload: string; readonly telegram_payment_charge_id: string }): Promise<void> => {
+export const starsPaid = async (ctx: Ctx, tg: Telegram, chat: number, p: { readonly total_amount: number; readonly invoice_payload: string; readonly telegram_payment_charge_id: string }, lang: Lang = 'uz'): Promise<void> => {
   const r = await ctx.db.rpc<{ result: string }>('svc_payment', { p_provider: 'stars', p_external: p.telegram_payment_charge_id, p_amount: p.total_amount, p_order: p.invoice_payload });
-  const text = r.result === 'paid' ? "✅ To'lov qabul qilindi — saytda tayyor! / Оплата получена!" : "⚠️ To'lov keldi, admin ko'rib chiqadi. / Оплата получена, админ проверит.";
-  await tg.send(chat, text, [{ text: '🏙', url: ctx.env.SITE_URL }]);
+  await tg.send(chat, bt(lang, r.result === 'paid' ? 'paidOk' : 'paidProblem'), [{ text: bt(lang, 'btnOpenCity'), webApp: `${ctx.env.SITE_URL}/?til=${lang}` }]);
 };
 
 const refundSchema = z.object({ payment: z.number().int().positive() });

@@ -8,6 +8,7 @@ import { flyTo, goToHouse, setMode } from './modes.ts';
 import { cancelBuildTimer, director, here, session, snapshotters } from './runtime.ts';
 import { translate } from './i18n.ts';
 import { getApp, openRoot, setApp, toast } from './store.ts';
+import { haptic } from './telegram.ts';
 
 export const goToPlot = (id: string, isInstant = false): void => {
   const p = getApp().plotById.get(id);
@@ -70,6 +71,8 @@ export const startConstruction = (p: Plot, tier?: number): void => {
 /** Telefon tebranishi (qo'llasa). */
 export const BUZZ = { tap: 10, coin: [12, 40, 12], big: [20, 60, 20, 60, 40] } as const;
 export const buzz = (pattern: number | readonly number[]): void => {
+  // Telegram ichida — uning tebranish API si.
+  if (haptic(typeof pattern === 'number' ? 'light' : pattern.length > 3 ? 'heavy' : 'medium')) return;
   // Foydalanuvchi hali tegmagan bo'lsa brauzer rad etadi va konsolga yozadi.
   if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(typeof pattern === 'number' ? pattern : [...pattern]);
 };

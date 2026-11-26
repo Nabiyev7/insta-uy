@@ -3,6 +3,7 @@ import { randomInt } from 'node:crypto';
 import { z } from 'zod';
 import { parseLogin, parsePassword } from '../../packages/shared/src/validation.ts';
 import { createAccount } from './auth.ts';
+import { bt, type Lang } from './botText.ts';
 import { HttpError, type Ctx, type Telegram } from './types.ts';
 import { json, keyed, limit, readJson } from './util.ts';
 
@@ -74,11 +75,11 @@ export const resetFinish = async (req: Request, ctx: Ctx): Promise<Response> => 
 
 const randomCode = (): string => String(randomInt(0, 1_000_000)).padStart(6, '0');
 /** Bot: /parol — parolni tiklash kodi (faqat parol yo'li yoqilgan bo'lsa). */
-export const sendReset = async (ctx: Ctx, tg: Telegram, telegramId: number): Promise<void> => {
-  if (!(await ctx.db.rpc<boolean>('svc_password_login', {}))) return tg.send(telegramId, 'Parol bilan kirish o‘chirilgan — /start yozing, kirish havolasi keladi. / Вход по паролю выключен — напишите /start.');
+export const sendReset = async (ctx: Ctx, tg: Telegram, telegramId: number, lang: Lang = 'uz'): Promise<void> => {
+  if (!(await ctx.db.rpc<boolean>('svc_password_login', {}))) return tg.send(telegramId, bt(lang, 'resetOff'));
   const user = await ctx.db.rpc<{ user_id: string; login: string } | null>('svc_user', { p_telegram: telegramId });
-  if (!user) return tg.send(telegramId, "Bu Telegram hech bir akkauntga ulanmagan. Saytda kirib, «Telegram'ni ulash»ni bosing.");
+  if (!user) return tg.send(telegramId, bt(lang, 'resetNoUser'));
   const code = randomCode();
   await ctx.db.rpc('svc_reset_begin', { p_user: user.user_id, p_code_hash: keyed(ctx.env.HASH_SECRET, `${user.user_id}:${code}`) });
-  return tg.send(telegramId, `Login: ${user.login}\nParolni tiklash kodi: ${code}\n10 daqiqa amal qiladi. Kodni hech kimga bermang.`);
+  return tg.send(telegramId, bt(lang, 'resetCode', { login: user.login, code }));
 };

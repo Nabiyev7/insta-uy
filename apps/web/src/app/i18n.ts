@@ -43,6 +43,8 @@ const T = {
   premiumSoonHouses: ['Maxsus premium uylar tayyorlanmoqda', 'Особые премиум-дома готовятся'], premiumSoonDecor: ['Maxsus premium bezaklar tayyorlanmoqda', 'Особый премиум-декор готовится'], premiumSoonCars: ['Maxsus premium mashinalar tayyorlanmoqda', 'Особые премиум-машины готовятся'],
   needCoins: ['Yana {n} tanga kerak', 'Не хватает {n} монет'], getCoins: ['Tanga olish', 'Купить монеты'],
   housesToday: ['Bugun {n} kishi uy oldi · jami {m}', 'Сегодня {n} получили дом · всего {m}'], beFirst: ['Birinchilardan bo‘ling!', 'Будьте среди первых!'], justClaimed: ['@{nick} hozirgina uy oldi', '@{nick} только что получил дом'],
+  miniNeedNick: ['Avval botda Instagram nikingizni yozing', 'Сначала напишите ник Instagram в боте'],
+  miniUseMenu: ['Kirish uchun botdagi «Menu» → «Shahar» tugmasini bosing', 'Чтобы войти, нажмите в боте «Menu» → «Город»'],
   tabNew: ['Yangi', 'Новое'], tabYard: ['Hovli', 'Двор'], tabGarden: ['Bog‘', 'Сад'], tabCar: ['Mashina', 'Машины'], tabLuxe: ['Lyuks', 'Люкс'], tabPet: ['Hayvonlar', 'Животные'], tabSet: ['To‘plamlar', 'Наборы'], tabSpecial: ['Maxsus', 'Особое'], get: ['Olish', 'Взять'], getMore: ['Yana olish', 'Ещё'], atLevel: ['levelda', 'й уровень'], have: ['Sizda bor', 'У вас есть'], soldOut: ['Tugadi', 'Распродано'], seasonOver: ['Mavsumi tugagan', 'Сезон прошёл'], putYard: ['Hovliga qo‘yish', 'Поставить'], shopEmpty: ['Hozircha tovar yo‘q', 'Пока товаров нет'], kmh: ['km/soat', 'км/ч'], pickCar: ['Mashina tanlash', 'Выбор машины'],
   offline: ['Internet yo‘q. Ulanish tiklanishini kutyapmiz…', 'Нет интернета. Ждём соединения…'], serverDown: ['Server javob bermadi', 'Сервер не ответил'], wait: ['Yuklanmoqda…', 'Загрузка…'], listEmpty: ['Hozircha bo‘sh', 'Пока пусто'],
 } satisfies Record<string, Pair>;

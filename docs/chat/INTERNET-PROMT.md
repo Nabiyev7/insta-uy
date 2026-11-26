@@ -14,7 +14,7 @@ Akkaunt ochish va parol kiritishni egasi o'zi qiladi. Sen buyruqni ishga tushira
 ## Sen nima qilasan
 1. **Supabase**: link → `db push` (hamma migratsiyalar) → Sign ups o'chiq → `supabase/test` sinovlari haqiqiy bazada o'tsin.
 2. **Worker**: `wrangler deploy`; maxfiylar (`server/.env.example` ro'yxati) — `HASH_SECRET`, `TELEGRAM_WEBHOOK_SECRET` ni o'zing yarat (`openssl rand -hex 32`); to'lov kalitlari bo'sh (`payments_enabled=false`).
-3. **Telegram**: webhook o'rnat, bot `/start` → nik → bir martalik havola ishlashini tekshir; bot kanalda admin bo'lishi kerakligini egasiga ayt.
+3. **Telegram**: `npm run bot:setup` (muhitda `TELEGRAM_TOKEN`, `SITE_URL`, `API_URL`, `TELEGRAM_WEBHOOK_SECRET`, `ADMIN_TELEGRAM_ID`) — buyruqlar (uz/ru, admin alohida), tavsif, Menu tugmasi (Mini App) va webhook bir yo'la; takror ishga tushirsa bo'ladi. Keyin bot `/start` → nik → «🏙 Shahar» (Mini App) ishlashini tekshir; bot kanalda admin bo'lishi kerakligini egasiga ayt. BotFather'da Mini App domeni (`/setdomain` — sayt manzili) ham kerak bo'lishi mumkin.
 4. **Sayt va admin**: Cloudflare Pages (`citylanduz`, `citylanduz-admin`), o'zgaruvchilar README bo'yicha. GitHub'ga ulab **avtomatik deploy** (main'ga push → sayt yangilanadi) — qo'lda yig'ish yo'q.
 5. **Realtime (ko'p o'yinchi)**: bepul Node xost tanla (uxlab qolsa ham sayt yakka rejimda ishlayveradi). Tanlov va sababini `SAVOLLAR.md` ga yoz. Bepul xost topilmasa — beta realtime'siz.
 6. **Birinchi admin**: egasi botga `/start` yozadi → uning `telegram_id` siga `role='admin'`.

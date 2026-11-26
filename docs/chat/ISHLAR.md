@@ -28,7 +28,7 @@ Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. **6-qadamni bajar: `docs/
 - [x] **11. Yangi interfeys** — `docs/chat/INTERFEYS-PROMT.md`
 - [x] **6a. Tuzatish 1 (sinovdan)** — `docs/chat/TUZATISH-1.md` (6-qadam tugagach, 12-qadamdan oldin)
 - [x] **6b. Qo'shimcha 1** — `docs/chat/QOSHIMCHA-1.md` (6a dan keyin, 12-qadamdan oldin)
-- [ ] **6c. Telegram bot** — `docs/chat/BOT-PROMT.md` (12-qadamdan oldin)
+- [x] **6c. Telegram bot** — `docs/chat/BOT-PROMT.md` (12-qadamdan oldin)
 - [x] **6d. Tuzatish 2 (do'kon)** — `docs/chat/TUZATISH-2.md` (6c bilan birga)
 - [ ] **12. Internetga chiqarish (beta)** — `docs/chat/INTERNET-PROMT.md` (6-qadamdan keyin; 7-qadam yuklama — betadan keyin, ochilishdan oldin)
 
