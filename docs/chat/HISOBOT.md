@@ -84,3 +84,44 @@ Hal qilinmagan savollar: `SAVOLLAR.md` (6-qadam: A, B+C, D, E, F, eski IQTISOD b
 - Botda "✍️ Adminga yozish": siz Telegram'da "Javob berish" qilsangiz — javob odamga boradi; admin panelda "Murojaatlar".
 
 Sinov: 368 ta unit test, tur tekshiruvi toza, e2e 88/88, skrinshotlar yangilandi. Ochiq savollar: `SAVOLLAR.md` (6a, 6b bo'limlari).
+
+## 6d — Tuzatish 2 (2026-11-26)
+- Do'konda endi faqat tanga narxi. Tanga yetmasa — "Yana X tanga kerak" va "Tanga olish" tugmasi.
+- Bo'limlar 2 qatorda, 4 tadan — hammasi doim ko'rinadi (telefonda ham, kompyuterda ham, ruschada ham).
+- Sinov rejimida (siz uchun) hech qayerda qulf yo'q: lyuks bezakni 1-level uyga ham qo'yasiz.
+- Admin — faqat siz: admin panelga faqat botdagi `/admin` orqali kirasiz. Boshqa odam (hatto bazada admin yozilgan bo'lsa ham) kira olmaydi, bot unga "Bunday buyruq yo'q" deydi.
+- Do'konda alohida "Premium" bo'lim (oltin hoshiya): Uylar, Bezaklar, Mashinalar, Tanga paketlari. Faqat pulga, hozircha "Tez kunda". Maxsus premium tovarlarni keyin birga chizamiz.
+- Uy ustidagi nik katta va o'qiladi; o'z uyingiz niki sariq va uy belgisi bilan.
+- Saytga necha kishi kirganini sanash (Cloudflare, bepul) va qayerdan kelgani (`?from=bio`, `?from=reels`).
+- Bo'sh shahar jonliroq: markaz yonidagi bo'sh joylarda yonib-o'chadigan bayroqcha, tepada "Bugun N kishi uy oldi", boshqa birov uy olsa — qisqa xabar.
+
+## 6c — Telegram bot (2026-11-26)
+- Botdagi "🏙 Shahar" tugmasi saytni **Telegram ichida** ochadi va o'zi kiradi (havola kerak emas). Brauzer uchun havola ham qoldi.
+- Til bir marta tanlanadi; keyin bot faqat shu tilda yozadi. Sozlamalarda almashadi va sayt ham o'sha tilga o'tadi.
+- Pastda doim 6 ta tugma: Shahar, Uyim (yoki Uy olish), Do'kon, Do'st taklif, Adminga yozish, Sozlamalar.
+- "Do'st taklif" — shaxsiy havola, sovg'alar shkalasi va "Do'stga yuborish" tugmasi.
+- Kanalga o'zi post qiladi: kunlik yangi uylar (20:00), haftaning hovlisi, shahar loyihasi tugaganda, 100/500/1 000… uy bo'lganda. Har birini admin panel → Sozlamalar'da o'chirasiz.
+- Siz uchun buyruqlar: `/stat` (bugun va 7 kun), `/hammaga` (matn yoki rasm → ko'rib chiqasiz → kimga → yuborish), `/murojaatlar`, `/nizolar`, `/admin`.
+- `npm run bot:setup` — internetga chiqqanda bot buyruqlari, tavsifi, menyu tugmasi va webhook bir buyruq bilan sozlanadi.
+
+**Tekshiruvchi:** hamma band ✅. 3 ta ❌ topdi, hammasi tuzatildi:
+- PLAN "Holat" yangilandi;
+- sinov rejimidagi do'kon skrinshoti (`ui-dokon-sinov.png`) qo'shildi;
+- "ishlab chiqarishda admin parol shakli yo'q" testi qo'shildi.
+
+**Sinov:**
+- 402 ta unit test o'tdi, tur tekshiruvi xatosiz.
+- E2e 88/88 o'tdi.
+- Skrinshotlar yangilandi.
+
+**Telefon tezligi** (CPU 6 baravar sekinlashtirilgan, oldin → keyin, `PERF.md`): yomonlashmadi.
+- Piyoda: 195 → 360.
+- Shahar: 270 → 322.
+- Mashina: 166 → 255 (past sifatda).
+
+**Yangi savollar** (`SAVOLLAR.md`, 6d va 6c bo'limlari):
+- Pastki menyu tugmasidan ochilganda ba'zi Telegram ilovalari "kim kirdi" ma'lumotini bermasligi mumkin. 12-qadamda telefonda tekshiramiz.
+- Haftaning hovlisi kanal postida uy rasmi hali yo'q.
+- Premium "Uylar" bo'limi hozircha bo'sh.
+- So'm narxi to'lov yoqilganda qaytadi.
+

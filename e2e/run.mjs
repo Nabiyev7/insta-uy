@@ -127,20 +127,16 @@ try {
     await admin.getByText('@sinov.nik').waitFor();
     assert.equal(await admin.getByRole('button', { name: /Tasdiqlash/ }).count(), 0);
   });
-  await step('oddiy foydalanuvchi admin panelga kirolmaydi; moderatorga bot havolasi', async () => {
-    const res = await fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify({ message: { message_id: 1, from: { id: ODAM, first_name: 'S' }, chat: { id: ODAM, type: 'private' }, text: '/admin' } }) }).then((r) => r.json());
-    assert.match(res.sent[0].text, /faqat adminlar/);
-    const admin2 = await open({});
+  await step('admin faqat egasi: oddiy odam va moderator /admin → "Bunday buyruq yo‘q"', async () => {
+    const say = () => fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify({ message: { message_id: 1, from: { id: ODAM, first_name: 'S' }, chat: { id: ODAM, type: 'private' }, text: '/admin' } }) }).then((r) => r.json());
+    const res = await say();
+    assert.match(res.sent[0].text, /Bunday buyruq yo‘q/);
+    assert.equal(res.sent[0].buttons.length, 0, 'havola berilmasin');
     const me = (await call('admin_users', { p_q: `tg${ODAM}` }, await adminToken()))[0];
     await call('admin_user', { p_id: me.id, p_action: 'role', p_data: { role: 'moderator', perms: ['plots'] } }, await adminToken());
-    const link = await fetch(`${API}/dev/telegram`, { method: 'POST', body: JSON.stringify({ message: { message_id: 1, from: { id: ODAM, first_name: 'S' }, chat: { id: ODAM, type: 'private' }, text: '/admin' } }) }).then((r) => r.json());
-    await admin2.goto(link.sent[0].buttons[0].url);
-    await admin2.getByRole('button', { name: 'Uylar' }).waitFor();
-    assert.equal(new URL(admin2.url()).search, '', 'havola manzildan olib tashlansin');
+    const again = await say();
+    assert.match(again.sent[0].text, /Bunday buyruq yo‘q/);
     await call('admin_user', { p_id: me.id, p_action: 'role', p_data: { role: 'user', perms: [] } }, await adminToken());
-    await admin2.reload();
-    await admin2.getByText("admin huquqi yo'q").waitFor();
-    await admin2.context().close();
   });
   await step('xarita: nik qidirish → kamera uchadi', async () => {
     await desk.keyboard.press('Escape');

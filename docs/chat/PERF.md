@@ -63,3 +63,10 @@ O'lchov xatosi ±15%. Birinchi o'lchovda xiralashtirish (blur) sabab piyoda mid/
 1-aylanish — low: piyoda 354 → 361, shahar 366 → 161, mashina 320 → 149; mid: 287 → 279, 135 → 141, 118 → 121; high: 159 → 167, 130 → 124, 77 → 78
 2-aylanish — low: 332 → 206, 161 → 111, 132 → 94; mid: 264 → 174, 136 → 101, 108 → 91; high: 137 → 192, 84 → 135, 56 → 80
 Draw call va uchburchaklar bir xil (low piyoda 45 call, high piyoda 80–81). Bu safar mashina band edi (Blender, dev server): bir xil kodning o'zida ham FPS ikki baravargacha o'zgardi — farq o'lchov xatosi ichida, aniq sekinlashuv ko'rinmadi. Yangi narsalar sahnaga deyarli qo'shilmagan: yorliqda yurak soni (o'sha bitta tekstura), salyut lentasi (DOM, 5 daqiqada 1 so'rov). Modellar fayli 2276 → 2025 KB (6–10-level modellari faylga kirmaydi). Haqiqiy telefonda qayta tekshirish kerak.
+
+## 6d + 6c dan keyin: nik yorlig'i, bo'sh joy belgilari (bir kompyuterda ketma-ket, CPU ÷6; FPS oldin → keyin)
+low: piyoda 195 → 360, shahar eng baland 270 → 322, mashina 166 → 255
+mid: piyoda 254 → 308, shahar 134 → 138, mashina 72 → 75
+high: piyoda 134 → 185, shahar 115 → 117, mashina 76 → 82
+Draw call +1 (bo'sh joy belgilari — bitta nuqtalar to'plami), uchburchaklar deyarli bir xil. Yorliqlar soni chegarasi va LOD o'zgarmadi; kattaroq yorliq tekstura o'lchamini o'zgartirmaydi (faqat masshtab). Birinchi o'lchovda mashina band edi — "oldin" raqamlari pastroq chiqdi, sekinlashuv yo'q.
+

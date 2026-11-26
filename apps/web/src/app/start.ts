@@ -108,6 +108,8 @@ export const start = async (): Promise<void> => {
 };
 
 let newsAt = 0;
+/** "@nik hozirgina uy oldi" — 3 soniya. */
+const NEWS_SHOW_MS = 3000;
 /** Yangi uy qurilganda boshqalar ekranida qisqa xabar (daqiqasiga ko'pi bilan 1 ta; admin sozlamasida o'chadi). */
 const refreshCity = async (): Promise<void> => {
   const before = getApp().houses;
@@ -117,7 +119,7 @@ const refreshCity = async (): Promise<void> => {
   const nick = newNeighbourNick(before, s.houses, new Set(s.profile?.plots.map((p) => p.plot) ?? []), newsAt, Date.now());
   if (!nick) return;
   newsAt = Date.now();
-  toast(translate('justClaimed', s.lang).replace('{nick}', nick));
+  toast(translate('justClaimed', s.lang).replace('{nick}', nick), false, NEWS_SHOW_MS);
 };
 
 let isRunning = false;

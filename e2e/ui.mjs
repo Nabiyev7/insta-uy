@@ -223,6 +223,9 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
   };
   const goods = (id) => page.locator(`.good[data-id="${id}"]`);
   const openTab = async (key) => {
+    // Do'kon oxirgi bo'limni eslaydi: tanga tablari uchun avval "Tanga do'koni".
+    const coinsPart = sheet.getByRole('tab', { name: T.shopCoins });
+    if (TABS.includes(key) && (await coinsPart.count()) > 0 && (await coinsPart.getAttribute('aria-selected')) !== 'true') await coinsPart.click();
     const tab = sheet.getByRole('tab', { name: T[key], exact: true });
     await tab.scrollIntoViewIfNeeded();
     await tab.click();

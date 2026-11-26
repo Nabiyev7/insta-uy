@@ -10,7 +10,7 @@ Dizayn **Farg'ona yoki boshqa bir hududga bog'lanmaydi** — **umumiy, universal
 - Promtlarda milliy uslub talab qilingan joy qolgan bo'lsa — bu bo'lim ustun turadi.
 
 ## Joriy vazifa
-Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. **6-qadamni bajar: `docs/chat/BOSQICH-2-3-PROMT.md`** (A → F qismlar, har qismdan keyin tekshiruv va commit). 7-qadam keyingi bosqichda — hozir tegma. (2026-11-25)
+Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. 6, 6a, 6b, 6c, 6d bajarildi. **Navbatdagi: 12-qadam — `docs/chat/INTERNET-PROMT.md`** (egasi akkauntlar tayyor deganda). 7-qadam betadan keyin. (2026-11-26)
 
 ## Ro'yxat
 

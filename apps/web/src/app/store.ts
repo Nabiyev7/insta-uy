@@ -112,10 +112,10 @@ export const setApp = useApp.setState;
 export const getApp = useApp.getState;
 
 let toastId = 0;
-export const toast = (text: string, isError = false): void => {
+export const toast = (text: string, isError = false, ms = 4200): void => {
   const id = ++toastId;
   setApp((s) => ({ toasts: [...s.toasts.slice(-2), { id, text, isError }] }));
-  setTimeout(() => setApp((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 4200);
+  setTimeout(() => setApp((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), ms);
 };
 const sameAs = (a: Panel, b: Panel): boolean => JSON.stringify(a) === JSON.stringify(b);
 const MAX_TRAIL = 12;
