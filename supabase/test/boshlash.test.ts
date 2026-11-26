@@ -56,3 +56,12 @@ describe('ishga tushirish: sinov ma‘lumotlari o‘chadi', () => {
     expect((await as<Row>(owner, 'admin_stats')).revenue).toBe(0);
   });
 });
+
+describe('Supabase pg_safeupdate', () => {
+  test('tozalash funksiyasida har bir DELETE va UPDATE da WHERE bor', async () => {
+    const src = ((await sql("select prosrc from pg_proc where proname = 'svc_launch_reset'"))[0]!.prosrc as string).replace(/--.*$/gm, '');
+    const statements = (src.match(/(delete from|update public\.)[^;]*/gi) ?? []).map((x) => x.replace(/\s+/g, ' '));
+    expect(statements.length).toBeGreaterThan(5);
+    for (const st of statements) expect(st, st).toMatch(/where/i);
+  });
+});
