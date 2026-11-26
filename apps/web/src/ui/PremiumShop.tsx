@@ -23,9 +23,16 @@ function CoinPacks(): React.JSX.Element {
   const packs = setting<{ readonly packs?: readonly Pack[] }>('premium', {}).packs ?? PACKS;
   return (
     <Section title={t('buyCoins')} icon="coin">
-      <ul className="list packs">{packs.map((p, i) => (
-        <li key={p.uzs}><span className="grow"><b>{money(p.coins)}</b>{p.bonus > 0 && <span className="tag gold">+{money(p.bonus)} {t('bonusWord')}</span>}{p.tag && <span className={`tag ${p.tag}`}>{t(p.tag === 'best' ? 'packBest' : 'packPopular')}</span>}{!p.stars && <span className="muted"> · {t('cardOnly')}</span>}</span>
-          <span className="muted">{money(p.uzs)} {t('som')}{p.stars ? <> · <Icon name="star" />{p.stars}</> : null}</span><BotBuy code={`pack${i + 1}`} /></li>))}</ul>
+      {/* Karta: tepada tanga soni, ostida bonus, keyin Stars narxi, belgi (matn ustiga tushmaydi), pastda to'liq enli tugma. */}
+      <ul className="pack-cards">{packs.map((p, i) => p.stars ? (
+        <li key={p.uzs} className={`pack-card ${p.tag ?? ''}`}>
+          <b className="pack-coins"><Icon name="coin" />{money(p.coins)}</b>
+          {p.bonus > 0 && <span className="pack-bonus">+{money(p.bonus)} {t('bonusWord')}</span>}
+          <span className="pack-price"><Icon name="star" />{p.stars}</span>
+          {p.tag && <span className={`pack-tag ${p.tag}`}>{t(p.tag === 'best' ? 'packBest' : 'packPopular')}</span>}
+          {/* Kod — sozlamadagi tartib raqami (bot shu bo'yicha topadi). */}
+          <BotBuy code={`pack${i + 1}`} />
+        </li>) : null)}</ul>
     </Section>
   );
 }

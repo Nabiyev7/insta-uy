@@ -379,11 +379,16 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .row.pay { flex-wrap: wrap; gap: 8px; }
 .row.pay .btn { flex: 1 1 auto; }
 .btn.pay-soon { opacity: .75; }
-.list.packs li { flex-wrap: wrap; gap: 8px; }
-.list.packs li .tag { margin-left: 6px; }
+/* 14-qadam: tanga paketlari — har biri alohida karta, yozuvlar ustma-ust tushmaydi (360 px, ruscha ham). */
+.pack-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pack-card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); }
+.pack-card.popular, .pack-card.best { border-color: rgba(243, 205, 104, 0.6); }
+.pack-coins { display: inline-flex; align-items: center; gap: 6px; font-size: 24px; line-height: 1.15; }
+.pack-bonus { color: #f3cd68; font-weight: 700; font-size: 14px; }
+.pack-price { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; font-weight: 700; }
+.pack-tag { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: rgba(243, 205, 104, 0.18); color: #f3cd68; }
+.pack-card .btn { align-self: stretch; width: 100%; margin-top: 6px; justify-content: center; white-space: normal; }
 .banner.salute { background: var(--main); color: var(--on-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
-/* 6a: admin sinov rejimi belgisi */
-.btn.test-buy { background: #b42318; color: #fff; }
 .tag.best { background: var(--gold-a); color: var(--on-gold); }
 .tag.popular { background: var(--main); color: var(--on-main); }
 /* 6a: xabar oyna tugmalarini yopmasin; do'kon tablari chetida so'nish */

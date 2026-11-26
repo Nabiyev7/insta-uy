@@ -165,7 +165,35 @@ const adminScreens = async () => {
   await page.context().close();
 };
 
+/** 14-qadam (6): tanga paketlari kartasida yozuvlar ustma-ust emas — 360/390 px, o'zbekcha va ruscha. */
+const packScreens = async () => {
+  const bad = [];
+  for (const [viewport, lang] of [[SMALL, 'uz'], [SMALL, 'ru'], [PHONE, 'uz'], [PHONE, 'ru']]) {
+    const page = await make(viewport, { lang });
+    await page.addInitScript(() => localStorage.setItem('shopPick', JSON.stringify({ part: 'premium', premium: 'packs', picked: null })));
+    await open(page);
+    await panel(page, { kind: 'shop' });
+    await page.locator('.pack-card').first().waitFor({ timeout: 30_000 });
+    const overlaps = await page.evaluate(() => [...document.querySelectorAll('.pack-card')].flatMap((card, n) => {
+      const parts = [...card.children].map((el) => ({ cls: el.className, r: el.getBoundingClientRect() })).filter((x) => x.r.width > 0 && x.r.height > 0);
+      const out = [];
+      for (const [i, a] of parts.entries()) for (const b of parts.slice(i + 1)) {
+        if (a.r.left < b.r.right - 0.5 && b.r.left < a.r.right - 0.5 && a.r.top < b.r.bottom - 0.5 && b.r.top < a.r.bottom - 0.5) out.push(`${n + 1}-karta: ${a.cls} × ${b.cls}`);
+      }
+      const box = card.getBoundingClientRect();
+      for (const x of parts) if (x.r.right > box.right + 0.5 || x.r.left < box.left - 0.5) out.push(`${n + 1}-karta: ${x.cls} kartadan chiqib ketgan`);
+      return out;
+    }));
+    bad.push(...overlaps.map((o) => `${viewport.width}px ${lang}: ${o}`));
+    if (viewport === PHONE && lang === 'uz') await shot(page, 'ui-tanga-paket', 900);
+    await page.context().close();
+  }
+  if (bad.length) throw new Error(`Tanga paketlari ustma-ust: ${bad.join('; ')}`);
+  console.log('✅ tanga paketlari: 360/390 px, uz/ru — ustma-ust yo‘q');
+};
+
 try {
+  await packScreens();
   const owner = await guestScreens();
   await ownerScreens(owner);
   await otherScreens(owner);
