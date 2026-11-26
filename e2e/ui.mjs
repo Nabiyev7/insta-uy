@@ -70,6 +70,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await enter(page);
     T = await app((l) => window.__texts(l), lang);
     await page.locator('.card').getByText(T.freeTitle).waitFor();
+    assert.ok(await app(() => window.__markers.current !== null), 'mehmonga "+" belgilari qatlami bor');
     assert.equal(await page.locator('.pill.coins, .bell').count(), 0, 'mehmonda tanga va qo‘ng‘iroq bo‘lmasin');
     await checkLayout(page, 'mehmon');
     const id = await app(() => {
@@ -107,6 +108,13 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await waitFor(async () => (await sheet.count()) === 0, 'orqaga tugmasi oynani yopmadi');
     await page.locator('.card').getByText(T.cheerBuilt).waitFor();
     await page.locator('.card-x').click();
+    // Bepul uy olindi: bo'sh joylardagi "+" darhol yo'qoladi (sahifa yangilanmasdan), bo'sh joy oynasida qurish tugmasi yo'q.
+    await waitFor(() => app(() => window.__markers.current?.points.visible === false), '"+" belgilari yo‘qolishi');
+    const empty = await app(() => { const s = window.__app.getState(); return s.plan.plots.find((q) => q.districtId === 1 && q.type === 'hovli' && !s.houses.has(q.id)).id; });
+    await app((id) => window.__app.setState({ panel: { kind: 'plot', id }, trail: [] }), empty);
+    await sheet.getByText(T.e_free_used).waitFor();
+    assert.equal(await sheet.getByRole('button', { name: T.buildFree }).count(), 0, 'uyi borga qurish tugmasi yo‘q');
+    await closeAll();
   });
 
   await at('3. rejimlar, joystick, mashina tanlash', async () => {

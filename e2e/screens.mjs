@@ -89,6 +89,10 @@ const ownerScreens = async ({ id, storage }) => {
   await day(me);
   await lookAt(me, id, 26);
   await shot(me, 'ui-egasi', 3000);
+  // 6e: bepul uyi bor — atrofdagi bo'sh joylarda "+" va "kutyapti" belgilari yo'q.
+  await lookAt(me, id, 60);
+  await shot(me, 'ui-uyi-bor', 2000);
+  await lookAt(me, id, 26);
   for (const [name, p] of PANELS(id)) {
     await panel(me, p);
     await shot(me, name, 1300);

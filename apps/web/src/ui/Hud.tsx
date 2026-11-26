@@ -8,8 +8,8 @@ import { here, input, player, snapshotters, type Mode } from '../app/runtime.ts'
 import { backPanel, openAuth, openPanel, openRoot, setApp, useApp, type Panel } from '../app/store.ts';
 import { rpc } from '../app/api.ts';
 import { goToPlot, nearestFree } from '../app/actions.ts';
-import { countLine } from '../logic/lively.ts';
-import { setting } from '../app/store.ts';
+import { canClaimFree, countLine } from '../logic/lively.ts';
+import { getApp, setting } from '../app/store.ts';
 import { BottomCard, PreviewBar } from './BottomCard.tsx';
 import { CoinFly } from './CoinFly.tsx';
 import { Icon, type IconName } from './icons.tsx';
@@ -110,7 +110,12 @@ function HousesCount(): React.JSX.Element | null {
   const hasHouse = useApp((s) => (s.profile?.plots.length ?? 0) > 0);
   const mode = useApp((s) => s.mode);
   if (hasHouse || mode !== 'city' || !setting('lively_start', true)) return null;
-  const go = (): void => { const id = nearestFree(); if (id) goToPlot(id); };
+  const go = (): void => {
+    const p = getApp().profile;
+    // Bepul uyi bor odam bo'sh joyga emas — o'z uyiga.
+    const id = canClaimFree(p) ? nearestFree() : p?.plots[0]?.plot ?? null;
+    if (id) goToPlot(id);
+  };
   return <button type="button" className="pill glass lively-count" onClick={go}><Icon name="home" /><b>{countLine(count, { today: t('housesToday'), first: t('beFirst') })}</b></button>;
 }
 

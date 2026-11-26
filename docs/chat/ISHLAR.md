@@ -10,7 +10,7 @@ Dizayn **Farg'ona yoki boshqa bir hududga bog'lanmaydi** — **umumiy, universal
 - Promtlarda milliy uslub talab qilingan joy qolgan bo'lsa — bu bo'lim ustun turadi.
 
 ## Joriy vazifa
-Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. 6, 6a, 6b, 6c, 6d bajarildi. **Navbatdagi: 12-qadam — `docs/chat/INTERNET-PROMT.md`** (egasi akkauntlar tayyor deganda). 7-qadam betadan keyin. (2026-11-26)
+Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. 6, 6a–6e bajarildi. **Navbatdagi: 12-qadam — `docs/chat/INTERNET-PROMT.md`** (egasi akkauntlar tayyor deganda). 7-qadam betadan keyin. (2026-11-26)
 
 ## Ro'yxat
 
@@ -30,6 +30,7 @@ Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. 6, 6a, 6b, 6c, 6d bajaril
 - [x] **6b. Qo'shimcha 1** — `docs/chat/QOSHIMCHA-1.md` (6a dan keyin, 12-qadamdan oldin)
 - [x] **6c. Telegram bot** — `docs/chat/BOT-PROMT.md` (12-qadamdan oldin)
 - [x] **6d. Tuzatish 2 (do'kon)** — `docs/chat/TUZATISH-2.md` (6c bilan birga)
+- [x] **6e. Tuzatish 3** — `docs/chat/TUZATISH-3.md` (12-qadamdan oldin)
 - [ ] **12. Internetga chiqarish (beta)** — `docs/chat/INTERNET-PROMT.md` (6-qadamdan keyin; 7-qadam yuklama — betadan keyin, ochilishdan oldin)
 
 ## Har qadamdan keyin

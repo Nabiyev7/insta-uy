@@ -21,7 +21,8 @@ function ClaimForm({ plot }: InfoProps): React.JSX.Element {
   const [bio, setBio] = useState('');
   const [isOpen, setOpen] = useState(false);
   const hasNick = Boolean(profile?.instagram);
-  if (profile?.free_used) return <p className="muted">{t('e_free_used')}</p>;
+  // Bepul uyi bor: faqat kichik izoh (uy qurish tugmasi yo'q). Sinov rejimida — bir nechta uy.
+  if (profile?.free_used && profile.test_mode !== true) return <p className="muted small">{t('e_free_used')}</p>;
   if (!isOpen) {
     const hint = setting('telegram_bot', '') ? t('tgFast') : t('needSignIn');
     return <><button type="button" className="btn gold block big" onClick={() => (profile ? setOpen(true) : openAuth())}>{t('buildFree')}</button>{!profile && <p className="muted center">{hint}</p>}</>;

@@ -1,6 +1,10 @@
 /** Bo'sh shahar jonliroq: markazga yaqin bo'sh joylar belgisi, "bugun N kishi uy oldi" va "@nik hozirgina uy oldi" xabari. Sof hisob. */
 import { isFreeType, type Plot } from '../../../../packages/shared/src/index.ts';
 
+interface ClaimProfile { readonly free_used: boolean; readonly test_mode?: boolean }
+/** Bepul uy hali olinmaganmi (mehmon ham)? Admin sinov rejimida — doim ha (bir nechta uy). */
+export const canClaimFree = (p: ClaimProfile | null | undefined): boolean => !p || !p.free_used || p.test_mode === true;
+
 /** Belgi shuncha joyda (tezlik uchun). */
 export const WAITING_MAX = 20;
 /** Yangi uy xabari daqiqasiga ko'pi bilan 1 ta. */
