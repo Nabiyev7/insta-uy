@@ -1,5 +1,7 @@
 /** Bot profili — avtomatik sozlash (12-qadamda deploy'dan keyin `npm run bot:setup`). Takror ishga tushirilsa xavfsiz: har chaqiruv o'rnatadi, qo'shmaydi. */
 import { bt, type Lang, type TextKey } from './botText.ts';
+import type { Ctx } from './types.ts';
+import { json, safeEqual } from './util.ts';
 
 export interface BotSetupOptions {
   readonly siteUrl: string;
@@ -44,3 +46,15 @@ export const botSetup = async (token: string, o: BotSetupOptions, fetcher: typeo
   }
   return done;
 };
+
+/** POST /bot/setup — server o'zi sozlaydi: token Cloudflare maxfiy kaliti bo'lib qoladi, hech qayerga chiqmaydi.
+ *  Faqat `x-setup-secret: <TELEGRAM_WEBHOOK_SECRET>` bilan (kalit faqat egasining kompyuterida). Takror chaqirsa bo'ladi. */
+export const setupRoute = async (req: Request, ctx: Ctx): Promise<Response> => {
+  const secret = ctx.env.TELEGRAM_WEBHOOK_SECRET;
+  if (!secret || !ctx.env.TELEGRAM_TOKEN || !safeEqual(req.headers.get('x-setup-secret') ?? '', secret)) return json({ error: 'forbidden' }, 403);
+  const done = await botSetup(ctx.env.TELEGRAM_TOKEN, {
+    siteUrl: ctx.env.SITE_URL.replace(/\/$/, ''), apiUrl: new URL(req.url).origin, webhookSecret: secret, adminTelegramId: Number(ctx.env.ADMIN_TELEGRAM_ID) || undefined,
+  }, ctx.fetch);
+  return json({ ok: true, done });
+};
+

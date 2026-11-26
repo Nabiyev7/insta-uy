@@ -7,6 +7,7 @@ import { disputeProof, panelReply } from './support.ts';
 import { channelCheck, devAdmin, devTelegram, handleTelegram } from './telegram.ts';
 import { HttpError, type Ctx } from './types.ts';
 import { webappLogin } from './webapp.ts';
+import { setupRoute } from './botSetup.ts';
 import { json } from './util.ts';
 
 type Handler = (req: Request, ctx: Ctx) => Promise<Response>;
@@ -21,6 +22,7 @@ const POST: Readonly<Record<string, Handler>> = {
   '/auth/delete': deleteAccount,
   '/waitlist': waitlist,
   '/telegram/webhook': handleTelegram,
+  '/bot/setup': setupRoute,
   '/dev/telegram': devTelegram,
   '/dev/admin': devAdmin,
   '/coins/channel': channelCheck,

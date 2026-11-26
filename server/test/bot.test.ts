@@ -282,6 +282,23 @@ describe('bot profili (npm run bot:setup)', () => {
   });
 });
 
+describe('/bot/setup (server o\'zi sozlaydi)', () => {
+  test('sirsiz — 403; sir bilan — hamma chaqiruv (token tashqariga chiqmaydi)', async () => {
+    expect((await call('/bot/setup', {})).status).toBe(403);
+    expect((await call('/bot/setup', {}, { 'x-setup-secret': 'xato' })).status).toBe(403);
+    const seen: string[] = [];
+    const fake: typeof fetch = async (input, init) => {
+      const url = String(input);
+      if (url.startsWith('https://api.telegram.org/')) { seen.push(url.split('/').at(-1)!); return new Response('{"ok":true}'); }
+      return emuFetch(input, init);
+    };
+    const res = await handle(new Request('https://api.test/bot/setup', { method: 'POST', body: '{}', headers: { 'x-setup-secret': 'wh' } }), ctx({ fetch: fake }), () => undefined);
+    expect(res.status).toBe(200);
+    expect(seen).toContain('setWebhook');
+    expect(seen).toContain('setChatMenuButton');
+  });
+});
+
 describe('Mini App ichida Stars', () => {
   test('/pay/stars/link: hisob havolasi (openInvoice uchun)', async () => {
     await db.query("update settings set value = 'true' where key = 'payments_enabled'");
