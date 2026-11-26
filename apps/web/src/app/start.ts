@@ -99,7 +99,7 @@ export const start = async (): Promise<void> => {
     if (isVideoMode) { exposeVideoApi(); return; }
     void applyLoginLink();
     // Telegram ichida (Mini App) — avtomatik kirish; keyin bot tugmasidagi oyna ochiladi.
-    void startMiniApp(() => { void refreshProfile().then(openWanted); });
+    void startMiniApp(() => { void supabase.auth.getSession().then(({ data }) => (data.session ? refreshProfile() : undefined)).then(openWanted); });
     startAnalytics();
     await runBackground();
   } catch (error: unknown) {
