@@ -26,6 +26,7 @@ const claim = async (uid: string, nick: string): Promise<string> => {
 let admin = '';
 beforeAll(async () => {
   db = await openDb();
+  await db.query("update settings set value = 'true' where key = 'treasure_enabled'");
   await db.query("update settings set value = 'true' where key = 'premium_house_enabled'");
   admin = await user('admin');
   await sql("update settings set value = 'true' where key = 'payments_enabled'");

@@ -61,29 +61,6 @@ interface CoinRules {
 const RULES: CoinRules = { founder: 1000, daily: 100, streakBonus: 300, channel: 300, referral: 500, yardWinner: 2000, treasure: 50, treasurePerDay: 3, sendDay: 500, receiveDay: 1000 };
 const CHANNEL = 'citylanduz';
 
-function SendCoins({ rules }: { readonly rules: CoinRules }): React.JSX.Element {
-  const t = useT();
-  const sent = useApp((s) => s.profile?.sent_today ?? 0);
-  const { isBusy, run } = useAction();
-  const [to, setTo] = useState('');
-  const [amount, setAmount] = useState('');
-  const submit = (e: React.FormEvent): void => {
-    e.preventDefault();
-    void run(async () => { await rpc('my_send_coins', { p_to: to, p_amount: Number(amount) }); buzz(BUZZ.coin); setTo(''); setAmount(''); await refreshProfile(); }, t('saved'));
-  };
-  const rulesText = t('sendRules').replace('{send}', money(rules.sendDay)).replace('{receive}', money(rules.receiveDay));
-  return (
-    <Section title={t('sendCoins')} icon="coin">
-      <p className="muted">{rulesText}</p>
-      <form className="row send-coins" onSubmit={submit}>
-        <input className="input grow" value={to} onChange={(ev) => setTo(ev.target.value)} maxLength={31} placeholder="@nik" aria-label={t('sendTo')} required />
-        <input className="input" type="number" inputMode="numeric" min={1} max={Math.max(1, rules.sendDay - sent)} value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder={t('amount')} aria-label={t('amount')} required />
-        <button type="submit" className="btn small" disabled={isBusy || sent >= rules.sendDay}>{t('send')}</button>
-      </form>
-      <p className="muted">{t('sentToday')}: {money(sent)} / {money(rules.sendDay)}</p>
-    </Section>
-  );
-}
 
 function ChannelBonus({ gain }: { readonly gain: number }): React.JSX.Element {
   const t = useT();
@@ -140,21 +117,22 @@ export function CoinsPanel(): React.JSX.Element {
     });
   };
   const daily = (): void => { void run(async () => { const r = await rpc<{ gain: number }>('my_daily'); buzz(BUZZ.coin); await refreshProfile(); toast(`+${r.gain}`); }); };
-  const earn: readonly (readonly [Key, number])[] = [['r_founder', rules.founder], ['r_daily', rules.daily], ['r_streak', rules.streakBonus], ['r_channel', rules.channel], ['r_referral', rules.referral], ['r_yard', rules.yardWinner], ['r_treasure', rules.treasure]];
+  // Xazina ovi vaqtincha o'chiq (treasure_enabled) — bo'lim ham, "qanday topiladi" qatori ham yo'q.
+  const hasTreasure = setting('treasure_enabled', false);
+  const earn: readonly (readonly [Key, number])[] = [['r_founder', rules.founder], ['r_daily', rules.daily], ['r_streak', rules.streakBonus], ['r_channel', rules.channel], ['r_referral', rules.referral], ['r_yard', rules.yardWinner], ...(hasTreasure ? [['r_treasure', rules.treasure] as const] : [])];
   const isTreasureDone = profile.treasures_today >= rules.treasurePerDay;
   return (
     <Sheet title={t('coins')}>
       <p className="big-coins"><Icon name="coin" />{money(profile.coins)}</p>
       <button type="button" className="btn gold" disabled={isBusy || profile.daily_done} onClick={daily}><Icon name="gift" />{profile.daily_done ? t('dailyDone') : `${t('daily')} · ${profile.daily_next}-${t('dayRow')}`}</button>
       <ChannelBonus gain={rules.channel} />
-      <Section title={t('treasure')}>
+      {hasTreasure &&       <Section title={t('treasure')}>
         <button type="button" className="btn" disabled={isBusy || !isWalking || isTreasureDone} onClick={dig}><Icon name="dig" />{t('treasureCheck')}</button>
         <p className="muted">{t('treasureLeft')}: {profile.treasures_today} / {rules.treasurePerDay}{isWalking ? '' : ` · ${t('walkFirst')}`}</p>
-      </Section>
+      </Section>}
       <Section title={t('earn')}>
         <ul className="list">{earn.map(([key, n]) => <li key={key}><span className="grow">{t(key)}</span><span className="tag gold">+{money(n)}</span></li>)}</ul>
       </Section>
-      <SendCoins rules={rules} />
       <button type="button" className="btn gold block buy-coins" onClick={() => openCoinShop()}><Icon name="coin" />{t('buyCoins')}</button>
       <Salute rules={rules} />
     </Sheet>

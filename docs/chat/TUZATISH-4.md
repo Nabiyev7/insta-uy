@@ -29,7 +29,16 @@ Tanga o'tkazish (bir odamdan boshqasiga) **hamma joydan** olinadi:
 Egasining kompyuterida (uy Wi-Fi) `https://citylanduz.pages.dev` **Chrome'da ochilmadi**: `ERR_QUIC_PROTOCOL_ERROR`, QUIC o'chirilsa `ERR_CONNECTION_RESET` (ECH va post-kvant kalitlarini o'chirish ham yordam bermadi). Shu kompyuterdan `curl` va PowerShell bilan esa 200 qaytadi; API (`workers.dev`) va Render ham javob beradi. Telegram Mini App ichida telefonda ishlagan. Taxmin: provayderning filtri Chrome ulanishini `*.pages.dev` ga uzmoqda.
 - Sababini aniqla (DNS — Chrome secure DNS va tizim DNS boshqa IP beryaptimi; TLS; IPv6). `e2e/prod.mjs` ga `--disable-quic` qo'sh va xatoni aniq yozsin.
 - Agar `*.pages.dev` ba'zi provayderlarda bloklangan bo'lsa — **yechim variantlarini `SAVOLLAR.md` ga yoz** (o'z domeni Cloudflare orqali: narxi; Cloudflare'da HTTP/3 o'chirish faqat o'z domenda mumkin; boshqa bepul xosting) — egasi tanlaydi, o'zing pullik narsa qilma.
-- Egasi telefonda tekshiradi: Chrome (Telegram'siz) — Wi-Fi va mobil internet (Beeline/Ucell/Uzmobile/Mobiuz).
+- **Natija (egasi, 10:01): telefondagi Chrome'da sayt ochiladi.** Demak muammo faqat egasining kompyuteriga xos (antivirus/proksi/VPN, Chrome profili yoki shu kompyuterning tarmog'i). Shuning uchun: faqat `e2e/prod.mjs` ni mustahkamla (`--disable-quic`, xatoni aniq yozish, 3 marta qayta urinish) va kompyuterdagi sababni qisqa tekshir; domen masalasi beta paytida foydalanuvchilardan shikoyat bo'lsagina qaytadi.
+
+## 5. Xazina ovi — vaqtincha olib tashlanadi (egasi)
+Keyin qayta ko'rib chiqiladi, shuning uchun **kod qoladi**, `treasure_enabled` (sukut **false**) bayroqchasi ortida:
+- Sayt: Tanga oynasidagi "Xazina ovi" bo'limi va "Xazina (kuniga 3 ta) +50" qatori, pastki karta (xazina kartasi), piyoda rejimidagi xazina belgisi/issiq-sovuq, Yordam va Qoidalar matni, ko'rsatma.
+- Bot va kanal: xazina haqidagi matnlar.
+- Server: `my_treasure_*` RPC'lar o'chiq bo'lsa `forbidden`; kunlik xazina yaratilmaydi (cron).
+- Admin panel: sozlamada "Xazina ovi" yoqish/o'chirish (izoh bilan); boshqa xazina bo'limlari yashirin.
+- `TANGA-NARXLAR.md` va `KEYINGI.md`: "Xazina ovi — vaqtincha o'chirilgan, keyin ko'rib chiqiladi (2026-11-26)".
+- Test: bayroqcha false → RPC rad, UI'da xazina yo'q; true → hozirgidek ishlaydi.
 
 ## Qabul sharti
 - `npm test`, `npm run typecheck`, tegishli e2e; `npm run screens`; deploy (12-qadam tartibida, GitHub push → avtomatik); `ISHLAR.md` [x]; commit: `fix: tuzatish 4 — tanga yuborish olib tashlandi, admin sinov rejimi o'chiq bo'lganda "+" yo'q, premium xarid botda`.

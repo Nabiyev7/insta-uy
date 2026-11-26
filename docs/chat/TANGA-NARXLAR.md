@@ -11,7 +11,7 @@
 | Telegram kanalga obuna (bir marta) | 300 |
 | Do'st taklifi (do'st uy olsa) | 500 |
 | "Haftaning hovlisi" g'olibi | 2 000 |
-| Xazina ovi (bitta topilma) | 50, kuniga ko'pi bilan 3 ta |
+| Xazina ovi (bitta topilma) — **vaqtincha o'chirilgan, keyin ko'rib chiqiladi (2026-11-26)**, `treasure_enabled=false` | 50, kuniga ko'pi bilan 3 ta |
 
 Har kuni kirib, xazina izlaydigan odam: kuniga ~250, haftasiga ~2 000, oyiga ~8 000–9 000 (+ referallar).
 
@@ -52,7 +52,7 @@ Har kuni kirib, xazina izlaydigan odam: kuniga ~250, haftasiga ~2 000, oyiga ~8 
 ## Qoidalar (egasi bilan kelishilgan)
 - Pul birligining nomi: **Tanga** (ruscha: монеты).
 - **Kunlik seriya:** bir kun kirilmasa — seriya darhol noldan boshlanadi.
-- **Tanga o'tkazish:** mumkin, cheklangan:
+- **Tanga o'tkazish — olib tashlandi (2026-11-26).** Kod qoladi, `coins_transfer_enabled=false`; quyidagi qoidalar faqat qayta yoqilsa amal qiladi:
   - bir odam kuniga ko'pi bilan **500 tanga** yubora oladi va **1 000 tanga** qabul qila oladi;
   - komissiya yo'q (yuborilgan miqdor to'liq yetib boradi);
   - faqat uyi va Telegram'i bor akkauntlar orasida; o'ziga (bir qurilma) yuborib bo'lmaydi;

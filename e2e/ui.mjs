@@ -350,6 +350,9 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await page.locator('.pill.coins').click();
     await heading(T.coins);
     await sheet.getByText(T.r_founder).waitFor();
+    // 6f: xazina ovi vaqtincha o'chiq — bo'lim va "qanday topiladi" qatori yo'q.
+    assert.equal(await sheet.getByText(T.treasure, { exact: true }).count(), 0, 'xazina bo‘limi yo‘q');
+    assert.equal(await sheet.getByText(T.r_treasure).count(), 0);
     // "Tanga sotib olish" — do'konning Premium → Tangalar tabi.
     await sheet.locator('.buy-coins').click();
     await heading(T.shop);
@@ -358,10 +361,9 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await page.goBack();
     await heading(T.coins);
     assert.equal(await sheet.getByText(T.quests ?? 'Topshiriqlar', { exact: true }).count(), 0, 'topshiriqlar yo‘q');
-    await sheet.getByLabel(T.sendTo).fill('yoq_odam_xyz');
-    await sheet.getByLabel(T.amount).fill('5');
-    await sheet.getByRole('button', { name: T.send, exact: true }).click();
-    await page.locator('.toasts').getByText(T.e_user_not_found).waitFor();
+    // 6f: tanga yuborish olib tashlangan.
+    assert.equal(await sheet.getByText(T.sendCoins, { exact: true }).count(), 0, 'tanga yuborish bo‘limi yo‘q');
+    assert.equal(await sheet.getByLabel(T.sendTo).count(), 0);
     await checkLayout(page, 'tanga oynasi');
     await closeAll();
     await page.locator('.bell').click();

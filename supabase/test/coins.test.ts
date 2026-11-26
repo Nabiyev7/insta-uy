@@ -63,6 +63,12 @@ describe('tanga: topish', () => {
     await as(guest, 'my_claim', { p_plot: plot });
     expect(await coinsOf(host.uid)).toBe(500);
   });
+  test('6f: xazina ovi o‘chiq (sukut) — rad; yoqilsa hozirgidek', async () => {
+    const { uid } = await withHouse(0);
+    await fails(as(uid, 'my_treasure', { p_x: 0, p_z: 0 }), 'forbidden');
+    await db.query("update settings set value = 'true' where key = 'treasure_enabled'");
+    expect(await as<Row>(uid, 'my_treasure', { p_x: 0, p_z: 0 })).toMatchObject({ state: 'hunt' });
+  });
   test('xazina: 50 tanga, kuniga 3 ta, har biri boshqa joyda', async () => {
     const { uid } = await user();
     for (let i = 1; i <= 3; i++) {
@@ -77,6 +83,15 @@ describe('tanga: topish', () => {
 });
 
 describe('tanga o‘tkazish', () => {
+  test('olib tashlangan (6f): bayroqcha o‘chiq — rad, admin sinov rejimida ham', async () => {
+    const [a, d] = [await withHouse(2000), await withHouse(0)];
+    await fails(as(a.uid, 'my_send_coins', { p_to: d.nick, p_amount: 10 }), 'forbidden');
+    await sql("update profiles set role = 'admin', test_mode = true where user_id = $1", [a.uid]);
+    await fails(as(a.uid, 'my_send_coins', { p_to: d.nick, p_amount: 10 }), 'forbidden');
+    await sql("update profiles set role = 'user' where user_id = $1", [a.uid]);
+    // Quyidagi testlar uchun — kod qolgan, bayroqcha yoqilsa eski qoidalar ishlaydi.
+    await sql("update settings set value = 'true' where key = 'coins_transfer_enabled'");
+  });
   test('komissiyasiz; kuniga yuborish ≤ 500, qabul ≤ 1 000', async () => {
     const [a, b, c, d] = [await withHouse(2000), await withHouse(2000), await withHouse(2000), await withHouse(0)];
     expect(await as(a.uid, 'my_send_coins', { p_to: `@${d.nick}`, p_amount: 300 })).toMatchObject({ coins: 1700, sent: 300 });

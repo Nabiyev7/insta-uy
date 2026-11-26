@@ -3,6 +3,7 @@ import { rpc } from '../api.ts';
 import { Btn, Table, useAction, useLoad, when } from '../ui.tsx';
 
 const TITLES: Readonly<Record<string, string>> = {
+  treasure_enabled: 'Xazina ovi (vaqtincha o‘chirilgan; yoqsangiz — Tanga oynasida va piyoda rejimida qaytadi)', coins_transfer_enabled: 'Tanga yuborish (olib tashlangan; yoqilmasin)',
   channel_posts: 'Kanalga avtomatik postlar (daily — kunlik 20:00, yard — haftaning hovlisi, project — shahar loyihasi, milestone — 100/500/1 000… uy); true/false', channel_lang: 'Kanal postlari tili (uz/ru)',
   lively_start: 'Bo‘sh shahar: belgilar, hisoblagich va «uy oldi» xabari',
   city_name: 'Shahar nomi', maintenance: 'Texnik ishlar rejimi', free_claim_enabled: 'Bepul uy tarqatish', payments_enabled: "To'lovlar yoqilgan", payment_provider: "To'lov usuli (card/payme/click)", pay_card: "To'lov kartasi", reserve_minutes: 'Band qilish (daqiqa)',

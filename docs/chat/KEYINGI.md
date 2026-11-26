@@ -38,4 +38,10 @@
 - Daryo va ko'priklar (joyi 1-bosqich xaritasida oldindan ajratiladi), atrofdagi tog'lar, ko'proq yashil zonalar.
 
 ## Tanga
+- **Xazina ovi** — vaqtincha o'chirilgan (bayroqcha `treasure_enabled`), keyin egasi bilan qayta ko'rib chiqiladi (2026-11-26).
+- **Tanga yuborish** — olib tashlangan (bayroqcha `coins_transfer_enabled`), kerak bo'lsa qaytariladi (2026-11-26).
 - Uy bo'shatilganda (3 oy kirmasa) tanga, level va bezaklar nima bo'lishi — hal qilinmagan.
+
+## Vaqtincha o'chirilganlar (2026-11-26)
+- **Xazina ovi** — vaqtincha o'chirilgan, keyin ko'rib chiqiladi (kod qoladi; admin → Sozlamalar → `treasure_enabled`).
+- **Tanga yuborish** (bir odamdan boshqasiga) — olib tashlangan (kod qoladi; `coins_transfer_enabled`).

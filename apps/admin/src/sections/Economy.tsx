@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { rpc } from '../api.ts';
 import { Btn, Table, useAction, useLoad, when } from '../ui.tsx';
 
-/** Tanga iqtisodi: topish, narxlar, o'tkazma chegaralari (hammasi `coins` sozlamasida). */
+/** Tanga iqtisodi: topish, narxlar (hammasi `coins` sozlamasida). */
+const SHOW_TRANSFERS = false;
 const FIELDS: readonly (readonly [key: string, label: string])[] = [
   ['founder', 'Birinchi 100 kishi (bir marta)'], ['daily', 'Kunlik kirish'], ['streakBonus', '7 kun ketma-ket (bonus)'], ['channel', 'Telegram kanalga obuna (bir marta)'],
   ['referral', "Do'st taklifi (do'st uy olsa)"], ['yardWinner', '"Haftaning hovlisi" g‘olibi'], ['treasure', 'Xazina (bitta topilma)'], ['treasurePerDay', 'Xazina: kuniga nechta'],
@@ -95,11 +96,14 @@ export function Economy(): React.JSX.Element {
       <Table rows={stats.data?.reasons ?? null} error={stats.error} rowKey={(r) => r.reason} columns={[
         { head: 'Qayerdan / qayerga', cell: (r) => r.reason }, { head: 'Kirdi', cell: (r) => `+${r.plus}` }, { head: 'Sarflandi', cell: (r) => `−${r.minus}` },
       ]} />
+      {/* Tanga o'tkazish olib tashlangan (coins_transfer_enabled=false) — bo'lim yashirin, kod qoladi. */}
+      {SHOW_TRANSFERS && <>
       <h3>Tanga o'tkazmalari</h3>
       <div className="row"><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nik" aria-label="O‘tkazmani qidirish" /></div>
       <Table rows={transfers.data} error={transfers.error} rowKey={(t) => String(t.id)} columns={[
         { head: 'Kimdan', cell: (t) => t.from_nick ?? '—' }, { head: 'Kimga', cell: (t) => t.to_nick ?? '—' }, { head: 'Tanga', cell: (t) => t.amount }, { head: 'Vaqt', cell: (t) => when(t.at) },
       ]} />
+      </>}
     </>
   );
 }

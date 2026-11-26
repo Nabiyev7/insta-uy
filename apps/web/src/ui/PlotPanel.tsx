@@ -11,6 +11,7 @@ import { BADGE_ICONS } from './badges.ts';
 import { Icon } from './icons.tsx';
 import { Field, LoadState, RowLink, Sheet, useAction, useLoad } from './kit.tsx';
 import { listOf } from '../logic/safe.ts';
+import { canClaimFree } from '../logic/lively.ts';
 
 interface InfoProps { readonly plot: PlotInfo }
 
@@ -23,7 +24,7 @@ function ClaimForm({ plot }: InfoProps): React.JSX.Element {
   const [isOpen, setOpen] = useState(false);
   const hasNick = Boolean(profile?.instagram);
   // Bepul uyi bor: faqat kichik izoh (uy qurish tugmasi yo'q). Sinov rejimida — bir nechta uy.
-  if (profile?.free_used && profile.test_mode !== true) return <p className="muted small">{t('e_free_used')}</p>;
+  if (!canClaimFree(profile)) return <p className="muted small">{t('e_free_used')}</p>;
   if (!isOpen) {
     const hint = setting('telegram_bot', '') ? t('tgFast') : t('needSignIn');
     return <><button type="button" className="btn gold block big" onClick={() => (profile ? setOpen(true) : openAuth())}>{t('buildFree')}</button>{!profile && <p className="muted center">{hint}</p>}</>;

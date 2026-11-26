@@ -109,7 +109,12 @@ const T = {
   productMissing: ['Tovar topilmadi.', 'Товар не найден.'],
   saluteHow: ['🎆 Salyut matnini shunday yozing: /salyut Tug‘ilgan kuning bilan!', '🎆 Напишите текст салюта так: /salyut С днём рождения!'],
   invoiceDesc: ['CityLand UZ — {title}. To‘langach saytda darhol paydo bo‘ladi.', 'CityLand UZ — {title}. После оплаты сразу появится на сайте.'],
-  paidOk: ['✅ To‘lov qabul qilindi — saytda tayyor!', '✅ Оплата получена — всё уже на сайте!'],
+  paidOk: ['✅ Tayyor — saytda ko‘ring!', '✅ Готово — смотрите на сайте!'],
+  product: ['{title}\n💰 {uzs} so‘m{stars}', '{title}\n💰 {uzs} сум{stars}'],
+  productStars: [' · {n} ⭐', ' · {n} ⭐'],
+  productCoins: ['🪙 {n} tanga', '🪙 {n} монет'],
+  btnPayStars: ['⭐ {n} Stars bilan to‘lash', '⭐ Оплатить {n} Stars'],
+  btnTestBuy: ['🧪 Sinov xaridi (bepul)', '🧪 Тестовая покупка (бесплатно)'],
   paidProblem: ['⚠️ To‘lov keldi, admin ko‘rib chiqadi.', '⚠️ Оплата получена, админ проверит.'],
   orderOld: ['Buyurtma muddati tugagan — qaytadan oching.', 'Заказ устарел — оформите заново.'],
   // ---------- Parol (faqat password_login yoqilganda) ----------

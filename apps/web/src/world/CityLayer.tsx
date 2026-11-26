@@ -108,7 +108,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     last.current = FRESH;
     world.ground.setState({ openDistricts: open });
     world.farGround.setState({ openDistricts: open });
-  }, [houses, open, extras, world, level, catalog, mine, profile?.free_used, profile?.test_mode]);
+  }, [houses, open, extras, world, level, catalog, mine, profile?.free_used, profile?.test_mode, profile?.plots.length]);
   useEffect(() => { world.boards.setLang(lang); }, [lang, world]);
   /** Bo'sh shahar: markazga eng yaqin ~20 bo'sh joy (uy olinganda qayta hisoblanadi). */
   useEffect(() => { world.beacons.set(waitingPlots(plan.plots, saved, open)); }, [plan, saved, open, world]);

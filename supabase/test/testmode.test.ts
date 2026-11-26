@@ -18,7 +18,7 @@ const user = async (role = 'user'): Promise<string> => {
 const plotOf = async (where: string): Promise<string> => (await sql(`select id from plots p where ${where} and not exists (select 1 from plot_state s where s.plot_id = p.id) order by id limit 1`))[0]!.id as string;
 const coins = async (uid: string): Promise<number> => (await sql('select coins from profiles where user_id = $1', [uid]))[0]!.coins as number;
 
-beforeAll(async () => { db = await openDb(); });
+beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'treasure_enabled'"); });
 
 describe('admin sinov rejimi', () => {
   test('admin: yopiq tuman, villa, bir nechta bepul uy; tanga yechilmaydi; lyuks 1-level uyga; uy istalgan levelga', async () => {

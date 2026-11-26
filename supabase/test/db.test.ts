@@ -34,7 +34,7 @@ const owner = async (): Promise<{ uid: string; plot: string }> => {
   return { uid, plot };
 };
 
-beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); });
+beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); await db.query("update settings set value = 'true' where key = 'treasure_enabled'"); });
 
 describe('ruxsatlar', () => {
   test('anon jadvalga, my_*, admin_*, svc_* ga kira olmaydi', async () => {

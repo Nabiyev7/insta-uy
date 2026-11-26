@@ -4,7 +4,7 @@ import { createAccount } from './auth.ts';
 import { bt, both, guessLang, langOf, oneLang, type Lang, type TextKey } from './botText.ts';
 import { sendReset } from './password.ts';
 import { adminReply, askNick, nickProblem, normalizeNick, openDispute, proposeNick, supportMessage, takeProof } from './support.ts';
-import { buyCode, preCheckout, sendInvoice, shopMenu, starsPaid } from './shop.ts';
+import { buyCode, payCode, preCheckout, sendInvoice, shopMenu, starsPaid, testBuy } from './shop.ts';
 import { HttpError, type Ctx, type ReplyMenu, type Telegram, type TgButton } from './types.ts';
 import { json, keyed, limit, randomPassword, randomToken, readJson, requireUser, safeEqual } from './util.ts';
 
@@ -433,6 +433,10 @@ const onCallback = async (ctx: Ctx, tg: Telegram, q: NonNullable<Update['callbac
   if (data === 'chan') return channelButton(ctx, tg, q.id, q.from.id, lang);
   const buy = /^buy:([A-Za-z0-9_]{1,60})$/.exec(data)?.[1];
   if (buy) { await tg.answer(q.id, '🛍'); return buyCode(ctx, tg, q.from.id, q.from.id, buy, lang); }
+  const pay = /^pay:([A-Za-z0-9_]{1,60})$/.exec(data)?.[1];
+  if (pay) { await tg.answer(q.id, '⭐'); return payCode(ctx, tg, q.from.id, q.from.id, pay, lang); }
+  const tbuy = /^tbuy:([A-Za-z0-9_]{1,58})$/.exec(data)?.[1];
+  if (tbuy) { await tg.answer(q.id, '🧪'); return testBuy(ctx, tg, q.from.id, q.from.id, tbuy, lang); }
   if (data === 'open') {
     // Eski xabarlardagi tugma: menyu va brauzer havolasi.
     await tg.answer(q.id, '🏙');

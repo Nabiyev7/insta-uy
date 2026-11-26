@@ -37,11 +37,64 @@ export const sendInvoice = async (ctx: Ctx, tg: Telegram, chat: number, telegram
   }
 };
 
-export const buyCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
+/** To'lov tugmasi bosildi (`pay:<kod>`): Stars hisob-fakturasi. */
+export const payCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
   if (code === 'salute') return tg.send(chat, bt(lang, 'saluteHow'));
   const p = parseProduct(code);
   if (!p) return tg.send(chat, bt(lang, 'productMissing'));
   return sendInvoice(ctx, tg, chat, telegram, p, lang);
+};
+
+interface ProductView { readonly title: string; readonly uzs: number; readonly stars: number | null; readonly image: string | null }
+/** Tovar ma'lumoti (sayt va bot bir xil narx): bezak — katalogdan, tanga paketi — `premium` sozlamasidan. */
+const productView = async (ctx: Ctx, code: string, lang: Lang): Promise<ProductView | null> => {
+  const premium = (await ctx.db.rpc<Premium | null>('svc_premium', {})) ?? {};
+  const min = premium.starsMin ?? 50;
+  const pack = /^pack([1-9])$/.exec(code)?.[1];
+  if (pack) {
+    const pk = premium.packs?.[Number(pack) - 1];
+    if (!pk) return null;
+    return { title: bt(lang, 'productCoins', { n: fmt(pk.coins + (pk.bonus ?? 0)) }), uzs: pk.uzs ?? 0, stars: pk.stars && pk.stars >= min ? pk.stars : null, image: null };
+  }
+  const decor = /^d_([a-z0-9_]{1,40})$/.exec(code)?.[1];
+  if (!decor) return null;
+  const c = (await ctx.db.rpc<readonly (CatalogItem & { readonly model?: string })[]>('api_catalog', {}).catch(() => [])).find((x) => x.id === decor);
+  if (!c) return null;
+  const stars = Math.max(1, Math.ceil(c.uzs / Math.max(1, premium.starsRate ?? 200)));
+  return { title: `${c.premium ? '⭐ ' : ''}${c[lang]}`, uzs: c.uzs, stars: stars >= min ? stars : null, image: c.model ? `${ctx.env.SITE_URL}/assets/decor/${c.model}.webp` : null };
+};
+
+/** Saytdagi "Botda sotib olish" (`?start=buy_<kod>`) va bot do'koni: rasm, nom, narx, to'lov tugmasi.
+ *  To'lov o'chiq — "Tez kunda"; admin sinov rejimida — "Sinov xaridi". */
+export const buyCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
+  if (code === 'salute') return tg.send(chat, bt(lang, 'saluteHow'));
+  const view = await productView(ctx, code, lang);
+  if (!view) return payCode(ctx, tg, chat, telegram, code, lang);
+  const [isTester, isOn] = await Promise.all([ctx.db.rpc<boolean>('svc_is_tester_tg', { p_telegram: telegram }), ctx.db.rpc<unknown>('svc_setting', { p_key: 'payments_enabled' })]);
+  const caption = bt(lang, 'product', { title: view.title, uzs: fmt(view.uzs), stars: view.stars ? bt(lang, 'productStars', { n: view.stars }) : '' });
+  const buttons: readonly TgButton[] = isTester ? [{ text: bt(lang, 'btnTestBuy'), data: `tbuy:${code}` }]
+    : isOn !== true ? [] : view.stars ? [{ text: bt(lang, 'btnPayStars', { n: view.stars }), data: `pay:${code}` }] : [];
+  const note = isTester ? '' : isOn !== true ? `\n\n${bt(lang, 'payOff')}` : view.stars ? '' : `\n\n${bt(lang, 'starsUnavailable')}`;
+  if (view.image && tg.photoButtons) {
+    try {
+      return await tg.photoButtons(chat, view.image, caption + note, buttons);
+    } catch {
+      // rasm yuklanmasa — matn bilan
+    }
+  }
+  return tg.send(chat, caption + note, buttons);
+};
+
+/** Admin sinov rejimi: botda to'lovsiz xarid (`is_test`). */
+export const testBuy = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
+  const p = parseProduct(code);
+  if (!p) return tg.send(chat, bt(lang, 'productMissing'));
+  try {
+    await ctx.db.rpc('svc_test_purchase', { p_telegram: telegram, p_kind: p.kind, p_payload: p.payload });
+    return await tg.send(chat, bt(lang, 'paidOk'), [{ text: bt(lang, 'btnCity'), webApp: `${ctx.env.SITE_URL}/?til=${lang}` }]);
+  } catch (error: unknown) {
+    return tg.send(chat, bt(lang, errorKey(error)));
+  }
 };
 
 const linkSchema = z.object({ code: z.string().regex(/^[A-Za-z0-9_]{1,60}$/) });
@@ -59,9 +112,9 @@ export const starsLink = async (req: Request, ctx: Ctx): Promise<Response> => {
   return json({ url });
 };
 
-interface Pack { readonly coins: number; readonly bonus?: number; readonly stars?: number | null; readonly tag?: string }
-interface Premium { readonly packs?: readonly Pack[]; readonly starsMin?: number; readonly starsRate?: number }
+interface Pack { readonly coins: number; readonly bonus?: number; readonly uzs?: number; readonly stars?: number | null; readonly tag?: string }
 interface CatalogItem { readonly id: string; readonly uz: string; readonly ru: string; readonly uzs: number; readonly premium?: boolean; readonly onSale: boolean }
+interface Premium { readonly packs?: readonly Pack[]; readonly starsMin?: number; readonly starsRate?: number }
 const fmt = (n: number): string => n.toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
 const TAGS: Readonly<Record<string, TextKey>> = { best: 'packBest', popular: 'packPopular' };
 /** Faqat Stars narxi bor (≥ 50 ⭐) paketlar; 1–2-paket — faqat saytda karta bilan. */
@@ -89,7 +142,7 @@ export const preCheckout = async (ctx: Ctx, tg: Telegram, q: { readonly id: stri
 /** successful_payment: to'lov yozilib, buyurtma darhol bajariladi (idempotent). */
 export const starsPaid = async (ctx: Ctx, tg: Telegram, chat: number, p: { readonly total_amount: number; readonly invoice_payload: string; readonly telegram_payment_charge_id: string }, lang: Lang = 'uz'): Promise<void> => {
   const r = await ctx.db.rpc<{ result: string }>('svc_payment', { p_provider: 'stars', p_external: p.telegram_payment_charge_id, p_amount: p.total_amount, p_order: p.invoice_payload });
-  await tg.send(chat, bt(lang, r.result === 'paid' ? 'paidOk' : 'paidProblem'), [{ text: bt(lang, 'btnOpenCity'), webApp: `${ctx.env.SITE_URL}/?til=${lang}` }]);
+  await tg.send(chat, bt(lang, r.result === 'paid' ? 'paidOk' : 'paidProblem'), [{ text: bt(lang, 'btnCity'), webApp: `${ctx.env.SITE_URL}/?til=${lang}` }]);
 };
 
 const refundSchema = z.object({ payment: z.number().int().positive() });

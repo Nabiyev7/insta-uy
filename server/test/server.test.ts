@@ -361,11 +361,15 @@ describe('Telegram Stars do‘koni', () => {
   test('buy_pack1 → hisob (50⭐) → tekshiruv → to‘lov → tanga; qaytarish', async () => {
     await db.query("update settings set value = 'true' where key = 'payments_enabled'");
     await botUser(1501, 'yulduz_odam2');
+    // 6f: avval tovar kartasi (narx), Stars bo'lmasa — to'lash tugmasi yo'q.
     await webhook(message(1501, '/start buy_pack1'));
     expect(sent.at(-1)!.text).toContain('karta');
+    expect(sent.at(-1)!.buttons ?? []).toEqual([]);
     await webhook(message(1501, '/dokon'));
     expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['buy:pack3', 'buy:pack4', 'buy:pack5', 'buy:salute', undefined]);
     await webhook(message(1501, '/start buy_pack3'));
+    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['pay:pack3']);
+    await webhook({ callback_query: { id: 'p', from: { id: 1501, first_name: 'Y' }, data: 'pay:pack3' } });
     const [, order, stars] = /^invoice:([0-9a-f-]{36}):(\d+):/.exec(sent.at(-1)!.text)!;
     expect(stars).toBe('60');
     await webhook(pre(1501, order!, 59));

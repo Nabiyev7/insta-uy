@@ -216,3 +216,32 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 9. **Telegram Web (brauzerdagi Telegram)** Mini App'ni iframe ichida ochadi — shuning uchun saytda `X-Frame-Options: DENY` olib tashlandi, `frame-ancestors` faqat `*.telegram.org` ga ruxsat beradi.
 10. **Sayt tili = bot tili**: botdagi havolalarda `?til=`; saytda til almashtirilsa profilga yoziladi (`my_lang`) va bot ham shu tilda yozadi.
 11. **"🏡 Uy olish"** — saytda xarita oynasi ochiladi, kamera eng yaqin bo'sh joyga turadi.
+
+### 6f, 4-band — sayt egasining kompyuterida Chrome'da ochilmaydi (tashxis va variantlar, 2026-11-26)
+**Topilgan sabab (shu kompyuter va uy Wi-Fi):**
+- **IPv6 ishlamaydi:** DNS IPv6 manzil beradi, lekin ulanish o'tmaydi (Google IPv6 ga ham).
+- **Chrome'ning TLS 1.3 ulanishi `pages.dev` ga uziladi** (`ERR_CONNECTION_RESET`):
+  - post-kvant kalitni o'chirish yordam bermadi;
+  - TLS 1.2 bilan yoki faqat IPv4 orqali sayt ochiladi;
+  - curl/PowerShell (IPv4) — 200.
+- Bir soat oldin shu kompyuterda ochilgan edi, demak muammo vaqti-vaqti bilan bo'ladi.
+- Telefonda (Chrome va Telegram) ishlaydi.
+- Xulosa: provayder yo'nalishi yoki uy routeridagi IPv6 sozlamasi. Saytning o'zi va Cloudflare bunga aloqador emas.
+
+**Bepul variantlar (egasi o'zi):**
+1. Windows'da Wi-Fi adapterida IPv6 ni o'chirish: Boshqaruv paneli → Tarmoq → adapter → Xususiyatlar → «IP version 6» belgisini olib tashlash. Shu kompyuter uchun eng oson yechim.
+2. Routerda IPv6 ni o'chirish yoki provayderga "IPv6 ishlamayapti" deb murojaat qilish.
+3. Chrome'da: `chrome://flags` → «Experimental QUIC protocol» → Disabled.
+
+**Agar beta foydalanuvchilarida ham shunday shikoyat bo'lsa (pullik — egasi tanlaydi, men qilmadim):**
+- O'z domeni (masalan, `citylanduz.uz` yoki `.com`):
+  - `.uz` — yiliga taxminan 60–120 ming so'm (UZ registratorlar);
+  - `.com` — Cloudflare Registrar'da yiliga ~10 $.
+  - O'z domenida Cloudflare'da HTTP/3 ni o'chirish, minimal TLS va boshqa sozlamalarni boshqarish mumkin; `pages.dev` da bu imkon yo'q.
+- Boshqa bepul xosting (Netlify, Vercel, GitHub Pages) — boshqa IP va tarmoq. Lekin avtomatik deploy va sarlavhalarni qayta sozlash kerak, foydasi kafolatlanmaydi.
+
+**Hozircha:** hech narsa sotib olinmadi. `e2e/prod.mjs` mustahkamlandi: QUIC o'chiq, 3 urinish, oxirgisi TLS 1.2 bilan, xato matni aniq yoziladi.
+
+### 6f — tekshiruvchi eslatmalari (egasi qaror qiladi)
+1. **1–2-tanga paketlari** (500 va 1 200 tanga) faqat karta bilan sotilardi; endi xarid botda, botda esa hozircha faqat Stars bor — bu ikki paketni hech qayerda olib bo'lmaydi. Variantlar: (a) ularga ham Stars narxi qo'yish (50 ⭐ dan kam bo'lmasin — masalan, 500 tanga = 50 ⭐); (b) to'lov yoqilganda botga karta to'lovi qo'shish; (c) ikkisini ro'yxatdan olib tashlash. **Hozir:** saytda ko'rinadi, botda "Stars bilan sotilmaydi" deyiladi.
+2. **Oddiy do'kondagi so'mli bezak, uy/level va salyut** hali saytda (to'lov yoqilganda) karta/Stars bilan to'lanadi — 3-band faqat Premium va tanga paketlarini so'ragan edi. Hammasini botga ko'chiraylikmi?

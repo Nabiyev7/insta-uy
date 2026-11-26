@@ -236,7 +236,7 @@ describe('egasining buyruqlari', () => {
 
 describe('matnlar va tozalash', () => {
   test('har kalit ikkala tilda; o‘zbekchasida kirill yo‘q, ruschasida bor', () => {
-    const neutral = new Set(['langUz', 'langRu', 'langName', 'langSaved']);
+    const neutral = new Set(['langUz', 'langRu', 'langName', 'langSaved', 'productStars']);
     for (const key of TEXT_KEYS) {
       const [uz, ru] = [bt('uz', key), bt('ru', key)];
       expect(uz.length, key).toBeGreaterThan(0);
@@ -296,6 +296,48 @@ describe('/bot/setup (server o\'zi sozlaydi)', () => {
     expect(res.status).toBe(200);
     expect(seen).toContain('setWebhook');
     expect(seen).toContain('setChatMenuButton');
+  });
+});
+
+describe('6f: premium xaridi botda (buy_<kod>)', () => {
+  test('to‘lov o‘chiq — rasm, nom, narx va "Tez kunda" (tugmasiz)', async () => {
+    await db.query("update settings set value = 'false' where key = 'payments_enabled'");
+    await db.query("update decor_catalog set is_premium = true, price_uzs = 30000 where id = 'lux_superkar'");
+    await newUser(4900, 'premium_xaridor');
+    sent.length = 0;
+    await say(4900, '/start buy_d_lux_superkar');
+    const card = last();
+    expect(card.photo).toMatch(/^https:\/\/shahar\.test\/assets\/decor\/.+\.webp$/);
+    expect(card.text).toContain('30 000 so‘m');
+    expect(card.text).toContain('150 ⭐');
+    expect(card.text).toMatch(/tez kunda/i);
+    expect(card.buttons ?? []).toEqual([]);
+  });
+  test('to‘lov yoqiq — "⭐ Stars bilan to‘lash" → hisob-faktura; paket ham', async () => {
+    await db.query("update settings set value = 'true' where key = 'payments_enabled'");
+    await say(4900, '/start buy_d_lux_superkar');
+    expect(last().buttons?.map((b) => b.data)).toEqual(['pay:d_lux_superkar']);
+    await tap(4900, 'pay:d_lux_superkar');
+    sent.length = 0;
+    await say(4900, '/start buy_pack3');
+    expect(last().text).toContain('tanga');
+    expect(last().buttons?.[0]?.data).toBe('pay:pack3');
+    await db.query("update settings set value = 'false' where key = 'payments_enabled'");
+  });
+  test('admin sinov rejimi — "Sinov xaridi" (to‘lovsiz, is_test), keyin "Tayyor" + Shahar', async () => {
+    await newUser(5000, 'egasi_nik');
+    await db.query("update profiles set test_mode = true where telegram_id = 5000");
+    await say(5000, '/start buy_d_lux_superkar');
+    expect(last().buttons?.map((b) => b.data)).toEqual(['tbuy:d_lux_superkar']);
+    await tap(5000, 'tbuy:d_lux_superkar');
+    expect(last().text).toBe('✅ Tayyor — saytda ko‘ring!');
+    expect(last().buttons?.[0]?.text).toBe('🏙 Shahar');
+    const rows = (await db.query("select o.is_test from orders o join profiles p on p.user_id = o.user_id where p.telegram_id = 5000 and o.kind = 'decor'")).rows;
+    expect(rows).toContainEqual({ is_test: true });
+    // Oddiy odam "Sinov xaridi" ni chaqira olmaydi.
+    await tap(4900, 'tbuy:d_lux_superkar');
+    expect(last().text).not.toContain('Tayyor');
+    await db.query("update decor_catalog set is_premium = false where id = 'lux_superkar'");
   });
 });
 

@@ -103,7 +103,7 @@ export function BottomCard(): React.JSX.Element | null {
   if (panel || preview || building) return null;
   const kind = nextCard({
     isCity: mode === 'city', isGuest: !profile, hasHouse: (profile?.plots.length ?? 0) > 0 || !canClaimFree(profile), isDailyReady: profile !== null && !profile.daily_done && setting('coins_enabled', true),
-    hasCheer: cheer !== null, hasTreasure: treasure !== null, hasFresh: catalog.some((c) => c.onSale && c.isNew && !seenNew.includes(c.id)),
+    hasCheer: cheer !== null, hasTreasure: treasure !== null && setting('treasure_enabled', false), hasFresh: catalog.some((c) => c.onSale && c.isNew && !seenNew.includes(c.id)),
   });
   const View = kind ? VIEWS[kind] : null;
   if (!View) return mode === 'city' ? <InstallCard /> : null;
