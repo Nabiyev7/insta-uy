@@ -10,3 +10,8 @@ crons = ["*/10 * * * *", "10 22 * * *"]
 [vars]
 SITE_URL = "https://citylanduz.pages.dev"
 ALLOWED_ORIGINS = "https://citylanduz.pages.dev,https://citylanduz-admin.pages.dev"
+SUPABASE_URL = "https://ecrmfcunhqjumhoqnwvq.supabase.co"
+ADMIN_URL = "https://citylanduz-admin.pages.dev"
+TELEGRAM_BOT = "Citylanduz_bot"
+TELEGRAM_CHANNEL = "citylanduz"
+ADMIN_TELEGRAM_ID = "680462045"

@@ -3,6 +3,9 @@ dist/
 .env
 .env.*
 !.env.example
+# Saytlarning ochiq (brauzerga boradigan) sozlamalari — maxfiy emas
+!apps/web/.env.production
+!apps/admin/.env.production
 *.log
 .dev-data*/
 coverage/
