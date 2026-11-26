@@ -15,3 +15,5 @@ video/out/
 .wrangler/
 __pycache__/
 blender/*.blend
+# Ishlab chiqarish zaxiralari (faqat shu kompyuterda)
+.zaxira/

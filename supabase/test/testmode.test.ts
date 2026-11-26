@@ -46,7 +46,10 @@ describe('admin sinov rejimi', () => {
     expect(((await as<Row>(admin, 'admin_stats')).revenue)).toBe(0);
     const plot = await plotOf("type = 'hovli' and district_id = 2");
     await as(admin, 'my_claim', { p_plot: plot });
+    await sql('update profiles set test_mode = true where user_id = $1', [admin]);
     const r = await as<Row>(admin, 'admin_test_cleanup');
+    // 13-qadam: tozalashdan keyin sinov rejimi o'chadi.
+    expect(await sql('select count(*)::int n from profiles where test_mode')).toEqual([{ n: 0 }]);
     expect(r.plots).toBeGreaterThanOrEqual(1);
     expect(await sql('select count(*)::int n from plot_state where is_test')).toEqual([{ n: 0 }]);
     expect(await sql('select count(*)::int n from orders where is_test')).toEqual([{ n: 0 }]);
