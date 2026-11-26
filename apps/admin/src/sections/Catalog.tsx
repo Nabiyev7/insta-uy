@@ -6,8 +6,10 @@ import { Btn, Table, useAction, useLoad } from '../ui.tsx';
 interface Row {
   readonly id: string; readonly slot: string; readonly model_id: string; readonly name_uz: string; readonly name_ru: string; readonly price_uzs: number; readonly price_coins: number; readonly stock: number | null; readonly sold: number;
   readonly min_level: number; readonly season_from: string | null; readonly season_to: string | null; readonly set_id: string | null; readonly is_new: boolean; readonly is_active: boolean; readonly tint: string | null; readonly sort: number;
+  /** Faqat pulga (do'konning Premium bo'limi), tangaga sotilmaydi, level cheklovisiz. */
+  readonly is_premium: boolean;
 }
-const EMPTY = { id: '', model_id: '', name_uz: '', name_ru: '', price_uzs: 0, price_coins: 0, stock: null, min_level: 1, season_from: null, season_to: null, set_id: null, is_new: true, tint: null, sort: 0 } as const;
+const EMPTY = { id: '', model_id: '', name_uz: '', name_ru: '', price_uzs: 0, price_coins: 0, stock: null, min_level: 1, season_from: null, season_to: null, set_id: null, is_new: true, tint: null, sort: 0, is_premium: false } as const;
 type Draft = Pick<Row, keyof typeof EMPTY>;
 
 interface EditorProps { readonly draft: Draft; readonly isNew: boolean; readonly models: readonly string[]; readonly onDone: () => void; readonly onCancel: () => void }
@@ -35,6 +37,7 @@ function Editor({ draft, isNew, models, onDone, onCancel }: EditorProps): React.
       <label className="field">To'plam ID<input className="input" value={form.set_id ?? ''} onChange={(e) => set({ set_id: e.target.value || null })} /></label>
       <label className="field">Rang (bo'sh = asl)<input className="input" value={form.tint ?? ''} placeholder="#c98f6b" pattern="#[0-9a-fA-F]{6}" onChange={(e) => set({ tint: e.target.value || null })} /></label>
       <label><input type="checkbox" checked={form.is_new} onChange={(e) => set({ is_new: e.target.checked })} /> «Yangi» belgisi</label>
+      <label><input type="checkbox" checked={form.is_premium} onChange={(e) => set({ is_premium: e.target.checked })} /> Premium (faqat pulga: so‘m yoki Stars ≥ 50)</label>
       <div><Btn kind="main" type="submit" disabled={isBusy}>Saqlash</Btn><Btn onClick={onCancel}>Bekor</Btn></div>
     </form>
   );
@@ -53,7 +56,7 @@ export function Catalog(): React.JSX.Element {
         ? <Editor key={editing.draft.id || 'yangi'} draft={editing.draft} isNew={editing.isNew} models={models} onCancel={close} onDone={() => { close(); void reload(); }} />
         : <p><Btn kind="main" onClick={() => setEditing({ draft: EMPTY, isNew: true })}>+ Yangi tovar</Btn></p>}
       <Table rows={data} error={error} rowKey={(c) => c.id} columns={[
-        { head: 'Bezak', cell: (c) => <><b>{c.name_uz}</b>{c.is_new && <span className="tag">Yangi</span>}<br /><span className="muted">{c.id}{c.model_id === c.id ? '' : ` · ${c.model_id}`}</span></> },
+        { head: 'Bezak', cell: (c) => <><b>{c.name_uz}</b>{c.is_new && <span className="tag">Yangi</span>}{c.is_premium && <span className="tag">Premium</span>}<br /><span className="muted">{c.id}{c.model_id === c.id ? '' : ` · ${c.model_id}`}</span></> },
         { head: "So'm", cell: (c) => c.price_uzs }, { head: 'Tanga', cell: (c) => c.price_coins }, { head: 'Level', cell: (c) => `${c.min_level}+` },
         { head: 'Zaxira', cell: (c) => (c.stock === null ? '∞' : `${c.stock - c.sold} / ${c.stock}`) }, { head: 'Sotilgan', cell: (c) => c.sold },
         { head: 'Mavsum', cell: (c) => (c.season_from && c.season_to ? `${c.season_from.slice(5)} – ${c.season_to.slice(5)}` : '') },

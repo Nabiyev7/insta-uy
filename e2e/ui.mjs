@@ -8,7 +8,17 @@ const LANDSCAPE = { width: 640, height: 360 };
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
 const MIN_TAP = 44;
 const MENU = [['cityWorks'], ['myCars'], ['coins'], ['settings'], ['help'], ['rules'], ['privacy']];
-const TABS = ['tabNew', 'tabYard', 'tabGarden', 'tabCar', 'tabLuxe', 'tabGate', 'tabPet', 'tabSet', 'tabSpecial'];
+const TABS = ['tabNew', 'tabYard', 'tabGarden', 'tabCar', 'tabLuxe', 'tabPet', 'tabSet', 'tabSpecial'];
+/** Do'kon tablari: 2 qator, hammasi ko'rinadi, matn kesilmaydi (360 px va 1280 px). */
+const checkTabs = async (page, where) => {
+  const tabs = await page.evaluate(() => [...document.querySelectorAll('.sheet .tabs [role=tab]')].map((b) => { const r = b.getBoundingClientRect(); return { name: b.textContent, cut: b.scrollWidth > b.clientWidth + 1, x: r.x, r: r.right, y: r.y }; }));
+  const width = page.viewportSize().width;
+  for (const t of tabs) {
+    assert.ok(!t.cut, `${where}: "${t.name}" tabi kesilgan`);
+    assert.ok(t.x >= 0 && t.r <= width + 0.5, `${where}: "${t.name}" tabi ekrandan chiqdi`);
+  }
+  assert.ok(new Set(tabs.map((t) => Math.round(t.y))).size <= 2, `${where}: tablar 2 qatordan oshdi`);
+};
 const ENOUGH = 3000;
 
 /** Ekrandagi tugmalar: bir-birini to'smaydi, ekrandan chiqmaydi, barmoqqa yetarli. */
@@ -244,12 +254,22 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
 
   await at('5. do‘kon: tablar, qulf (1, 5-level), sotib olish → hovlida', async () => {
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
+    await checkTabs(page, 'do‘kon');
     for (const key of TABS) await openTab(key);
+    assert.equal(await sheet.locator('.goods').getByText(T.som).count(), 0, 'tanga do‘konida so‘m narxi yo‘q');
     await openTab('tabYard');
     await goods('dam_basseyn').getByText(`5-${T.atLevel}`).waitFor();
     await goods('lux_pavilyon').getByText(`5-${T.atLevel}`).waitFor();
     await goods('dam_basseyn').click();
     assert.ok(await sheet.locator('footer .btn:not(.pay-soon)').last().isDisabled(), '1-levelda bezak sotilmasin');
+    assert.equal(await sheet.locator('footer .pay-soon').count(), 0, 'to‘lov o‘chiq — so‘m tugmasi yo‘q');
+    // Premium bo'limi: 4 tab, bo'sh kategoriyada "Tez kunda" kartasi.
+    await sheet.getByRole('tab', { name: T.shopPremium }).click();
+    await checkTabs(page, 'premium');
+    await sheet.getByRole('tab', { name: T.ptHouses, exact: true }).click();
+    await sheet.locator('.premium-soon').getByText(T.premiumSoonHouses).waitFor();
+    await sheet.getByRole('tab', { name: T.shopCoins }).click();
+    await openTab('tabYard');
     await raise(page, tgId, 5, ENOUGH + 10);
     await reload(5);
     await nav.getByRole('button', { name: new RegExp(`^${T.shop}`) }).click();
@@ -319,8 +339,13 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await page.locator('.pill.coins').click();
     await heading(T.coins);
     await sheet.getByText(T.r_founder).waitFor();
+    // "Tanga sotib olish" — do'konning Premium → Tangalar tabi.
+    await sheet.locator('.buy-coins').click();
+    await heading(T.shop);
     assert.match(await sheet.locator('.packs .pay-soon').first().innerText(), new RegExp(T.soon), 'to‘lov o‘chiq — pul tugmasi "Tez kunda"');
     assert.ok(await sheet.locator('.packs .pay-soon').first().isDisabled());
+    await page.goBack();
+    await heading(T.coins);
     assert.equal(await sheet.getByText(T.quests ?? 'Topshiriqlar', { exact: true }).count(), 0, 'topshiriqlar yo‘q');
     await sheet.getByLabel(T.sendTo).fill('yoq_odam_xyz');
     await sheet.getByLabel(T.amount).fill('5');

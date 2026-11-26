@@ -5,7 +5,9 @@ import { onSession, rpc, supabase } from './api.ts';
 import { startAudio } from './audio.ts';
 import { applyLoginLink } from './login.ts';
 import { connectMultiplayer } from './multiplayer.ts';
-import { getApp, loadPlan, refreshBoot, refreshCatalog, refreshHouses, refreshProfile, setApp } from './store.ts';
+import { getApp, loadPlan, refreshBoot, refreshCatalog, refreshHouses, refreshProfile, setApp, setting, toast } from './store.ts';
+import { newNeighbourNick } from '../logic/lively.ts';
+import { translate } from './i18n.ts';
 import { exposeVideoApi } from './videoMode.ts';
 
 const REFRESH_MS = 60_000;
@@ -15,6 +17,7 @@ const hasWebgl2 = (): boolean => document.createElement('canvas').getContext('we
 
 const bump = (share: number): void => setApp((s) => ({ progress: Math.min(1, s.progress + share) }));
 
+import { rememberSource, sendSource, startAnalytics } from './analytics.ts';
 import { countVisit } from './install.ts';
 import { playIntro } from './intro.ts';
 
@@ -34,6 +37,7 @@ const applyLink = (): void => {
   goToPlot(params.get('uy') ?? '', true);
   if (!isVideoMode) playIntro(params.get('uy'));
   countVisit();
+  rememberSource(params.get('from'));
 };
 
 /** Sinov rejimi: admin qoralama xaritani ko'radi (?xarita=ID). */
@@ -66,10 +70,24 @@ export const start = async (): Promise<void> => {
     setApp({ kit, stage: isVideoMode || seen ? 'play' : 'intro' });
     if (isVideoMode) { exposeVideoApi(); return; }
     void applyLoginLink();
+    startAnalytics();
     await runBackground();
   } catch (error: unknown) {
     setApp({ stage: 'error', error: error instanceof Error ? error.message : 'load' });
   }
+};
+
+let newsAt = 0;
+/** Yangi uy qurilganda boshqalar ekranida qisqa xabar (daqiqasiga ko'pi bilan 1 ta; admin sozlamasida o'chadi). */
+const refreshCity = async (): Promise<void> => {
+  const before = getApp().houses;
+  await refreshHouses();
+  const s = getApp();
+  if (!setting('lively_start', true) || s.isClean || s.isPhoto) return;
+  const nick = newNeighbourNick(before, s.houses, new Set(s.profile?.plots.map((p) => p.plot) ?? []), newsAt, Date.now());
+  if (!nick) return;
+  newsAt = Date.now();
+  toast(translate('justClaimed', s.lang).replace('{nick}', nick));
 };
 
 let isRunning = false;
@@ -79,11 +97,11 @@ const runBackground = async (): Promise<void> => {
   onSession((s) => {
     // Supabase qulfi ichida so'rov yubormaslik uchun navbatga qo'yiladi.
     setTimeout(() => {
-      void (s ? refreshProfile() : Promise.resolve(setApp({ profile: null }))).then(() => applyDraftMap().catch(() => undefined));
+      void (s ? refreshProfile().then(sendSource) : Promise.resolve(setApp({ profile: null }))).then(() => applyDraftMap().catch(() => undefined));
       void connectMultiplayer().catch(() => undefined);
     }, 0);
   });
-  setInterval(() => { if (!document.hidden) void Promise.allSettled([refreshHouses(), refreshBoot().then(applyDraftMap)]); }, REFRESH_MS);
+  setInterval(() => { if (!document.hidden) void Promise.allSettled([refreshCity(), refreshBoot().then(applyDraftMap)]); }, REFRESH_MS);
   setInterval(() => {
     const s = getApp();
     if (!s.profile && !document.hidden) void supabase.auth.getSession().then(({ data }) => (data.session ? refreshProfile() : undefined)).catch(() => undefined);

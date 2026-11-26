@@ -70,6 +70,8 @@ export interface Boot {
   readonly objects: readonly { readonly id: number; readonly m: string; readonly x: number; readonly z: number; readonly r: number; readonly s: number }[];
   readonly projects: readonly { readonly id: number; readonly kind: 'bog' | 'stadion' | 'koprik'; readonly uz: string; readonly ru: string; readonly goal: number; readonly raised: number; readonly status: string }[];
   readonly hero: { readonly nick: string; readonly total: number } | null;
+  /** Bugun va jami olingan uylar (sinov uylari hisoblanmaydi). */
+  readonly houses?: { readonly today: number; readonly total: number };
 }
 export interface MyPlot {
   readonly is_test?: boolean;

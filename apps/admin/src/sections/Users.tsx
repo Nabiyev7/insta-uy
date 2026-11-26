@@ -8,6 +8,7 @@ interface UserRow {
 }
 const PERMS = 'plots, reports, streets, ads, orders, users, map, video, settings';
 
+const SHOW_ROLES = false;
 export function Users(): React.JSX.Element {
   const [q, setQ] = useState('');
   const { isBusy, run } = useAction();
@@ -34,7 +35,8 @@ export function Users(): React.JSX.Element {
         {Object.entries(BADGES).map(([id, b]) => <option key={id} value={id}>{b.uz}</option>)}
       </select>
       <Btn disabled={isBusy} onClick={() => addCoins(u)}>Tanga</Btn>
-      <Btn disabled={isBusy} onClick={() => setRole(u)}>Rol</Btn>
+      {/* Moderator roli hozircha ishlatilmaydi — rol berish tugmasi yashirin (kod qoladi). */}
+      {SHOW_ROLES && <Btn disabled={isBusy} onClick={() => setRole(u)}>Rol</Btn>}
       <Btn disabled={isBusy} onClick={() => setNick(u)}>Nik</Btn>
       <Btn kind="danger" disabled={isBusy} onClick={() => { if (confirm(u.banned ? 'Blokdan chiqarilsinmi?' : 'Bloklansinmi?')) act(u.id, u.banned ? 'unban' : 'ban'); }}>{u.banned ? 'Blokdan chiqarish' : 'Bloklash'}</Btn>
     </>

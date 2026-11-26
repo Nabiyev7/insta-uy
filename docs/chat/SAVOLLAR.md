@@ -191,3 +191,15 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 3. **Sinov rejimi**: shahar loyihasiga hissa va salyut sinovchidan ham haqiqiy tanga yechadi (hammaga ta'sir qiladi). Sinov xaridida olingan tanga paketi admin balansiga haqiqiy tanga qo'shadi; tozalash uni olib tashlamaydi.
 4. **Kechki eslatma kuni** Toshkent vaqti bo'yicha, "bonus olinganmi" esa server kuni bo'yicha — 19:00 da farq yo'q; `reminder_hour` ni tun yarmiga qo'ymang.
 5. **Lokal admin tugmasi** ishlab chiqarish yig'ilishida yo'qligi alohida build testi bilan tekshirilmagan (endpoint 404 — test bor).
+
+### 6d — Tuzatish 2 (nimani tanladim va nega)
+1. **So'mdagi narx tanga do'konida**: to'lov yoqilsa (`payments_enabled=true`) qayta chiqadi (1-band), garchi 6-bandda "Tanga do'koni — faqat tanga" deyilgan. Sabab: 1-band aniq "kod qoladi, yoqilganda qayta chiqadi" deydi. Kerak bo'lmasa — bitta qatorni o'chiramiz.
+2. **"Darvoza va yoritish" tabi** "Hovli"ga qo'shildi: promtdagi 8 tab ro'yxatida u yo'q va 4×2 panjaraga sig'ishi uchun.
+3. **Uy olish, level ko'tarish va salyut** pul tugmalari to'lov o'chiq paytda avvalgidek "Tez kunda" bo'lib turadi (faqat do'kondagi so'm narxi yashirildi).
+4. **Egasi qanday aniqlanadi**: server har cron'da `ADMIN_TELEGRAM_ID` ni bazaga yozadi (`svc_set_owner`). Shundan keyin boshqa hech kim admin bo'la olmaydi (baza o'zi rad etadi), eski admin/moderator rollari "user" bo'ladi. `ADMIN_TELEGRAM_ID` berilmagan lokal sinovda admin roli yetadi.
+5. **Moderator** kodi qoldi, lekin `moderators_enabled` sozlamasi (yo'q = o'chiq) bilan yopiq. Admin panelda "Rol" tugmasi yashirildi.
+6. **Premium "Uylar"** tabi hozircha doim bo'sh ("Tez kunda"): premium uy tovarlari katalogga qo'shilganda ulanadi (eski premium uy kodi `premium_house_enabled=false` ortida qoladi).
+7. **Premium tovar** admin panelda "Bezaklar" → tahrirlash → "Premium (faqat pulga)" belgisi bilan; narx — so'm maydoni, Stars kurs bo'yicha (≥ 50 ⭐ bo'lmasa faqat karta).
+8. **Uzoqdagi uylar** (yorliq masofasidan keyin): nuqta qo'yilmadi — hozirgi LOD qoidasi saqlandi (yorliq ko'rinmaydi). Sabab: tezlik.
+9. **Kelish manbai** faqat yangi akkauntga (1 kun ichida) yoziladi; bot havolasi orqali kelganlar (`t.me/...?start=`) hozircha "Belgisiz".
+10. **"Hozirgina uy oldi"** xabari uylar ro'yxati har daqiqada yangilanganda chiqadi (realtime emas) — kechikish 1 daqiqagacha.

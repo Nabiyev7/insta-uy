@@ -6,7 +6,7 @@ import { BADGES, DECOR, plotAddress, type Plot } from '../../../packages/shared/
 import { nextCard, type CardInput } from '../src/logic/cards.ts';
 import type { CatalogRow, SetRow } from '../src/logic/decorCatalog.ts';
 import { findAddress } from '../src/logic/search.ts';
-import { goodState, shopTabs } from '../src/logic/shopTabs.ts';
+import { goodState, premiumTabs, shopTabs } from '../src/logic/shopTabs.ts';
 
 const row = (id: string, over: Partial<CatalogRow> = {}): CatalogRow => {
   const d = DECOR.find((x) => x.id === id)!;
@@ -40,7 +40,7 @@ describe('do‘kon tablari', () => {
   const ids = (tab: string, list = all): readonly string[] => shopTabs(list, sets).find((t) => t.tab === tab)?.rows.map((c) => c.id) ?? [];
   test('har tovar kamida bitta bo‘limda, bo‘limlar tartibi', () => {
     const tabs = shopTabs([...all.slice(1), row('fence_wood', { isNew: true })], sets);
-    expect(tabs.map((t) => t.tab)).toEqual(['new', 'yard', 'garden', 'car', 'luxe', 'gate', 'pet', 'set', 'special']);
+    expect(tabs.map((t) => t.tab)).toEqual(['new', 'yard', 'garden', 'car', 'luxe', 'pet', 'set', 'special']);
     const shown = new Set(tabs.flatMap((t) => t.rows.map((c) => c.id)));
     for (const c of all.filter((x) => x.onSale)) expect(shown.has(c.id), c.id).toBe(true);
   });
@@ -57,13 +57,26 @@ describe('do‘kon tablari', () => {
     expect(ids('luxe')).not.toContain('gate_gold');
     expect(ids('luxe')).not.toContain('dam_basseyn');
     expect(ids('car')).toEqual(expect.arrayContaining(['avto_sedan', 'lux_limuzin']));
-    expect(ids('gate')).toEqual(expect.arrayContaining(['fence_wood', 'gate_wood', 'path_stone', 'sign_nick', 'light_lamps', 'roof_solar']));
+    expect(ids('yard')).toEqual(expect.arrayContaining(['fence_wood', 'gate_wood', 'path_stone', 'sign_nick', 'light_lamps', 'roof_solar']));
   });
   test('mavsumi tugagani va sotuvdan olingani do‘konda ko‘rinmaydi (admin panelda bor)', () => {
     const list = [row('light_hayit', { from: '2026-05-10', to: '2026-05-31', onSale: false, active: true }), row('light_lamps'), row('water_pool')];
-    expect(ids('gate', list)).toEqual(['light_lamps']);
+    expect(ids('yard', list)).toEqual(['light_lamps']);
     expect(ids('special', list)).toEqual([]);
     expect(shopTabs(list, []).flatMap((t) => t.rows.map((c) => c.id))).not.toContain('water_pool');
+  });
+  test('premium tovar: tanga do‘konida yo‘q, Premium bo‘limida; 4 tab doim; level qulfi yo‘q', () => {
+    const list = [row('dam_basseyn', { premium: true }), row('avto_sedan', { premium: true }), row('gul_zor')];
+    expect(shopTabs(list, sets).flatMap((t) => t.rows.map((c) => c.id))).toEqual(['gul_zor']);
+    expect(shopTabs(list, sets).find((t) => t.tab === 'set')).toBeUndefined();
+    const p = premiumTabs(list);
+    expect(p.map((t) => t.tab)).toEqual(['houses', 'decor', 'cars', 'packs']);
+    expect(p.map((t) => t.rows.map((c) => c.id))).toEqual([[], ['dam_basseyn'], ['avto_sedan'], []]);
+    expect(goodState(row('dam_basseyn', { premium: true }), 1)).toBe('free');
+  });
+  test('admin sinov rejimida level qulfi yo‘q', () => {
+    expect(goodState(row('lux_pavilyon'), 1, true)).toBe('free');
+    expect(goodState(row('lux_pavilyon'), 1, false)).toBe('locked');
   });
   test('kartochka holati', () => {
     expect(goodState(row('dam_basseyn'), 5)).toBe('free');

@@ -7,6 +7,9 @@ import { setMode } from '../app/modes.ts';
 import { here, input, player, snapshotters, type Mode } from '../app/runtime.ts';
 import { backPanel, openAuth, openPanel, openRoot, setApp, useApp, type Panel } from '../app/store.ts';
 import { rpc } from '../app/api.ts';
+import { goToPlot, nearestFree } from '../app/actions.ts';
+import { countLine } from '../logic/lively.ts';
+import { setting } from '../app/store.ts';
 import { BottomCard, PreviewBar } from './BottomCard.tsx';
 import { CoinFly } from './CoinFly.tsx';
 import { Icon, type IconName } from './icons.tsx';
@@ -98,6 +101,17 @@ function PlacePill(): React.JSX.Element {
   // Ko'cha oynasi yo'q: joy nomi xaritani ochadi.
   const open = (): void => openRoot({ kind: 'map' });
   return <button type="button" className="pill place glass" aria-label={`${place}, ${districtName}`} title={districtName} onClick={open}><Icon name="pin" /><b>{place}</b></button>;
+}
+
+/** Mehmon va hali uyi yo'q odamga: "Bugun N kishi uy oldi · jami M". Bosilsa — eng yaqin bo'sh joyga. */
+function HousesCount(): React.JSX.Element | null {
+  const t = useT();
+  const count = useApp((s) => s.boot?.houses);
+  const hasHouse = useApp((s) => (s.profile?.plots.length ?? 0) > 0);
+  const mode = useApp((s) => s.mode);
+  if (hasHouse || mode !== 'city' || !setting('lively_start', true)) return null;
+  const go = (): void => { const id = nearestFree(); if (id) goToPlot(id); };
+  return <button type="button" className="pill glass lively-count" onClick={go}><Icon name="home" /><b>{countLine(count, { today: t('housesToday'), first: t('beFirst') })}</b></button>;
 }
 
 function TopRow(): React.JSX.Element {
@@ -196,6 +210,7 @@ export function Hud(): React.JSX.Element {
   return (
     <div className={`hud mode-${mode} ${hasPanel ? 'has-panel' : ''}`}>
       <TopRow />
+      {!hasPanel && <HousesCount />}
       {(isOffline || isMaintenance) && <p className="banner" role="alert">{t(isOffline ? 'offline' : 'maintenance')}</p>}
       {!isOffline && !isMaintenance && <SaluteBanner />}
       {isTester && <p className="test-chip" title={t('testModeHint')}>{t('testMode')} · {t('testFree')}</p>}

@@ -24,6 +24,8 @@ const MARKS: Readonly<Record<string, readonly [number, number]>> = {
 };
 const markOf = (a: Anchor): readonly [number, number] => MARKS[a.id] ?? [a.x, a.z];
 
+/** Sinov rejimida hamma nuqta ochiq. */
+const TESTER_TIER = 99;
 interface YardMapProps { readonly level: number; readonly places: Places; readonly selected: string | null; readonly onPick: (id: string) => void; /** Pulga olingan bezak uchun ochiq nuqtalar. */ readonly paidOpen: ReadonlySet<string> }
 function YardMap({ level, places, selected, onPick, paidOpen }: YardMapProps): React.JSX.Element {
   const t = useT();
@@ -95,7 +97,10 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
   const [selected, setSelected] = useState<string | null>(null);
   const byId = new Map(catalog.map((c) => [c.id, c]));
   const { places } = plot;
-  const max = decorSlots(plot.tier, setting<readonly number[] | undefined>('decor_slots', undefined));
+  // Admin sinov rejimida level va joylar soni cheklovi yo'q (server ham shunday).
+  const isTester = profile?.test_mode === true;
+  const tier = isTester ? TESTER_TIER : plot.tier;
+  const max = isTester ? Number.POSITIVE_INFINITY : decorSlots(plot.tier, setting<readonly number[] | undefined>('decor_slots', undefined));
   const used = usedSlots(places);
   const anchor = selected ? anchorById(selected) : undefined;
   const current = selected ? places[selected] : undefined;
@@ -114,11 +119,11 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
     }, t('saved'));
   };
   /** Level yetmagan joy: faqat pulga olingan bezak, faqat pulli bezak nuqtasida. */
-  const isPaidPlace = (c: CatalogRow, a: Anchor): boolean => a.minLevel > plot.tier || c.min > plot.tier;
-  const fits = (c: CatalogRow, a: Anchor): boolean => c.spots.includes(a.kind) && (!isPaidPlace(c, a) || (a.paidLevel <= plot.tier && (paid[c.id] ?? 0) > 0));
+  const isPaidPlace = (c: CatalogRow, a: Anchor): boolean => a.minLevel > tier || (c.min > tier && c.premium !== true);
+  const fits = (c: CatalogRow, a: Anchor): boolean => c.spots.includes(a.kind) && (!isPaidPlace(c, a) || (a.paidLevel <= tier && (paid[c.id] ?? 0) > 0));
   const choices = anchor ? catalog.filter((c) => fits(c, anchor) && freeQty(c.id) > 0) : [];
-  const paidOpen = new Set(ANCHORS.filter((a) => a.minLevel > plot.tier && a.paidLevel <= plot.tier && catalog.some((c) => (paid[c.id] ?? 0) > 0 && c.spots.includes(a.kind) && freeQty(c.id) > 0)).map((a) => a.id));
-  const moves = current && anchor ? ANCHORS.filter((a) => a.id !== anchor.id && a.minLevel <= plot.tier && !places[a.id] && (byId.get(current)?.spots.includes(a.kind) ?? false)) : [];
+  const paidOpen = new Set(ANCHORS.filter((a) => a.minLevel > tier && a.paidLevel <= tier && catalog.some((c) => (paid[c.id] ?? 0) > 0 && c.spots.includes(a.kind) && freeQty(c.id) > 0)).map((a) => a.id));
+  const moves = current && anchor ? ANCHORS.filter((a) => a.id !== anchor.id && a.minLevel <= tier && !places[a.id] && (byId.get(current)?.spots.includes(a.kind) ?? false)) : [];
   const place = (id: string): void => { if (selected) save({ ...places, [selected]: id }); };
   const moveTo = (to: string): void => {
     if (!selected || !current) return;
@@ -128,9 +133,9 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
   const isFull = used >= max && !current && anchor?.kind !== 'sign' && !(anchor && paidOpen.has(anchor.id));
   return (
     <>
-      <p className="row between"><b>{t('decor')}</b><span className="tag">{used}/{max}</span></p>
-      <YardMap level={plot.tier} places={places} selected={selected} onPick={setSelected} paidOpen={paidOpen} />
-      <p className="muted">{plot.tier < DECOR_LEVEL ? `${t('decor')}: ${DECOR_LEVEL}-${t('opensAt')}. ${t('paidAnyLevel')}` : t('yardHint')}</p>
+      <p className="row between"><b>{t('decor')}</b><span className="tag">{isTester ? used : `${used}/${max}`}</span></p>
+      <YardMap level={tier} places={places} selected={selected} onPick={setSelected} paidOpen={paidOpen} />
+      <p className="muted">{tier < DECOR_LEVEL ? `${t('decor')}: ${DECOR_LEVEL}-${t('opensAt')}. ${t('paidAnyLevel')}` : t('yardHint')}</p>
       {anchor && (
         <div className="spot-panel">
           <b>{anchor[lang]}</b>
@@ -141,7 +146,7 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
             </label>
           )}
           {isFull && <p className="muted">{t('e_no_slots')}</p>}
-          {!isFull && (anchor.minLevel <= plot.tier || paidOpen.has(anchor.id)) && choices.map((c) => <div className="row between" key={c.id}><DecorImage model={c.model} /><span className="grow">{c[lang]} <span className="muted">×{freeQty(c.id)}</span></span><button type="button" className="btn small" disabled={isBusy} onClick={() => place(c.id)}>{t('place')}</button></div>)}
+          {!isFull && (anchor.minLevel <= tier || paidOpen.has(anchor.id)) && choices.map((c) => <div className="row between" key={c.id}><DecorImage model={c.model} /><span className="grow">{c[lang]} <span className="muted">×{freeQty(c.id)}</span></span><button type="button" className="btn small" disabled={isBusy} onClick={() => place(c.id)}>{t('place')}</button></div>)}
           {!isFull && choices.length === 0 && !current && <p className="muted">{t('noFit')}</p>}
         </div>
       )}

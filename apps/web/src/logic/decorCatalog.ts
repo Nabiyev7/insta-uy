@@ -6,6 +6,8 @@ export interface CatalogRow {
   readonly spots: readonly SpotKind[]; readonly min: number; readonly from: string | null; readonly to: string | null; readonly set: string | null; readonly isNew: boolean; readonly tint: string | null; readonly onSale: boolean;
   /** Admin sotuvga qo'ygan (mavsumi tugagan bo'lishi mumkin — u holda onSale = false). */
   readonly active: boolean;
+  /** Faqat pulga sotiladi ("Premium" bo'limi), tangaga emas. */
+  readonly premium?: boolean;
 }
 export interface SetRow { readonly id: string; readonly uz: string; readonly ru: string; readonly discount: number; readonly coins: number; readonly items: readonly string[] }
 const toItem = (r: CatalogRow): DecorItem => ({ id: r.id, slot: r.slot, uz: r.uz, ru: r.ru, priceUzs: r.uzs, priceCoins: r.coins, stock: r.left, model: r.model, spots: r.spots, minLevel: r.min, tint: r.tint, isActive: r.onSale });

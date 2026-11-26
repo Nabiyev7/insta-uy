@@ -1,3 +1,4 @@
+import { openCoinShop } from './ShopPanel.tsx';
 import { useState } from 'react';
 import { BUZZ, buzz, goToPlot } from '../app/actions.ts';
 import { post, rpc } from '../app/api.ts';
@@ -92,24 +93,7 @@ function ChannelBonus({ gain }: { readonly gain: number }): React.JSX.Element {
   );
 }
 
-interface Pack { readonly coins: number; readonly bonus: number; readonly uzs: number; readonly stars?: number | null; readonly tag?: 'best' | 'popular' }
-interface PremiumSettings { readonly packs?: readonly Pack[]; readonly salute?: { readonly uzs: number; readonly coins: number } }
-const PACKS: readonly Pack[] = [
-  { coins: 500, bonus: 0, uzs: 3000, stars: null }, { coins: 1000, bonus: 200, uzs: 6000, stars: null }, { coins: 2500, bonus: 500, uzs: 12000, stars: 60 },
-  { coins: 5500, bonus: 1500, uzs: 25000, stars: 125, tag: 'popular' }, { coins: 12000, bonus: 4000, uzs: 50000, stars: 250, tag: 'best' },
-];
-
-function CoinPacks(): React.JSX.Element {
-  const t = useT();
-  const packs = setting<PremiumSettings>('premium', {}).packs ?? PACKS;
-  return (
-    <Section title={t('buyCoins')} icon="coin">
-      <ul className="list packs">{packs.map((p, i) => (
-        <li key={p.uzs}><span className="grow"><b>{money(p.coins)}</b>{p.bonus > 0 && <span className="tag gold">+{money(p.bonus)} {t('bonusWord')}</span>}{p.tag && <span className={`tag ${p.tag}`}>{t(p.tag === 'best' ? 'packBest' : 'packPopular')}</span>}{!p.stars && <span className="muted"> · {t('cardOnly')}</span>}</span>
-          <PayButtons kind="coins" payload={{ pack: i + 1 }} uzs={p.uzs} code={`pack${i + 1}`} stars={p.stars ?? null} /></li>))}</ul>
-    </Section>
-  );
-}
+interface PremiumSettings { readonly salute?: { readonly uzs: number; readonly coins: number } }
 
 function Salute({ rules }: { readonly rules: CoinRules }): React.JSX.Element {
   const t = useT();
@@ -164,7 +148,7 @@ export function CoinsPanel(): React.JSX.Element {
         <ul className="list">{earn.map(([key, n]) => <li key={key}><span className="grow">{t(key)}</span><span className="tag gold">+{money(n)}</span></li>)}</ul>
       </Section>
       <SendCoins rules={rules} />
-      <CoinPacks />
+      <button type="button" className="btn gold block buy-coins" onClick={() => openCoinShop()}><Icon name="coin" />{t('buyCoins')}</button>
       <Salute rules={rules} />
     </Sheet>
   );

@@ -35,13 +35,15 @@ export interface CollectSource {
   /** Uchastka bo'yicha kesh: yaqin (to'liq) va uzoq (bitta) ko'rinish. */
   readonly full: Map<string, readonly Item[]>;
   readonly simple: Map<string, Item>;
+  /** Mening uylarim (yorlig'i sariq). */
+  readonly mine?: ReadonlySet<string>;
 }
 
 const LABEL_GAP = 2;
-const labelOf = (p: Plot, s: HouseState): LabelInfo => {
+const labelOf = (p: Plot, s: HouseState, isMine: boolean): LabelInfo => {
   const top = houseTop(p, s);
-  const size = p.type === 'qasr' ? 1.5 : p.type === 'villa' ? 1.2 : 1;
-  return { key: p.id, text: `@${s.nick} · L${s.tier}${s.isTest ? ' · SINOV' : ''}`, kind: s.label, badge: s.badge, hearts: s.hearts, x: top.x, y: top.y + LABEL_GAP * size, z: top.z, size };
+  const size = p.type === 'qasr' ? 1.2 : p.type === 'villa' ? 1.1 : 1;
+  return { key: p.id, text: `@${s.nick}${s.isTest ? ' · SINOV' : ''}`, level: s.tier, isMine, kind: s.label, badge: s.badge, hearts: s.hearts, x: top.x, y: top.y + LABEL_GAP * size, z: top.z, size };
 };
 
 const fullItems = (src: CollectSource, p: Plot, s: HouseState | undefined): readonly Item[] => {
@@ -121,7 +123,7 @@ const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResul
       const sign = d < v.detail ? signOf(p, s, list) : null;
       if (sign) signs.push({ d, info: sign });
     } else items.push(simpleItem(src, p, s, v.isSimple));
-    if (s.nick && d < v.label) labels.push({ d, info: labelOf(p, s) });
+    if (s.nick && d < v.label) labels.push({ d, info: labelOf(p, s, src.mine?.has(p.id) === true) });
   }
   labels.sort((a, b) => a.d - b.d);
   signs.sort((a, b) => a.d - b.d);

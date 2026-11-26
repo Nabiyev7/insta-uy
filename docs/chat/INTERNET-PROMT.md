@@ -9,6 +9,7 @@ Akkaunt ochish va parol kiritishni egasi o'zi qiladi. Sen buyruqni ishga tushira
 2. **Supabase** akkaunti (bepul) → `npx supabase login`; loyiha yaratishni ham buyruq bilan qil (region: Yevropa, Markaziy Osiyoga eng yaqini).
 3. **Telegram bot tokeni** — BotFather'dan, egasi o'zi `wrangler secret put TELEGRAM_TOKEN` ga kiritadi (token chatga yozilmaydi).
 4. Bot username, kanal (`@citylanduz`), `ADMIN_TELEGRAM_ID` — egasidan so'ra.
+5. **Cloudflare Web Analytics** tokeni (Cloudflare panelida bepul) → `VITE_CF_ANALYTICS`.
 
 ## Sen nima qilasan
 1. **Supabase**: link → `db push` (hamma migratsiyalar) → Sign ups o'chiq → `supabase/test` sinovlari haqiqiy bazada o'tsin.

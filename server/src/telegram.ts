@@ -102,8 +102,9 @@ interface BotStart { readonly state: 'ready' | 'need_nick' | 'banned' | 'renick'
 const RENICK = 'Nikingiz uning haqiqiy egasiga o‘tgan. Yangi Instagram nikingizni yozing — uyingiz va tangalaringiz o‘zingizda. / Напишите новый ник Instagram.';
 /** `ADMIN_TELEGRAM_ID` dagi Telegram birinchi kirishdayoq admin bo'ladi (SQL kerak emas). */
 const promoteOwner = async (ctx: Ctx, telegram: number): Promise<void> => {
-  if (ctx.env.ADMIN_TELEGRAM_ID && String(telegram) === ctx.env.ADMIN_TELEGRAM_ID.trim()) await ctx.db.rpc('svc_make_admin', { p_telegram: telegram });
+  if (isOwnerChat(ctx, telegram)) await ctx.db.rpc('svc_set_owner', { p_telegram: telegram });
 };
+const NO_COMMAND = 'Bunday buyruq yo‘q. / Такой команды нет.';
 
 const greet = async (ctx: Ctx, tg: Telegram, m: Message, ref: string | null): Promise<void> => {
   const from = m.from!;
@@ -134,10 +135,12 @@ const confirmNick = async (ctx: Ctx, tg: Telegram, chat: number, from: { readonl
 };
 
 interface SvcUser { readonly user_id: string; readonly role: string; readonly is_banned: boolean }
-/** Admin va moderatorga admin panelga bir martalik havola (parol yo'q). */
+/** Faqat egasi: `ADMIN_TELEGRAM_ID` va bazada admin roli. */
+export const isOwnerChat = (ctx: Ctx, telegram: number): boolean => Boolean(ctx.env.ADMIN_TELEGRAM_ID) && String(telegram) === ctx.env.ADMIN_TELEGRAM_ID?.trim();
+/** Admin panelga bir martalik havola — faqat egasiga. Boshqalarga admin borligi ham bildirilmaydi. */
 const adminLink = async (ctx: Ctx, tg: Telegram, m: Message): Promise<void> => {
-  const u = await ctx.db.rpc<SvcUser | null>('svc_user', { p_telegram: m.from!.id });
-  if (!u || u.is_banned || u.role === 'user') return tg.send(m.chat.id, "Bu buyruq faqat adminlar uchun. / Только для админов.");
+  const u = isOwnerChat(ctx, m.from!.id) ? await ctx.db.rpc<SvcUser | null>('svc_user', { p_telegram: m.from!.id }) : null;
+  if (!u || u.is_banned || u.role !== 'admin') return tg.send(m.chat.id, NO_COMMAND);
   if (!ctx.env.ADMIN_URL) return tg.send(m.chat.id, 'ADMIN_URL sozlanmagan.');
   const token = await issueLogin(ctx, u.user_id);
   return tg.send(m.chat.id, '🛠 Admin panel (15 daqiqa, bir marta)', [{ text: '🛠 Admin panelni ochish', url: `${ctx.env.ADMIN_URL}/?kirish=${token}` }]);
@@ -398,7 +401,8 @@ export const devAdmin = async (_req: Request, ctx: Ctx): Promise<Response> => {
   const telegram = Number(ctx.env.ADMIN_TELEGRAM_ID) || LOCAL_ADMIN_TG;
   const r = await ctx.db.rpc<BotStart>('svc_bot_start', { p_telegram: telegram, p_ref: null, p_name: 'Admin' });
   const user = r.user ?? (await createAccount(ctx, `tg${telegram}`, randomPassword(), null, telegram, 'admin_lokal'));
-  await ctx.db.rpc('svc_make_admin', { p_telegram: telegram });
+  // ADMIN_TELEGRAM_ID berilgan bo'lsa — u egasi (boshqa admin rollari olib tashlanadi).
+  await ctx.db.rpc(ctx.env.ADMIN_TELEGRAM_ID ? 'svc_set_owner' : 'svc_make_admin', { p_telegram: telegram });
   return json({ token: await issueLogin(ctx, user) });
 };
 

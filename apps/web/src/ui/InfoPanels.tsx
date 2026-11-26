@@ -69,7 +69,6 @@ export function SettingsPanel(): React.JSX.Element {
         <p className="muted">{t('testModeHint')}</p>
         <Seg<'on' | 'off'> label={t('testMode')} value={profile.test_mode ? 'on' : 'off'} onPick={(v) => void run(async () => { await rpc('my_test_mode', { p_on: v === 'on' }); await refreshProfile(); }, t('saved'))} options={[['on', t('on')], ['off', t('off')]]} />
       </Section>}
-      <RowLink icon="eyeOff" text={t('hideUi')} onClick={hideScreen} />
     </Sheet>
   );
 }

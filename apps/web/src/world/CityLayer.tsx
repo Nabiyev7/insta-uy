@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Color, DirectionalLight, Fog, HemisphereLight } from 'three';
+import { Color, DirectionalLight, Fog, HemisphereLight, PerspectiveCamera } from 'three';
 import { SpatialIndex, dayFraction, holidayOf, seasonOf, weatherOf, type MasterPlan } from '../../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
 import type { Item } from '../logic/item.ts';
@@ -17,11 +17,12 @@ import { Ads } from './Ads.tsx';
 import { collect, type CollectSource } from './collect.ts';
 import { FAR_CHUNK, Ground } from './ground.ts';
 import { kitUniforms, type Kit } from './kit.ts';
-import { Labels, type LabelInfo } from './labels.ts';
+import { LABEL_NEAR, LABEL_PX, Labels, type LabelInfo } from './labels.ts';
 import { POND, STADIUM } from '../logic/paving.ts';
 /** Loyiha joylari bosh rejadagi mavjud joylarda (qulfga tegilmaydi): stadion — o'z joyi, bog' — hovuz yonida. */
 const PROJECT_SPOTS: Readonly<Partial<Record<'bog' | 'stadion' | 'koprik', { readonly x: number; readonly z: number }>>> = { stadion: STADIUM, bog: { x: POND.x, z: POND.z + POND.r + 12 } };
-import { Markers, Selection, activeMarkers } from './markers.ts';
+import { Beacons, Markers, Selection, activeMarkers } from './markers.ts';
+import { waitingPlots } from '../logic/lively.ts';
 import { Pools } from './pools.ts';
 import { Boards, Signs } from './signs.ts';
 import { Lake, Sky } from './sky.ts';
@@ -67,7 +68,9 @@ const without = (houses: ReadonlyMap<string, HouseState>, plot: string | null): 
 interface CityLayerProps { readonly kit: Kit; readonly plan: MasterPlan }
 
 export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
-  const { scene, gl, size } = useThree();
+  const { scene, gl, size, camera } = useThree();
+  const profile = useApp((s) => s.profile);
+  const mine = useMemo(() => new Set((profile?.plots ?? []).map((p) => p.plot)), [profile]);
   const level = useApp((s) => s.quality);
   const saved = useApp((s) => s.houses);
   const preview = useApp((s) => s.preview);
@@ -81,7 +84,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const index = useMemo(() => worldIndex(plan), [plan]);
 
   const world = useMemo(() => ({
-    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(), boards: new Boards(), markers: new Markers(), selection: new Selection(), works: new Pools(kit),
+    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(), boards: new Boards(), markers: new Markers(), selection: new Selection(), works: new Pools(kit), beacons: new Beacons(),
   }), [kit, plan]);
   const sun = useMemo(() => new DirectionalLight('#fff', 2), []);
   const hemi = useMemo(() => new HemisphereLight('#fff', '#c9d6b4', 1), []);
@@ -105,15 +108,17 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     last.current = FRESH;
     world.ground.setState({ openDistricts: open });
     world.farGround.setState({ openDistricts: open });
-  }, [houses, open, extras, world, level, catalog]);
+  }, [houses, open, extras, world, level, catalog, mine]);
   useEffect(() => { world.boards.setLang(lang); }, [lang, world]);
+  /** Bo'sh shahar: markazga eng yaqin ~20 bo'sh joy (uy olinganda qayta hisoblanadi). */
+  useEffect(() => { world.beacons.set(waitingPlots(plan.plots, saved, open)); }, [plan, saved, open, world]);
   /** Oynasi ochiq bo'sh joy sariq ramkada. */
   const chosen = useApp((s) => (s.panel?.kind === 'plot' && !s.houses.has(s.panel.id) ? s.panel.id : null));
   useEffect(() => { world.selection.set((chosen && index.plots ? getApp().plotById.get(chosen) : null) ?? null); }, [chosen, world, index]);
 
   useEffect(() => {
     scene.fog = fog;
-    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, world.boards.mesh, world.markers.points, world.selection.group, world.works.group, sun, sun.target, hemi];
+    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, world.boards.mesh, world.markers.points, world.beacons.points, world.selection.group, world.works.group, sun, sun.target, hemi];
     scene.add(...parts);
     activeMarkers.current = world.markers;
     return () => {
@@ -122,6 +127,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       world.ground.dispose();
       world.farGround.dispose();
       world.labels.dispose();
+      world.beacons.dispose();
       world.signs.dispose();
       world.boards.dispose();
       activeMarkers.current = null;
@@ -158,7 +164,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   };
 
   const refresh = (v: View): void => {
-    const src: CollectSource = { plots: index.plots, statics: index.statics, extras, commerce, plan, houses, open, building: building?.plot ?? null, ...caches.current };
+    const src: CollectSource = { plots: index.plots, statics: index.statics, extras, commerce, plan, houses, open, building: building?.plot ?? null, mine, ...caches.current };
     const { items, labels, signs, boards, free } = collect(v, src, q.labels);
     world.pools.set(items);
     world.signs.set(signs);
@@ -173,7 +179,11 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       const pct = Math.min(100, Math.floor((p.raised / Math.max(1, p.goal)) * 100));
       return [{ key: `work-${p.id}`, text: `${p.uz} · ${p.status === 'done' ? '100%' : `${pct}%`}`, kind: p.status === 'done' ? 'gold' : 'plain', badge: null, icon: 'bank', x: at.x, y: 12, z: at.z, size: 1.6 } satisfies LabelInfo];
     });
-    world.labels.set([...heroLabel, ...works, ...labels]);
+    // Yaqinda (≤ 60 m) yorliq ekranda bir xil katta, uzoqda kichrayadi.
+    const fov = camera instanceof PerspectiveCamera ? camera.fov : 60;
+    const perPx = (2 * Math.tan((fov * Math.PI) / 360)) / Math.max(1, size.height);
+    const at = camera.position;
+    world.labels.set([...heroLabel, ...works, ...labels], (x, y, z) => LABEL_PX * perPx * Math.min(Math.hypot(x - at.x, y - at.y, z - at.z), LABEL_NEAR));
   };
 
   const updateGround = (v: View, isHigh: boolean): void => {
@@ -227,6 +237,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     updateWorks();
     const app = getApp();
     world.markers.setVisible(s.mode === 'city' && !isHigh && !app.isPhoto && !app.isClean);
+    world.beacons.update(!app.isPhoto && !app.isClean && setting('lively_start', true), clock.elapsedTime);
     if (!isStale(last.current, s)) return;
     last.current = s;
     refresh(v);

@@ -26,6 +26,20 @@ function Spark({ title, values, days }: SparkProps): React.JSX.Element {
   );
 }
 
+interface SourceRow { readonly source: string; readonly users: number }
+const SOURCE_NAMES: Readonly<Record<string, string>> = { bio: 'Instagram bio', reels: 'Reels', '': 'Belgisiz' };
+/** Yangi foydalanuvchilar qayerdan kelgani (7 kun): havolada `?from=bio`, `?from=reels`. */
+function Sources(): React.JSX.Element {
+  const { data, error } = useLoad(() => rpc<readonly SourceRow[]>('admin_sources'));
+  return (
+    <>
+      <h3>Qayerdan kelishdi (7 kun)</h3>
+      <p className="muted">Instagram bio havolasiga <code>?from=bio</code>, reels havolasiga <code>?from=reels</code> qo‘shing. Saytga necha kishi kirgani — <a href="https://dash.cloudflare.com/?to=/:account/web-analytics" target="_blank" rel="noopener noreferrer">Cloudflare Web Analytics</a> (cookie’siz, bepul).</p>
+      <Table rows={data} error={error} rowKey={(r) => r.source || '-'} columns={[{ head: 'Manba', cell: (r) => SOURCE_NAMES[r.source] ?? r.source }, { head: 'Yangi foydalanuvchi', cell: (r) => r.users }]} />
+    </>
+  );
+}
+
 export function Stats(): React.JSX.Element {
   const { data: s, error } = useLoad(() => rpc<StatsData>('admin_stats'));
   if (error) return <p className="error">{error}</p>;
@@ -44,6 +58,7 @@ export function Stats(): React.JSX.Element {
         <Spark title="Ro'yxatdan o'tgan" days={days} values={s.days.map((d) => d.signups)} />
         <Spark title="Olingan uylar" days={days} values={s.days.map((d) => d.claims)} />
       </div>
+      <Sources />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { PGlite } from '@electric-sql/pglite';
-import { beforeAll, describe, expect, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { openDb } from '../dev/db.ts';
 import { createEmulator, makeKeys } from '../dev/supabase-emu.ts';
 import { handle } from '../src/app.ts';
@@ -83,6 +83,8 @@ beforeAll(async () => {
   emu = createEmulator(db, keys, path.join(tmpdir(), `shahar-test-${process.pid}`));
   await db.query("update settings set value = 'true' where key = 'payments_enabled'");
 });
+/* Har test o'z egasini o'zi belgilaydi (egasi yozilmagan — admin roli yetadi). */
+beforeEach(async () => { await db.query('delete from private.owner'); });
 
 describe('kirish faqat Telegram bot orqali', () => {
   test('eski yo‘llar: so‘rov-kutish yo‘q (404); parol yo‘li bayroqcha ortida (403)', async () => {
@@ -150,11 +152,20 @@ describe('kirish faqat Telegram bot orqali', () => {
     await webhook(message(700, 'salom'));
     expect(sent.at(-1)!.text).toContain('/yordam');
   });
-  test('/admin: faqat admin va moderatorga admin panel havolasi', async () => {
+  test('/admin: faqat egasi (ADMIN_TELEGRAM_ID + admin roli); boshqalarga "Bunday buyruq yo‘q"', async () => {
     await webhook(message(700, '/admin'));
-    expect(sent.at(-1)!.text).toContain('faqat adminlar');
+    expect(sent.at(-1)!.text).toContain('Bunday buyruq yo‘q');
+    expect(sent.at(-1)!.buttons ?? []).toEqual([]);
     await db.query("update profiles set role = 'moderator' where telegram_id = 700");
     await webhook(message(700, '/admin'));
+    expect(sent.at(-1)!.text).toContain('Bunday buyruq yo‘q');
+    await db.query("update profiles set role = 'admin' where telegram_id = 700");
+    await webhook(message(700, '/admin'));
+    expect(sent.at(-1)!.text).toContain('Bunday buyruq yo‘q');
+    await db.query("update profiles set role = 'user' where telegram_id = 700");
+    const c = ctx({ env: { ...ENV, ADMIN_TELEGRAM_ID: '700' } });
+    await db.query("update profiles set role = 'admin' where telegram_id = 700");
+    await call('/telegram/webhook', message(700, '/admin'), { 'x-telegram-bot-api-secret-token': 'wh' }, c);
     const url = sent.at(-1)!.buttons![0]!.url!;
     expect(url).toMatch(/^https:\/\/admin\.test\/\?kirish=[0-9a-f]{32}$/);
     expect(await redeem(url.split('kirish=')[1]!)).toBeTruthy();

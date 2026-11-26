@@ -52,12 +52,12 @@ export const PRIVACY: Doc = {
     ['Nimani saqlaymiz', ['Telegram ID va ismingiz (kirish shu orqali), Instagram niki, uy yozuvi, avatar. Yangi akkauntlarda parol yo‘q.', 'To‘lovda — summa va tranzaksiya raqami (karta ma’lumoti saqlanmaydi).', 'Spamga qarshi — IP manzilning kalitlangan xeshi, qisqa muddat.']],
     ['Nima ochiq', ['Nik, uy yozuvi, uy ko‘rinishi, nishonlar hammaga ko‘rinadi. Ko‘p o‘yinchida joylashuvingiz (shahar ichida) va mahalla chati ko‘rinadi.']],
     ['O‘chirish', ['Uyim → Akkauntni o‘chirish. Profil, chat xabarlari, Telegram bog‘lanishi va shaxsiy ma’lumot darhol o‘chadi, uy bo‘shaydi; moliyaviy yozuvlar shaxssiz qoladi.', 'O‘chirilgan akkaunt ma’lumoti yangi zaxira nusxalarga kirmaydi; eski nusxalar faqat favqulodda tiklash uchun yopiq saqlanadi.', 'Saytda shaxsiy (yopiq) xabar yo‘q — faqat ochiq chat.']],
-    ['Uchinchi tomonlar', ['Supabase (baza), Cloudflare (hosting), Telegram (bot, zaxira nusxa adminga), xatolar monitoringi. Ma’lumot sotilmaydi.']],
+    ['Uchinchi tomonlar', ['Supabase (baza), Cloudflare (hosting), Telegram (bot, zaxira nusxa adminga), xatolar monitoringi. Ma’lumot sotilmaydi.', 'Anonim tashrif statistikasi (Cloudflare) yig‘iladi — cookie’siz, shaxsingiz aniqlanmaydi.']],
   ],
   ru: [
     ['Что храним', ['Telegram ID и имя (вход через бот), ник Instagram, подпись дома, аватар. У новых аккаунтов пароля нет.', 'При оплате — сумма и номер транзакции (данные карты не хранятся).', 'Против спама — хеш IP-адреса, недолго.']],
     ['Что видно всем', ['Ник, подпись, вид дома, значки. В мультиплеере — положение в городе и чат махалли.']],
     ['Удаление', ['Мой дом → Удалить аккаунт. Профиль, сообщения чата, связь с Telegram и личные данные удаляются сразу, дом освобождается; финансовые записи обезличиваются.', 'Данные удалённого аккаунта не попадают в новые резервные копии; старые копии хранятся закрыто только для аварийного восстановления.', 'Личных (закрытых) сообщений на сайте нет — только открытый чат.']],
-    ['Третьи стороны', ['Supabase (база), Cloudflare (хостинг), Telegram (бот, резервная копия админу), мониторинг ошибок. Данные не продаются.']],
+    ['Третьи стороны', ['Supabase (база), Cloudflare (хостинг), Telegram (бот, резервная копия админу), мониторинг ошибок. Данные не продаются.', 'Собирается анонимная статистика посещений (Cloudflare) — без cookie, личность не определяется.']],
   ],
 };

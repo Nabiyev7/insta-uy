@@ -81,6 +81,8 @@ describe('tanga fermasi', () => {
 });
 
 test('moderator pul va mulk amallarini bajara olmaydi', async () => {
+  // Moderator roli hozircha o'chiq (6d); kod qolgan — yoqilganda ham pul/mulk amallari yopiq.
+  await sql("insert into settings (key, value) values ('moderators_enabled', 'true') on conflict (key) do update set value = 'true'");
   const m = await user('moderator', ['orders', 'plots', 'settings']);
   const u = await user();
   const o = (await as(u, 'my_order', { p_kind: 'decor', p_payload: { id: 'sign_nick' } })) as { id: string };
@@ -95,6 +97,7 @@ test('moderator pul va mulk amallarini bajara olmaydi', async () => {
   expect(((await as(m, 'admin_catalog')) as Row[]).length).toBeGreaterThan(5);
   await expect(as(m, 'admin_plot', { p_plot: plot, p_action: 'tier', p_data: { tier: 5 } })).rejects.toThrow('forbidden');
   await as(m, 'admin_plot', { p_plot: plot, p_action: 'clear_bio' });
+  await sql("update settings set value = 'false' where key = 'moderators_enabled'");
 });
 
 test('login nomi ochiq ko‘rinmaydi', async () => {

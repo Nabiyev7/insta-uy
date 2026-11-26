@@ -118,5 +118,82 @@ export class Selection {
   }
 }
 
+/** "Bu joy sizni kutyapti": markazga eng yaqin bo'sh joylarda bayroqcha + yorqin "+", sekin yonib-o'chadi. Hammasi bitta draw call. */
+const BEACON_SIZE = 44;
+const BEACON_LIFT = 7;
+const beaconTexture = (): CanvasTexture => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  if (g) {
+    // bayroqcha: ustun + uchburchak
+    g.fillStyle = '#ffffff';
+    g.fillRect(60, 6, 6, 70);
+    g.fillStyle = '#e0465a';
+    g.beginPath();
+    g.moveTo(66, 8);
+    g.lineTo(104, 22);
+    g.lineTo(66, 36);
+    g.closePath();
+    g.fill();
+    g.beginPath();
+    g.arc(64, 92, 32, 0, Math.PI * 2);
+    g.fillStyle = '#ffffff';
+    g.fill();
+    g.beginPath();
+    g.arc(64, 92, 27, 0, Math.PI * 2);
+    g.fillStyle = YELLOW;
+    g.fill();
+    g.strokeStyle = '#3d2a05';
+    g.lineWidth = 8;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(64, 79);
+    g.lineTo(64, 105);
+    g.moveTo(51, 92);
+    g.lineTo(77, 92);
+    g.stroke();
+  }
+  const t = new CanvasTexture(c);
+  t.colorSpace = SRGBColorSpace;
+  return t;
+};
+export class Beacons {
+  readonly points: Points<BufferGeometry, PointsMaterial>;
+  private readonly position = new BufferAttribute(new Float32Array(MAX * 3), 3);
+  private count = 0;
+
+  constructor() {
+    const geometry = new BufferGeometry();
+    geometry.setAttribute('position', this.position);
+    this.points = new Points(geometry, new PointsMaterial({ map: beaconTexture(), size: BEACON_SIZE, sizeAttenuation: false, transparent: true, alphaTest: 0.1, depthTest: true, depthWrite: false, fog: false }));
+    this.points.frustumCulled = false;
+    this.points.renderOrder = 8;
+    this.points.visible = false;
+  }
+
+  set(list: readonly Plot[]): void {
+    this.count = Math.min(MAX, list.length);
+    list.slice(0, MAX).forEach((p, i) => this.position.setXYZ(i, p.x, padHeight(p) + BEACON_LIFT, p.z));
+    this.position.needsUpdate = true;
+    this.points.geometry.setDrawRange(0, this.count);
+  }
+
+  /** Yonib-o'chish: faqat o'lcham va shaffoflik (bitta material). */
+  update(isVisible: boolean, seconds: number): void {
+    this.points.visible = isVisible && this.count > 0;
+    if (!this.points.visible) return;
+    const wave = (Math.sin(seconds * 2.4) + 1) / 2;
+    this.points.material.size = BEACON_SIZE * (0.9 + wave * 0.2);
+    this.points.material.opacity = 0.7 + wave * 0.3;
+  }
+
+  dispose(): void {
+    this.points.geometry.dispose();
+    this.points.material.map?.dispose();
+    this.points.material.dispose();
+  }
+}
+
 /** Bosishni aniqlash uchun hozirgi belgilar (pick.ts). */
 export const activeMarkers: { current: Markers | null } = { current: null };

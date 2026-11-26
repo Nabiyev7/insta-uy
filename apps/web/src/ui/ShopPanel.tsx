@@ -7,12 +7,14 @@ import { car } from '../app/runtime.ts';
 import { openAuth, openPanel, openRoot, refreshCatalog, refreshProfile, setting, toast, useApp, write } from '../app/store.ts';
 import type { CatalogRow, SetRow } from '../logic/decorCatalog.ts';
 import { CARS, ownedCars } from '../logic/drive.ts';
-import { goodState, shopTabs, type ShopTab } from '../logic/shopTabs.ts';
+import { goodState, shopTabs, type PremiumTab, type ShopTab } from '../logic/shopTabs.ts';
 import { PayButtons } from './PayButtons.tsx';
+import { PremiumShop } from './PremiumShop.tsx';
 import { Icon } from './icons.tsx';
 import { DecorImage, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
 
-const TAB_NAMES: Readonly<Record<ShopTab, Key>> = { new: 'tabNew', yard: 'tabYard', garden: 'tabGarden', car: 'tabCar', luxe: 'tabLuxe', gate: 'tabGate', pet: 'tabPet', set: 'tabSet', special: 'tabSpecial' };
+const TAB_NAMES: Readonly<Record<ShopTab, Key>> = { new: 'tabNew', yard: 'tabYard', garden: 'tabGarden', car: 'tabCar', luxe: 'tabLuxe', pet: 'tabPet', set: 'tabSet', special: 'tabSpecial' };
+const useTester = (): boolean => useApp((s) => s.profile?.test_mode === true);
 
 interface BestPlot { readonly level: number; readonly id: string | null }
 /** Eng yuqori levelli hovlim (kvartira hisobga olinmaydi). */
@@ -32,7 +34,7 @@ function Good({ row, level, isPicked, onPick }: GoodProps): React.JSX.Element {
   const t = useT();
   const lang = useApp((s) => s.lang);
   const qty = useApp((s) => s.profile?.decor[row.id] ?? 0);
-  const state = goodState(row, level);
+  const state = goodState(row, level, useTester());
   const note = { free: '', locked: `${row.min}-${t('atLevel')}`, soldOut: t('soldOut'), seasonOver: t('seasonOver') }[state];
   return (
     <button type="button" className={`good ${state}`} aria-label={row[lang]} aria-pressed={isPicked} data-id={row.id} onClick={onPick}>
@@ -51,7 +53,7 @@ function SetCard({ set, rows, level, isPicked, onPick }: SetProps): React.JSX.El
   const lang = useApp((s) => s.lang);
   const need = Math.max(...rows.map((c) => c.min));
   const full = rows.reduce((n, c) => n + c.coins, 0);
-  const isLocked = need > 1 && level < need;
+  const isLocked = need > 1 && level < need && !useTester();
   return (
     <button type="button" className={`good set ${isLocked ? 'locked' : ''}`} aria-label={set[lang]} aria-pressed={isPicked} data-id={set.id} onClick={onPick}>
       <span className="frame">{rows.map((c) => <DecorImage key={c.id} model={c.model} />)}{isLocked && <em><Icon name="lock" />{need}-{t('atLevel')}</em>}</span>
@@ -70,8 +72,10 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
   const qty = profile?.decor[row.id] ?? 0;
-  const state = goodState(row, best.level);
+  const isTester = profile?.test_mode === true;
+  const state = goodState(row, best.level, isTester);
   const yard = best.id;
+  const short = profile && !isTester && state === 'free' ? row.coins - profile.coins : 0;
   const buy = (): void => {
     if (!profile) { openAuth(); return; }
     void run(async () => {
@@ -80,17 +84,24 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
       await refreshShop();
     }, t('bought'));
   };
-  const offer = `${t(qty > 0 ? 'getMore' : 'get')} · ${money(row.coins)}`;
+  const offer = `${t(qty > 0 ? 'getMore' : 'get')} · ${isTester ? t('testFree') : money(row.coins)}`;
   const label = { free: offer, locked: profile ? `${row.min}-${t('opensAt')}` : offer, soldOut: t('soldOut'), seasonOver: t('seasonOver') }[state];
   const isClosed = isBusy || state === 'soldOut' || state === 'seasonOver' || (state === 'locked' && profile !== null);
+  // So'mdagi narx faqat to'lov yoqilganda (admin sinov rejimida ham).
+  const isPaid = row.uzs > 0 && setting('payments_enabled', false);
   return (
+    <>
+    {short > 0 && <p className="need-coins">{t('needCoins').replace('{n}', money(short))}</p>}
     <div className="row two">
       {qty > 0 && yard
         ? <button type="button" className="btn soft" onClick={() => openPanel({ kind: 'yard', id: yard })}><Icon name="plus" />{t('putYard')}</button>
         : <button type="button" className="btn soft" aria-label={`${row[lang]}: ${t('tryIt')}`} onClick={() => { if (!tryDecor(row)) toast(t('noHouse'), true); }}>{t('tryIt')}</button>}
-      {setting('coins_enabled', true) && <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}</button>}
-      {row.uzs > 0 && <PayButtons kind="decor" payload={{ id: row.id }} uzs={row.uzs} code={`d_${row.id}`} isDisabled={state === 'soldOut' || state === 'seasonOver'} />}
+      {setting('coins_enabled', true) && (short > 0
+        ? <button type="button" className="btn gold" onClick={() => openCoinShop()}><Icon name="coin" />{t('getCoins')}</button>
+        : <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}</button>)}
+      {isPaid && <PayButtons kind="decor" payload={{ id: row.id }} uzs={row.uzs} code={`d_${row.id}`} isDisabled={state === 'soldOut' || state === 'seasonOver'} />}
     </div>
+    </>
   );
 }
 function BuySetBar({ set, level, need }: { readonly set: SetRow; readonly level: number; readonly need: number }): React.JSX.Element {
@@ -98,24 +109,24 @@ function BuySetBar({ set, level, need }: { readonly set: SetRow; readonly level:
   const lang = useApp((s) => s.lang);
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
-  const isLocked = need > 1 && level < need;
+  const isTester = profile?.test_mode === true;
+  const isLocked = need > 1 && level < need && !isTester;
   const buy = (): void => {
     if (!profile) { openAuth(); return; }
     void run(async () => { await rpc('my_buy_set_coins', { p_set: set.id }); buzz(BUZZ.coin); await refreshShop(); }, t('bought'));
   };
-  const label = isLocked && profile ? `${need}-${t('opensAt')}` : `${t('get')} · ${money(set.coins)}`;
+  const label = isLocked && profile ? `${need}-${t('opensAt')}` : `${t('get')} · ${isTester ? t('testFree') : money(set.coins)}`;
   return <button type="button" className="btn block" disabled={isBusy || (isLocked && profile !== null)} aria-label={`${set[lang]}: ${label}`} onClick={buy}>{label}</button>;
 }
 
 /** Kirish (Telegramdan qaytish — sahifa qayta yuklanadi) yoki boshqa oynadan qaytganda do'kon o'sha joyida ochiladi. */
 const MEMORY_KEY = 'shopPick';
-/** Tanlangan tab chetda kesilib qolmasin. */
-const scrollIntoTab = (el: HTMLButtonElement | null): void => { el?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); };
-type ShopMemory = { tab: ShopTab | null; picked: string | null };
+type ShopPart = 'coins' | 'premium';
+type ShopMemory = { part?: ShopPart; tab: ShopTab | null; premium?: PremiumTab; picked: string | null };
 const readMemory = (): ShopMemory => {
   try {
     const raw = JSON.parse(localStorage.getItem(MEMORY_KEY) ?? 'null') as Partial<ShopMemory> | null;
-    return { tab: typeof raw?.tab === 'string' ? raw.tab : null, picked: typeof raw?.picked === 'string' ? raw.picked : null };
+    return { part: raw?.part === 'premium' ? 'premium' : 'coins', tab: typeof raw?.tab === 'string' ? raw.tab : null, premium: typeof raw?.premium === 'string' ? raw.premium : 'decor', picked: typeof raw?.picked === 'string' ? raw.picked : null };
   } catch {
     return { tab: null, picked: null };
   }
@@ -125,6 +136,11 @@ const saveMemory = (next: ShopMemory): void => {
   memory = next;
   try { localStorage.setItem(MEMORY_KEY, JSON.stringify(next)); } catch { /* maxfiy rejim */ }
 };
+/** "Tanga olish": do'konning Premium → Tanga paketlari tabi. */
+export const openCoinShop = (): void => {
+  saveMemory({ ...memory, part: 'premium', premium: 'packs', picked: null });
+  openPanel({ kind: 'shop' });
+};
 
 export function ShopPanel(): React.JSX.Element {
   const t = useT();
@@ -132,9 +148,11 @@ export function ShopPanel(): React.JSX.Element {
   const catalog = useApp((s) => s.catalog);
   const sets = useApp((s) => s.sets);
   const best = useBestPlot();
+  const [part, setPart] = useState<ShopPart>(memory.part ?? 'coins');
   const [tab, setTab] = useState(memory.tab);
+  const [premium, setPremium] = useState<PremiumTab>(memory.premium ?? 'decor');
   const [picked, setPicked] = useState(memory.picked);
-  useEffect(() => { saveMemory({ tab, picked }); }, [tab, picked]);
+  useEffect(() => { saveMemory({ part, tab, premium, picked }); }, [part, tab, premium, picked]);
   const loaded = useLoad(refreshCatalog, 'catalog');
   const tabs = shopTabs(catalog, sets);
   const current = tabs.find((x) => x.tab === tab) ?? tabs[0];
@@ -143,10 +161,18 @@ export function ShopPanel(): React.JSX.Element {
   const rowsOf = (x: SetRow): readonly CatalogRow[] => x.items.flatMap((id) => catalog.find((c) => c.id === id) ?? []);
   const footer = set ? <BuySetBar set={set} level={best.level} need={Math.max(...rowsOf(set).map((c) => c.min))} /> : row && <BuyBar row={row} best={best} />;
   const wallet = coins !== undefined && <button type="button" className="pill coins flat" aria-label={`${t('coins')}: ${coins}`} onClick={() => openPanel({ kind: 'coins' })}><Icon name="coin" /><b>{money(coins)}</b></button>;
+  const parts = (
+    <div className="shop-parts" role="tablist" aria-label={t('shop')}>
+      <button type="button" role="tab" aria-selected={part === 'coins'} onClick={() => { setPart('coins'); setPicked(null); }}><Icon name="coin" />{t('shopCoins')}</button>
+      <button type="button" role="tab" className="premium" aria-selected={part === 'premium'} onClick={() => { setPart('premium'); setPicked(null); }}><Icon name="star" />{t('shopPremium')}</button>
+    </div>
+  );
+  if (part === 'premium') return <PremiumShop parts={parts} wallet={wallet} tab={premium} onTab={(x) => { setPremium(x); setPicked(null); }} picked={picked} onPick={setPicked} />;
   return (
     <Sheet title={t('shop')} variant="full" extra={wallet} footer={footer}>
-      <div className="tabs" role="tablist" aria-label={t('shop')}>
-        {tabs.map((x) => <button type="button" role="tab" key={x.tab} ref={x.tab === current?.tab ? scrollIntoTab : undefined} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{t(TAB_NAMES[x.tab])}</button>)}
+      {parts}
+      <div className="tabs" role="tablist" aria-label={t('shopCoins')}>
+        {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{t(TAB_NAMES[x.tab])}</button>)}
       </div>
       {(loaded.hasError || !current) && <LoadState of={loaded} isEmpty={!current} empty={t('shopEmpty')} />}
       <div className="goods">

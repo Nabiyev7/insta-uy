@@ -21,7 +21,13 @@ const SECTIONS: readonly SectionDef[] = [
   ['projects', 'Loyihalar', 'settings', Projects], ['settings', 'Sozlamalar', 'settings', Settings], ['audit', 'Jurnal', 'admin', Audit],
 ];
 
+/** Ishlab chiqarishda login + parol shakli yo'q: kirish faqat botdagi /admin havolasi orqali. */
+const HAS_PASSWORD_FORM = import.meta.env.DEV;
 function Login({ onDone }: { readonly onDone: () => void }): React.JSX.Element {
+  if (!HAS_PASSWORD_FORM) return <div className="login"><p className="muted">Telegram botda <b>/admin</b> yozing</p></div>;
+  return <PasswordLogin onDone={onDone} />;
+}
+function PasswordLogin({ onDone }: { readonly onDone: () => void }): React.JSX.Element {
   const { isBusy, run } = useAction();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');

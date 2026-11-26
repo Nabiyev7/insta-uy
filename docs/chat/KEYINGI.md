@@ -21,7 +21,7 @@
 - Gap pufakchalari, chap qo'l rejimi, telefon chetlari (safe-area allaqachon promtda), birinchi kirgandagi 5 qadamli ko'rsatma.
 
 ## Uylar
-- **Premium uy** (pulga uchastka + darhol level) — 6-qadamdagisi yashirildi (kod bayroqcha ortida), egasi bilan qayta loyihalanadi, narxlarni egasi belgilaydi (2026-11-25).
+- **Premium tovarlar** (faqat pulga, do'konda "⭐ Premium" bo'limi — TUZATISH-2, 6-band): **maxsus dizaynli uylar, bezaklar, mashinalar** — egasi bilan Blender'da chiziladi, narxlarni egasi belgilaydi (2026-11-26).
 - **Login + parol** — kod bor, o'chiq; sayt yaxshi ishlay boshlagach to'liq qaytariladi (2026-11-25).
 - 4–10-level uy modellarini qayta ko'rib chiqish (hozircha maksimal level — 3).
 - Kvartira egalari uchun balkon bezaklari va levellar.

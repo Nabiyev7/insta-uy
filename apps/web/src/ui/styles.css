@@ -305,9 +305,8 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .prose ul { margin: 0; padding-left: 20px; display: grid; gap: 5px; }
 
 /* do'kon */
-.tabs { display: flex; gap: 8px; margin: 0 -20px; padding: 2px 20px 4px; overflow-x: auto; scrollbar-width: none; position: sticky; top: -4px; z-index: 2; background: var(--bg); touch-action: pan-x; }
-.tabs::-webkit-scrollbar { display: none; }
-.tabs button { flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 22px; background: var(--bg-2); color: var(--text-2); font-weight: 800; white-space: nowrap; cursor: pointer; }
+.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 2px 0 6px; position: sticky; top: -4px; z-index: 2; background: var(--bg); }
+.tabs button { min-width: 0; min-height: 40px; padding: 0 4px; border: 0; border-radius: 14px; background: var(--bg-2); color: var(--text-2); font-weight: 800; font-size: 13px; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; cursor: pointer; }
 .tabs button[aria-selected='true'] { background: var(--main); color: var(--on-main); }
 .goods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .good { position: relative; display: grid; gap: 5px; align-content: start; padding: 10px; border: 2px solid transparent; border-radius: 22px; background: var(--field); box-shadow: 0 4px 16px rgb(20 45 50 / 0.09); text-align: left; cursor: pointer; transition: transform 140ms var(--ease), border-color 140ms; }
@@ -390,8 +389,6 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .tag.popular { background: var(--main); color: var(--on-main); }
 /* 6a: xabar oyna tugmalarini yopmasin; do'kon tablari chetida so'nish */
 .toasts.top { bottom: auto; top: calc(64px + var(--safe-t)); }
-.tabs { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); scroll-padding-inline: 24px; }
-.tabs > * { flex: 0 0 auto; }
 .heart .btn .icon { margin-right: 4px; }
 .heart .btn[aria-pressed='true'] svg path { fill: currentColor; }
 /* 6b: taklif shkalasi */
@@ -400,4 +397,21 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .invite-scale li.done { outline: 2px solid var(--gold-a); }
 .invite-scale li img { width: 56px; height: 56px; object-fit: contain; }
 .invite-scale li svg:last-child { position: absolute; top: 6px; right: 6px; }
-
+/* 6d: do'kon — tanga / premium; panel ichidagi aylantirish chizig'i ingichka va to'q */
+.shop-parts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.shop-parts button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border: 2px solid transparent; border-radius: 16px; background: var(--bg-2); color: var(--text-2); font-weight: 800; cursor: pointer; }
+.shop-parts button[aria-selected='true'] { background: var(--main); color: var(--on-main); }
+.shop-parts button.premium { border-color: var(--gold-a); color: var(--gold-a); }
+.shop-parts button.premium[aria-selected='true'] { background: linear-gradient(135deg, #fbe9a9, #d79f2f); color: #3d2a05; }
+.premium-tabs button[aria-selected='true'] { background: linear-gradient(135deg, #fbe9a9, #d79f2f); color: #3d2a05; }
+.good.premium { outline: 2px solid var(--gold-a); outline-offset: -2px; }
+.premium-soon { display: grid; justify-items: center; gap: 6px; padding: 28px 16px; margin-top: 8px; border-radius: 18px; border: 2px dashed var(--gold-a); text-align: center; }
+.premium-soon svg { width: 36px; height: 36px; color: var(--gold-a); }
+.need-coins { margin: 0 0 6px; text-align: center; color: var(--gold-a); font-weight: 700; }
+.sheet .body { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }
+.sheet .body::-webkit-scrollbar { width: 6px; }
+.sheet .body::-webkit-scrollbar-track { background: transparent; }
+.sheet .body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+/* 6d: bo'sh shahar — hisoblagich */
+.lively-count { position: absolute; left: calc(12px + var(--safe-l)); top: calc(112px + var(--safe-t)); max-width: calc(100vw - 96px); height: 44px; padding: 0 12px; gap: 6px; font-size: 13px; }
+.lively-count b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -52,11 +52,19 @@ export const backup = async (ctx: Ctx, now = new Date()): Promise<string> => {
 
 const DAILY = '10 22 * * *';
 
+/** Egasi (ADMIN_TELEGRAM_ID) bazada yozilib turadi: boshqa Telegramdagi admin roli ishlamaydi. */
+export const syncOwner = async (ctx: Ctx): Promise<boolean> => {
+  const owner = Number(ctx.env.ADMIN_TELEGRAM_ID);
+  if (!Number.isSafeInteger(owner) || owner <= 0) return false;
+  await ctx.db.rpc('svc_set_owner', { p_telegram: owner });
+  return true;
+};
+
 /** Bitta ish yiqilsa, qolganlari davom etadi. */
 export const runCron = async (ctx: Ctx, cron: string): Promise<readonly string[]> => {
   const jobs: readonly (readonly [string, () => Promise<unknown>])[] = cron === DAILY
     ? [['backup', () => backup(ctx)], ['comments', () => collectComments(ctx)]]
-    : [['tick', () => ctx.db.rpc('svc_tick', {})], ['outbox', () => flushOutbox(ctx)], ['broadcast', () => flushBroadcast(ctx)], ['tg_outbox', () => flushTgOutbox(ctx)], ['videos', () => sendVideos(ctx)]];
+    : [['owner', () => syncOwner(ctx)], ['tick', () => ctx.db.rpc('svc_tick', {})], ['outbox', () => flushOutbox(ctx)], ['broadcast', () => flushBroadcast(ctx)], ['tg_outbox', () => flushTgOutbox(ctx)], ['videos', () => sendVideos(ctx)]];
   const results = await Promise.allSettled(jobs.map(([, run]) => run()));
   return results.flatMap((r, i) => (r.status === 'rejected' ? [`${jobs[i]?.[0]}: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`] : []));
 };
