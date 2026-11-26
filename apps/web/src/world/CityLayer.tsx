@@ -21,8 +21,8 @@ import { LABEL_NEAR, LABEL_PX, Labels, type LabelInfo } from './labels.ts';
 import { POND, STADIUM } from '../logic/paving.ts';
 /** Loyiha joylari bosh rejadagi mavjud joylarda (qulfga tegilmaydi): stadion — o'z joyi, bog' — hovuz yonida. */
 const PROJECT_SPOTS: Readonly<Partial<Record<'bog' | 'stadion' | 'koprik', { readonly x: number; readonly z: number }>>> = { stadion: STADIUM, bog: { x: POND.x, z: POND.z + POND.r + 12 } };
-import { Beacons, Markers, Selection, activeMarkers } from './markers.ts';
-import { canClaimFree, waitingPlots } from '../logic/lively.ts';
+import { Beacons, Markers, Selection, activeBeacons, activeMarkers } from './markers.ts';
+import { showClaimMarks, waitingPlots } from '../logic/lively.ts';
 import { Pools } from './pools.ts';
 import { Boards, Signs } from './signs.ts';
 import { Lake, Sky } from './sky.ts';
@@ -78,6 +78,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const lang = useApp((s) => s.lang);
   /** Qurilayotgan uy effekt tugaguncha oddiy ro'yxatda ko'rinmaydi. */
   const houses = useMemo(() => without(withPreview(saved, preview), building?.plot ?? null), [saved, preview, building]);
+  const authState = useApp((s) => s.authState);
   const boot = useApp((s) => s.boot);
   const catalog = useApp((s) => s.catalog);
   const q = QUALITY[level];
@@ -108,12 +109,12 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     last.current = FRESH;
     world.ground.setState({ openDistricts: open });
     world.farGround.setState({ openDistricts: open });
-  }, [houses, open, extras, world, level, catalog, mine, profile?.free_used, profile?.plots.length]);
+  }, [houses, open, extras, world, level, catalog, mine, profile?.free_used, profile?.plots.length, authState]);
   useEffect(() => { world.boards.setLang(lang); }, [lang, world]);
   /** Bo'sh shahar: markazga eng yaqin ~20 bo'sh joy (uy olinganda qayta hisoblanadi). */
   useEffect(() => { world.beacons.set(waitingPlots(plan.plots, saved, open)); }, [plan, saved, open, world]);
   /** Oynasi ochiq bo'sh joy sariq ramkada. */
-  const chosen = useApp((s) => (s.panel?.kind === 'plot' && !s.houses.has(s.panel.id) && canClaimFree(s.profile) ? s.panel.id : null));
+  const chosen = useApp((s) => (s.panel?.kind === 'plot' && !s.houses.has(s.panel.id) && showClaimMarks(s.authState, s.profile) ? s.panel.id : null));
   useEffect(() => { world.selection.set((chosen && index.plots ? getApp().plotById.get(chosen) : null) ?? null); }, [chosen, world, index]);
 
   useEffect(() => {
@@ -121,6 +122,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, world.boards.mesh, world.markers.points, world.beacons.points, world.selection.group, world.works.group, sun, sun.target, hemi];
     scene.add(...parts);
     activeMarkers.current = world.markers;
+    activeBeacons.current = world.beacons;
     return () => {
       scene.remove(...parts);
       world.pools.dispose();
@@ -131,6 +133,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       world.signs.dispose();
       world.boards.dispose();
       activeMarkers.current = null;
+      activeBeacons.current = null;
       world.markers.dispose();
       world.selection.dispose();
       world.works.dispose();
@@ -170,7 +173,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.signs.set(signs);
     world.boards.set(boards);
     // Uyi bor odamga (admin ham) "+" umuman chizilmaydi.
-    world.markers.set(canClaimFree(getApp().profile) ? free : []);
+    world.markers.set(showClaimMarks(getApp().authState, getApp().profile) ? free : []);
     const hero = boot?.hero;
     const heroLabel: LabelInfo[] = hero && Math.hypot(v.x - HERO_SPOT.x, v.z - HERO_SPOT.z) < HERO_RANGE ? [{ key: 'hero', text: hero.nick, kind: 'gold', badge: null, icon: 'rank', x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];
     // Shahar loyihalari joyida taxta: "Stadion · 34%" (ko'prik uchun joy hali yo'q).
@@ -237,7 +240,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     updateGround(v, isHigh);
     updateWorks();
     const app = getApp();
-    const canClaim = canClaimFree(app.profile);
+    const canClaim = showClaimMarks(app.authState, app.profile);
     world.markers.setVisible(canClaim && s.mode === 'city' && !isHigh && !app.isPhoto && !app.isClean);
     world.beacons.update(canClaim && !app.isPhoto && !app.isClean && setting('lively_start', true), clock.elapsedTime);
     if (!isStale(last.current, s)) return;

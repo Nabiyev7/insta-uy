@@ -66,6 +66,8 @@ export interface AppState {
   readonly boot: Boot | null;
   readonly houses: ReadonlyMap<string, HouseState>;
   readonly profile: Profile | null;
+  /** Kirganmi — hali noma'lum (sessiya bor, profil kelmagan; Mini App kirishi davom etyapti), mehmon yoki kirgan. Noma'lumda "+" chizilmaydi. */
+  readonly authState: AuthState;
   readonly panel: Panel | null;
   /** Orqaga qaytish yo'li: ochiq oynadan oldingilari. */
   readonly trail: readonly Panel[];
@@ -106,8 +108,9 @@ export interface AppState {
   readonly fps: number;
 }
 
+export type AuthState = 'unknown' | 'guest' | 'user';
 export const useApp = create<AppState>(() => ({
-  stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, trail: [], toasts: [],
+  stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, authState: 'unknown', panel: null, trail: [], toasts: [],
   lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: true, isSound: read('sound') === '1', theme: 'dark', isLeftHand: false, isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, isClean: false, district: 0, street: 0, online: 0, isLiveWaking: false, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
@@ -179,10 +182,10 @@ export const refreshHouses = async (source: 'snap' | 'live' = 'live'): Promise<v
 };
 export const refreshProfile = async (): Promise<void> => {
   try {
-    setApp({ profile: await rpc<Profile>('my_profile') });
+    setApp({ profile: await rpc<Profile>('my_profile'), authState: 'user' });
   } catch (error: unknown) {
     // Internet uzilishi foydalanuvchini "chiqarib" yubormasin.
-    if (error instanceof Error && /not_signed_in|banned|permission denied|JWT/.test(error.message)) setApp({ profile: null });
+    if (error instanceof Error && /not_signed_in|banned|permission denied|JWT/.test(error.message)) setApp({ profile: null, authState: 'guest' });
   }
 };
 export const setting = <T,>(key: string, fallback: T): T => (getApp().boot?.settings[key] as T | undefined) ?? fallback;

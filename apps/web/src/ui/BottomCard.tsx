@@ -9,7 +9,7 @@ import { Icon, type IconName } from './icons.tsx';
 import { DecorImage, useAction } from './kit.tsx';
 import { dismissInstall, hasInstallPrompt, installDue, promptInstall } from '../app/install.ts';
 import { installWay } from '../logic/growth.ts';
-import { canClaimFree } from '../logic/lively.ts';
+import { showClaimMarks } from '../logic/lively.ts';
 
 interface CardProps { readonly icon: ReactNode; readonly title: string; readonly children: ReactNode; readonly button: string; readonly isGold?: boolean; readonly isBusy?: boolean; readonly onClick: () => void; readonly onClose?: () => void; readonly buttonLabel?: string }
 function Card({ icon, title, children, button, isGold = false, isBusy = false, onClick, onClose, buttonLabel }: CardProps): React.JSX.Element {
@@ -99,10 +99,10 @@ function InstallCard(): React.JSX.Element | null {
 }
 
 export function BottomCard(): React.JSX.Element | null {
-  const { profile, panel, preview, building, mode, cheer, treasure, catalog, seenNew } = useApp();
+  const { profile, authState, panel, preview, building, mode, cheer, treasure, catalog, seenNew } = useApp();
   if (panel || preview || building) return null;
   const kind = nextCard({
-    isCity: mode === 'city', isGuest: !profile, hasHouse: (profile?.plots.length ?? 0) > 0 || !canClaimFree(profile), isDailyReady: profile !== null && !profile.daily_done && setting('coins_enabled', true),
+    isCity: mode === 'city', isGuest: !profile, hasHouse: (profile?.plots.length ?? 0) > 0 || !showClaimMarks(authState, profile), isDailyReady: profile !== null && !profile.daily_done && setting('coins_enabled', true),
     hasCheer: cheer !== null, hasTreasure: treasure !== null && setting('treasure_enabled', false), hasFresh: catalog.some((c) => c.onSale && c.isNew && !seenNew.includes(c.id)),
   });
   const View = kind ? VIEWS[kind] : null;

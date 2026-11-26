@@ -40,3 +40,24 @@ describe('egasi-admin', () => {
     expect(goodState(lux, 1, true)).toBe('free');
   });
 });
+
+describe('"+" — uyi bor hech kimga (admin ham) chiqmaydi', () => {
+  test('mehmon — bor; kirgan va uysiz — bor; uyi bor yoki bepul uyini olgan — yo‘q', async () => {
+    const { showClaimMarks } = await import('../src/logic/lively.ts');
+    expect(showClaimMarks('guest', null)).toBe(true);
+    expect(showClaimMarks('user', { free_used: false, plots: [] })).toBe(true);
+    expect(showClaimMarks('user', { free_used: true, plots: [] })).toBe(false);
+    expect(showClaimMarks('user', { free_used: false, plots: [{ plot: 'P0001' }] })).toBe(false);
+  });
+  test('profil hali kelmagan (sessiya bor, Mini App kirishi, internet uzilgan) — yo‘q', async () => {
+    const { showClaimMarks } = await import('../src/logic/lively.ts');
+    expect(showClaimMarks('unknown', null)).toBe(false);
+    expect(showClaimMarks('user', null)).toBe(false);
+  });
+  test('belgilarning hammasi bitta qoidadan: "+", ramka, "Bu joy sizni kutyapti" va pastki karta', () => {
+    const layer = readFileSync(join(ROOT, 'apps/web/src/world/CityLayer.tsx'), 'utf8');
+    expect(layer).not.toMatch(/canClaimFree\(/);
+    expect(layer.match(/showClaimMarks\(/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(readFileSync(join(ROOT, 'apps/web/src/ui/BottomCard.tsx'), 'utf8')).toContain('showClaimMarks(authState, profile)');
+  });
+});

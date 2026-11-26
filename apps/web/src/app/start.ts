@@ -1,7 +1,7 @@
 /** Yuklash ketma-ketligi va fon ishlari. */
 import { loadKit } from '../world/kit.ts';
 import { goToPlot, nearestFree } from './actions.ts';
-import { startMiniApp } from './telegram.ts';
+import { isTelegramLaunch, startMiniApp } from './telegram.ts';
 import { onSession, rpc, supabase } from './api.ts';
 import { startAudio } from './audio.ts';
 import { applyLoginLink } from './login.ts';
@@ -103,7 +103,14 @@ export const start = async (): Promise<void> => {
     if (isVideoMode) { exposeVideoApi(); return; }
     void applyLoginLink();
     // Telegram ichida (Mini App) — avtomatik kirish; keyin bot tugmasidagi oyna ochiladi.
-    void startMiniApp(() => { void supabase.auth.getSession().then(({ data }) => (data.session ? refreshProfile() : undefined)).then(openWanted); });
+    void startMiniApp(() => {
+      void supabase.auth.getSession().then(({ data }) => {
+        miniSignIn = false;
+        if (data.session) return refreshProfile();
+        setApp({ authState: 'guest' });
+        return undefined;
+      }).then(openWanted);
+    });
     startAnalytics();
     await runBackground();
   } catch (error: unknown) {
@@ -134,6 +141,8 @@ const pingOnce = (district: number): void => {
   void rpc('my_ping', { p_district: district }).catch(() => { pinged.delete(key); });
 };
 
+/** Telegram ichida (Mini App) kirish tugagunicha mehmon deb hisoblanmaydi ("+" uyi bor odamga bir lahzaga ham chiqmasin). */
+let miniSignIn = isTelegramLaunch(location.hash) || Boolean(window.Telegram?.WebApp?.initData);
 let isRunning = false;
 const runBackground = async (): Promise<void> => {
   if (isRunning) return;
@@ -142,7 +151,7 @@ const runBackground = async (): Promise<void> => {
     // Supabase qulfi ichida so'rov yubormaslik uchun navbatga qo'yiladi.
     setTimeout(() => {
       // Kirgan odamga uylar bir marta bazadan to'g'ridan-to'g'ri (o'z uyi darhol ko'rinsin); mehmon — snapshotdan.
-      void (s ? refreshProfile().then(sendSource).then(() => refreshHouses('live')) : Promise.resolve(setApp({ profile: null }))).then(() => applyDraftMap().catch(() => undefined));
+      void (s ? refreshProfile().then(sendSource).then(() => refreshHouses('live')) : Promise.resolve(setApp({ profile: null, authState: miniSignIn ? 'unknown' : 'guest' }))).then(() => applyDraftMap().catch(() => undefined));
       void connectMultiplayer().catch(() => undefined);
     }, 0);
   });

@@ -5,6 +5,11 @@ interface ClaimProfile { readonly free_used: boolean; readonly plots?: readonly 
 /** Bo'sh joyda uy qura oladimi (mehmon ham)? Kamida 1 ta uyi bor (admin ham) yoki bepul uyini olgan — yo'q. */
 export const canClaimFree = (p: ClaimProfile | null | undefined): boolean => !p || (!p.free_used && (p.plots?.length ?? 0) === 0);
 
+/** Bo'sh joy belgilari ("+", ramka, "Bu joy sizni kutyapti") chiziladimi: mehmonga — ha; kirgan bo'lsa — faqat uysizga;
+ *  hali noma'lum (profil kelmagan, internet uzilgan, Mini App kirishi) — yo'q (uyi bor odamga bir lahzaga ham chiqmasin). */
+export const showClaimMarks = (authState: 'unknown' | 'guest' | 'user', p: ClaimProfile | null | undefined): boolean =>
+  authState === 'guest' ? true : authState === 'user' && p ? canClaimFree(p) : false;
+
 /** Belgi shuncha joyda (tezlik uchun). */
 export const WAITING_MAX = 20;
 /** Yangi uy xabari daqiqasiga ko'pi bilan 1 ta. */

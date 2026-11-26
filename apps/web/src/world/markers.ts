@@ -64,6 +64,9 @@ export class Markers {
     this.points.visible = isVisible && this.shown.length > 0;
   }
 
+  /** Nechta "+" qo'yilgan (tekshiruv uchun). */
+  get listed(): number { return this.shown.length; }
+
   /** Bosilgan "+": ekrandagi eng yaqini. */
   hit(x: number, y: number, size: { readonly width: number; readonly height: number }, camera: Camera): string | null {
     if (!this.points.visible) return null;
@@ -179,6 +182,9 @@ export class Beacons {
     this.points.geometry.setDrawRange(0, this.count);
   }
 
+  /** "Bu joy sizni kutyapti" ko'rinadimi (tekshiruv uchun). */
+  get isOn(): boolean { return this.points.visible; }
+
   /** Yonib-o'chish: faqat o'lcham va shaffoflik (bitta material). */
   update(isVisible: boolean, seconds: number): void {
     this.points.visible = isVisible && this.count > 0;
@@ -197,3 +203,4 @@ export class Beacons {
 
 /** Bosishni aniqlash uchun hozirgi belgilar (pick.ts). */
 export const activeMarkers: { current: Markers | null } = { current: null };
+export const activeBeacons: { current: Beacons | null } = { current: null };
