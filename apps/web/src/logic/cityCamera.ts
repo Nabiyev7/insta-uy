@@ -6,8 +6,9 @@ export interface CityView { readonly x: number; readonly z: number; readonly yaw
 export const MIN_HEIGHT = 15;
 export const START_VIEW: CityView = { x: 0, z: 0, yaw: 0, height: 95 };
 const LOW_PITCH = 0.52;
-const HIGH_PITCH = 1.0;
-const FULL_PITCH_HEIGHT = 260;
+/** Eng balandda ~63° — xarita kabi tepadan (14-qadam). */
+const HIGH_PITCH = 1.1;
+const FULL_PITCH_HEIGHT = 450;
 const LIMIT = CITY_HALF;
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));

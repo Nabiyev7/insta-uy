@@ -19,7 +19,7 @@ export function World(): React.JSX.Element | null {
   return (
     <Canvas
       onCreated={({ gl }) => gl.domElement.addEventListener('webglcontextlost', () => setLost(true), { once: true })}
-      className="world" shadows={{ type: PCFShadowMap }} dpr={Math.min(globalThis.devicePixelRatio, q.dpr)} camera={{ fov: 60, near: 0.25, far: 1700 }}
+      className="world" shadows={{ type: PCFShadowMap }} dpr={Math.min(globalThis.devicePixelRatio, q.dpr)} camera={{ fov: 60, near: 0.25, far: 2600 }}
       gl={{ antialias: level !== 'low', powerPreference: 'high-performance', toneMapping: NoToneMapping }}
     >
       <PlayerLayer plan={plan} kit={kit} />

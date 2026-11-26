@@ -4,7 +4,7 @@ import { chromium } from 'playwright-core';
 const site = process.env.SITE_URL ?? 'http://localhost:5173';
 const throttle = Number(process.argv[2] ?? 6);
 const MEASURE_MS = 6000;
-const MAX_HEIGHT = { low: 190, mid: 240, high: 300 };
+const MAX_HEIGHT = { low: 450, mid: 600, high: 750 };
 /** Piyoda (P0001 oldida), shahar — eng yuqori kamera (aholisi zich joy ustida), mashina. */
 const SCENES = {
   piyoda: () => window.__setMode('walk'),

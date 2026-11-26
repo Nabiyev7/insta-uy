@@ -61,3 +61,17 @@ describe('"+" — uyi bor hech kimga (admin ham) chiqmaydi', () => {
     expect(readFileSync(join(ROOT, 'apps/web/src/ui/BottomCard.tsx'), 'utf8')).toContain('showClaimMarks(authState, profile)');
   });
 });
+
+describe('shaharni yuqoridan ko‘rish — balandroq', () => {
+  test('eng baland kamera 450 / 600 / 750 m, ko‘rinish 1 100 / 1 400 / 1 800 m; balandda ~55–65° tepadan', async () => {
+    const { QUALITY } = await import('../src/logic/quality.ts');
+    const { pitchOf } = await import('../src/logic/cityCamera.ts');
+    expect([QUALITY.low.cityMax, QUALITY.mid.cityMax, QUALITY.high.cityMax]).toEqual([450, 600, 750]);
+    expect([QUALITY.low.cityView, QUALITY.mid.cityView, QUALITY.high.cityView]).toEqual([1100, 1400, 1800]);
+    for (const q of Object.values(QUALITY)) {
+      const deg = (pitchOf(q.cityMax) * 180) / Math.PI;
+      expect(deg).toBeGreaterThanOrEqual(55);
+      expect(deg).toBeLessThanOrEqual(65);
+    }
+  });
+});
