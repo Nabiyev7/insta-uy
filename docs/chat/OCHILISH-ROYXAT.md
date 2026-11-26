@@ -5,14 +5,10 @@
 ## 1. Ochilishdan oldin (bugun)
 - [ ] **Botni kanalga admin qiling:** @citylanduz → Sozlamalar → Administrators → Add Admin → @Citylanduz_bot. "Post messages" ruxsati yoqilgan bo'lsin.
 - [ ] **Supabase'da ro'yxatdan o'tishni o'chiring:** supabase.com → citylanduz loyihasi → Authentication → Sign In / Providers → **"Allow new users to sign up"** — o'chiq (ro'yxat faqat bot orqali).
-- [ ] **`nabiyev_7` akkaunti haqida qaror qiling** (u sizning sinov akkauntingizmi?). Unda haqiqiy bepul uy (P0003, 5-level), "Asoschi" nishoni №1 va 41 100 tanga bor. Tozalash tugmasi unga tegmaydi.
-  - **A.** Sinov akkaunti — o'chiramiz: shu Telegram'dan saytga kiring → Uyim → **"Akkauntni o'chirish"**. Uy bo'shaydi, asoschi hisoblagichi 0 dan boshlanadi.
-  - **B.** Bu haqiqiy akkauntingiz — qoldiramiz (asoschi №1 bo'lib qoladi).
-- [ ] **Sinov ma'lumotlarini tozalang:** admin panel (botga `/admin`) → **Iqtisod** → **"Sinov ma'lumotlarini tozalash"**.
-  - Zaxira olingan: `.zaxira/oldin-tozalash-20261126-1610.json`.
-  - Natijada sinov uyi P0001, sinov bezaklari va 3 ta sinov buyurtmasi o'chadi, sinov rejimi o'chadi.
-- [ ] **Bitta haqiqiy xarid bilan tekshiring:** botga `/dokon` → "🪙 3 000 tanga — 60⭐" → to'lang. Tanga darhol qo'shilishi kerak. Xohlasangiz, keyin admin panel → **Buyurtma va to'lov** → shu to'lovda **"Qaytarish (Stars)"** — yulduzlar qaytadi, tanga olinadi.
-- [ ] **O'zingizning bepul uyingiz:** endi oddiy foydalanuvchi sifatida "🏡 Uy olish" (asoschi bo'lasiz).
+- [x] **`nabiyev_7` akkaunti** — siz o'chirishni tasdiqladingiz; 14-qadamda o'chirildi.
+- [x] **Sinov ma'lumotlari o'chirildi** (14-qadam, zaxiradan keyin): uylar, bezaklar, buyurtmalar, faollik — 0; "Asoschi" 0 / 100. Zaxira: `.zaxira/oldin-ochish-20261127-0307.json` va Telegramingizda. Admin paneldagi "tozalash" tugmasi endi yo'q.
+- [ ] **Bitta haqiqiy xarid bilan tekshiring** (14-qadamdan: sizning akkauntingizda botda "✅ Olish (admin)" chiqadi — to'lovsiz; haqiqiy Stars to'lovini **boshqa Telegram akkaunt** bilan sinang): botga `/dokon` → "🪙 3 000 tanga — 60⭐" → to'lang. Tanga darhol qo'shilishi kerak. Xohlasangiz, keyin admin panel → **Buyurtma va to'lov** → shu to'lovda **"Qaytarish (Stars)"** — yulduzlar qaytadi, tanga olinadi.
+- [ ] **O'zingizning bepul uyingiz:** "🏡 Uy olish" — oddiy yo'l bilan (asoschi №1 bo'lasiz). Keyingi uylarni admin panel → Uylar → "Uy berish" bilan qo'yasiz.
 - [ ] (Ixtiyoriy) **Cloudflare Web Analytics:** dash.cloudflare.com → Web Analytics → citylanduz.pages.dev ni qo'shing → tokenni menga ayting (`VITE_CF_ANALYTICS`).
 
 ## 2. Ochilish kuni
