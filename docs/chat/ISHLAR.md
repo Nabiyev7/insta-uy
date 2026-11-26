@@ -34,6 +34,7 @@ Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. 6, 6a–6e bajarildi. **N
 - [x] **6f. Tuzatish 4 (telefon sinovidan)** — `docs/chat/TUZATISH-4.md`
 - [x] **12. Internetga chiqarish (beta)** — `docs/chat/INTERNET-PROMT.md` (sayt, bot, Render ishlayapti; egasi telefonda sinadi)
 - [x] **13. Haqiqiy ochilish** — `docs/chat/OCHILISH-PROMT.md` (Stars, tozalash, minimal yuklama, kuzatuv, ochilish kuni)
+- [x] **14. Tuzatish 5 — haqiqiy loyiha** — `docs/chat/TUZATISH-5.md` (admin huquqlari, "+", sinov ma'lumotlarini o'chirish, baland kamera, niklar, tanga paketlari)
 
 ## Har qadamdan keyin
 

@@ -179,3 +179,67 @@ Sinov: 368 ta unit test, tur tekshiruvi toza, e2e 88/88, skrinshotlar yangilandi
 7. Instagram bio: `https://t.me/Citylanduz_bot?start=from_bio`.
 8. `/hammaga` → kutish ro'yxatiga xabar (matn tayyor).
 9. Kanalga e'lon (matn va rasm tayyor).
+
+## 14-qadam — Tuzatish 5: haqiqiy loyiha (2026-11-27)
+**Nima qilindi:**
+1. **"Sinov rejimi" yo'q — admin huquqlari doimiy.**
+   - Saytda, admin panelda va botda "sinov/test" so'zi va belgisi qolmadi (buni test tekshiradi).
+   - Siz (egasi) uchun hamma narsa doim ochiq, tugmasiz: istalgan bezak istalgan uyga, istalgan level, tanga yechilmaydi, kunlik limit yo'q, yopiq tumanlar ochiq.
+   - Do'konda sizga tugma "Olish · narx" va kichik "Admin" yozuvi chiqadi.
+   - Botda premium kartasida "✅ Olish (admin)" bor; bu xaridlar haqiqiy, lekin tushumga kirmaydi.
+   - Qo'shimcha uy: admin panel → Uylar → **"Uy berish"** (nik + level), yoki saytda bo'sh joyni bosganda "Admin: shu yerga uy qo'yish".
+2. **"+" belgisi.**
+   - Kamida 1 ta uyi bor odamga (sizga ham) "+", ramka va "Bu joy sizni kutyapti" chiqmaydi.
+   - Topilgan sabablar: admin akkauntida sinov rejimi sukut bo'yicha yoqiq edi; "kutyapti" belgilari uyi borga ham chiqardi; Telegram ichida profil kechikib kelguncha sayt odamni mehmon deb hisoblardi.
+   - Uchalasi tuzatildi.
+   - Haqiqiy saytda tekshirildi (`e2e/prod.mjs`): mehmonga — belgilar bor, uyi borga — yo'q. Rasm: `ui-uyi-bor.png`.
+3. **Sinov ma'lumotlari o'chirildi** (avval zaxira olindi; ikkinchi akkauntni o'chirishni siz tasdiqladingiz).
+   - Zaxira: kompyuterda `.zaxira/oldin-ochish-20261127-0307.json`, nusxasi Telegramingizga yuborildi ("🗄 Zaxira").
+   - O'chganlar:
+
+     | Nima | Soni |
+     |---|---|
+     | Uylar | 3 |
+     | Bezaklar | 3 (raqamli nusxalar — 2) |
+     | Buyurtmalar | 5 |
+     | To'lovlar | 4 |
+     | Tanga yozuvlari | 13 |
+     | Yuraklar | 1 |
+     | Salyutlar | 1 |
+     | Kanal posti navbati | 1 |
+     | Kunlik faollik | 5 |
+     | Bildirishnomalar | 6 |
+     | Egalik tarixi | 3 |
+     | Xazina | 1 |
+     | Kanal bonusi | 1 |
+     | Sayt xatolari | 5 |
+     | Gazeta | 1 |
+     | Akkaunt (@nabiyev_7) | 1 |
+
+   - Murojaatlar, nizolar va chat xabarlari bazada yo'q edi (0). Chat bazada saqlanmaydi.
+   - Endi: faqat sizning akkauntingiz (@citylanduz) — tanga 0, uy yo'q, nishon yo'q; uylar 0, "Shahar asoschisi" 0 / 100, faqat 1-tuman ochiq.
+   - Bepul uyingizni oddiy yo'l bilan oling — siz №1 asoschi bo'lasiz.
+   - Zaxirani istalgan payt olish mumkin: maxfiy kalit bilan `POST /bot/backup` (fayl Telegramingizga keladi).
+4. **Shahar yuqoridan.** Eng baland kamera 450 / 600 / 750 m (oldin 190 / 240 / 300), ko'rinish 1 100 / 1 400 / 1 800 m. Tepada xarita kabi ~63° burchakdan qaraydi.
+5. **Niklar.**
+   - Endi hamma egali uylarning niki ko'rinadi (ekranda bir vaqtda 300 tagacha).
+   - Yaqindagilari katta (matni ~18 px) va belgilari bilan; uzoqdagilari kichikroq, lekin matni ~10 px dan kichik emas.
+   - Ustma-ust tushsa — uzoqrog'i yashiriladi; oyna ochiq bo'lsa — xira; o'z uyingiz doim sariq va ustida.
+   - Hammasi bitta qatlamda chiziladi, yuzlab nik ham arzon.
+6. **Tanga paketlari** — har biri alohida karta: tepada tanga soni, ostida bonus, keyin ⭐ narx, belgi ("Ommabop" / "Eng foydali") va pastda to'liq enli "Botda sotib olish". 360/390 px, o'zbek va rus tilida yozuvlar ustma-ust tushmasligini e2e tekshiradi. Rasm: `ui-tanga-paket.png`.
+
+**Tekshiruv:**
+- `npm test` 452/452, typecheck toza, e2e 88/88, screens o'tdi.
+- Haqiqiy sayt (`e2e/prod.mjs`): 2 soniyada ochildi, xato yo'q, "+" ssenariysi ✅.
+- Tekshiruvchi: 1–6-bandlar kodda ✅. U hujjatlar (ISHLAR, PLAN, HISOBOT) hali yozilmaganini aytgan edi — yozildi. Eslatmalari `SAVOLLAR.md` da (14-qadam bo'limi).
+
+**Telefon tezligi** (FPS, protsessor 6 baravar sekinlashtirilgan, shahar rejimi, eng baland kamera):
+
+| | Past | O'rta | Yuqori |
+|---|---|---|---|
+| 4-band: kamera (oldin → keyin) | 172 → 332 | 163 → 146 | 132 → 131 |
+| 5-band: niklar, 456 ta uy (oldin → keyin, ketma-ket o'lchov) | 110 → 255 | 108 → 126 | 96 → 97 |
+
+Hammasi 30 FPS chegarasidan ancha yuqori. Kompyuter yuklamasiga qarab o'lchovlar ±20% tebranadi.
+
+**Yangi savollar** (`SAVOLLAR.md`, 14-qadam): admin ham bepul uyini oddiy yo'l bilan oladi; "Uy berish"da nik topilmasa — uy sizning akkauntingizga yoziladi; eng balandda ham butun 3 km sig'maydi (~1–1,5 km ko'rinadi).

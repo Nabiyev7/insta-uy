@@ -255,3 +255,20 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 6. **Sog'liq tekshiruvi** 15 emas, **10 daqiqada** (mavjud cron'ga qo'shildi — bepul tarifda cron soni cheklangan). Tekshiruv ichida 20 soniyadan keyin qayta tekshiriladi ("2 marta ketma-ket").
 7. **Render trafigi** (100 GB/oy) — eng tez tugaydigan bepul chegara bo'lishi mumkin (YUKLAMA-HISOBOT.md). Oshsa: Render Starter ($7/oy) yoki harakat tikini kamaytirish.
 8. **Zaxiradan tiklash** "bir buyruq" — `npm run restore -- fayl.json.gz` SQL tayyorlaydi; uni Supabase SQL Editor'ga qo'yish qo'lda (Supabase CLI'da to'g'ridan-to'g'ri SQL bajarish buyrug'i yo'q, parol so'ramasligi uchun).
+
+## 14-qadam: Tuzatish 5 — haqiqiy loyiha (2026-11-27)
+1. **Eski `private.is_tester` nomlari** ko'p funksiya ichida ishlatiladi. Hammasini qayta yozish o'rniga ular endi faqat `private.is_owner_admin` ni chaqiradi (`test_mode` ustuni hisobga olinmaydi). Natija bir xil, xavf kam.
+2. **Admin ham bepul uyini oddiy yo'l bilan oladi** (bitta; "Asoschi" nishoni va 1 000 tanga unga ham beriladi). Qo'shimcha uylar faqat "Uy berish" orqali olinadi va asoschilar soniga kirmaydi. Admin uchun yopiq tuman, villa va qasr ochiq.
+3. **"Uy berish"da nik bazada topilmasa**, uy admin akkauntiga shu nik bilan yoziladi (masalan, brend yoki namuna uy). Nik noto'g'ri yozilsa — uyni admin panel → Uylar → "Bo'shatish" bilan bo'shatib, qaytadan bering.
+4. **Kanalga post** endi admin uylari uchun ham chiqadi (ular haqiqiy).
+5. **O'chirish** zaxiradan keyin bajarildi. Ikki akkaunt bor edi: @citylanduz (egasi) va @nabiyev_7. Egasi @nabiyev_7 ni o'chirishni tasdiqladi.
+   - Zaxira 2 joyda: kompyuterda `.zaxira/oldin-ochish-20261127-0307.json` va egasining Telegramida.
+   - Kutish ro'yxati, katalog, xarita, sozlamalar va audit jurnali qoldi.
+6. **Kirish yozuvi tartibi.** Birinchi urinishda tozalash rad etildi (Supabase'da WHERE siz DELETE taqiqlangan), lekin @nabiyev_7 ning kirish yozuvi (auth) undan oldin o'chib bo'lgan edi.
+   - Tuzatishdan keyin (`0037`) tozalash to'liq bajarildi.
+   - Natija tasdiqlangan holat bilan bir xil.
+7. **Niklarning tezligi 456 ta uy bilan o'lchandi**, 1 000 ta bilan emas: lokal DEMO ikki tumanda shuncha uy yaratadi.
+   - Ketma-ket o'lchovda FPS pasaymadi.
+   - Bundan tashqari unit test 1 000 ta uy bilan yorliqlar yig'ilishini tekshiradi.
+8. **Eng balandda butun shahar (3 km) ekranga sig'maydi.** Telefonda taxminan 1–1,5 km ko'rinadi. Balandlik promtdagi qiymatlarda qoldirildi; FPS chegarasidan ancha yuqori.
+9. **`e2e/prod.mjs` egasining akkauntida brauzer sessiyasini ochadi** (faqat o'qish). Shuning uchun egasining "oxirgi ko'rilgan" vaqti va bugungi faollik yozuvi yangilanadi.

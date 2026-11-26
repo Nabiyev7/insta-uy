@@ -2,7 +2,7 @@
  *  QUIC (HTTP/3) o'chiq — ba'zi tarmoqlarda Chrome'ning QUIC ulanishi uziladi; 3 marta urinadi (oxirgisi TLS 1.2 bilan); xatoni aniq yozadi.
  *  Egasining kompyuterida (2026-11-26): IPv6 ishlamaydi va TLS 1.3 ulanishi ERR_CONNECTION_RESET bilan uziladi; TLS 1.2 yoki faqat IPv4 — ochiladi.
  *  14-qadam: "+" ssenariysi — mehmon → belgilar bor; uyi bor akkaunt → yo'q (rasm `docs/chat/ui-uyi-bor.png`).
- *  Akkaunt: `.env.render` dagi kalit bilan bir martalik kirish havolasi (sukut — egasi, `PROD_TG=<telegram id>`); hech narsa o'zgartirilmaydi.
+ *  Akkaunt: `.env.render` dagi kalit bilan bir martalik sessiya (magic link → sessiya, brauzer xotirasiga; sukut — egasi, `PROD_TG=<telegram id>`); hech narsa o'zgartirilmaydi.
  *  Akkauntda haqiqiy uy hali bo'lmasa — profil javobiga bitta uy qo'shib (faqat brauzerda) sayt mantiqi tekshiriladi. */
 import { existsSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
@@ -49,8 +49,8 @@ const envOf = () => {
   const env = Object.fromEntries(pairs.map((m) => [m[1], m[2].trim()]));
   return env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY ? { url: env.SUPABASE_URL, key: env.SUPABASE_SERVICE_KEY } : null;
 };
-/** Bir martalik kirish havolasi (magic link token) — sayt `?kirish=` bilan kiradi. */
-const loginToken = async ({ url, key }, telegram) => {
+/** Bir martalik sessiya: magic link → /verify → sessiya (Supabase brauzer xotirasidagi ko'rinishda). */
+const loginSession = async ({ url, key }, telegram) => {
   const headers = { apikey: key, authorization: `Bearer ${key}`, 'content-type': 'application/json' };
   const rows = await fetch(`${url}/rest/v1/profiles?telegram_id=eq.${encodeURIComponent(telegram)}&select=user_id`, { headers }).then((r) => r.json());
   const uid = rows?.[0]?.user_id;
@@ -59,7 +59,10 @@ const loginToken = async ({ url, key }, telegram) => {
   const link = await fetch(`${url}/auth/v1/admin/generate_link`, { method: 'POST', headers, body: JSON.stringify({ type: 'magiclink', email: user.email }) }).then((r) => r.json());
   const hash = link.hashed_token ?? link.properties?.hashed_token;
   if (!hash) throw new Error('kirish havolasi olinmadi');
-  return hash;
+  const session = await fetch(`${url}/auth/v1/verify`, { method: 'POST', headers, body: JSON.stringify({ type: 'magiclink', token_hash: hash }) }).then((r) => r.json());
+  if (!session.access_token) throw new Error('sessiya olinmadi');
+  // Sayt Supabase mijozini `storageKey: 'shahar-auth'` bilan ochadi (apps/web/src/app/api.ts).
+  return { storageKey: 'shahar-auth', value: JSON.stringify({ ...session, expires_at: session.expires_at ?? Math.floor(Date.now() / 1000) + Number(session.expires_in ?? 3600) }) };
 };
 
 const marks = (page) => page.evaluate(() => window.__belgilar?.() ?? null);
@@ -93,7 +96,9 @@ const plusScenario = async (isTls12) => {
           await route.fulfill({ response: res, json: { ...body, free_used: true, plots } });
         });
       }
-      await page.goto(`${SITE}?kirish=${await loginToken(env, OWNER_TG)}`, { timeout: 60_000 });
+      const s = await loginSession(env, OWNER_TG);
+      await page.addInitScript(({ k, v }) => { localStorage.setItem(k, v); localStorage.setItem('intro', '1'); }, { k: s.storageKey, v: s.value });
+      await page.goto(SITE, { timeout: 60_000 });
       await waitAuth(page, 'user');
       await settle(page);
       return page;
