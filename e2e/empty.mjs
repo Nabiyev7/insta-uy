@@ -32,7 +32,7 @@ const login = `sinov_${Date.now().toString(36)}`;
 const form = page.locator('.sheet .dev-login');
 await form.getByLabel('Telegram ID').fill(String(Date.now() % 1e9));
 await form.getByLabel('Instagram nik').fill(login);
-await form.getByRole('button', { name: 'Sinov kirish' }).click();
+await form.getByRole('button', { name: 'Lokal kirish' }).click();
 await page.waitForFunction(() => window.__app?.getState().profile !== null && !location.search.includes('kirish='), null, { timeout: 60_000 });
 await page.goto(`${site}/?uy=${plot.id}`);
 await page.locator('.nav5').waitFor({ state: 'attached', timeout: 60_000 });

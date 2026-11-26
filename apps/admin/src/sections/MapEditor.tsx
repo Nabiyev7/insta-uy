@@ -137,7 +137,7 @@ function Editor({ plan, version, onSaved }: EditorProps): React.JSX.Element {
       <div className="row">
         <b>{version.name}</b><span className={`tag ${version.status}`}>{version.status}</span><span className="muted">{objs.length} obyekt</span>
         {isDraft && <Btn kind="main" disabled={isBusy} onClick={() => void run(() => rpc('admin_map_save', { p_version: version.id, p_objects: objs }), 'Saqlandi').then(onSaved)}>Saqlash</Btn>}
-        <a className="btn" href={`${SITE_URL}/?xarita=${version.id}`} target="_blank" rel="noopener noreferrer">Sinov rejimi (3D)</a>
+        <a className="btn" href={`${SITE_URL}/?xarita=${version.id}`} target="_blank" rel="noopener noreferrer">3D da ko'rish</a>
         <Btn onClick={() => zoom(1 / 1.4)}>＋</Btn><Btn onClick={() => zoom(1.4)}>－</Btn>
         {cur && isDraft && <><Btn onClick={() => patch({ r: cur.r + Math.PI / 8 })}>⟳</Btn><Btn onClick={() => patch({ s: Math.min(4, cur.s * 1.15) })}>Kattaroq</Btn><Btn onClick={() => patch({ s: Math.max(0.3, cur.s / 1.15) })}>Kichikroq</Btn><Btn kind="danger" onClick={remove}>O'chirish</Btn></>}
       </div>

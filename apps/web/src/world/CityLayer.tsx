@@ -108,7 +108,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     last.current = FRESH;
     world.ground.setState({ openDistricts: open });
     world.farGround.setState({ openDistricts: open });
-  }, [houses, open, extras, world, level, catalog, mine, profile?.free_used, profile?.test_mode, profile?.plots.length]);
+  }, [houses, open, extras, world, level, catalog, mine, profile?.free_used, profile?.plots.length]);
   useEffect(() => { world.boards.setLang(lang); }, [lang, world]);
   /** Bo'sh shahar: markazga eng yaqin ~20 bo'sh joy (uy olinganda qayta hisoblanadi). */
   useEffect(() => { world.beacons.set(waitingPlots(plan.plots, saved, open)); }, [plan, saved, open, world]);
@@ -169,7 +169,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.pools.set(items);
     world.signs.set(signs);
     world.boards.set(boards);
-    // Bepul uyi bor odamga "+" umuman chizilmaydi (sinov rejimidan tashqari).
+    // Uyi bor odamga (admin ham) "+" umuman chizilmaydi.
     world.markers.set(canClaimFree(getApp().profile) ? free : []);
     const hero = boot?.hero;
     const heroLabel: LabelInfo[] = hero && Math.hypot(v.x - HERO_SPOT.x, v.z - HERO_SPOT.z) < HERO_RANGE ? [{ key: 'hero', text: hero.nick, kind: 'gold', badge: null, icon: 'rank', x: HERO_SPOT.x, y: 9.4, z: HERO_SPOT.z }] : [];

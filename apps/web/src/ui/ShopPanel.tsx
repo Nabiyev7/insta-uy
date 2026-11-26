@@ -1,4 +1,5 @@
 /** Do'kon: tablar, rasmli kartochkalar, pastda "Sinab ko'rish" va "Olish". Mashina tanlash oynasi ham shu yerda. */
+import { isOwnerAdmin } from '../logic/admin.ts';
 import { useEffect, useState } from 'react';
 import { BUZZ, buzz, tryDecor } from '../app/actions.ts';
 import { rpc } from '../app/api.ts';
@@ -13,7 +14,7 @@ import { Icon } from './icons.tsx';
 import { DecorImage, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
 
 const TAB_NAMES: Readonly<Record<ShopTab, Key>> = { new: 'tabNew', yard: 'tabYard', garden: 'tabGarden', car: 'tabCar', luxe: 'tabLuxe', pet: 'tabPet', set: 'tabSet', special: 'tabSpecial' };
-const useTester = (): boolean => useApp((s) => s.profile?.test_mode === true);
+const useAdmin = (): boolean => useApp((s) => isOwnerAdmin(s.profile));
 
 interface BestPlot { readonly level: number; readonly id: string | null }
 /** Eng yuqori levelli hovlim (kvartira hisobga olinmaydi). */
@@ -33,7 +34,7 @@ function Good({ row, level, isPicked, onPick }: GoodProps): React.JSX.Element {
   const t = useT();
   const lang = useApp((s) => s.lang);
   const qty = useApp((s) => s.profile?.decor[row.id] ?? 0);
-  const state = goodState(row, level, useTester());
+  const state = goodState(row, level, useAdmin());
   const note = { free: '', locked: `${row.min}-${t('atLevel')}`, soldOut: t('soldOut'), seasonOver: t('seasonOver') }[state];
   return (
     <button type="button" className={`good ${state}`} aria-label={row[lang]} aria-pressed={isPicked} data-id={row.id} onClick={onPick}>
@@ -52,7 +53,7 @@ function SetCard({ set, rows, level, isPicked, onPick }: SetProps): React.JSX.El
   const lang = useApp((s) => s.lang);
   const need = Math.max(...rows.map((c) => c.min));
   const full = rows.reduce((n, c) => n + c.coins, 0);
-  const isLocked = need > 1 && level < need && !useTester();
+  const isLocked = need > 1 && level < need && !useAdmin();
   return (
     <button type="button" className={`good set ${isLocked ? 'locked' : ''}`} aria-label={set[lang]} aria-pressed={isPicked} data-id={set.id} onClick={onPick}>
       <span className="frame">{rows.map((c) => <DecorImage key={c.id} model={c.model} />)}{isLocked && <em><Icon name="lock" />{need}-{t('atLevel')}</em>}</span>
@@ -71,10 +72,10 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
   const qty = profile?.decor[row.id] ?? 0;
-  const isTester = profile?.test_mode === true;
-  const state = goodState(row, best.level, isTester);
+  const isAdmin = isOwnerAdmin(profile);
+  const state = goodState(row, best.level, isAdmin);
   const yard = best.id;
-  const short = profile && !isTester && state === 'free' ? row.coins - profile.coins : 0;
+  const short = profile && !isAdmin && state === 'free' ? row.coins - profile.coins : 0;
   const buy = (): void => {
     if (!profile) { openAuth(); return; }
     void run(async () => {
@@ -83,7 +84,7 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
       await refreshShop();
     }, t('bought'));
   };
-  const offer = `${t(qty > 0 ? 'getMore' : 'get')} · ${isTester ? t('testFree') : money(row.coins)}`;
+  const offer = `${t(qty > 0 ? 'getMore' : 'get')} · ${money(row.coins)}`;
   const label = { free: offer, locked: profile ? `${row.min}-${t('opensAt')}` : offer, soldOut: t('soldOut'), seasonOver: t('seasonOver') }[state];
   const isClosed = isBusy || state === 'soldOut' || state === 'seasonOver' || (state === 'locked' && profile !== null);
   return (
@@ -95,7 +96,7 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
         : <button type="button" className="btn soft" aria-label={`${row[lang]}: ${t('tryIt')}`} onClick={() => { if (!tryDecor(row)) toast(t('noHouse'), true); }}>{t('tryIt')}</button>}
       {setting('coins_enabled', true) && (short > 0
         ? <button type="button" className="btn gold" onClick={() => openCoinShop()}><Icon name="coin" />{t('getCoins')}</button>
-        : <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}</button>)}
+        : <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}{isAdmin && <small className="admin-tag">{t('adminTag')}</small>}</button>)}
     </div>
     </>
   );
@@ -105,13 +106,13 @@ function BuySetBar({ set, level, need }: { readonly set: SetRow; readonly level:
   const lang = useApp((s) => s.lang);
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
-  const isTester = profile?.test_mode === true;
-  const isLocked = need > 1 && level < need && !isTester;
+  const isAdmin = isOwnerAdmin(profile);
+  const isLocked = need > 1 && level < need && !isAdmin;
   const buy = (): void => {
     if (!profile) { openAuth(); return; }
     void run(async () => { await rpc('my_buy_set_coins', { p_set: set.id }); buzz(BUZZ.coin); await refreshShop(); }, t('bought'));
   };
-  const label = isLocked && profile ? `${need}-${t('opensAt')}` : `${t('get')} · ${isTester ? t('testFree') : money(set.coins)}`;
+  const label = isLocked && profile ? `${need}-${t('opensAt')}` : `${t('get')} · ${money(set.coins)}`;
   return <button type="button" className="btn block" disabled={isBusy || (isLocked && profile !== null)} aria-label={`${set[lang]}: ${label}`} onClick={buy}>{label}</button>;
 }
 

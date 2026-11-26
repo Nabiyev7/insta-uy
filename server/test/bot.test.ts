@@ -324,18 +324,18 @@ describe('6f: premium xaridi botda (buy_<kod>)', () => {
     expect(last().buttons?.[0]?.data).toBe('pay:pack3');
     await db.query("update settings set value = 'false' where key = 'payments_enabled'");
   });
-  test('admin sinov rejimi — "Sinov xaridi" (to‘lovsiz, is_test), keyin "Tayyor" + Shahar', async () => {
+  test('egasi-admin — "Olish (admin)" (to‘lovsiz, is_admin, daromadga kirmaydi), keyin "Tayyor" + Shahar', async () => {
     await newUser(5000, 'egasi_nik');
-    await db.query("update profiles set test_mode = true where telegram_id = 5000");
     await say(5000, '/start buy_d_lux_superkar');
-    expect(last().buttons?.map((b) => b.data)).toEqual(['tbuy:d_lux_superkar']);
-    await tap(5000, 'tbuy:d_lux_superkar');
+    expect(last().buttons?.map((b) => b.data)).toEqual(['abuy:d_lux_superkar']);
+    expect(last().buttons?.[0]?.text).toBe('✅ Olish (admin)');
+    await tap(5000, 'abuy:d_lux_superkar');
     expect(last().text).toBe('✅ Tayyor — saytda ko‘ring!');
     expect(last().buttons?.[0]?.text).toBe('🏙 Shahar');
-    const rows = (await db.query("select o.is_test from orders o join profiles p on p.user_id = o.user_id where p.telegram_id = 5000 and o.kind = 'decor'")).rows;
-    expect(rows).toContainEqual({ is_test: true });
-    // Oddiy odam "Sinov xaridi" ni chaqira olmaydi.
-    await tap(4900, 'tbuy:d_lux_superkar');
+    const rows = (await db.query("select o.is_test, o.is_admin from orders o join profiles p on p.user_id = o.user_id where p.telegram_id = 5000 and o.kind = 'decor'")).rows;
+    expect(rows).toContainEqual({ is_test: false, is_admin: true });
+    // Oddiy odam admin xaridini chaqira olmaydi.
+    await tap(4900, 'abuy:d_lux_superkar');
     expect(last().text).not.toContain('Tayyor');
     await db.query("update decor_catalog set is_premium = false where id = 'lux_superkar'");
   });

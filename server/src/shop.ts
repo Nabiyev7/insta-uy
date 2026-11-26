@@ -65,16 +65,16 @@ const productView = async (ctx: Ctx, code: string, lang: Lang): Promise<ProductV
 };
 
 /** Saytdagi "Botda sotib olish" (`?start=buy_<kod>`) va bot do'koni: rasm, nom, narx, to'lov tugmasi.
- *  To'lov o'chiq — "Tez kunda"; admin sinov rejimida — "Sinov xaridi". */
+ *  To'lov o'chiq — "Tez kunda"; egasi-adminga — "Olish (admin)" (to'lovsiz, daromadga kirmaydi). */
 export const buyCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
   if (code === 'salute') return tg.send(chat, bt(lang, 'saluteHow'));
   const view = await productView(ctx, code, lang);
   if (!view) return payCode(ctx, tg, chat, telegram, code, lang);
-  const [isTester, isOn] = await Promise.all([ctx.db.rpc<boolean>('svc_is_tester_tg', { p_telegram: telegram }), ctx.db.rpc<unknown>('svc_setting', { p_key: 'payments_enabled' })]);
+  const [isAdmin, isOn] = await Promise.all([ctx.db.rpc<boolean>('svc_is_owner_admin_tg', { p_telegram: telegram }), ctx.db.rpc<unknown>('svc_setting', { p_key: 'payments_enabled' })]);
   const caption = bt(lang, 'product', { title: view.title, uzs: fmt(view.uzs), stars: view.stars ? bt(lang, 'productStars', { n: view.stars }) : '' });
-  const buttons: readonly TgButton[] = isTester ? [{ text: bt(lang, 'btnTestBuy'), data: `tbuy:${code}` }]
+  const buttons: readonly TgButton[] = isAdmin ? [{ text: bt(lang, 'btnAdminGet'), data: `abuy:${code}` }]
     : isOn !== true ? [] : view.stars ? [{ text: bt(lang, 'btnPayStars', { n: view.stars }), data: `pay:${code}` }] : [];
-  const note = isTester ? '' : isOn !== true ? `\n\n${bt(lang, 'payOff')}` : view.stars ? '' : `\n\n${bt(lang, 'starsUnavailable')}`;
+  const note = isAdmin ? '' : isOn !== true ? `\n\n${bt(lang, 'payOff')}` : view.stars ? '' : `\n\n${bt(lang, 'starsUnavailable')}`;
   if (view.image && tg.photoButtons) {
     try {
       return await tg.photoButtons(chat, view.image, caption + note, buttons);
@@ -85,12 +85,12 @@ export const buyCode = async (ctx: Ctx, tg: Telegram, chat: number, telegram: nu
   return tg.send(chat, caption + note, buttons);
 };
 
-/** Admin sinov rejimi: botda to'lovsiz xarid (`is_test`). */
-export const testBuy = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
+/** Egasi-admin: botda to'lovsiz xarid (`is_admin`, daromadga kirmaydi). */
+export const adminBuy = async (ctx: Ctx, tg: Telegram, chat: number, telegram: number, code: string, lang: Lang = 'uz'): Promise<void> => {
   const p = parseProduct(code);
   if (!p) return tg.send(chat, bt(lang, 'productMissing'));
   try {
-    await ctx.db.rpc('svc_test_purchase', { p_telegram: telegram, p_kind: p.kind, p_payload: p.payload });
+    await ctx.db.rpc('svc_admin_purchase', { p_telegram: telegram, p_kind: p.kind, p_payload: p.payload });
     return await tg.send(chat, bt(lang, 'paidOk'), [{ text: bt(lang, 'btnCity'), webApp: `${ctx.env.SITE_URL}/?til=${lang}` }]);
   } catch (error: unknown) {
     return tg.send(chat, bt(lang, errorKey(error)));

@@ -1,4 +1,5 @@
 /** Hovlini bezash: reja ustidagi nuqtani bosing → bezak tanlang, ko'chiring yoki olib qo'ying. */
+import { isOwnerAdmin } from '../logic/admin.ts';
 import { useState, type FormEvent } from 'react';
 import { ANCHORS, DECOR_LEVEL, REF_YARD, anchorById, decorSlots, usedSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
 import { rpc, type MyPlot } from '../app/api.ts';
@@ -24,8 +25,8 @@ const MARKS: Readonly<Record<string, readonly [number, number]>> = {
 };
 const markOf = (a: Anchor): readonly [number, number] => MARKS[a.id] ?? [a.x, a.z];
 
-/** Sinov rejimida hamma nuqta ochiq. */
-const TESTER_TIER = 99;
+/** Egasi-adminga hamma nuqta ochiq. */
+const ADMIN_TIER = 99;
 interface YardMapProps { readonly level: number; readonly places: Places; readonly selected: string | null; readonly onPick: (id: string) => void; /** Pulga olingan bezak uchun ochiq nuqtalar. */ readonly paidOpen: ReadonlySet<string> }
 function YardMap({ level, places, selected, onPick, paidOpen }: YardMapProps): React.JSX.Element {
   const t = useT();
@@ -97,10 +98,10 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
   const [selected, setSelected] = useState<string | null>(null);
   const byId = new Map(catalog.map((c) => [c.id, c]));
   const { places } = plot;
-  // Admin sinov rejimida level va joylar soni cheklovi yo'q (server ham shunday).
-  const isTester = profile?.test_mode === true;
-  const tier = isTester ? TESTER_TIER : plot.tier;
-  const max = isTester ? Number.POSITIVE_INFINITY : decorSlots(plot.tier, setting<readonly number[] | undefined>('decor_slots', undefined));
+  // Egasi-adminga level va joylar soni cheklovi yo'q (server ham shunday).
+  const isAdmin = isOwnerAdmin(profile);
+  const tier = isAdmin ? ADMIN_TIER : plot.tier;
+  const max = isAdmin ? Number.POSITIVE_INFINITY : decorSlots(plot.tier, setting<readonly number[] | undefined>('decor_slots', undefined));
   const used = usedSlots(places);
   const anchor = selected ? anchorById(selected) : undefined;
   const current = selected ? places[selected] : undefined;
@@ -133,7 +134,7 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
   const isFull = used >= max && !current && anchor?.kind !== 'sign' && !(anchor && paidOpen.has(anchor.id));
   return (
     <>
-      <p className="row between"><b>{t('decor')}</b><span className="tag">{isTester ? used : `${used}/${max}`}</span></p>
+      <p className="row between"><b>{t('decor')}</b><span className="tag">{isAdmin ? used : `${used}/${max}`}</span></p>
       <YardMap level={tier} places={places} selected={selected} onPick={setSelected} paidOpen={paidOpen} />
       <p className="muted">{tier < DECOR_LEVEL ? `${t('decor')}: ${DECOR_LEVEL}-${t('opensAt')}. ${t('paidAnyLevel')}` : t('yardHint')}</p>
       {anchor && (

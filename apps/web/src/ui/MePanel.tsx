@@ -1,4 +1,5 @@
 /** Uyim: uy kartasi va bo'limlar; avatar. */
+import { isOwnerAdmin } from '../logic/admin.ts';
 import { useState } from 'react';
 import { MAX_TIER, TIERS, sanitizeAvatar, type AvatarLook } from '../../../../packages/shared/src/index.ts';
 import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareStory } from '../app/actions.ts';
@@ -73,10 +74,10 @@ export function MePanel(): React.JSX.Element {
   const profile = useApp((s) => s.profile);
   const { isBusy, run } = useAction();
   if (!profile) return <Sheet title={t('me')}><button type="button" className="btn" onClick={() => openAuth()}>{t('login')}</button></Sheet>;
-  // Buyurtma va reklama — to'lov yoqilganda (reklama joylari ham pulga sotiladi); admin sinov rejimida doim.
+  // Buyurtma va reklama — to'lov yoqilganda (reklama joylari ham pulga sotiladi); egasi-adminga doim.
   const isPaid = setting('payments_enabled', false);
   const hasAds = isPaid;
-  const isTester = profile.test_mode === true;
+  const isAdmin = isOwnerAdmin(profile);
   const findFree = (): void => {
     const id = nearestFree();
     if (id) goToPlot(id);
@@ -101,8 +102,8 @@ export function MePanel(): React.JSX.Element {
       </Section>
       <div className="menu-list">
         <RowLink icon="gift" text={t('giftsTitle')} note={profile.transfers.length > 0 && <i className="dot flat">{profile.transfers.length}</i>} onClick={() => openPanel({ kind: 'gifts' })} />
-        {(isPaid || isTester) && <RowLink icon="orders" text={t('myOrders')} onClick={() => openPanel({ kind: 'orders' })} />}
-        {(hasAds || isTester) && <RowLink icon="ads" text={t('myAds2')} onClick={() => openPanel({ kind: 'ads' })} />}
+        {(isPaid || isAdmin) && <RowLink icon="orders" text={t('myOrders')} onClick={() => openPanel({ kind: 'orders' })} />}
+        {(hasAds || isAdmin) && <RowLink icon="ads" text={t('myAds2')} onClick={() => openPanel({ kind: 'ads' })} />}
         <RowLink icon="settings" text={t('settings')} onClick={() => openPanel({ kind: 'settings' })} />
         <RowLink icon="logout" text={t('logout')} isDisabled={isBusy} onClick={() => void run(async () => { await signOut(); openRoot(null); })} />
       </div>

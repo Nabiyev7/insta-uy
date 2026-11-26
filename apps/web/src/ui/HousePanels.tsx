@@ -1,4 +1,5 @@
 /** O'z uyim ishlari: ranglar va material, level, nik, bezash, sovg'alar. */
+import { isOwnerAdmin } from '../logic/admin.ts';
 import { useState, type FormEvent } from 'react';
 import { MAX_TIER, TIERS, TIER_COINS, parseBio, type TierId } from '../../../../packages/shared/src/index.ts';
 import { startConstruction } from '../app/actions.ts';
@@ -61,10 +62,10 @@ export function UpgradeButton({ plot }: PlotProps): React.JSX.Element | null {
   const { isBusy, run } = useAction();
   const prices = setting<Prices | null>('prices', null);
   const coins = setting<CoinPrices>('coins', {});
-  const isTester = useApp((s) => s.profile?.test_mode === true);
-  const setTier = (tier: number): void => { void run(async () => { await rpc('my_test_tier', { p_plot: plot.plot, p_tier: tier }); await refreshMine(); if (full && tier > plot.tier) startConstruction(full, tier); }); };
-  const testTiers = isTester && <div className="seg test-tiers" role="group" aria-label={t('testMode')}>{TIERS.map((x) => <button type="button" key={x.id} aria-pressed={x.id === plot.tier} disabled={isBusy} onClick={() => setTier(x.id)}>{x.id}</button>)}</div>;
-  if (plot.tier >= MAX_TIER) return <>{testTiers}<p className="max-level with-icon"><Icon name="star" />{t('maxLevel')}</p></>;
+  const isAdmin = useApp((s) => isOwnerAdmin(s.profile));
+  const setTier = (tier: number): void => { void run(async () => { await rpc('my_admin_tier', { p_plot: plot.plot, p_tier: tier }); await refreshMine(); if (full && tier > plot.tier) startConstruction(full, tier); }); };
+  const adminTiers = isAdmin && <div className="seg admin-tiers" role="group" aria-label={`${t('adminTag')}: ${t('levelWord')}`}>{TIERS.map((x) => <button type="button" key={x.id} aria-pressed={x.id === plot.tier} disabled={isBusy} onClick={() => setTier(x.id)}>{x.id}</button>)}</div>;
+  if (plot.tier >= MAX_TIER) return <>{adminTiers}<p className="max-level with-icon"><Icon name="star" />{t('maxLevel')}</p></>;
   const next = (plot.tier + 1) as TierId;
   const name = TIERS.find((x) => x.id === next)?.[lang] ?? '';
   const price = coins.tier?.[next] ?? TIER_COINS[next] ?? 0;
@@ -80,7 +81,7 @@ export function UpgradeButton({ plot }: PlotProps): React.JSX.Element | null {
   };
   return (
     <>
-      {testTiers}
+      {adminTiers}
       {canCoins && balance >= price && <button type="button" className="btn gold block big upgrade" disabled={isBusy} onClick={() => void raise()}>{label}</button>}
       {canCoins && balance < price && <div className="upgrade-need">
         <button type="button" className="btn block big upgrade" disabled>{label}</button>

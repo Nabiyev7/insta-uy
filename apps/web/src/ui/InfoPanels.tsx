@@ -3,7 +3,7 @@ import type { Lang } from '../../../../packages/shared/src/index.ts';
 import { rpc, signOut } from '../app/api.ts';
 import { startAudio, stopAudio } from '../app/audio.ts';
 import { useT, type Key } from '../app/i18n.ts';
-import { getApp, openPanel, openRoot, refreshProfile, setApp, setting, useApp, write } from '../app/store.ts';
+import { getApp, openPanel, openRoot, setApp, setting, useApp, write } from '../app/store.ts';
 import { Icon, type IconName } from './icons.tsx';
 import { RowLink, Section, Seg, Sheet, useAction } from './kit.tsx';
 import { FAQ, PRIVACY, RULES, type Doc } from './legal.ts';
@@ -52,11 +52,10 @@ export function MenuPanel(): React.JSX.Element {
   );
 }
 
-/** Sozlamalarda faqat Til va Ovoz (sifat — doim "Avto", interfeys — doim to'q). Adminga — sinov rejimi. */
+/** Sozlamalarda faqat Til va Ovoz (sifat — doim "Avto", interfeys — doim to'q). */
 export function SettingsPanel(): React.JSX.Element {
   const t = useT();
-  const { lang, isSound, profile } = useApp();
-  const { run } = useAction();
+  const { lang, isSound } = useApp();
   const setSound = (v: 'on' | 'off'): void => {
     write('sound', v === 'on' ? '1' : '0');
     setApp({ isSound: v === 'on' });
@@ -67,10 +66,6 @@ export function SettingsPanel(): React.JSX.Element {
     <Sheet title={t('settings')}>
       <Section title={t('language')}><Seg label={t('language')} value={lang} onPick={pickLang} options={LANGS} /></Section>
       <Section title={t('sound')}><Seg<'on' | 'off'> label={t('sound')} value={isSound ? 'on' : 'off'} onPick={setSound} options={[['on', t('on')], ['off', t('off')]]} /></Section>
-      {profile?.role === 'admin' && <Section title={t('testMode')}>
-        <p className="muted">{t('testModeHint')}</p>
-        <Seg<'on' | 'off'> label={t('testMode')} value={profile.test_mode ? 'on' : 'off'} onPick={(v) => void run(async () => { await rpc('my_test_mode', { p_on: v === 'on' }); await refreshProfile(); }, t('saved'))} options={[['on', t('on')], ['off', t('off')]]} />
-      </Section>}
     </Sheet>
   );
 }

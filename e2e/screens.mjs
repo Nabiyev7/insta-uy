@@ -148,12 +148,12 @@ const otherScreens = async ({ id, storage }) => {
   }
 };
 
-/** Admin sinov rejimi: 1-level uy, lyuks bezaklarda qulf yo'q ("Olish · Sinov — bepul"). */
-const testerScreens = async () => {
+/** Egasi-admin: 1-level uy, lyuks bezaklarda qulf yo'q ("Olish · narx" + kichik "Admin"). */
+const adminScreens = async () => {
   const { token } = await fetch(`${server.API}/dev/admin`, { method: 'POST', body: '{}' }).then((r) => r.json());
   const page = await make(PHONE);
   await page.goto(`${SITE}/?kirish=${token}`);
-  await page.waitForFunction(() => window.__app?.getState().profile?.test_mode === true, null, { timeout: 60_000 });
+  await page.waitForFunction(() => window.__app?.getState().profile?.owner === true, null, { timeout: 60_000 });
   const plot = await page.evaluate(() => { const s = window.__app.getState(); return s.plan.plots.find((q) => q.districtId === 1 && q.type === 'hovli' && !s.houses.has(q.id)).id; });
   await server.call('my_claim', { p_plot: plot }, await server.tgToken(1));
   await page.reload();
@@ -161,7 +161,7 @@ const testerScreens = async () => {
   await day(page);
   await panel(page, { kind: 'shop' });
   await page.getByRole('tab', { name: 'Lyuks', exact: true }).click();
-  await shot(page, 'ui-dokon-sinov', 1300);
+  await shot(page, 'ui-dokon-admin', 1300);
   await page.context().close();
 };
 
@@ -169,7 +169,7 @@ try {
   const owner = await guestScreens();
   await ownerScreens(owner);
   await otherScreens(owner);
-  await testerScreens();
+  await adminScreens();
 } finally {
   await browser.close();
   await server.stop();

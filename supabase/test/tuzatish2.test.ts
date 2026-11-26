@@ -77,12 +77,12 @@ describe('admin — faqat egasi', () => {
     await expect(as(m, 'admin_users', { p_q: '' })).rejects.toThrow('forbidden');
     expect(await as<Row>(m, 'my_profile')).toMatchObject({ role: 'user', perms: [] });
   });
-  test('sinov rejimi faqat egasida', async () => {
+  test('admin huquqlari faqat egasida', async () => {
     const owner = await user();
     const other = await user('admin');
     await svc('svc_set_owner', { p_telegram: await tgOf(owner) });
-    expect((await as<Row>(owner, 'my_profile')).test_mode).toBe(true);
-    expect((await as<Row>(other, 'my_profile')).test_mode).toBe(false);
+    expect((await as<Row>(owner, 'my_profile')).owner).toBe(true);
+    expect((await as<Row>(other, 'my_profile')).owner).toBe(false);
   });
 });
 
@@ -102,14 +102,14 @@ describe('qayerdan keldi va hisoblagich', () => {
     expect(list.find((r) => r.source === 'bio')?.users).toBeGreaterThanOrEqual(1);
     await expect(as(u, 'admin_sources')).rejects.toThrow('forbidden');
   });
-  test('api_boot: bugun va jami uylar (sinov uylari hisoblanmaydi), sozlama ochiq', async () => {
+  test('api_boot: bugun va jami uylar (admin uyi ham haqiqiy), sozlama ochiq', async () => {
     const before = (await anon<Row>('api_boot')).houses as { today: number; total: number };
     const u = await user();
     await as(u, 'my_claim', { p_plot: await freeHovli(), p_instagram: `t2_nik_${n}` });
     const owner = await user('admin');
     await as(owner, 'my_claim', { p_plot: await freeHovli() });
     const boot = await anon<Row>('api_boot');
-    expect(boot.houses).toEqual({ today: before.today + 1, total: before.total + 1 });
+    expect(boot.houses).toEqual({ today: before.today + 2, total: before.total + 2 });
     expect((boot.settings as Row).lively_start).toBe(true);
   });
 });

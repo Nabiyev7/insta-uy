@@ -1,9 +1,9 @@
 /** Bo'sh shahar jonliroq: markazga yaqin bo'sh joylar belgisi, "bugun N kishi uy oldi" va "@nik hozirgina uy oldi" xabari. Sof hisob. */
 import { isFreeType, type Plot } from '../../../../packages/shared/src/index.ts';
 
-interface ClaimProfile { readonly free_used: boolean; readonly test_mode?: boolean; readonly plots?: readonly unknown[] }
-/** Bo'sh joyda uy qura oladimi (mehmon ham)? Istalgan uyi bor (admin sinov uyi ham) — yo'q; faqat sinov rejimi yoqilganda — ha (bir nechta uy). */
-export const canClaimFree = (p: ClaimProfile | null | undefined): boolean => !p || p.test_mode === true || (!p.free_used && (p.plots?.length ?? 0) === 0);
+interface ClaimProfile { readonly free_used: boolean; readonly plots?: readonly unknown[] }
+/** Bo'sh joyda uy qura oladimi (mehmon ham)? Kamida 1 ta uyi bor (admin ham) yoki bepul uyini olgan — yo'q. */
+export const canClaimFree = (p: ClaimProfile | null | undefined): boolean => !p || (!p.free_used && (p.plots?.length ?? 0) === 0);
 
 /** Belgi shuncha joyda (tezlik uchun). */
 export const WAITING_MAX = 20;

@@ -20,8 +20,16 @@ export function Houses(): React.JSX.Element {
     const instagram = login && prompt('Instagram niki:');
     if (login && instagram) act(id, 'assign', { login, instagram });
   };
+  /** Bo'sh joyga uy: nik (akkaunt topilmasa — o'zingizga shu nik bilan) va level. */
+  const give = (id: string): void => {
+    const nick = prompt('Kimga (Instagram nik; bo‘sh — o‘zingizga):') ?? null;
+    if (nick === null) return;
+    const tier = Number(prompt('Level (1–5):', '1'));
+    if (tier >= 1 && tier <= 5) void run(() => rpc('admin_give_house', { p_plot: id, p_nick: nick.trim() || null, p_tier: tier }), 'Uy berildi').then(reload);
+  };
   const actions = (r: HouseRow): React.JSX.Element => (
     <>
+      {r.status !== 'owned' && <Btn kind="main" disabled={isBusy} onClick={() => give(r.id)}>Uy berish</Btn>}
       {r.status === 'owned' && <><Btn disabled={isBusy} onClick={() => act(r.id, 'clear_bio')}>Yozuvni o'chirish</Btn><Btn kind="danger" disabled={isBusy} onClick={() => { if (confirm(`${r.id} bo'shatilsinmi?`)) act(r.id, 'release'); }}>Bo'shatish</Btn></>}
       <Btn disabled={isBusy} onClick={() => assign(r.id)}>Egasi…</Btn>
       {r.status === 'owned' && <Btn disabled={isBusy} onClick={() => { const n = Number(prompt('Level (1–5):')); if (n >= 1 && n <= 5) act(r.id, 'tier', { tier: n }); }}>Level…</Btn>}

@@ -69,16 +69,6 @@ function Packs(): React.JSX.Element {
   );
 }
 
-/** Ochilishdan oldin: admin sinov rejimida yaratilgan hamma narsa o'chadi. */
-function TestCleanup(): React.JSX.Element {
-  const { isBusy, run } = useAction();
-  const clean = (): void => {
-    if (!confirm('Sinov uylari, bezaklari va buyurtmalari o‘chiriladi, uchastkalar bo‘shaydi. Davom etilsinmi?')) return;
-    void run(() => rpc('admin_test_cleanup'), 'Tozalandi');
-  };
-  return <p><Btn kind="danger" disabled={isBusy} onClick={clean}>Sinov ma'lumotlarini tozalash</Btn> <span className="muted">Admin sinov rejimida yaratilgan uylar, bezaklar va buyurtmalar.</span></p>;
-}
-
 export function Economy(): React.JSX.Element {
   const [q, setQ] = useState('');
   const stats = useLoad(() => rpc<Economy>('admin_economy'));
@@ -89,8 +79,6 @@ export function Economy(): React.JSX.Element {
       <CoinSettings />
       <h3>Tanga paketlari</h3>
       <Packs />
-      <h3>Sinov rejimi</h3>
-      <TestCleanup />
       <h3>So'nggi 7 kun</h3>
       {stats.data && <p>Hammada jami: <b>{stats.data.total.toLocaleString('ru-RU')}</b> tanga · asoschilar: <b>{stats.data.founders}</b></p>}
       <Table rows={stats.data?.reasons ?? null} error={stats.error} rowKey={(r) => r.reason} columns={[

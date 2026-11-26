@@ -43,7 +43,7 @@ const LABEL_GAP = 2;
 const labelOf = (p: Plot, s: HouseState, isMine: boolean): LabelInfo => {
   const top = houseTop(p, s);
   const size = p.type === 'qasr' ? 1.2 : p.type === 'villa' ? 1.1 : 1;
-  return { key: p.id, text: `@${s.nick}${s.isTest ? ' · SINOV' : ''}`, level: s.tier, isMine, kind: s.label, badge: s.badge, hearts: s.hearts, x: top.x, y: top.y + LABEL_GAP * size, z: top.z, size };
+  return { key: p.id, text: `@${s.nick}`, level: s.tier, isMine, kind: s.label, badge: s.badge, hearts: s.hearts, x: top.x, y: top.y + LABEL_GAP * size, z: top.z, size };
 };
 
 const fullItems = (src: CollectSource, p: Plot, s: HouseState | undefined): readonly Item[] => {

@@ -383,7 +383,6 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .list.packs li .tag { margin-left: 6px; }
 .banner.salute { background: var(--main); color: var(--on-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 /* 6a: admin sinov rejimi belgisi */
-.test-chip { position: absolute; left: 50%; bottom: calc(6px + var(--safe-b, 0px)); transform: translateX(-50%); margin: 0; padding: 3px 10px; border-radius: 10px; background: #b42318; color: #fff; font-size: 11px; font-weight: 700; pointer-events: none; z-index: 5; }
 .btn.test-buy { background: #b42318; color: #fff; }
 .tag.best { background: var(--gold-a); color: var(--on-gold); }
 .tag.popular { background: var(--main); color: var(--on-main); }
@@ -418,3 +417,7 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 /* 12: jonli server uyg'onmoqda */
 .live-chip { position: absolute; left: 50%; bottom: calc(6px + var(--safe-b, 0px)); transform: translateX(-50%); margin: 0; padding: 3px 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 11px; font-weight: 600; pointer-events: none; z-index: 5; }
 
+
+/* Egasi-admin: kichik belgi (faqat unga). */
+.admin-tag { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; background: rgba(255, 255, 255, 0.14); opacity: 0.85; }
+.admin-place { border-top: 1px dashed rgba(255, 255, 255, 0.18); padding-top: 10px; }

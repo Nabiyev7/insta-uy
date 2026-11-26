@@ -209,7 +209,6 @@ export function Hud(): React.JSX.Element {
   const isOffline = useApp((s) => s.isOffline);
   const hasPanel = useApp((s) => s.panel !== null);
   const isMaintenance = useApp((s) => Boolean(s.boot?.settings.maintenance));
-  const isTester = useApp((s) => s.profile?.test_mode === true);
   const isLiveWaking = useApp((s) => s.isLiveWaking);
   if (isClean) return <CleanScreen />;
   if (isPhoto) return <PhotoBar />;
@@ -219,8 +218,7 @@ export function Hud(): React.JSX.Element {
       {!hasPanel && <HousesCount />}
       {(isOffline || isMaintenance) && <p className="banner" role="alert">{t(isOffline ? 'offline' : 'maintenance')}</p>}
       {!isOffline && !isMaintenance && <SaluteBanner />}
-      {isLiveWaking && !isTester && <p className="live-chip" role="status">{t('liveWaking')}</p>}
-      {isTester && <p className="test-chip" title={t('testModeHint')}>{t('testMode')} · {t('testFree')}</p>}
+      {isLiveWaking && <p className="live-chip" role="status">{t('liveWaking')}</p>}
       {mode !== 'city' && <Joystick />}
       <div className="dock"><Rail /><PreviewBar /><BottomCard /><BottomBar /></div>
       <CoinFly />

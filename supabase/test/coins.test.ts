@@ -83,10 +83,10 @@ describe('tanga: topish', () => {
 });
 
 describe('tanga o‘tkazish', () => {
-  test('olib tashlangan (6f): bayroqcha o‘chiq — rad, admin sinov rejimida ham', async () => {
+  test('olib tashlangan (6f): bayroqcha o‘chiq — rad, admin uchun ham', async () => {
     const [a, d] = [await withHouse(2000), await withHouse(0)];
     await fails(as(a.uid, 'my_send_coins', { p_to: d.nick, p_amount: 10 }), 'forbidden');
-    await sql("update profiles set role = 'admin', test_mode = true where user_id = $1", [a.uid]);
+    await sql("update profiles set role = 'admin' where user_id = $1", [a.uid]);
     await fails(as(a.uid, 'my_send_coins', { p_to: d.nick, p_amount: 10 }), 'forbidden');
     await sql("update profiles set role = 'user' where user_id = $1", [a.uid]);
     // Quyidagi testlar uchun — kod qolgan, bayroqcha yoqilsa eski qoidalar ishlaydi.

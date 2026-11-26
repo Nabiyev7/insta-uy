@@ -72,7 +72,7 @@ const applyLink = (): void => {
   rememberSource(params.get('from'));
 };
 
-/** Sinov rejimi: admin qoralama xaritani ko'radi (?xarita=ID). */
+/** Qoralama xarita: admin uni 3D da ko'radi (?xarita=ID). */
 const applyDraftMap = async (): Promise<void> => {
   const draft = Number(params.get('xarita'));
   const boot = getApp().boot;

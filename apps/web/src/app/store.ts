@@ -175,9 +175,7 @@ export const refreshHouses = async (source: 'snap' | 'live' = 'live'): Promise<v
   const text = JSON.stringify(rows);
   if (text === lastRows) return;
   lastRows = text;
-  const profile = getApp().profile;
-  const testPlots = new Set(profile?.role === 'admin' ? profile.plots.filter((p) => p.is_test).map((p) => p.plot) : []);
-  setApp({ houses: new Map(rows.map((r) => [r[0], { ...toHouse(r), isTest: testPlots.has(r[0]) }])) });
+  setApp({ houses: new Map(rows.map((r) => [r[0], toHouse(r)])) });
 };
 export const refreshProfile = async (): Promise<void> => {
   try {

@@ -12,6 +12,7 @@ import { Icon } from './icons.tsx';
 import { Field, LoadState, RowLink, Sheet, useAction, useLoad } from './kit.tsx';
 import { listOf } from '../logic/safe.ts';
 import { canClaimFree } from '../logic/lively.ts';
+import { isOwnerAdmin } from '../logic/admin.ts';
 
 interface InfoProps { readonly plot: PlotInfo }
 
@@ -23,7 +24,7 @@ function ClaimForm({ plot }: InfoProps): React.JSX.Element {
   const [bio, setBio] = useState('');
   const [isOpen, setOpen] = useState(false);
   const hasNick = Boolean(profile?.instagram);
-  // Bepul uyi bor: faqat kichik izoh (uy qurish tugmasi yo'q). Sinov rejimida — bir nechta uy.
+  // Uyi bor (admin ham): faqat kichik izoh (uy qurish tugmasi yo'q).
   if (!canClaimFree(profile)) return <p className="muted small">{t('e_free_used')}</p>;
   if (!isOpen) {
     const hint = setting('telegram_bot', '') ? t('tgFast') : t('needSignIn');
@@ -71,8 +72,26 @@ function BuyPlot({ plot }: InfoProps): React.JSX.Element {
   );
 }
 
-/** Admin sinov rejimida yopiq narsalar ham ochiq (server ham tekshiradi). */
-const profileTest = (): boolean => getApp().profile?.test_mode === true;
+/** Faqat egasi-adminga: bo'sh joyga qo'shimcha uy (o'z niki bilan, istalgan level). "+" emas — oyna ichidagi tugma. */
+function AdminPlace({ plot }: InfoProps): React.JSX.Element {
+  const t = useT();
+  const { isBusy, run } = useAction();
+  const [tier, setTier] = useState(1);
+  const place = (): void => {
+    void run(async () => {
+      await rpc('admin_give_house', { p_plot: plot.id, p_nick: null, p_tier: tier });
+      const full = getApp().plotById.get(plot.id);
+      if (full) startConstruction(full, tier);
+      await Promise.all([refreshHouses(), refreshProfile()]);
+    });
+  };
+  return (
+    <div className="section admin-place">
+      <div className="seg" role="group" aria-label={`${t('adminTag')}: ${t('levelWord')}`}>{TIERS.map((x) => <button type="button" key={x.id} aria-pressed={x.id === tier} onClick={() => setTier(x.id)}>{x.id}</button>)}</div>
+      <button type="button" className="btn block" disabled={isBusy} onClick={place}><Icon name="tools" />{t('adminPlace')}</button>
+    </div>
+  );
+}
 
 const NEAR = 60;
 /** Yon-atrofdagi egali uylar. */
@@ -88,6 +107,7 @@ function FreePlot({ plot, full }: InfoProps & { readonly full: Plot }): React.JS
   const founders = useApp((s) => s.boot?.founders);
   const isFounder = founders !== undefined && founders.taken < founders.limit;
   const isSale = plot.type !== 'kvartira' && (!isFreeType(plot.type) || setting('payments_enabled', false));
+  const isAdmin = useApp((s) => isOwnerAdmin(s.profile));
   return (
     <>
       <p className="muted">{district ? (lang === 'uz' ? district.name_uz : district.name_ru) : ''} · {t('toPlaza')} {Math.round(Math.hypot(full.x, full.z) / 10) * 10} {t('meters')}</p>
@@ -96,10 +116,11 @@ function FreePlot({ plot, full }: InfoProps & { readonly full: Plot }): React.JS
         <span>{countNeighbours(full)} {t('neighbours')}</span>
         <span>{isFounder && isFreeType(plot.type) ? t('founder') : t(`t_${plot.type}`)}</span>
       </div>
-      {!plot.open && <p className="muted">{t('closed')}</p>}
-      {plot.open && isFreeType(plot.type) && <ClaimForm plot={plot} />}
-      {plot.open && plot.type === 'kvartira' && <p className="muted">{t('e_apartments_closed')}</p>}
-      {plot.open && isSale && (setting('premium_house_enabled', false) || profileTest()) && <BuyPlot plot={plot} />}
+      {!plot.open && !isAdmin && <p className="muted">{t('closed')}</p>}
+      {(plot.open || isAdmin) && isFreeType(plot.type) && <ClaimForm plot={plot} />}
+      {plot.open && plot.type === 'kvartira' && !isAdmin && <p className="muted">{t('e_apartments_closed')}</p>}
+      {plot.open && isSale && setting('premium_house_enabled', false) && <BuyPlot plot={plot} />}
+      {isAdmin && <AdminPlace plot={plot} />}
     </>
   );
 }

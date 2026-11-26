@@ -117,7 +117,7 @@ const T = {
   productStars: [' · {n} ⭐', ' · {n} ⭐'],
   productCoins: ['🪙 {n} tanga', '🪙 {n} монет'],
   btnPayStars: ['⭐ {n} Stars bilan to‘lash', '⭐ Оплатить {n} Stars'],
-  btnTestBuy: ['🧪 Sinov xaridi (bepul)', '🧪 Тестовая покупка (бесплатно)'],
+  btnAdminGet: ['✅ Olish (admin)', '✅ Получить (админ)'],
   paidProblem: ['⚠️ To‘lov keldi, admin ko‘rib chiqadi.', '⚠️ Оплата получена, админ проверит.'],
   orderOld: ['Buyurtma muddati tugagan — qaytadan oching.', 'Заказ устарел — оформите заново.'],
   // ---------- Parol (faqat password_login yoqilganda) ----------

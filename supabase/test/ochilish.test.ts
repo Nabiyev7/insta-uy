@@ -71,7 +71,6 @@ describe('ochilish kuni', () => {
   test('tuman: ochiqlaridagi bepul joylarning 80% i band — keyingisi o‘zi ochiladi va egasiga xabar; kam bo‘lsa — yo‘q', async () => {
     const owner = await user();
     await svc('svc_set_owner', { p_telegram: owner.tg });
-    await db.query('update profiles set test_mode = false where user_id = $1', [owner.uid]);
     const isOpen = async (id: number): Promise<boolean> => ((await db.query<{ o: boolean }>('select is_open o from districts where id = $1', [id])).rows[0]!.o);
     await db.query('select private.auto_open_district()');
     expect(await isOpen(2)).toBe(false);

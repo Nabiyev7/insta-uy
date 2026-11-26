@@ -35,9 +35,9 @@ export const premiumTabs = (catalog: readonly CatalogRow[]): readonly PremiumRow
 };
 
 export type GoodState = 'free' | 'locked' | 'soldOut' | 'seasonOver';
-/** Admin sinov rejimida va premium tovarda level qulfi yo'q (server ham shunday). */
-export const goodState = (c: CatalogRow, level: number, isTester = false): GoodState => {
+/** Egasi-adminga va premium tovarda level qulfi yo'q (server ham shunday). */
+export const goodState = (c: CatalogRow, level: number, isAdmin = false): GoodState => {
   if (!c.onSale) return 'seasonOver';
   if (c.left === 0) return 'soldOut';
-  return c.min > 1 && level < c.min && !isTester && !isPremium(c) ? 'locked' : 'free';
+  return c.min > 1 && level < c.min && !isAdmin && !isPremium(c) ? 'locked' : 'free';
 };

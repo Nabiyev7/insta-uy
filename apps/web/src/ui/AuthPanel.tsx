@@ -29,10 +29,10 @@ const tokenIn = (r: DevSent): string | null => {
 };
 /** Bot bilan lokal suhbat; nik yozilsa tasdiq ("Ha, to'g'ri") ham bosiladi. */
 const devSay = async (id: number, text: string): Promise<string | null> => {
-  const r = await post<DevSent>('/dev/telegram', { message: { message_id: 1, from: { id, first_name: 'Sinov' }, chat: { id, type: 'private' }, text } });
+  const r = await post<DevSent>('/dev/telegram', { message: { message_id: 1, from: { id, first_name: 'Dev' }, chat: { id, type: 'private' }, text } });
   const token = tokenIn(r);
   if (token || !r.sent.some((m) => m.buttons.some((b) => 'data' in b && b.data === 'nick_ok'))) return token;
-  return tokenIn(await post<DevSent>('/dev/telegram', { callback_query: { id: 'n', from: { id, first_name: 'Sinov' }, data: 'nick_ok' } }));
+  return tokenIn(await post<DevSent>('/dev/telegram', { callback_query: { id: 'n', from: { id, first_name: 'Dev' }, data: 'nick_ok' } }));
 };
 
 /** Faqat lokal (npm run dev): Telegramsiz bot suhbatini sinash — o'sha bot kodi ishlaydi. */
@@ -52,10 +52,10 @@ function DevLogin(): React.JSX.Element {
   };
   return (
     <form className="section dev-login" onSubmit={submit}>
-      <p className="muted">Lokal sinov: bot o‘rniga</p>
+      <p className="muted">Lokal (DEV): bot o‘rniga</p>
       <Field label="Telegram ID"><input value={id} onChange={(e) => setId(e.target.value)} inputMode="numeric" pattern="\d{1,12}" required /></Field>
       <Field label="Instagram nik"><input value={nick} onChange={(e) => setNick(e.target.value)} autoCapitalize="none" maxLength={30} /></Field>
-      <button type="submit" className="btn block" disabled={isBusy}>Sinov kirish</button>
+      <button type="submit" className="btn block" disabled={isBusy}>Lokal kirish</button>
       <button type="button" className="btn soft block" disabled={isBusy} onClick={() => void run(async () => {
         const { token } = await post<{ token: string }>('/dev/admin', {});
         location.assign(`${location.pathname}?kirish=${token}`);
