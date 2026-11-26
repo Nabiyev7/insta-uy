@@ -91,6 +91,8 @@ export interface AppState {
   readonly district: number;
   readonly street: number;
   readonly online: number;
+  /** Jonli server (ko'p o'yinchi): uxlab qolgan bo'lsa — ulanmoqda, sayt yakka rejimda ishlayveradi. */
+  readonly isLiveWaking: boolean;
   readonly catalog: readonly CatalogRow[];
   readonly sets: readonly SetRow[];
   readonly preview: Preview | null;
@@ -106,7 +108,7 @@ export interface AppState {
 
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, panel: null, trail: [], toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: true, isSound: read('sound') === '1', theme: 'dark', isLeftHand: false, isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, isClean: false, district: 0, street: 0, online: 0, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: true, isSound: read('sound') === '1', theme: 'dark', isLeftHand: false, isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, isClean: false, district: 0, street: 0, online: 0, isLiveWaking: false, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;

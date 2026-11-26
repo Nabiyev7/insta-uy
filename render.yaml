@@ -1,0 +1,24 @@
+# Render.com (bepul): ko'p o'yinchi va chat serveri. GitHub'dan avtomatik deploy (main'ga push).
+# 15 daqiqa bo'sh tursa uxlaydi — sayt shu paytda yakka rejimda ishlaydi va server uyg'ongach o'zi ulanadi.
+services:
+  - type: web
+    name: citylanduz-realtime
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    autoDeploy: true
+    # Faqat server bog'liqliklari (socket.io); butun monorepo o'rnatilmaydi.
+    buildCommand: cd server && npm install --omit=dev --workspaces=false --no-audit --no-fund
+    startCommand: node server/src/realtime/main.ts
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: ALLOWED_ORIGINS
+        value: https://citylanduz.pages.dev
+      # Maxfiy: Render panelida egasi kiritadi (Supabase → Settings → API).
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false

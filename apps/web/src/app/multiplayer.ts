@@ -48,6 +48,9 @@ export const connectMultiplayer = async (): Promise<void> => {
     }
   });
   socket.on('snap', onSnapshot);
+  // Bepul server uxlab qolgan bo'lsa uyg'onguncha (≈ 1 daqiqa) kichik yozuv; socket.io o'zi qayta ulanadi.
+  socket.on('connect', () => setApp({ isLiveWaking: false }));
+  socket.on('connect_error', () => { if (!getApp().isLiveWaking) setApp({ isLiveWaking: true }); });
   socket.on('chat', (m: ChatLine) => addMessages([m], true));
   socket.on('chat_history', (list: readonly ChatLine[]) => addMessages(list, false));
   socket.on('chat_deleted', dropMessage);
@@ -78,6 +81,7 @@ useApp.subscribe(() => {
 
 export const disconnectMultiplayer = (): void => {
   clearInterval(timer);
+  if (getApp().isLiveWaking) setApp({ isLiveWaking: false });
   socket?.disconnect();
   socket = null;
   remotes.clear();
