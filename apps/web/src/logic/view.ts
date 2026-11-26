@@ -16,6 +16,8 @@ export interface View {
   /** Katta narsalar (minora, kran, tijorat) ko'rinadigan masofa. */
   readonly far: number;
   readonly tree: number; readonly small: number; readonly label: number;
+  /** Uzoq niklar (bitta qatlam) shu masofagacha: shaharda — butun ko'rinish, piyoda/mashinada — faqat yaqindagilar. */
+  readonly nicks: number;
   readonly fogNear: number; readonly fogFar: number;
   readonly isSimple: boolean;
   readonly isHidden: (x: number, z: number, slack?: number) => boolean;
@@ -30,7 +32,7 @@ export const groundView = ({ x, z, yaw, quality: q, boost, isVideo }: GroundView
   const dirX = Math.sin(yaw);
   const dirZ = Math.cos(yaw);
   return {
-    x, z, radius: q.mid * boost, eyeX: x, eyeZ: z, eyeY: 0, near: q.near * boost, detail: q.detail * boost, far: q.fog * boost, tree: q.mid * boost * 0.75, small: q.near * boost * 1.8, label: LABEL_RANGE * boost,
+    x, z, radius: q.mid * boost, eyeX: x, eyeZ: z, eyeY: 0, near: q.near * boost, detail: q.detail * boost, far: q.fog * boost, tree: q.mid * boost * 0.75, small: q.near * boost * 1.8, label: LABEL_RANGE * boost, nicks: LABEL_RANGE * boost,
     fogNear: q.fog * 0.25 * boost, fogFar: q.fog * boost, isSimple: q.level === 'low' && !isVideo,
     isHidden: (px, pz, slack = 0) => {
       const d = Math.hypot(px - x, pz - z) - slack;
@@ -49,7 +51,7 @@ export const cityView = (v: CityView, q: Quality, halfFov: number): View => {
   return {
     x: v.x - Math.sin(v.yaw) * ahead, z: v.z - Math.cos(v.yaw) * ahead, radius: q.cityView,
     eyeX: wedge.x, eyeZ: wedge.z, eyeY: v.height, near: q.near * CITY_NEAR_BOOST, detail: isHigh ? 0 : q.detail * CITY_NEAR_BOOST, far: q.cityView,
-    tree: isHigh ? q.cityTree : q.mid, small: isHigh ? 0 : q.near * 2, label: isHigh ? 0 : LABEL_RANGE * CITY_NEAR_BOOST,
+    tree: isHigh ? q.cityTree : q.mid, small: isHigh ? 0 : q.near * 2, label: isHigh ? 0 : LABEL_RANGE * CITY_NEAR_BOOST, nicks: q.cityView,
     fogNear: distance + q.cityView * 0.25, fogFar: distance + q.cityView * 0.95, isSimple: q.level === 'low',
     isHidden: (px, pz) => !inWedge(wedge, px, pz),
   };

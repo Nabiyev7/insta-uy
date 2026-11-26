@@ -9,9 +9,6 @@ export interface LabelInfo {
   readonly x: number; readonly y: number; readonly z: number; readonly size?: number;
   /** O'z uyim: sariq yorliq + uy belgisi. */ readonly isMine?: boolean; /** Uy leveli — yorliq ichida kichik "L5". */ readonly level?: number;
 }
-/** Yorliqning ekrandagi balandligi (CSS px) shu masofagacha o'zgarmaydi, keyin uzoqlashgan sari kichrayadi. */
-export const LABEL_PX = 26;
-export const LABEL_NEAR = 60;
 
 const CACHE_MAX = 90;
 const ICON_SIZE = 36;
@@ -126,6 +123,11 @@ export class Labels {
     for (const { texture } of this.cache.values()) texture.dispose();
     for (const s of this.sprites) s.material.dispose();
     this.cache.clear();
+  }
+
+  /** Oyna ochiq bo'lsa — xira. */
+  setOpacity(value: number): void {
+    for (const s of this.sprites) if (s.material.opacity !== value) s.material.opacity = value;
   }
 
   /** `height(x, y, z)` — yorliqning dunyo birligidagi balandligi (kamera masofasiga qarab); berilmasa — eski o'lcham. */

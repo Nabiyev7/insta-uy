@@ -14,10 +14,13 @@ import { worldIndex } from '../logic/worldIndex.ts';
 import { camera as cam, city, director, here, session } from '../app/runtime.ts';
 import { getApp, setting, useApp, type Preview } from '../app/store.ts';
 import { Ads } from './Ads.tsx';
-import { collect, type CollectSource } from './collect.ts';
+import { collect, type CollectSource, type NickCandidate } from './collect.ts';
 import { FAR_CHUNK, Ground } from './ground.ts';
 import { kitUniforms, type Kit } from './kit.ts';
-import { LABEL_NEAR, LABEL_PX, Labels, type LabelInfo } from './labels.ts';
+import { Labels, type LabelInfo } from './labels.ts';
+import { FarNicks } from './nicks.ts';
+import { placeLabels } from './placeLabels.ts';
+import { labelPx } from '../logic/declutter.ts';
 import { POND, STADIUM } from '../logic/paving.ts';
 /** Loyiha joylari bosh rejadagi mavjud joylarda (qulfga tegilmaydi): stadion — o'z joyi, bog' — hovuz yonida. */
 const PROJECT_SPOTS: Readonly<Partial<Record<'bog' | 'stadion' | 'koprik', { readonly x: number; readonly z: number }>>> = { stadion: STADIUM, bog: { x: POND.x, z: POND.z + POND.r + 12 } };
@@ -36,6 +39,8 @@ const STEP = { ground: { move: 6, turn: 0.25 }, city: { move: 6, turn: 0.12, per
 
 interface Last { readonly x: number; readonly z: number; readonly yaw: number; readonly height: number; readonly mode: string }
 const FRESH: Last = { x: NOWHERE, z: NOWHERE, yaw: 0, height: 0, mode: '' };
+/** Yorliqlarni ekranga qayta joylash oralig'i (s). */
+const PLACE_S = 0.12;
 const angleBetween = (a: number, b: number): number => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 
 /** Hozirgi ko'rinish holati: nimaga qarab qayta yig'ish kerakligi shundan bilinadi. */
@@ -85,12 +90,15 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
   const index = useMemo(() => worldIndex(plan), [plan]);
 
   const world = useMemo(() => ({
-    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), signs: new Signs(), boards: new Boards(), markers: new Markers(), selection: new Selection(), works: new Pools(kit), beacons: new Beacons(),
+    pools: new Pools(kit), ground: new Ground(plan, { openDistricts: new Set() }), farGround: new Ground(plan, { openDistricts: new Set() }, { chunk: FAR_CHUNK, hasTop: false }), sky: new Sky(), lake: new Lake(), labels: new Labels(), nicks: new FarNicks(), signs: new Signs(), boards: new Boards(), markers: new Markers(), selection: new Selection(), works: new Pools(kit), beacons: new Beacons(),
   }), [kit, plan]);
   const sun = useMemo(() => new DirectionalLight('#fff', 2), []);
   const hemi = useMemo(() => new HemisphereLight('#fff', '#c9d6b4', 1), []);
   const fog = useMemo(() => new Fog('#cde', 40, 400), []);
   const last = useRef<Last>(FRESH);
+  const pending = useRef<{ readonly fixed: readonly LabelInfo[]; readonly detail: readonly LabelInfo[]; readonly nicks: readonly NickCandidate[] } | null>(null);
+  const placedAt = useRef(0);
+  const placedCam = useRef('');
   const caches = useRef({ full: new Map<string, readonly Item[]>(), simple: new Map<string, Item>() });
 
   const open = useMemo(() => new Set(boot?.districts.filter((d) => d.open).map((d) => d.id) ?? [1]), [boot]);
@@ -119,7 +127,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
 
   useEffect(() => {
     scene.fog = fog;
-    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.signs.group, world.boards.mesh, world.markers.points, world.beacons.points, world.selection.group, world.works.group, sun, sun.target, hemi];
+    const parts = [world.pools.group, world.ground.group, world.farGround.group, world.sky.group, world.lake.mesh, world.labels.group, world.nicks.mesh, world.signs.group, world.boards.mesh, world.markers.points, world.beacons.points, world.selection.group, world.works.group, sun, sun.target, hemi];
     scene.add(...parts);
     activeMarkers.current = world.markers;
     activeBeacons.current = world.beacons;
@@ -129,6 +137,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       world.ground.dispose();
       world.farGround.dispose();
       world.labels.dispose();
+      world.nicks.dispose();
       world.beacons.dispose();
       world.signs.dispose();
       world.boards.dispose();
@@ -168,7 +177,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
 
   const refresh = (v: View): void => {
     const src: CollectSource = { plots: index.plots, statics: index.statics, extras, commerce, plan, houses, open, building: building?.plot ?? null, mine, ...caches.current };
-    const { items, labels, signs, boards, free } = collect(v, src, q.labels);
+    const { items, labels, nicks, signs, boards, free } = collect(v, src, q.labels);
     world.pools.set(items);
     world.signs.set(signs);
     world.boards.set(boards);
@@ -183,11 +192,28 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
       const pct = Math.min(100, Math.floor((p.raised / Math.max(1, p.goal)) * 100));
       return [{ key: `work-${p.id}`, text: `${p.uz} · ${p.status === 'done' ? '100%' : `${pct}%`}`, kind: p.status === 'done' ? 'gold' : 'plain', badge: null, icon: 'bank', x: at.x, y: 12, z: at.z, size: 1.6 } satisfies LabelInfo];
     });
-    // Yaqinda (≤ 60 m) yorliq ekranda bir xil katta, uzoqda kichrayadi.
+    // Ekranga joylash kameraga bog'liq — `placeNow` (kadrlarda, tez-tez emas) yangi kamera bilan qiladi.
+    pending.current = { fixed: [...heroLabel, ...works], detail: labels, nicks };
+    placedAt.current = 0;
+    placedCam.current = '';
+  };
+
+  /** Yaqinda (≤ 60 m) yorliq katta (~18 px matn), uzoqlashgan sari kichrayadi, lekin ~10 px dan kichik emas.
+   *  Hamma egali uylarning niki: yaqindagilar batafsil, qolgani bitta qatlamda; ustma-ust tushsa uzoqrog'i yashiriladi. */
+  const placeNow = (): void => {
+    const p = pending.current;
+    if (!p) return;
+    camera.updateMatrixWorld();
+    // Kamera qimirlamagan va yangi ro'yxat yo'q — qayta joylash shart emas.
+    const key = camera.matrixWorld.elements.map((x) => x.toFixed(2)).join(',') + `|${size.width}x${size.height}`;
+    if (key === placedCam.current) return;
+    placedCam.current = key;
     const fov = camera instanceof PerspectiveCamera ? camera.fov : 60;
     const perPx = (2 * Math.tan((fov * Math.PI) / 360)) / Math.max(1, size.height);
     const at = camera.position;
-    world.labels.set([...heroLabel, ...works, ...labels], (x, y, z) => LABEL_PX * perPx * Math.min(Math.hypot(x - at.x, y - at.y, z - at.z), LABEL_NEAR));
+    const placed = placeLabels(p.fixed, p.detail, p.nicks, camera, size, world.nicks);
+    world.labels.set(placed.detail, (x, y, z) => { const d = Math.hypot(x - at.x, y - at.y, z - at.z); return labelPx(d) * perPx * d; });
+    world.nicks.set(placed.far, size);
   };
 
   const updateGround = (v: View, isHigh: boolean): void => {
@@ -240,9 +266,18 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     updateGround(v, isHigh);
     updateWorks();
     const app = getApp();
+    // Oyna ochiq bo'lsa yorliqlar xira (panel ostida xalaqit bermasin).
+    const dim = app.panel !== null ? 0.4 : 1;
+    world.nicks.setOpacity(dim);
+    world.labels.setOpacity(dim);
     const canClaim = showClaimMarks(app.authState, app.profile);
     world.markers.setVisible(canClaim && s.mode === 'city' && !isHigh && !app.isPhoto && !app.isClean);
     world.beacons.update(canClaim && !app.isPhoto && !app.isClean && setting('lively_start', true), clock.elapsedTime);
+    // Yorliqlar ekranga ~8 marta/soniya qayta joylanadi (kamera yursa ham ustma-ust tushmasin).
+    if (clock.elapsedTime - placedAt.current > PLACE_S) {
+      placedAt.current = clock.elapsedTime;
+      placeNow();
+    }
     if (!isStale(last.current, s)) return;
     last.current = s;
     refresh(v);

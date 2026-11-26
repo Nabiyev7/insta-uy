@@ -61,7 +61,9 @@ const simpleItem = (src: CollectSource, p: Plot, s: HouseState, isSimple: boolea
   return made;
 };
 
-interface PlotResult { readonly items: Item[]; readonly labels: readonly LabelInfo[]; readonly signs: readonly SignInfo[]; /** Ko'rinayotgan "Bo'sh joy" taxtachalari. */ readonly boards: readonly Item[]; /** "+" belgisi chiqadigan bo'sh joylar, yaqinidan. */ readonly free: readonly Plot[] }
+/** Uzoq nik nomzodi (ekranda declutter bilan tanlanadi). */
+export interface NickCandidate { readonly d: number; readonly info: LabelInfo }
+interface PlotResult { readonly items: Item[]; readonly labels: readonly LabelInfo[]; /** Batafsil yorliqqa kirmagan hamma egali uylar, yaqinidan. */ readonly nicks: readonly NickCandidate[]; readonly signs: readonly SignInfo[]; /** Ko'rinayotgan "Bo'sh joy" taxtachalari. */ readonly boards: readonly Item[]; /** "+" belgisi chiqadigan bo'sh joylar, yaqinidan. */ readonly free: readonly Plot[] }
 
 /** Lavhali uylar: yozuv modelning old yuzasida turadi. */
 const SIGN_MODEL = 'sign_nick';
@@ -123,11 +125,14 @@ const collectPlots = (v: View, src: CollectSource, maxLabels: number): PlotResul
       const sign = d < v.detail ? signOf(p, s, list) : null;
       if (sign) signs.push({ d, info: sign });
     } else items.push(simpleItem(src, p, s, v.isSimple));
-    if (s.nick && d < v.label) labels.push({ d, info: labelOf(p, s, src.mine?.has(p.id) === true) });
+    if (s.nick && d < Math.max(v.label, v.nicks)) labels.push({ d, info: labelOf(p, s, src.mine?.has(p.id) === true) });
   }
-  labels.sort((a, b) => a.d - b.d);
+  // O'z uyim — doim batafsil (sariq) va birinchi; qolgani yaqinidan.
+  labels.sort((a, b) => Number(b.info.isMine === true) - Number(a.info.isMine === true) || a.d - b.d);
   signs.sort((a, b) => a.d - b.d);
-  return { items, labels: labels.slice(0, maxLabels).map((l) => l.info), signs: signs.map((x) => x.info), boards, free: free.sort((a, b) => a.d - b.d).map((x) => x.p) };
+  const detail = labels.filter((l, i) => l.info.isMine === true || (l.d < v.label && i < maxLabels)).slice(0, Math.max(1, maxLabels));
+  const inDetail = new Set(detail.map((l) => l.info.key));
+  return { items, labels: detail.map((l) => l.info), nicks: labels.filter((l) => !inDetail.has(l.info.key)), signs: signs.map((x) => x.info), boards, free: free.sort((a, b) => a.d - b.d).map((x) => x.p) };
 };
 
 const staticItem = (v: View, it: Item, d: number): Item | null => {
@@ -161,7 +166,7 @@ const collectBuildings = (v: View, list: readonly Building[]): Item[] => list.fl
 export const collect = (v: View, src: CollectSource, maxLabels: number): PlotResult => {
   const plots = collectPlots(v, src, maxLabels);
   return {
-    labels: plots.labels, signs: plots.signs, boards: plots.boards, free: plots.free,
+    labels: plots.labels, nicks: plots.nicks, signs: plots.signs, boards: plots.boards, free: plots.free,
     items: [
       ...plots.items, ...collectStatics(v, src.statics.query(v.x, v.z, v.far)), ...collectStatics({ ...v, near: v.near * 1.6 }, src.extras.query(v.x, v.z, v.far)),
       ...collectCommerce(v, src.commerce.query(v.x, v.z, v.far)), ...collectBuildings(v, src.plan.buildings),
