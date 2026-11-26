@@ -5,7 +5,6 @@ import { addressOf } from '../app/actions.ts';
 import { rpc } from '../app/api.ts';
 import { money, useT, type Key } from '../app/i18n.ts';
 import { openAuth, openPanel, setting, useApp } from '../app/store.ts';
-import { createOrder } from './OrderPanels.tsx';
 import type { IconName } from './icons.tsx';
 import { LoadState, RowLink, Section, Sheet, useAction, useLoad } from './kit.tsx';
 import { listOf } from '../logic/safe.ts';
@@ -57,8 +56,6 @@ export function CivicPanel({ id }: IdProps): React.JSX.Element | null {
 interface CommerceInfo { readonly id: string; readonly type: Commerce['type']; readonly price: number; readonly free: boolean; readonly title: string | null; readonly link: string | null }
 export function CommercePanel({ id }: IdProps): React.JSX.Element {
   const t = useT();
-  const profile = useApp((s) => s.profile);
-  const { isBusy, run } = useAction();
   const lang = useApp((s) => s.lang);
   const tower = TOWERS[id];
   const loaded = useLoad(() => rpc<CommerceInfo>('api_commerce', { p_id: id }), id);
@@ -76,7 +73,7 @@ export function CommercePanel({ id }: IdProps): React.JSX.Element {
       {isShut && <p className="muted">{t('e_not_for_sale')}</p>}
       {isSale && <>
         <div className="row between"><span className="tag free">{t('free')}</span><b>{money(data.price)} {t('som')} / {t('perMonth')}</b></div>
-        <button type="button" className="btn block" disabled={isBusy} onClick={() => (profile ? void run(() => createOrder('commerce', { id })) : openAuth())}>{t('rent')}</button>
+        <p className="muted">{t('paidSoon')}</p>
       </>}
     </Sheet>
   );
@@ -103,7 +100,6 @@ export function StreetPanel({ id }: { readonly id: number }): React.JSX.Element 
       <button type="submit" className="btn small" disabled={isBusy}>{label}</button>
     </form>
   );
-  const canPay = setting('payments_enabled', false);
   return (
     <Sheet title={data?.name ?? `${id}-${t('street').toLowerCase()}`} variant="half">
       <LoadState of={loaded} />
@@ -122,7 +118,7 @@ export function StreetPanel({ id }: { readonly id: number }): React.JSX.Element 
       </Section>}
       {data?.central && !data.pending && <Section title={t('streetBuy')}>
         <p><b>{money(data.price)} {t('som')}</b></p>
-        {canPay ? nameForm(t('buy'), (v) => createOrder('street_name', { street: id, name: v })) : <p className="muted">{t('paidSoon')}</p>}
+        <p className="muted">{t('paidSoon')}</p>
       </Section>}
     </Sheet>
   );

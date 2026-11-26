@@ -1,27 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { rpc, uploadAd } from '../app/api.ts';
 import { hasKey, money, useT, type Key } from '../app/i18n.ts';
-import { openPanel, refreshHouses, useApp } from '../app/store.ts';
+import { refreshHouses, useApp } from '../app/store.ts';
 import { Field, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
 
 interface Order { readonly id: string; readonly kind: string; readonly payload: Readonly<Record<string, unknown>>; readonly amount: number; readonly status: string; readonly expires: string; readonly provider: string; readonly card: string | null; readonly at: string }
 
-export const createOrder = async (kind: string, payload: Readonly<Record<string, unknown>>): Promise<void> => {
-  await rpc('my_order', { p_kind: kind, p_payload: payload });
-  openPanel({ kind: 'orders' });
-  void refreshHouses();
-};
-
-/** Provayderga mos to'lov ko'rsatmasi (PLAN §8: A va B variant bir interfeysda). */
-const checkoutUrl = (o: Order): string | null => {
-  const payme = import.meta.env.VITE_PAYME_MERCHANT as string | undefined;
-  const click = import.meta.env.VITE_CLICK_MERCHANT as string | undefined;
-  const service = import.meta.env.VITE_CLICK_SERVICE as string | undefined;
-  if (o.provider === 'payme' && payme) return `https://checkout.paycom.uz/${btoa(`m=${payme};ac.order=${o.id};a=${o.amount * 100}`)}`;
-  if (o.provider === 'click' && click && service) return `https://my.click.uz/services/pay?service_id=${service}&merchant_id=${click}&amount=${o.amount}&transaction_param=${o.id}`;
-  return null;
-};
-
+/** Buyurtmalar tarixi. To'lov botda (Telegram Stars) — saytda to'lov ko'rsatmasi yo'q. */
 export function OrdersPanel(): React.JSX.Element {
   const t = useT();
   const { isBusy, run } = useAction();
@@ -31,13 +16,10 @@ export function OrdersPanel(): React.JSX.Element {
   return (
     <Sheet title={t('myOrders')}>
       {open.map((o) => {
-        const url = checkoutUrl(o);
         return (
           <div className="pay" key={o.id}>
             <span>{t('payTitle')} · {o.kind}</span>
             <strong>{money(o.amount)} {t('som')}</strong>
-            {o.provider === 'card' && <><span>{t('payExact')}</span>{o.card && <span>{t('payCard')}: <b style={{ userSelect: 'all' }}>{o.card}</b></span>}</>}
-            {url && <a className="btn" href={url} target="_blank" rel="noopener noreferrer">{t('payTitle')}</a>}
             <small>{t('payUntil')}: {new Date(o.expires).toLocaleTimeString('ru-RU')}</small>
             <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(async () => { await rpc('my_order_cancel', { p_id: o.id }); reload(); await refreshHouses(); })}>{t('cancel')}</button>
           </div>

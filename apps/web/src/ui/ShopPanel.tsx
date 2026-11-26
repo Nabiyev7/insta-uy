@@ -8,7 +8,6 @@ import { openAuth, openPanel, openRoot, refreshCatalog, refreshProfile, setting,
 import type { CatalogRow, SetRow } from '../logic/decorCatalog.ts';
 import { CARS, ownedCars } from '../logic/drive.ts';
 import { goodState, shopTabs, type PremiumTab, type ShopTab } from '../logic/shopTabs.ts';
-import { PayButtons } from './PayButtons.tsx';
 import { PremiumShop } from './PremiumShop.tsx';
 import { Icon } from './icons.tsx';
 import { DecorImage, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
@@ -87,8 +86,6 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
   const offer = `${t(qty > 0 ? 'getMore' : 'get')} · ${isTester ? t('testFree') : money(row.coins)}`;
   const label = { free: offer, locked: profile ? `${row.min}-${t('opensAt')}` : offer, soldOut: t('soldOut'), seasonOver: t('seasonOver') }[state];
   const isClosed = isBusy || state === 'soldOut' || state === 'seasonOver' || (state === 'locked' && profile !== null);
-  // So'mdagi narx faqat to'lov yoqilganda (admin sinov rejimida ham).
-  const isPaid = row.uzs > 0 && setting('payments_enabled', false);
   return (
     <>
     {short > 0 && <p className="need-coins">{t('needCoins').replace('{n}', money(short))}</p>}
@@ -99,7 +96,6 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
       {setting('coins_enabled', true) && (short > 0
         ? <button type="button" className="btn gold" onClick={() => openCoinShop()}><Icon name="coin" />{t('getCoins')}</button>
         : <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}</button>)}
-      {isPaid && <PayButtons kind="decor" payload={{ id: row.id }} uzs={row.uzs} code={`d_${row.id}`} isDisabled={state === 'soldOut' || state === 'seasonOver'} />}
     </div>
     </>
   );

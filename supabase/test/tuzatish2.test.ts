@@ -21,7 +21,7 @@ const user = async (role = 'user', coins = 100_000): Promise<string> => {
 const freeHovli = async (): Promise<string> => (await sql("select id from plots p where type = 'hovli' and district_id = 1 and not exists (select 1 from plot_state s where s.plot_id = p.id) order by id limit 1"))[0]!.id as string;
 
 beforeAll(async () => {
-  db = await openDb();
+  db = await openDb(); await db.query("update settings set value = 'true' where key = 'payments_card'"); await db.query("update settings set value = '\"card\"' where key = 'payment_provider'"); /* karta yo'li kodda qoladi (13-qadamdan o'chiq) — eski qoidalar sinovi */
   await sql("update settings set value = 'true' where key = 'payments_enabled'");
 });
 beforeEach(async () => { await sql('delete from private.owner'); });

@@ -4,8 +4,8 @@ import { money, useT, type Key } from '../app/i18n.ts';
 import { setting, toast, useApp } from '../app/store.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { premiumTabs, type PremiumTab } from '../logic/shopTabs.ts';
-import { starsOf } from './PayButtons.tsx';
-import { miniApp } from '../app/telegram.ts';
+import { BotBuy } from './BotBuy.tsx';
+import { starsFromUzs } from '../logic/stars.ts';
 import { Icon } from './icons.tsx';
 import { DecorImage, Section, Sheet } from './kit.tsx';
 
@@ -13,28 +13,10 @@ const TAB_NAMES: Readonly<Record<PremiumTab, Key>> = { houses: 'ptHouses', decor
 const SOON: Readonly<Record<Exclude<PremiumTab, 'packs'>, Key>> = { houses: 'premiumSoonHouses', decor: 'premiumSoonDecor', cars: 'premiumSoonCars' };
 
 interface Pack { readonly coins: number; readonly bonus: number; readonly uzs: number; readonly stars?: number | null; readonly tag?: 'best' | 'popular' }
+/** Sozlama kelmaguncha: faqat Stars bilan sotiladigan 3 paket (13-qadam). */
 const PACKS: readonly Pack[] = [
-  { coins: 500, bonus: 0, uzs: 3000, stars: null }, { coins: 1000, bonus: 200, uzs: 6000, stars: null }, { coins: 2500, bonus: 500, uzs: 12000, stars: 60 },
-  { coins: 5500, bonus: 1500, uzs: 25000, stars: 125, tag: 'popular' }, { coins: 12000, bonus: 4000, uzs: 50000, stars: 250, tag: 'best' },
+  { coins: 2500, bonus: 500, uzs: 12000, stars: 60 }, { coins: 5500, bonus: 1500, uzs: 25000, stars: 125, tag: 'popular' }, { coins: 12000, bonus: 4000, uzs: 50000, stars: 250, tag: 'best' },
 ];
-
-/** Premium faqat ko'rsatiladi, xarid — botda (`?start=buy_<kod>`). To'lov o'chiq — "Tez kunda" (sinov rejimidagi admin botga o'tadi). */
-export function BotBuy({ code, label }: { readonly code: string; readonly label?: string }): React.JSX.Element {
-  const t = useT();
-  const isTester = useApp((s) => s.profile?.test_mode === true);
-  const bot = setting('telegram_bot', '');
-  const head = label ? `${label} · ` : '';
-  if ((!setting('payments_enabled', false) && !isTester) || !bot) return <button type="button" className="btn soft pay-soon" disabled>{head}{t('soon')}</button>;
-  const url = `https://t.me/${bot}?start=buy_${code}`;
-  // Telegram ichida (Mini App) — bot suhbatiga o'tadi, brauzerda — oddiy havola.
-  const open = (e: React.MouseEvent): void => {
-    const wa = miniApp();
-    if (!wa?.openTelegramLink) return;
-    e.preventDefault();
-    wa.openTelegramLink(url);
-  };
-  return <a className="btn gold bot-buy" href={url} target="_blank" rel="noopener noreferrer" onClick={open}><Icon name="telegram" />{head}{t('buyInBot')}</a>;
-}
 
 function CoinPacks(): React.JSX.Element {
   const t = useT();
@@ -48,6 +30,17 @@ function CoinPacks(): React.JSX.Element {
   );
 }
 
+/** Salyut — pulga faqat botda (matn botda yoziladi: /salyut matn). */
+function SalutePremium(): React.JSX.Element {
+  const t = useT();
+  return (
+    <Section title={t('salute')} icon="star">
+      <p className="muted">{t('saluteHint')}</p>
+      <BotBuy code="salute" />
+    </Section>
+  );
+}
+
 function Soon({ text }: { readonly text: Key }): React.JSX.Element {
   const t = useT();
   return <div className="premium-soon"><Icon name="star" /><b>{t(text)}</b><span className="muted">{t('soon')}</span></div>;
@@ -57,7 +50,7 @@ function PremiumGood({ row, isPicked, onPick }: { readonly row: CatalogRow; read
   const t = useT();
   const lang = useApp((s) => s.lang);
   // Bot bilan bir xil: 50 yulduzdan (starsMin) kam bo'lsa Stars narxi ko'rsatilmaydi.
-  const stars = starsOf(row.uzs);
+  const stars = starsFromUzs(row.uzs, setting<{ readonly starsRate?: number }>('premium', {}).starsRate);
   const starsMin = setting<{ readonly starsMin?: number }>('premium', {}).starsMin ?? 50;
   return (
     <button type="button" className="good premium" aria-label={row[lang]} aria-pressed={isPicked} data-id={row.id} onClick={onPick}>
@@ -95,7 +88,7 @@ export function PremiumShop({ parts, wallet, tab, onTab, picked, onPick }: Premi
       <div className="tabs premium-tabs" role="tablist" aria-label={t('shopPremium')}>
         {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => onTab(x.tab)}>{t(TAB_NAMES[x.tab])}</button>)}
       </div>
-      {current?.tab === 'packs' && <CoinPacks />}
+      {current?.tab === 'packs' && <><CoinPacks /><SalutePremium /></>}
       {current && current.tab !== 'packs' && current.rows.length === 0 && <Soon text={SOON[current.tab]} />}
       {current && current.rows.length > 0 && <div className="goods">{current.rows.map((c) => <PremiumGood key={c.id} row={c} isPicked={c.id === row?.id} onPick={() => onPick(c.id)} />)}</div>}
     </Sheet>

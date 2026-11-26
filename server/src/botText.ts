@@ -66,6 +66,9 @@ const T = {
   sendPhoto: ['Iltimos, skrinshotni rasm qilib yuboring.', 'Пожалуйста, пришлите скриншот как фото.'],
   disputeGiven: ['Rahmat. Nik haqiqiy egasiga o‘tdi — yangi nikingizni yozing.', 'Спасибо. Ник передан владельцу — напишите новый ник.'],
   // ---------- Adminga yozish ----------
+  paySupportAsk: ['💳 To‘lov bo‘yicha muammoni yozing: nima sotib oldingiz, qachon va nima bo‘ldi. Skrinshot ham yuborsa bo‘ladi. Admin shu yerda javob beradi.', '💳 Опишите проблему с оплатой: что покупали, когда и что случилось. Можно приложить скриншот. Админ ответит здесь.'],
+  terms: ['📄 Qoidalar va to‘lov shartlari:\n• Telegram Stars bilan to‘lov — raqamli tovar (tanga, bezak, salyut), darhol beriladi.\n• Muammo bo‘lsa — /paysupport.\n• Asossiz qaytarish yo‘q; xato bizdan bo‘lsa — admin Stars’ni qaytaradi.\nTo‘liq matn: {url}', '📄 Правила и условия оплаты:\n• Оплата Telegram Stars — цифровой товар (монеты, украшения, салют), выдаётся сразу.\n• Если проблема — /paysupport.\n• Без оснований возврата нет; если ошибка с нашей стороны — админ вернёт Stars.\nПолный текст: {url}'],
+  payTicketTag: ['💳 [to‘lov]', '💳 [оплата]'],
   supportAsk: ['✍️ Savolingiz yoki muammoingizni yozing. Rasm yoki skrinshot ham yuborsa bo‘ladi.', '✍️ Напишите вопрос или проблему. Можно приложить фото или скриншот.'],
   supportLimit: ['Bugun murojaatlar chegarasi tugadi (kuniga 5 ta).', 'Лимит обращений на сегодня исчерпан (5 в день).'],
   supportSent: ['✅ Yuborildi. Admin javobini shu yerda olasiz.', '✅ Отправлено. Ответ админа придёт сюда.'],
@@ -177,6 +180,8 @@ const T = {
   cmdInvite: ['Do‘st taklif', 'Пригласить друга'],
   cmdSupport: ['Adminga yozish', 'Написать админу'],
   cmdSettings: ['Sozlamalar', 'Настройки'],
+  cmdPaySupport: ['To‘lov bo‘yicha yordam', 'Помощь с оплатой'],
+  cmdTerms: ['Qoidalar va to‘lov shartlari', 'Правила и условия оплаты'],
   cmdAdmin: ['Admin panel', 'Админ-панель'],
   cmdStat: ['Statistika', 'Статистика'],
   cmdBroadcast: ['Hammaga xabar', 'Рассылка'],

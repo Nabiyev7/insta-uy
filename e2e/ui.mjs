@@ -356,8 +356,9 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     // "Tanga sotib olish" — do'konning Premium → Tangalar tabi.
     await sheet.locator('.buy-coins').click();
     await heading(T.shop);
-    assert.match(await sheet.locator('.packs .pay-soon').first().innerText(), new RegExp(T.soon), 'to‘lov o‘chiq — pul tugmasi "Tez kunda"');
-    assert.ok(await sheet.locator('.packs .pay-soon').first().isDisabled());
+    // 13-qadam: pulli xarid faqat botda (Stars) — saytda to'lov oynasi yo'q, tugma botga chuqur havola.
+    assert.match(await sheet.locator('.packs .bot-buy').first().getAttribute('href'), /^https:\/\/t\.me\/[A-Za-z_]+\?start=buy_pack1$/);
+    assert.equal(await sheet.locator('.packs').getByText('500', { exact: true }).count(), 0, 'kichik paket yo‘q');
     await page.goBack();
     await heading(T.coins);
     assert.equal(await sheet.getByText(T.quests ?? 'Topshiriqlar', { exact: true }).count(), 0, 'topshiriqlar yo‘q');

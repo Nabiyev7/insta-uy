@@ -25,7 +25,7 @@ const claim = async (uid: string, nick: string): Promise<string> => {
 };
 let admin = '';
 beforeAll(async () => {
-  db = await openDb();
+  db = await openDb(); await db.query("update settings set value = 'true' where key = 'payments_card'"); await db.query("update settings set value = '\"card\"' where key = 'payment_provider'"); /* karta yo'li kodda qoladi (13-qadamdan o'chiq) — eski qoidalar sinovi */
   await db.query("update settings set value = 'true' where key = 'treasure_enabled'");
   await db.query("update settings set value = 'true' where key = 'premium_house_enabled'");
   admin = await user('admin');

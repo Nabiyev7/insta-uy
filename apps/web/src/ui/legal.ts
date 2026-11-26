@@ -28,7 +28,7 @@ export const RULES: Doc = {
   uz: [
     ['Virtual uy nima', ['Uy — virtual narsa, faqat shu saytdagi ko‘rinish. U haqiqiy mulk, qimmatli qog‘oz yoki investitsiya emas.', 'Uyni pulga qayta sotish kafolatlanmaydi; sovg‘a qilish mumkin.']],
     ['Xulq', ['Haqorat, kamsitish, tahdid, yolg‘on shaxs, reklama-spam taqiqlanadi.', 'Nik o‘zingizniki bo‘lishi kerak. Birovning nikini olgan uy bo‘shatiladi.', 'Bilbordda boshqa brend logotipi — faqat ruxsat bilan.']],
-    ['To‘lov va qaytarish', ['To‘lov xizmat ko‘rsatilgach yakunlanadi. Xizmat bizning aybimiz bilan ko‘rsatilmasa — pul to‘liq qaytariladi.', 'Ko‘cha nomi yoki reklama moderatsiyadan o‘tmasa — tuzatish yoki pulni qaytarish tanlanadi.', 'Foydalanilgan bezak va darajalar uchun pul qaytarilmaydi.']],
+    ['To‘lov va qaytarish', ['Telegram Stars bilan to‘lov — raqamli tovar (tanga, bezak, salyut), botda to‘lanadi va darhol beriladi. Muammo bo‘lsa — botda /paysupport. Asossiz qaytarish yo‘q; xato bizdan bo‘lsa, admin Stars’ni qaytaradi.', 'To‘lov xizmat ko‘rsatilgach yakunlanadi. Xizmat bizning aybimiz bilan ko‘rsatilmasa — pul to‘liq qaytariladi.', 'Ko‘cha nomi yoki reklama moderatsiyadan o‘tmasa — tuzatish yoki pulni qaytarish tanlanadi.', 'Foydalanilgan bezak va darajalar uchun pul qaytarilmaydi.']],
     ['Faolsizlik', ['Bepul uy egasi 3 oy kirmasa, Telegram orqali ogohlantirishdan 14 kun keyin uy bo‘shatiladi. Nishonlar odamda qoladi. Pulga olingan uylar bo‘shatilmaydi.']],
     ['Tanga', ['Tanga — virtual, pulga almashtirilmaydi va qaytarilmaydi. Tangani boshqa odamga o‘tkazib bo‘lmaydi; aldash (soxta akkauntlar) uchun tanga va akkaunt bloklanadi.']],
     ['Ko‘chirish', ['Uy joyi o‘zgarmaydi. Favqulodda holatda faqat rozilik bilan, teng yoki yaxshiroq joyga va bonus bilan.']],
@@ -38,7 +38,7 @@ export const RULES: Doc = {
   ru: [
     ['Что такое виртуальный дом', ['Дом — виртуальный объект на этом сайте. Это не недвижимость, не ценная бумага и не инвестиция.', 'Перепродажа за деньги не гарантируется; дом можно подарить.']],
     ['Поведение', ['Запрещены оскорбления, дискриминация, угрозы, чужая личность и спам.', 'Ник должен быть вашим. Дом на чужой ник освобождается.', 'Чужие логотипы на билбордах — только с разрешения.']],
-    ['Оплата и возврат', ['Если услуга не оказана по нашей вине — деньги возвращаются полностью.', 'Если название улицы или реклама не прошли модерацию — исправление или возврат.', 'За использованные украшения и уровни возврата нет.']],
+    ['Оплата и возврат', ['Оплата Telegram Stars — цифровой товар (монеты, украшения, салют), оплачивается в боте и выдаётся сразу. Если проблема — /paysupport в боте. Без оснований возврата нет; если ошибка с нашей стороны, админ вернёт Stars.', 'Если услуга не оказана по нашей вине — деньги возвращаются полностью.', 'Если название улицы или реклама не прошли модерацию — исправление или возврат.', 'За использованные украшения и уровни возврата нет.']],
     ['Неактивность', ['Если владелец бесплатного дома не заходит 3 месяца, дом освобождается через 14 дней после предупреждения в Telegram. Значки остаются. Платные дома не освобождаются.']],
     ['Монеты', ['Монеты виртуальные, не обмениваются на деньги и не возвращаются. Монеты нельзя передать другому игроку; за обман (фейковые аккаунты) монеты и аккаунт блокируются.']],
     ['Перенос', ['Место дома не меняется. В исключительном случае — только с согласия, на равное или лучшее место и с бонусом.']],

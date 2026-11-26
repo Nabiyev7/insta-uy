@@ -1,4 +1,4 @@
-/** Telegram Mini App: sayt bot ichida ochilganda — avtomatik kirish (initData), to'liq ekran, "Orqaga" tugmasi, tebranish, Stars to'lovi (openInvoice). Oddiy brauzerda hech narsa qilmaydi. */
+/** Telegram Mini App: sayt bot ichida ochilganda — avtomatik kirish (initData), to'liq ekran, "Orqaga" tugmasi, tebranish. Oddiy brauzerda hech narsa qilmaydi. */
 import { ApiError, post, signInWithToken, supabase } from './api.ts';
 import { translate } from './i18n.ts';
 import { backPanel, getApp, openPanel, refreshProfile, setting, toast, useApp } from './store.ts';
@@ -10,7 +10,6 @@ export interface TgWebApp {
   ready(): void; expand(): void; close(): void;
   requestFullscreen?(): void; disableVerticalSwipes?(): void; setHeaderColor?(color: string): void; setBackgroundColor?(color: string): void;
   isVersionAtLeast?(v: string): boolean;
-  openInvoice?(url: string, cb?: (status: string) => void): void;
   openTelegramLink?(url: string): void;
   readonly BackButton?: BackButton; readonly HapticFeedback?: Haptic;
 }
@@ -90,13 +89,5 @@ export const startMiniApp = async (onReady: () => void): Promise<void> => {
 export const haptic = (strength: 'light' | 'medium' | 'heavy'): boolean => {
   if (!app?.HapticFeedback) return false;
   app.HapticFeedback.impactOccurred(strength);
-  return true;
-};
-
-/** Stars: Mini App ichida botga chiqmasdan to'lash. Mini App bo'lmasa — false (bot havolasi ishlatiladi). */
-export const payStars = async (code: string): Promise<boolean> => {
-  if (!app?.openInvoice) return false;
-  const { url } = await post<{ url: string }>('/pay/stars/link', { code }, true);
-  app.openInvoice(url, (status) => { if (status === 'paid') void refreshProfile(); });
   return true;
 };

@@ -328,7 +328,7 @@ const onStep = async (ctx: Ctx, tg: Telegram, m: Message, c: BotCtx, lang: Lang,
   const text = (m.text ?? '').trim();
   const isPlain = !text.startsWith('/');
   if (c.step === 'broadcast' && isPlain && (body || photo) && (await isOwner(ctx, from.id))) { await broadcastDraft(ctx, tg, chat, from.id, body, photo, lang); return true; }
-  if (c.step === 'support' && isPlain && (body || photo)) { await supportMessage(ctx, tg, chat, from, body, photo, lang); return true; }
+  if (c.step === 'support' && isPlain && (body || photo)) { await supportMessage(ctx, tg, chat, from, c.sess_nick === 'pay' ? `${bt(lang, 'payTicketTag')} ${body}` : body, photo, lang); return true; }
   if ((c.step === 'dispute' || c.step === 'dispute_owner') && c.ref_id) {
     if (photo) { await takeProof(ctx, tg, chat, from.id, c.ref_id, photo, lang); return true; }
     if (isPlain) { await tg.send(chat, bt(lang, 'sendPhoto')); return true; }
@@ -356,6 +356,13 @@ const onCommand = async (ctx: Ctx, tg: Telegram, m: Message, text: string, c: Bo
   if (text === '/dokon') { await shopMenu(ctx, tg, chat, lang); return true; }
   if (text === '/taklif') { await sendInvite(ctx, tg, chat, from, lang); return true; }
   if (text === '/yordam') { await askSupport(ctx, tg, chat, from, lang); return true; }
+  if (text === '/paysupport') {
+    // Murojaat "to'lov" belgisi bilan (sessiyada `pay`), admin darhol ajratadi.
+    await ctx.db.rpc('svc_bot_step', { p_telegram: from, p_step: 'support', p_nick: 'pay' });
+    await tg.send(chat, bt(lang, 'paySupportAsk'));
+    return true;
+  }
+  if (text === '/terms') { await tg.send(chat, bt(lang, 'terms', { url: siteUrl(ctx, lang, { panel: 'qoidalar' }) })); return true; }
   if (text === '/sozlamalar' || text === '/til') { await sendSettings(tg, chat, lang, c.news); return true; }
   if (text === '/parol' && (await ctx.db.rpc<boolean>('svc_password_login', {}))) { await sendReset(ctx, tg, from, lang); return true; }
   if (text === '/stop' || text === '/xabar') {

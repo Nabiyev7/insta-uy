@@ -38,6 +38,7 @@ const openWanted = (): void => {
   const wanted = params.get('panel');
   const s = getApp();
   if (wanted === 'dokon') openPanel({ kind: 'shop' });
+  if (wanted === 'qoidalar') openPanel({ kind: 'rules' });
   if (wanted === 'uyim') {
     const plot = s.profile?.plots[0]?.plot;
     if (plot) goToPlot(plot);

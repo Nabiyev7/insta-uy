@@ -6,7 +6,7 @@ import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { forgetMe } from '../app/multiplayer.ts';
 import { openAuth, openPanel, openRoot, refreshProfile, setting, toast, useApp } from '../app/store.ts';
-import { PaidExtras, UpgradeButton } from './HousePanels.tsx';
+import { UpgradeButton } from './HousePanels.tsx';
 import { Icon } from './icons.tsx';
 import { DecorImage, RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
 import { referralSteps } from '../logic/growth.ts';
@@ -31,7 +31,6 @@ function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
         <button type="button" disabled={isBusy} onClick={() => run(() => shareStory(plot.plot, plot.instagram ?? ''))}><Icon name="story" />{t('stories')}</button>
         <button type="button" disabled={isBusy} onClick={() => run(() => copyText(houseUrl(plot.plot)), t('copied'))}><Icon name="share" />{t('share')}</button>
       </div>
-      {isYard && isOwned && <PaidExtras plot={plot} />}
     </section>
   );
 }

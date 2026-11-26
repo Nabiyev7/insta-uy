@@ -12,7 +12,8 @@ export interface BotSetupOptions {
   readonly adminTelegramId?: number;
 }
 
-const USER_COMMANDS: readonly (readonly [string, TextKey])[] = [['start', 'cmdStart'], ['dokon', 'cmdShop'], ['taklif', 'cmdInvite'], ['yordam', 'cmdSupport'], ['sozlamalar', 'cmdSettings']];
+/** Telegram to'lov qoidasi: /paysupport va /terms majburiy. */
+const USER_COMMANDS: readonly (readonly [string, TextKey])[] = [['start', 'cmdStart'], ['dokon', 'cmdShop'], ['taklif', 'cmdInvite'], ['yordam', 'cmdSupport'], ['sozlamalar', 'cmdSettings'], ['paysupport', 'cmdPaySupport'], ['terms', 'cmdTerms']];
 const ADMIN_COMMANDS: readonly (readonly [string, TextKey])[] = [['admin', 'cmdAdmin'], ['stat', 'cmdStat'], ['hammaga', 'cmdBroadcast'], ['murojaatlar', 'cmdTickets'], ['nizolar', 'cmdDisputes']];
 export const commandsFor = (lang: Lang, isAdmin: boolean): readonly { readonly command: string; readonly description: string }[] =>
   [...USER_COMMANDS, ...(isAdmin ? ADMIN_COMMANDS : [])].map(([command, key]) => ({ command, description: bt(lang, key) }));

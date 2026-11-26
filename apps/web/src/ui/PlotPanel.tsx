@@ -3,10 +3,10 @@ import { useState, type FormEvent } from 'react';
 import { BADGES, TIERS, instagramUrl, isFreeType, parseBio, parseInstagram, type BadgeId, type Plot } from '../../../../packages/shared/src/index.ts';
 import { addressOf, copyText, goToPlot, houseUrl, shareStory, startConstruction, walkTo } from '../app/actions.ts';
 import { rpc, type MyPlot, type PlotInfo } from '../app/api.ts';
-import { useT } from '../app/i18n.ts';
+import { money, useT } from '../app/i18n.ts';
 import { getApp, openAuth, openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
 import { UpgradeButton } from './HousePanels.tsx';
-import { PayButtons } from './PayButtons.tsx';
+import { BotBuy } from './BotBuy.tsx';
 import { BADGE_ICONS } from './badges.ts';
 import { Icon } from './icons.tsx';
 import { Field, LoadState, RowLink, Sheet, useAction, useLoad } from './kit.tsx';
@@ -59,7 +59,6 @@ const TYPE_ADD: Readonly<Record<string, number>> = { hovli: 0, villa: 40000, qas
 function BuyPlot({ plot }: InfoProps): React.JSX.Element {
   const t = useT();
   const lang = useApp((s) => s.lang);
-  const profile = useApp((s) => s.profile);
   const prices = setting<HousePrices>('premium', {});
   const [tier, setTier] = useState(plot.type === 'hovli' ? 3 : 5);
   const uzs = (prices.house?.[tier] ?? HOUSE[tier] ?? 0) + (prices.typeAdd?.[plot.type] ?? TYPE_ADD[plot.type] ?? 0);
@@ -67,7 +66,7 @@ function BuyPlot({ plot }: InfoProps): React.JSX.Element {
     <div className="section">
       <p className="muted">{t('premiumHouse')}</p>
       <div className="seg" role="group" aria-label={t('levelWord')}>{TIERS.map((x) => <button type="button" key={x.id} aria-pressed={x.id === tier} title={x[lang]} onClick={() => setTier(x.id)}>{x.id}</button>)}</div>
-      <PayButtons kind="plot" payload={{ plot: plot.id, tier, instagram: profile?.instagram ?? undefined }} uzs={uzs} code={`h_${plot.id}_${tier}`} label={`${tier}-${t('levelWord')}`} />
+      <BotBuy code={`h_${plot.id}_${tier}`} label={`${tier}-${t('levelWord')} · ${money(uzs)} ${t('som')}`} />
     </div>
   );
 }

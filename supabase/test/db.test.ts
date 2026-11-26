@@ -34,7 +34,7 @@ const owner = async (): Promise<{ uid: string; plot: string }> => {
   return { uid, plot };
 };
 
-beforeAll(async () => { db = await openDb(); await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); await db.query("update settings set value = 'true' where key = 'treasure_enabled'"); });
+beforeAll(async () => { db = await openDb(); await db.query("update settings set value = jsonb_set(value, '{packs}', '[{\"coins\":500,\"bonus\":0,\"uzs\":3000,\"stars\":null},{\"coins\":1000,\"bonus\":200,\"uzs\":6000,\"stars\":null},{\"coins\":2500,\"bonus\":500,\"uzs\":12000,\"stars\":60},{\"coins\":5500,\"bonus\":1500,\"uzs\":25000,\"stars\":125,\"tag\":\"popular\"},{\"coins\":12000,\"bonus\":4000,\"uzs\":50000,\"stars\":250,\"tag\":\"best\"}]') where key = 'premium'"); await db.query("update settings set value = 'false' where key = 'payments_enabled'"); /* eski 5 paket va to'lov o'chiq — to'lov mantiqi sinovi (13-qadam sozlamasi 'ochilish.test.ts' da) */ await db.query("update settings set value = 'true' where key = 'payments_card'"); await db.query("update settings set value = '\"card\"' where key = 'payment_provider'"); /* karta yo'li kodda qoladi (13-qadamdan o'chiq) — eski qoidalar sinovi */ await db.query("update settings set value = 'true' where key = 'premium_house_enabled'"); await db.query("update settings set value = 'true' where key = 'treasure_enabled'"); });
 
 describe('ruxsatlar', () => {
   test('anon jadvalga, my_*, admin_*, svc_* ga kira olmaydi', async () => {

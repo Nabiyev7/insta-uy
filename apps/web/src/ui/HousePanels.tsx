@@ -6,8 +6,7 @@ import { rpc, type MyPlot } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
 import { openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
 import { GiftDecor, YardEditor } from './YardEditor.tsx';
-import { createOrder } from './OrderPanels.tsx';
-import { PayButtons } from './PayButtons.tsx';
+import { BotBuy } from './BotBuy.tsx';
 import { Icon } from './icons.tsx';
 import { Field, Section, Sheet, askConfirm, useAction } from './kit.tsx';
 
@@ -87,24 +86,11 @@ export function UpgradeButton({ plot }: PlotProps): React.JSX.Element | null {
         <button type="button" className="btn block big upgrade" disabled>{label}</button>
         <div className="row between"><span className="muted">{t('needMore').replace('{n}', money(price - balance))}</span><button type="button" className="btn small gold" onClick={() => openPanel({ kind: 'coins' })}><Icon name="coin" />{t('addCoins')}</button></div>
       </div>}
-      {prices && <PayButtons kind="tier" payload={{ plot: plot.plot, tier: next }} uzs={prices.tierUp[next] ?? 0} code={`t_${plot.plot}_${next}`} label={`${next}. ${name}`} />}
+      {prices && <BotBuy code={`t_${plot.plot}_${next}`} label={`${next}. ${name} · ${money(prices.tierUp[next] ?? 0)} ${t('som')}`} />}
     </>
   );
 }
 
-/** Faqat to'lov yoqilganda: nik yorlig'i va hovlini kengaytirish. */
-export function PaidExtras({ plot }: PlotProps): React.JSX.Element | null {
-  const t = useT();
-  const { isBusy, run } = useAction();
-  const prices = setting<Prices | null>('prices', null);
-  if (!setting('payments_enabled', false) || !prices) return null;
-  return (
-    <>
-      {plot.label !== 'gold' && <div className="row">{(['silver', 'gold'] as const).filter((l) => l !== plot.label).map((l) => <button type="button" key={l} className="btn small soft" disabled={isBusy} onClick={() => run(() => createOrder('label', { plot: plot.plot, label: l }))}>{t('label')}: {t(l)} · {money(prices.label[l] ?? 0)}</button>)}</div>}
-      {plot.expansion && !plot.has_expansion && <button type="button" className="btn small soft" disabled={isBusy} onClick={() => run(() => createOrder('expansion', { plot: plot.plot }))}>{t('expand')} · {money(prices.expansion)}</button>}
-    </>
-  );
-}
 
 
 

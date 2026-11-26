@@ -79,7 +79,7 @@ const legacyUser = async (login: string, password: string): Promise<string> => {
 };
 
 beforeAll(async () => {
-  db = await openDb();
+  db = await openDb(); await db.query("update settings set value = 'true' where key = 'payments_card'"); await db.query("update settings set value = '\"card\"' where key = 'payment_provider'"); /* karta yo'li kodda qoladi (13-qadamdan o'chiq) — eski qoidalar sinovi */
   emu = createEmulator(db, keys, path.join(tmpdir(), `shahar-test-${process.pid}`));
   await db.query("update settings set value = 'true' where key = 'payments_enabled'");
 });
@@ -358,18 +358,16 @@ describe('Telegram Stars do‘koni', () => {
     await webhook(message(1500, '/start buy_pack1'));
     expect(sent.at(-1)!.text).toContain('tez kunda');
   });
-  test('buy_pack1 → hisob (50⭐) → tekshiruv → to‘lov → tanga; qaytarish', async () => {
+  test('Stars to‘liq yo‘l: buy_pack1 → hisob (60⭐) → pre_checkout → successful_payment → tanga; qaytarish (refund)', async () => {
     await db.query("update settings set value = 'true' where key = 'payments_enabled'");
     await botUser(1501, 'yulduz_odam2');
-    // 6f: avval tovar kartasi (narx), Stars bo'lmasa — to'lash tugmasi yo'q.
-    await webhook(message(1501, '/start buy_pack1'));
-    expect(sent.at(-1)!.text).toContain('karta');
-    expect(sent.at(-1)!.buttons ?? []).toEqual([]);
+    // 13-qadam: kichik paketlar yo'q — 3 ta paket (60 / 125 / 250 ⭐). Avval tovar kartasi, keyin to'lov.
     await webhook(message(1501, '/dokon'));
-    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['buy:pack3', 'buy:pack4', 'buy:pack5', 'buy:salute', undefined]);
-    await webhook(message(1501, '/start buy_pack3'));
-    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['pay:pack3']);
-    await webhook({ callback_query: { id: 'p', from: { id: 1501, first_name: 'Y' }, data: 'pay:pack3' } });
+    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['buy:pack1', 'buy:pack2', 'buy:pack3', 'buy:salute', undefined]);
+    await webhook(message(1501, '/start buy_pack1'));
+    expect(sent.at(-1)!.text).toContain('3 000 tanga');
+    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['pay:pack1']);
+    await webhook({ callback_query: { id: 'p', from: { id: 1501, first_name: 'Y' }, data: 'pay:pack1' } });
     const [, order, stars] = /^invoice:([0-9a-f-]{36}):(\d+):/.exec(sent.at(-1)!.text)!;
     expect(stars).toBe('60');
     await webhook(pre(1501, order!, 59));
@@ -392,7 +390,7 @@ describe('Telegram Stars do‘koni', () => {
   });
   test('/dokon menyusi va salyut buyrug‘i', async () => {
     await webhook(message(1501, '/dokon'));
-    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toContain('buy:pack4');
+    expect(sent.at(-1)!.buttons!.map((b) => b.data)).toContain('buy:pack2');
     await webhook(message(1501, '/start buy_salute'));
     expect(sent.at(-1)!.text).toContain('/salyut');
   });

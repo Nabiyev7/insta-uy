@@ -341,6 +341,20 @@ describe('6f: premium xaridi botda (buy_<kod>)', () => {
   });
 });
 
+describe('13-qadam: Telegram to‘lov talablari', () => {
+  test('/paysupport — "to‘lov" belgili murojaat adminga; /terms — qoidalar havolasi; buyruqlar ro‘yxatida bor', async () => {
+    await newUser(4950, 'tolov_savol');
+    await say(4950, '/paysupport');
+    expect(last().text).toContain('To‘lov bo‘yicha');
+    await say(4950, 'Stars yechildi, tanga kelmadi');
+    expect(sent.some((m) => m.chat === 5000 && m.text.includes('[to‘lov] Stars yechildi'))).toBe(true);
+    await say(4950, '/terms');
+    expect(last().text).toContain('/paysupport');
+    expect(last().text).toContain('https://shahar.test/?panel=qoidalar&til=uz');
+    expect(commandsFor('uz', false).map((c) => c.command)).toEqual(expect.arrayContaining(['paysupport', 'terms']));
+  });
+});
+
 describe('Mini App ichida Stars', () => {
   test('/pay/stars/link: hisob havolasi (openInvoice uchun)', async () => {
     await db.query("update settings set value = 'true' where key = 'payments_enabled'");

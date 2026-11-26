@@ -6,7 +6,7 @@ import { money, useT, type Key } from '../app/i18n.ts';
 import { player } from '../app/runtime.ts';
 import { openAuth, refreshBoot, refreshProfile, setApp, setting, toast, useApp } from '../app/store.ts';
 import { Icon } from './icons.tsx';
-import { PayButtons } from './PayButtons.tsx';
+import { BotBuy } from './BotBuy.tsx';
 import { LoadState, Section, Sheet, useAction, useLoad } from './kit.tsx';
 import { listOf } from '../logic/safe.ts';
 
@@ -91,7 +91,7 @@ function Salute({ rules }: { readonly rules: CoinRules }): React.JSX.Element {
       <input className="input" value={text} onChange={(e) => setText(e.target.value)} maxLength={80} placeholder={t('saluteText')} aria-label={t('saluteText')} />
       <div className="row">
         {rules.daily > 0 && <button type="button" className="btn" disabled={isBusy || text.trim() === ''} onClick={byCoins}><Icon name="coin" />{money(premium.coins)}</button>}
-        <PayButtons kind="salute" payload={{ text }} uzs={premium.uzs} code="salute" isDisabled={text.trim() === ''} />
+        <BotBuy code="salute" />
       </div>
     </Section>
   );
