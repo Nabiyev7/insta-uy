@@ -1,4 +1,5 @@
 /** Har kadrda o'zgaradigan holat — React'dan tashqarida (qayta render bo'lmasin). */
+import type { HouseOrbit } from '../logic/houseOrbit.ts';
 import type { AvatarLook } from '../../../../packages/shared/src/index.ts';
 import { START_VIEW, type CityView, type Flight } from '../logic/cityCamera.ts';
 import type { Pose } from '../logic/cameraPath.ts';
@@ -30,6 +31,8 @@ export const cancelBuildTimer = (): void => {
 export const city: { view: CityView; flight: Flight | null } = { view: START_VIEW, flight: null };
 export const car: { state: CarState; id: string } = { state: { x: 0, z: 140, yaw: 0, speed: 0 }, id: 'oddiy' };
 
+/** "Uyimni suratga olish": Foto rejimida kamera faqat shu uy atrofida aylanadi (19-qadam). */
+export const houseShot: { orbit: HouseOrbit | null } = { orbit: null };
 /** Video yoki foto rejimida kamera tashqaridan boshqariladi. */
 export const director: { pose: Pose | null; dayFraction: number | null } = { pose: null, dayFraction: null };
 /** Rejim almashganda kamera eski joyidan yangisiga silliq o'tadi. */

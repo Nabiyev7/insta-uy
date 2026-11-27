@@ -1,4 +1,5 @@
 /** Uyim: uy kartasi va bo'limlar; avatar. */
+import { openHousePhoto } from '../app/actions.ts';
 import { isOwnerAdmin } from '../logic/admin.ts';
 import { useState } from 'react';
 import { MAX_TIER, TIERS, sanitizeAvatar, type AvatarLook } from '../../../../packages/shared/src/index.ts';
@@ -25,6 +26,7 @@ function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
       {plot.instagram && <p className="nick">@{plot.instagram}</p>}
       <p className="muted with-icon"><Icon name="pin" />{plot.address}</p>
       <button type="button" className="btn block" onClick={() => goToPlot(plot.plot)}><Icon name="home" />{t('goHome')}</button>
+      <button type="button" className="btn soft block house-photo" onClick={() => openHousePhoto(plot.plot)}><Icon name="photo" />{t('housePhoto')}</button>
       {isYard && isOwned && <UpgradeButton plot={plot} />}
       <div className="tiles">
         {isYard && isOwned && <button type="button" onClick={() => openPanel({ kind: 'yard', id: plot.plot })}><Icon name="tools" />{t('decorate')}</button>}

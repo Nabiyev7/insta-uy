@@ -338,6 +338,30 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
   await at('6. Uyim: har bo‘lim, akkauntni o‘chirish tasdig‘i', async () => {
     const openMe = async () => { await nav.getByRole('button', { name: T.myHouse, exact: true }).click(); await heading(T.me); };
     await openMe();
+    // 19-qadam: "Uyimni suratga olish" — kamera faqat o'z uyi atrofida (orbit), kadr 1080×1920.
+    await sheet.getByRole('button', { name: T.housePhoto }).first().click();
+    await page.locator('.photo-panel').waitFor();
+    const orbit = () => app(() => { const o = window.__houseShot.orbit; return o && { plot: o.plot, x: o.x, z: o.z, yaw: o.yaw, pitch: o.pitch }; });
+    const o1 = await orbit();
+    assert.ok(o1 && o1.plot === (await app(() => window.__app.getState().profile.plots[0].plot)), 'orbit o‘z uyida');
+    const box = await page.locator('canvas').first().boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 3);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 3 + 60, { steps: 6 });
+    await page.mouse.up();
+    await waitFor(async () => (await orbit()).yaw !== o1.yaw, 'orbit aylanadi');
+    const o2 = await orbit();
+    assert.deepEqual([o2.x, o2.z], [o1.x, o1.z], 'markaz o‘sha uy — surib ketib bo‘lmaydi');
+    assert.ok(o2.pitch >= (25 * Math.PI) / 180 - 1e-6 && o2.pitch <= (65 * Math.PI) / 180 + 1e-6, 'burchak 25–65°');
+    await page.locator('.photo-panel').getByRole('button', { name: '9:16' }).click();
+    await page.locator('.photo-panel').getByRole('button', { name: T.shoot }).click();
+    const shotImg = page.locator('.photo-result img');
+    await shotImg.waitFor();
+    assert.deepEqual(await shotImg.evaluate(async (el) => { await el.decode(); return [el.naturalWidth, el.naturalHeight]; }), [1080, 1920]);
+    await page.locator('.photo-result').getByRole('button', { name: T.close }).click();
+    await page.locator('.photo-panel').getByRole('button', { name: T.close }).first().click();
+    await waitFor(async () => (await orbit()) === null, 'Foto rejimidan chiqqanda orbit tugaydi');
+    await openMe();
     for (const [button, title] of [['decorate', 'decorate'], ['bioTitle', 'bioTitle'], ['giftsTitle', 'giftsTitle'], ['settings', 'settings']]) {
       await sheet.getByRole('button', { name: T[button], exact: true }).click();
       await heading(T[title]);

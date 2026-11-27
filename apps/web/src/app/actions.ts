@@ -5,7 +5,8 @@ import { viewOfPlot } from '../logic/cityCamera.ts';
 import { BUILD_MS, FLIGHT_MS } from '../logic/construction.ts';
 import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { flyTo, goToHouse, setMode } from './modes.ts';
-import { cancelBuildTimer, director, here, session, snapshotters } from './runtime.ts';
+import { cancelBuildTimer, city, director, here, houseShot, session, snapshotters } from './runtime.ts';
+import { startOrbit } from '../logic/houseOrbit.ts';
 import { translate } from './i18n.ts';
 import { getApp, openRoot, setApp, toast } from './store.ts';
 import { haptic } from './telegram.ts';
@@ -188,4 +189,14 @@ export const shareStory = async (id: string, nick: string): Promise<void> => {
   const ref = getApp().profile?.ref;
   if (ref) await copyText(inviteUrl(ref)).then(() => toast(translate('storyLinkCopied', getApp().lang))).catch(() => undefined);
   await shareImage(canvas, `uy-${nick || id}`);
+};
+
+/** "Uyimni suratga olish": Foto rejimi uy rejimida — kamera o'z uyiga yuqori-yon burchakdan, faqat uy atrofida aylanadi. */
+export const openHousePhoto = (plotId: string): void => {
+  const p = getApp().plotById.get(plotId);
+  if (!p) return;
+  if (session.mode !== 'city') setMode('city');
+  city.flight = null;
+  houseShot.orbit = startOrbit(p, padHeight(p));
+  setApp({ isPhoto: true, isClean: false, panel: null, trail: [] });
 };

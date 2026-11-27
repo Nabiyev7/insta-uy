@@ -102,6 +102,14 @@ const ownerScreens = async ({ id, storage }) => {
     await me.getByRole('tab', { name: tab, exact: true }).click();
     await shot(me, name, 1300);
   }
+  // 19-qadam: "Uyimni suratga olish" — orbit kamera o'z uyida, oltin soat + maket.
+  await panel(me, { kind: 'me' });
+  await me.locator('.sheet').getByRole('button', { name: 'Uyimni suratga olish' }).first().click();
+  await me.locator('.photo-panel').waitFor();
+  await me.evaluate(() => window.__app.setState({ photo: { light: 'golden', tilt: 'mid', format: '9:16', hasLink: true } }));
+  await shot(me, 'ui-uy-surat', 3000);
+  await me.locator('.photo-panel').getByRole('button', { name: 'Yopish' }).first().click();
+  await me.waitForFunction(() => window.__houseShot.orbit === null);
   await panel(me, null);
   for (const [mode, name] of [['walk', 'ui-piyoda'], ['drive', 'ui-mashina']]) {
     await me.evaluate((m) => window.__setMode(m), mode);

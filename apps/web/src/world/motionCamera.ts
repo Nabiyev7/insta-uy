@@ -1,10 +1,11 @@
 /** Har rejimda bir kadrlik harakat va kameraning kerakli holati. */
 import type { MasterPlan, Plot } from '../../../../packages/shared/src/index.ts';
 import { terrainHeight } from '../../../../packages/shared/src/index.ts';
-import { camera as cam, car, city, input, player, transition } from '../app/runtime.ts';
+import { camera as cam, car, city, houseShot, input, player, transition } from '../app/runtime.ts';
+import { orbitPose as houseOrbitPose, stepOrbit } from '../logic/houseOrbit.ts';
 import { getApp } from '../app/store.ts';
 import type { Pose } from '../logic/cameraPath.ts';
-import { cityPose, clampView, flightAt, metersPerPixel, pan, rotate, zoom } from '../logic/cityCamera.ts';
+import { cityPose, clampView, flightAt, metersPerPixel, pan, rotate, viewOfPlot, zoom } from '../logic/cityCamera.ts';
 import { animOfCar, carById, stepCar } from '../logic/drive.ts';
 import { cameraDistance, lerpAngle, movePlayer } from '../logic/motion.ts';
 import { carSolids, walkSolids, worldIndex } from '../logic/worldIndex.ts';
@@ -45,7 +46,25 @@ export const stepWalk = (c: StepContext): readonly Plot[] => {
   return plots;
 };
 
+/** Uy surati: barmoq faqat uy atrofida aylantiradi; Foto rejimidan chiqqanda shahar kamerasi shu uyga qaytadi. */
+const stepHouseShot = (): boolean => {
+  const o = houseShot.orbit;
+  if (!o) return false;
+  if (!getApp().isPhoto) {
+    houseShot.orbit = null;
+    const p = getApp().plotById.get(o.plot);
+    if (p) city.view = viewOfPlot(p);
+    city.flight = null;
+    return false;
+  }
+  houseShot.orbit = stepOrbit(o, { panX: input.panX, panY: input.panY, zoomBy: input.zoomBy, twist: input.twist });
+  input.panX = input.panY = input.twist = input.zoom = input.lookX = input.lookY = 0;
+  input.zoomBy = 1;
+  return true;
+};
+
 export const stepCity = (c: StepContext): void => {
+  if (stepHouseShot()) return;
   const now = performance.now();
   const hasInput = input.panX !== 0 || input.panY !== 0 || input.zoomBy !== 1 || input.twist !== 0 || input.moveX !== 0 || input.moveY !== 0;
   if (city.flight && !hasInput) {
@@ -86,7 +105,7 @@ export const walkPose = (c: StepContext, smoothY: number, plots: readonly Plot[]
 const CHASE = 7.2;
 const CHASE_PER_SPEED = 0.2;
 export const drivePose = (smoothY: number): Pose => orbitPose(car.state.x, smoothY, car.state.z, CHASE + Math.abs(car.state.speed) * CHASE_PER_SPEED);
-export const currentCityPose = (): Pose => cityPose(city.view, terrainHeight(city.view.x, city.view.z));
+export const currentCityPose = (): Pose => (houseShot.orbit ? houseOrbitPose(houseShot.orbit) : cityPose(city.view, terrainHeight(city.view.x, city.view.z)));
 
 /** Rejim almashganda eski kameradan yangisiga silliq o'tish (1 soniyadan tez). */
 export const blend = (to: Pose): Pose => {

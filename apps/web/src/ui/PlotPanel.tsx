@@ -1,7 +1,7 @@
 /** Uchastka oynasi: bo'sh joy, boshqaning uyi yoki o'z uyim. */
 import { useState, type FormEvent } from 'react';
 import { BADGES, TIERS, instagramUrl, isFreeType, parseBio, parseInstagram, type BadgeId, type Plot } from '../../../../packages/shared/src/index.ts';
-import { addressOf, copyText, goToPlot, houseUrl, shareStory, startConstruction, walkTo } from '../app/actions.ts';
+import { addressOf, copyText, goToPlot, houseUrl, openHousePhoto, shareStory, startConstruction, walkTo } from '../app/actions.ts';
 import { rpc, type MyPlot, type PlotInfo } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
 import { getApp, openAuth, openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
@@ -171,6 +171,7 @@ function MineActions({ mine, full }: { readonly mine: MyPlot; readonly full: Plo
   return (
     <>
       {hasYard && <UpgradeButton plot={mine} />}
+      <button type="button" className="btn soft block house-photo" onClick={() => openHousePhoto(mine.plot)}><Icon name="photo" />{t('housePhoto')}</button>
       <div className="tiles">
         {hasYard && <button type="button" onClick={() => openPanel({ kind: 'yard', id: mine.plot })}><Icon name="plus" />{t('decorate')}</button>}
         <button type="button" onClick={() => openPanel({ kind: 'bio', id: mine.plot })}><Icon name="rules" />{t('bioTitle')}</button>

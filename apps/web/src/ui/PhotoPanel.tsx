@@ -1,8 +1,8 @@
 /** Foto rejimi paneli (17-qadam): yorug'lik, maket effekti, format, "Mening uyim", suratga olish va natija oynasi. */
 import { useEffect, useState } from 'react';
-import { goToPlot, shareImage } from '../app/actions.ts';
+import { openHousePhoto, shareImage } from '../app/actions.ts';
 import { useT } from '../app/i18n.ts';
-import { snapshotters } from '../app/runtime.ts';
+import { houseShot, snapshotters } from '../app/runtime.ts';
 import { setApp, toast, useApp } from '../app/store.ts';
 import { aspectOf, frameRect, type PhotoFormat, type PhotoLight, type PhotoSettings, type PhotoTilt } from '../logic/photo.ts';
 import { Icon } from './icons.tsx';
@@ -35,6 +35,9 @@ export function PhotoPanel(): React.JSX.Element {
   const t = useT();
   const photo = useApp((s) => s.photo);
   const mine = useApp((s) => s.profile?.plots[0]?.plot ?? null);
+  const plots = useApp((s) => s.profile?.plots ?? []);
+  // Uy surati rejimi: kamera faqat shu uy atrofida; bir nechta uy bo'lsa — ro'yxatdan tanlanadi.
+  const housePlot = houseShot.orbit?.plot ?? null;
   const [shot, setShot] = useState<Shot | null>(null);
   const [isBusy, setBusy] = useState(false);
   const [view, setView] = useState({ w: innerWidth, h: innerHeight });
@@ -77,9 +80,14 @@ export function PhotoPanel(): React.JSX.Element {
             <div className="seg small" role="group" aria-label={t('photoFormat')}>{FORMATS.map((f) => <button type="button" key={f} aria-pressed={photo.format === f} onClick={() => setPhoto({ format: f })}>{f}</button>)}</div>
             <label className="small check"><input type="checkbox" checked={photo.hasLink} onChange={(e) => setPhoto({ hasLink: e.target.checked })} />{t('photoLink')}</label>
           </div>
+          {housePlot && plots.length > 1 && (
+            <label className="photo-row small">{t('whichHouse')}
+              <select className="input" value={housePlot} onChange={(e) => openHousePhoto(e.target.value)}>{plots.map((p) => <option key={p.plot} value={p.plot}>{p.address}{p.instagram ? ` · @${p.instagram}` : ''}</option>)}</select>
+            </label>
+          )}
           <div className="photo-row actions">
             <button type="button" className="btn soft" onClick={close}>{t('close')}</button>
-            {mine && <button type="button" className="round glass" aria-label={t('myHouse')} title={t('myHouse')} onClick={() => goToPlot(mine)}><Icon name="home" /></button>}
+            {mine && !housePlot && <button type="button" className="round glass" aria-label={t('myHouse')} title={t('myHouse')} onClick={() => openHousePhoto(mine)}><Icon name="home" /></button>}
             <button type="button" className="btn gold big shoot" disabled={isBusy} onClick={() => void take()}><Icon name="photo" />{t('shoot')}</button>
             <button type="button" className="round glass" aria-label={t('hideUi')} title={t('hideUi')} onClick={() => setApp({ isPhoto: false, isClean: true })}><Icon name="eyeOff" /></button>
           </div>

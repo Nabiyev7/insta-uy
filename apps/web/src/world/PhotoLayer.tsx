@@ -4,15 +4,16 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Vector2 } from 'three';
 import { pitchOf } from '../logic/cityCamera.ts';
 import { aspectOf, frameRect, gradeOf, tiltOf, type PhotoSettings } from '../logic/photo.ts';
-import { city, director, session, snapshotters } from '../app/runtime.ts';
+import { city, director, houseShot, session, snapshotters } from '../app/runtime.ts';
 import { getApp, useApp } from '../app/store.ts';
 import { isInFrame, makeComposer, takeShot } from './photoFx.ts';
 
 /** Kamera qiyaligi: shahar rejimida balandlikdan, piyoda/mashinada — deyarli gorizontal. */
-const pitchNow = (): number => (session.mode === 'city' ? pitchOf(city.view.height) : 0.25);
+const pitchNow = (): number => houseShot.orbit?.pitch ?? (session.mode === 'city' ? pitchOf(city.view.height) : 0.25);
 const ownSpot = (): { readonly x: number; readonly z: number; readonly nick: string } | null => {
   const { profile, plotById } = getApp();
-  const mine = profile?.plots[0];
+  // Uy surati rejimida — o'sha uy, aks holda birinchi uy.
+  const mine = profile?.plots.find((p) => p.plot === houseShot.orbit?.plot) ?? profile?.plots[0];
   const p = mine ? plotById.get(mine.plot) : undefined;
   return p && mine?.instagram ? { x: p.x, z: p.z, nick: mine.instagram } : null;
 };
