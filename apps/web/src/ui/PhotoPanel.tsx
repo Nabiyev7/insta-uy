@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { goToPlot, shareImage } from '../app/actions.ts';
 import { useT } from '../app/i18n.ts';
 import { snapshotters } from '../app/runtime.ts';
-import { setApp, useApp } from '../app/store.ts';
+import { setApp, toast, useApp } from '../app/store.ts';
 import { aspectOf, frameRect, type PhotoFormat, type PhotoLight, type PhotoSettings, type PhotoTilt } from '../logic/photo.ts';
 import { Icon } from './icons.tsx';
 
@@ -55,6 +55,9 @@ export function PhotoPanel(): React.JSX.Element {
       const canvas = snapshotters.photo?.();
       if (!canvas) return;
       setShot({ canvas, url: URL.createObjectURL(await blobOf(canvas)), width: canvas.width, height: canvas.height });
+    } catch {
+      // Xotira yoki brauzer cheklovi: xabar chiqadi, Foto rejimi ishlashda davom etadi.
+      toast(t('photoFail'), true);
     } finally {
       setBusy(false);
     }

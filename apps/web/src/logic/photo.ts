@@ -60,8 +60,6 @@ export const renderScale = (frameW: number, targetW: number, isWeak: boolean, ma
   return Math.max(1, Math.min(want, maxCanvas / Math.max(1, canvasW)));
 };
 
-/** Instagram stories: yuqorida tugmalar ostida qolmasin — 9:16 da yuqori 14% bo'sh joy (belgi pastda). */
-export const SAFE_TOP: Readonly<Record<PhotoFormat, number>> = { '9:16': 0.14, '4:5': 0.04, '1:1': 0.04 };
 
 /** Tungi Foto kadrida derazalar va chiroqlarning yorqinligi (o'yindagidan necha baravar). */
 export const PHOTO_NIGHT_GLOW = 1.9;
