@@ -36,8 +36,8 @@ Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. 6, 6a–6e bajarildi. **N
 - [x] **13. Haqiqiy ochilish** — `docs/chat/OCHILISH-PROMT.md` (Stars, tozalash, minimal yuklama, kuzatuv, ochilish kuni)
 - [x] **14. Tuzatish 5 — haqiqiy loyiha** — `docs/chat/TUZATISH-5.md` (admin huquqlari, "+", sinov ma'lumotlarini o'chirish, baland kamera, niklar, tanga paketlari)
 - [x] **15. Tuzatish 6 — narxlar −50%, bezak levellari, joylar, chegirmalar, admin katalog** — `docs/chat/TUZATISH-6.md`
-- [ ] **16. Instagram: postlar** — `docs/chat/INSTAGRAM-PROMT.md` (faqat 0, 0.1 va 1-bo'limlar — postlar; **2–3-bo'lim (promo video, reels) hozircha QILINMAYDI**)
-- [ ] **17. Foto rejimi: oltin soat, tun, maket effekti** — `docs/chat/FOTO-PROMT.md`
+- [x] **16. Instagram: postlar** — `docs/chat/INSTAGRAM-PROMT.md` (faqat 0, 0.1 va 1-bo'limlar — postlar; **2–3-bo'lim (promo video, reels) hozircha QILINMAYDI**)
+- [x] **17. Foto rejimi: oltin soat, tun, maket effekti** — `docs/chat/FOTO-PROMT.md`
 - [ ] **18. Video: "qurilish va yangi egasi" ssenariysi** — `docs/chat/VIDEO-QURILISH-PROMT.md` — **KEYINGA QOLDIRILDI** (egasi, 2026-11-27: avval takomillashtiramiz, keyin ishga tushiriladi; hozir tegma)
 
 ## Har qadamdan keyin

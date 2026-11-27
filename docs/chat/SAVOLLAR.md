@@ -301,3 +301,20 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 11. **Premium tovarlar** endi admin → Bezaklar → "⭐ Premium" tabida (so'm narxi bilan, Stars shundan hisoblanadi); asosiy ro'yxatda so'm ustuni yo'q.
 12. **To'plam narxida chegirma hisobga olinmaydi.** U asosiy narxlar yig'indisidan 20% bo'ladi. Shuning uchun alohida tovarga qo'yilgan chegirma to'plamni arzonlashtirmaydi.
 13. **To'plamdan chiqarish.** 0038-migratsiya o'sha paytda sotuvda bo'lmagan tovarlarni to'plamdan chiqardi; ular aynan arxivdagi 13 ta edi. Keyin yashirib, yana ko'rsatilgan tovar to'plamga o'zi qaytmaydi: admin → tovar → Qo'shimcha → "To'plam ID" da qayta yoziladi.
+
+## 17-qadam: Foto rejimi (2026-11-27)
+1. **Post-processing kutubxonasi qo'shilmadi.** Three.js ichidagi tayyor qismlar ishlatildi (EffectComposer, tilt-shift shaderlari, UnrealBloom), yangi paket yo'q.
+2. **Tungi Foto kadrida uy ustidagi niklar yashiriladi.** Aks holda bloom oq yorliqlarni oq dog'larga aylantiradi. O'z uyingiz kadrda bo'lsa, nikingiz rasm belgisida (@nik) chiqadi.
+3. **Tunda derazalar va chiroqlar o'yindagidan ~1,9 baravar yorqinroq qilindi**, chunki kadrning umumiy yorqinligi pasaytirilgan (to'q ko'k osmon). Bu faqat Foto rejimida.
+4. **Telegram'ning `shareToStory` funksiyasi ishlatilmadi.** U faylni emas, internetdagi havolani so'raydi, rasmni esa serverga yuklash kerak bo'lardi. Hozir "Ulashish" telefonning ulashish oynasini ochadi (Instagram ham shu yerda); imkoni bo'lmasa — fayl saqlanadi.
+5. **Foto sozlamalari Foto rejimidan chiqqanda eslab qolinadi.** O'yindagi ko'rinish esa darhol odatiy holatga qaytadi (effektlar faqat Foto rejimida ishlaydi).
+6. **Kuchsiz telefonda** jonli ko'rinishda maket effekti o'chiq bo'ladi, yakuniy kadrda esa yoqiladi. Xotira yetmasa kadr 1× aniqlikda olinadi; u ham bo'lmasa — "Suratga olib bo'lmadi" xabari.
+
+## 16-qadam: Instagram postlari (2026-11-27)
+1. **Kadrlar faqat saytning Foto rejimidan olindi** (siz shunday so'radingiz). Blender varianti va `01-1-blender.png` qilinmadi. Afzalligi: postdagi rasm saytdagidan farq qilmaydi.
+2. **Niklar umumiy so'zlar bilan almashtirildi** (`sening_niking`, `qoshnim`, `dostim_uyi`…), faqat kadr olinayotgan brauzerda. Demo bazadagi `demo_0123` kabi niklar postga tushmaydi, haqiqiy odam nikiga o'xshash nik ham yo'q.
+3. **Sarlavha ortida chalkashlik bo'lmasin deb**, niklar faqat nikka oid kadrlarda ko'rsatildi (mahalla, "Uy ustida sening niking", levellar, bezaklar).
+4. **Bot ekrani (2-post)** HTML'da chizilgan telefon ramkasi. Matnlar haqiqiy botdagi bilan bir xil, faqat qisqartirilgan va emojisiz (slaydda emoji ishlatmaslik qoidasi).
+5. **Sovg'alar shkalasi (9-post)** saytdagi bezak ikonkalari bilan (128 px — biroz kichik). Kattaroq ikonka kerak bo'lsa, Blender'da qayta render qilinadi (`npm run models`).
+6. **Slaydlar gitda.** Sizning `9433aef` commit'ingiz ularni gitga qo'shgan edi, shuni saqlab qoldim (≈ 34 MB). Har qayta yig'ishda repozitoriy shuncha kattalashadi. Kerak bo'lsa, `.gitignore` ga olib qo'yish mumkin.
+7. **`korinish.png` dagi tartib** 1 → 9 (chapdan o'ngga, tepadan pastga). Instagram'da eng oxirgi post tepada chap burchakda turadi. Shuning uchun 9-postdan boshlab teskari tartibda joylasangiz, profilda shu ko'rinish chiqadi.

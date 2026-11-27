@@ -285,3 +285,65 @@ Hammasi 30 FPS chegarasidan ancha yuqori. Kompyuter yuklamasiga qarab o'lchovlar
 - jadval va qoida 7 ta tovarda farq qiladi — jadval ustun qoldirildi;
 - nuqtalarning levellarga taqsimoti;
 - chegirma boshlanganda kanalga yoki botga avtomatik e'lon qilinmadi (ixtiyoriy edi; kerak bo'lsa — tugma qilaman).
+
+## 17-qadam — Foto rejimi: oltin soat, tun, maket effekti (2026-11-27)
+**Nima qilindi:**
+- **Foto rejimida yangi panel** (to'q, ixcham):
+  - **Yorug'lik**: Hozirgi · Oltin soat · Tun;
+  - **Maket**: yo'q / past / o'rta / kuchli;
+  - **Format**: 9:16 (stories) · 4:5 (post) · 1:1, ekranda ramka bilan;
+  - **Havola**: rasmga havola yozilsinmi (o'chirsa bo'ladi);
+  - **Mening uyim** (kamera uyingizga uchadi);
+  - katta **Suratga olish** tugmasi → natija: **Saqlash** va **Ulashish**.
+- **Oltin soat**: past iliq quyosh (~20°), uzun soyalar, iliq ranglar, osmon pastda iliq, tepada och ko'k. Kadrda soyalar yuqori sifatda (4096).
+- **Tun**: to'q ko'k osmon, derazalar va chiroqlar yonadi, atrofida yengil nur (bloom).
+- **Maket effekti (tilt-shift)**: o'rtadagi tasma tiniq, tepasi va pasti xira, ranglar biroz to'yinganroq — shahar maketdek ko'rinadi.
+- **Rasm sifati**: ekrandan 2 baravar katta render qilinib, 1080×1920 (yoki 1350, 1080) ga kichraytiriladi. Pastki chapda "CityLand UZ", o'z uyingiz kadrda bo'lsa — **@nik**, o'ngda kichik havola. Mehmon ham foydalana oladi (faqat logo).
+- **O'yin rejimiga ta'sir yo'q**: effektlar faqat Foto rejimida ishlaydi, chiqqanda hammasi odatiy holatga qaytadi.
+- Rasmlar: `ui-foto-oltin.png`, `ui-foto-tun.png` (panel) va `foto-namuna-oltin.jpg`, `foto-namuna-oltin-4x5.jpg`, `foto-namuna-tun.jpg` (natija kadrlari).
+
+**Tezlik:**
+- Kadr olish: oddiy kompyuterda ~0,1 s, protsessor 6 baravar sekinlashtirilganda (o'rta telefon) **1,6 s** (chegara 3 s).
+- O'yin FPS (CPU 6 baravar sekin, 1 000 ga yaqin uyli demo shahar):
+
+  | | Piyoda | Shahar (eng baland) | Mashina |
+  |---|---|---|---|
+  | Past sifat | 323 → 338 | 272 → 273 | 228 → 219 |
+  | O'rta sifat | 265 → 276 | 113 → 115 | 73 → 74 |
+  | Yuqori sifat | 156 → 172 | 105 → 102 | 72 → 72 |
+
+  Farqlar o'lchovning odatiy tebranishi (±10%) ichida: o'yin rejimi o'zgarmagan.
+
+## 16-qadam — Instagram: 9 ta ochilish posti (2026-11-27)
+**Nima qilindi:**
+- **9 post, 34 slayd** (1080 × 1350, faqat o'zbekcha), sahifa to'ri 3×3:
+  1. Ochildi;
+  2. Bepul uy 3 qadamda;
+  3. Uy ustida niking;
+  4. 5 level;
+  5. Hovlini beza;
+  6. Tanga qanday topiladi;
+  7. Shahar asoschilari;
+  8. Kechasi shahar;
+  9. Do'stingni qo'shni qil.
+- **Kadrlar — yangi Foto rejimi grafikasi bilan**: kunduzgi mavzular **A** (oltin soat + maket), "Kechasi shahar" **D** (tun).
+  - Kadrlar yangi 1–5-level uylar va bezaklardan iborat, lokal demo shahardan olindi (ishlab chiqarish bazasiga tegilmadi).
+  - Niklar umumiy so'zlar: `sening_niking`, `qoshnim`…
+- **Shablon**: katta qalin sarlavha, bitta oltin so'z, sayt shrifti, pastda kichik logo va slayd nuqtalari. Oxirgi slaydda "Uyingni ol → bio'dagi havola". Matnlarda emoji va "N kishi yashaydi" kabi da'vo yo'q (test tekshiradi).
+- **Izohlar va xeshteglar** (har postga 2–3 qator izoh va 5–6 xeshteg): `docs/insta/izohlar.md`.
+- **Hamma matnlar bitta faylda**: `docs/insta/matnlar.md`. Uni o'zgartirsangiz, `npm run insta` hammasini qayta yig'adi (dev server demo bilan ishlab turishi kerak).
+- **Ko'rinish**: `docs/insta/korinish.png` — 9 postning bosh slaydlari 3×3 to'rda.
+- Slaydlar: `docs/insta/postlar/01..09/`.
+- Promo video va reels (2–3-bo'lim) **qilinmadi**; 18-qadamga (video) tegilmadi.
+
+**Tekshiruv (ikkala qadam):**
+- `npm test` 492/492, typecheck toza, e2e 88/88 (yangi Foto qadami bilan), screens o'tdi.
+- Haqiqiy sayt (`e2e/prod.mjs`): 2,9 soniyada ochildi, xato yo'q, "+" ssenariysi ✅; yangi Foto rejimi saytda.
+- Tekshiruvchi: ikkala qadamda ❌ yo'q. U topgan ikki kichik kamchilik tuzatildi: kadr olinmasa xabar chiqadi, ishlatilmagan kod olib tashlandi.
+
+**Yangi savollar** (`SAVOLLAR.md`, 16 va 17-qadam):
+- tungi Foto kadrida niklar yashiriladi;
+- Telegram'ning "stories'ga ulashish" funksiyasi o'rniga telefonning ulashish oynasi ishlatiladi;
+- Blender varianti qilinmadi;
+- slaydlar gitda (≈ 34 MB);
+- Instagram'ga joylash tartibi — 9-postdan boshlab.
