@@ -304,7 +304,7 @@ Hammasi 30 FPS chegarasidan ancha yuqori. Kompyuter yuklamasiga qarab o'lchovlar
 
 **Tezlik:**
 - Kadr olish: oddiy kompyuterda ~0,1 s, protsessor 6 baravar sekinlashtirilganda (o'rta telefon) **1,6 s** (chegara 3 s).
-- O'yin FPS (CPU 6 baravar sekin, 1 000 ga yaqin uyli demo shahar):
+- O'yin FPS (CPU 6 baravar sekin, 456 ta uyli demo shahar):
 
   | | Piyoda | Shahar (eng baland) | Mashina |
   |---|---|---|---|
