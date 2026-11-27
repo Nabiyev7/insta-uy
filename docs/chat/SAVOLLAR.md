@@ -272,3 +272,32 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
    - Bundan tashqari unit test 1 000 ta uy bilan yorliqlar yig'ilishini tekshiradi.
 8. **Eng balandda butun shahar (3 km) ekranga sig'maydi.** Telefonda taxminan 1–1,5 km ko'rinadi. Balandlik promtdagi qiymatlarda qoldirildi; FPS chegarasidan ancha yuqori.
 9. **`e2e/prod.mjs` egasining akkauntida brauzer sessiyasini ochadi** (faqat o'qish). Shuning uchun egasining "oxirgi ko'rilgan" vaqti va bugungi faollik yozuvi yangilanadi.
+
+## 15-qadam: Tuzatish 6 — narxlar, levellar, chegirmalar, admin katalog (2026-11-27)
+1. **Yaxlitlash "o'rtada — juftga".** Jadvaldagi 150 → 80 va 450 → 220 ikkalasiga faqat shu qoida mos keladi (7,5 → 8, 22,5 → 22). Jadvaldagi 63 ta narxning hammasi shu qoidaga to'g'ri keladi (test tekshiradi).
+2. **Level: jadval va qoida 7 ta tovarda farq qiladi.**
+   - Jadval: chinor va gulzor (80 tanga) — 1-lv; tandir, tokzor, basketbol halqasi, palma va gul kamari (150 tanga) — 3-lv.
+   - Qoida: ikkala guruh uchun 2-lv.
+   - Jadval ustun turadi. Bu 7 tasi "qo'lda qo'yilgan" deb belgilandi, shuning uchun narx o'zgarsa ham leveli saqlanadi; admin → Bezaklar → Level → "avto" bilan qaytariladi.
+   - Qolganlari "avto".
+3. **Nuqtalar levellari tovarlar jadvaliga mos qilib taqsimlandi.** Shuning uchun "nuqta istisnosi" kerak bo'lgan mavjud tovar yo'q. Qoida bazada ishlaydi: masalan, faqat tomga qo'yiladigan yangi tovar arzon bo'lsa ham 4-leveldan ochiladi (test bor).
+   | Level | Yangi ochiladigan nuqtalar | Hammasi | Joy soni |
+   |---|---|---|---|
+   | 1 | panjara, darvoza, yo'lak, darvoza yoni, old burchak (chap), old hovli (o'ng) | 6 | 2 |
+   | 2 | yo'lak chiroqlari, eshik oldi, old hovli (chap), old burchak (o'ng) | 10 | 4 |
+   | 3 | eshik oldi (o'ng) | 11 | 6 |
+   | 4 | uy yoritilishi, tom, garaj oldi, orqa burchaklar | 16 | 10 |
+   | 5 | — | 16 | 16 |
+4. **Orqa burchaklar 4-leveldan ochiladi.** Ular 2–3-leveldagi uyga tegadi (test topdi), 4-levelda esa tegmaydi.
+5. **Tanga paketlarida bonus alohida ko'rsatilmaydi**, kartada jami son yoziladi: 5 000 / 12 000 / 28 000.
+6. **To'plam narxi chegirmasiz hisoblanadi** (asosiy narxlar yig'indisidan 20%). Arxivdagi tovarlar to'plamdan chiqarildi; ilgari ular to'plamni sotib bo'lmaydigan qilib qo'yardi.
+7. **Chegirma.**
+   - Ko'p tovarga birdaniga qo'yish mumkin. Muddati kesishgan ikkinchi chegirma rad etiladi.
+   - Narx serverda hisoblanadi. Do'kondagi ko'rinish ~1 daqiqagacha kechikishi mumkin (umumiy nusxa), lekin xarid doim serverdagi aniq narxda.
+   - Chegirmali narx ham shu yaxlitlash qoidasi bilan hisoblanadi.
+8. **Chegirma boshlanganda kanalga yoki botga avtomatik e'lon qilinmadi** (promtda ixtiyoriy edi). Bu ommaviy, qaytarib bo'lmaydigan amal, shuning uchun hozircha yo'q. Kerak bo'lsa — keyingi qadamda tugma qilaman.
+9. **"🔥" emoji o'rniga olov ikonkasi.** Saytda emoji ishlatmaslik qoidasi bor (test tekshiradi).
+10. **"Yangi tovar"dagi modellar ro'yxati** — bazadagi tovarlarning modellari: arxivdagilar ham, `assets/decor` dagi hamma rasm ham shular. Blender'dan yangi model `npm run models` bilan katalogga qo'shilgach, shu ro'yxatda chiqadi.
+11. **Premium tovarlar** endi admin → Bezaklar → "⭐ Premium" tabida (so'm narxi bilan, Stars shundan hisoblanadi); asosiy ro'yxatda so'm ustuni yo'q.
+12. **To'plam narxida chegirma hisobga olinmaydi.** U asosiy narxlar yig'indisidan 20% bo'ladi. Shuning uchun alohida tovarga qo'yilgan chegirma to'plamni arzonlashtirmaydi.
+13. **To'plamdan chiqarish.** 0038-migratsiya o'sha paytda sotuvda bo'lmagan tovarlarni to'plamdan chiqardi; ular aynan arxivdagi 13 ta edi. Keyin yashirib, yana ko'rsatilgan tovar to'plamga o'zi qaytmaydi: admin → tovar → Qo'shimcha → "To'plam ID" da qayta yoziladi.

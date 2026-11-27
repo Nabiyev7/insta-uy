@@ -100,6 +100,8 @@ describe('level (2-band) va joylar (3-band)', () => {
     const corner = (await sql("select private.auto_level(40, 'yangi_daraxt', '{corner}') v"))[0]!.v;
     expect([roof, corner]).toEqual([4, 1]);
     expect(await sql("select id from decor_catalog where level_auto and min_level < private.level_for_price(price_coins, id)")).toEqual([]);
+    // Qo'lda qo'yilgan (jadval) levellar ham tovar nuqtasi ochiladigan leveldan past emas.
+    expect(await sql("select id from decor_catalog where id <> 'sign_nick' and min_level < private.spot_level(spots)")).toEqual([]);
   });
   test('admin: level qo‘lda — saqlanadi (narx o‘zgarsa ham); "Avtomatik" — narxdan qaytadi; narx o‘zgarsa avto level ham', async () => {
     const a = await admin();

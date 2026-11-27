@@ -243,3 +243,45 @@ Sinov: 368 ta unit test, tur tekshiruvi toza, e2e 88/88, skrinshotlar yangilandi
 Hammasi 30 FPS chegarasidan ancha yuqori. Kompyuter yuklamasiga qarab o'lchovlar ±20% tebranadi.
 
 **Yangi savollar** (`SAVOLLAR.md`, 14-qadam): admin ham bepul uyini oddiy yo'l bilan oladi; "Uy berish"da nik topilmasa — uy sizning akkauntingizga yoziladi; eng balandda ham butun 3 km sig'maydi (~1–1,5 km ko'rinadi).
+
+## 15-qadam — Tuzatish 6: narxlar, levellar, chegirmalar, admin katalog (2026-11-27)
+**Nima qilindi:**
+1. **Narxlar 2 baravar arzon.**
+   - Tanga bilan sotiladigan hamma narx × 0,5, qoidaga ko'ra yaxlitlangan (1 000 gacha — 10 ga, 1 000–9 999 — 50 ga, 10 000 dan — 500 ga). Jadvaldagi 63 ta tovarning hammasi mos (test tekshiradi).
+   - To'plamlar — tarkibidan 20% chegirma, avtomatik hisoblanadi.
+   - Uy leveli: 2-lv 150, 3-lv 500, 4-lv 1 000, 5-lv 1 750.
+   - Salyut: 1 000 tanga.
+   - Tanga paketlari: **5 000 — 50 ⭐**, **12 000 — 100 ⭐** (Ommabop), **28 000 — 200 ⭐** (Eng foydali).
+   - Tanga topish miqdorlari va premium narxlari o'zgarmadi. `TANGA-NARXLAR.md` yangilandi.
+2. **Bezak levellari jadvaldagidek.**
+   - Arzon bezaklar endi 1-leveldan, lyukslar 5-leveldan.
+   - Yangi tovarning leveli narxdan avtomatik taklif qilinadi.
+   - Admin har tovarga qo'lda level qo'ya oladi; "avto" bilan qaytadi.
+   - Do'konda qulflangan tovarda "3-levelda ochiladi" yozuvi va **"Uyni kuchaytirish"** tugmasi chiqadi.
+3. **Hovlida joylar har levelda: 2 / 4 / 6 / 10 / 16.**
+   - Nuqtalar 1-leveldan ochiladi (1-levelda 6 ta, 4-levelda 16 ta). Yopiqlari rejada kulrang, "N-levelda" yozuvi bilan.
+   - Orqa burchaklar 4-leveldan: test 2–3-leveldagi uyga tegishini topdi.
+4. **Chegirmalar.**
+   - Admin tovarga 5–90% chegirma qo'yadi, boshlanish va tugash vaqti bilan (Toshkent vaqti).
+   - Narx serverda hisoblanadi; muddat tugashi bilan eski narx o'zi qaytadi.
+   - Do'konda **"Chegirmalar"** bo'limi (birinchi, faqat chegirma bo'lsa ko'rinadi): eski narx chizilgan, "−30%" belgisi va "2 kun 5 soat qoldi". Rasm: `ui-dokon-chegirma.png`.
+5. **Admin → Bezaklar soddaroq.**
+   - Ro'yxat ustunlari: rasm, nom, kategoriya, tanga (joyida o'zgaradi), level (joyida, "avto"), chegirma, sotilgan, holat. So'm ustuni yo'q.
+   - Tablar: Bezaklar / ⭐ Premium / **Arxiv** (13 ta eski tovar; egalarida qoladi).
+   - Qidiruv, filtr va tartib bor.
+   - Ommaviy amallar: narx ± %, levelni avtomatik qayta hisoblash, chegirma, yashirish/ko'rsatish, arxivga o'tkazish.
+   - **Yangi tovar — 1 sahifa:** model rasmlardan tanlanadi → nom → kategoriya → narx (level taklifi) → do'konda qanday ko'rinishi → Saqlash. Qo'shimcha maydonlar yashirin ochiladigan qismda.
+   - Hamma o'zgarish "Jurnal"da. Rasmlar: `admin-bezaklar.png`, `admin-yangi-tovar.png`.
+   - Hammasi ishlab chiqarishga chiqdi (migratsiyalar `0038`–`0041`).
+
+**Tekshiruv:**
+- `npm test` 479/479, typecheck toza, e2e 88/88 (admin qadami yangilandi), screens o'tdi.
+- Haqiqiy sayt (`e2e/prod.mjs`): 2,3 soniyada ochildi, xato yo'q.
+- "+" ssenariysi ✅: sizning akkauntingizda endi haqiqiy uy bor, unga "+" chiqmaydi.
+- Ishlab chiqarishdagi katalog tekshirildi: yo'lak 40 (1-lv), chinor 80 (1-lv), tandir 150 (3-lv), sedan 600 (4-lv), superkar 7 500 (5-lv).
+- Tekshiruvchi: 1–6-bandlar ✅, xavfsizlik ✅, bosh reja qulfi buzilmagan. U taklif qilgan test qo'shildi: hech bir tovarning leveli o'z nuqtasi ochiladigan leveldan past emas.
+
+**Yangi savollar** (`SAVOLLAR.md`, 15-qadam):
+- jadval va qoida 7 ta tovarda farq qiladi — jadval ustun qoldirildi;
+- nuqtalarning levellarga taqsimoti;
+- chegirma boshlanganda kanalga yoki botga avtomatik e'lon qilinmadi (ixtiyoriy edi; kerak bo'lsa — tugma qilaman).
