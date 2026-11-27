@@ -433,3 +433,21 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .flag.sale svg { width: 12px; height: 12px; flex: none; }
 .cost s.old { opacity: .55; font-weight: 500; margin-right: 4px; font-size: .85em; }
 .need-coins.locked-note { opacity: .8; }
+/* 17-qadam: Foto rejimi — ramka (tanlangan format), ixcham to'q panel, natija oynasi. */
+.photo-mode { pointer-events: none; }
+.photo-mode > * { pointer-events: auto; }
+.photo-frame { position: fixed; pointer-events: none !important;
+  box-shadow: 0 0 0 200vmax rgba(8, 12, 18, 0.42); outline: 1.5px solid rgba(255, 255, 255, 0.55); border-radius: 2px; }
+.photo-panel { position: absolute; left: 50%; bottom: calc(14px + var(--safe-b, 0px)); transform: translateX(-50%); width: min(560px, calc(100vw - 20px)); display: grid; gap: 8px;
+  padding: 10px 12px; border-radius: 18px; background: rgba(16, 22, 30, 0.86); backdrop-filter: blur(10px); color: #fff; }
+.photo-panel .seg { display: flex; }
+.photo-panel .seg { flex-wrap: nowrap; }
+.photo-panel .seg button { flex: 1; min-height: 36px; padding: 4px 6px; font-size: 13px; white-space: nowrap; }
+.photo-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.photo-row .seg { flex: 1; min-width: 0; }
+.photo-row.actions { justify-content: center; }
+.photo-row .shoot { flex: 1; max-width: 260px; }
+.photo-panel .check { display: inline-flex; align-items: center; gap: 4px; }
+.photo-result { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 12px; padding: 16px; background: rgba(8, 12, 18, 0.9); }
+.photo-result img { max-width: min(92vw, 520px); max-height: calc(100dvh - 120px); border-radius: 14px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+.photo-result .row { display: flex; gap: 10px; justify-content: center; }

@@ -1,10 +1,11 @@
 /** Ekran: yuqori qator, o'ng ustun (rejimlar), pastdagi karta va panel. Elementlar faqat chetda, o'rta ochiq (telefon birinchi). */
+import { PhotoPanel } from './PhotoPanel.tsx';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { inPlaza, streetLabel, zoneAt } from '../../../../packages/shared/src/index.ts';
-import { BUZZ, buzz, shareImage } from '../app/actions.ts';
+import { BUZZ, buzz } from '../app/actions.ts';
 import { money, useT, type Key } from '../app/i18n.ts';
 import { setMode } from '../app/modes.ts';
-import { here, input, player, snapshotters, type Mode } from '../app/runtime.ts';
+import { here, input, player, type Mode } from '../app/runtime.ts';
 import { backPanel, openAuth, openPanel, openRoot, setApp, useApp, type Panel } from '../app/store.ts';
 import { rpc } from '../app/api.ts';
 import { goToPlot, nearestFree } from '../app/actions.ts';
@@ -13,7 +14,6 @@ import { getApp, setting } from '../app/store.ts';
 import { BottomCard, PreviewBar } from './BottomCard.tsx';
 import { CoinFly } from './CoinFly.tsx';
 import { Icon, type IconName } from './icons.tsx';
-import { useAction } from './kit.tsx';
 
 function Joystick(): React.JSX.Element {
   const knob = useRef<HTMLElement>(null);
@@ -75,17 +75,6 @@ function DriveActions(): React.JSX.Element {
   );
 }
 
-function PhotoBar(): React.JSX.Element {
-  const t = useT();
-  const { isBusy, run } = useAction();
-  return (
-    <div className="hud"><div className="photo-bar">
-      <button type="button" className="btn soft" onClick={() => setApp({ isPhoto: false })}>{t('close')}</button>
-      <button type="button" className="btn gold" disabled={isBusy} onClick={() => run(async () => { const c = snapshotters.capture?.(); if (c) await shareImage(c, 'shahar'); })}><Icon name="photo" />{t('shoot')}</button>
-      <button type="button" className="round glass" aria-label={t('hideUi')} title={t('hideUi')} onClick={() => setApp({ isPhoto: false, isClean: true })}><Icon name="eyeOff" /></button>
-    </div></div>
-  );
-}
 
 const PLACE_PANELS: readonly Panel['kind'][] = ['plot', 'civic', 'building', 'commerce', 'street'];
 function PlacePill(): React.JSX.Element {
@@ -211,7 +200,7 @@ export function Hud(): React.JSX.Element {
   const isMaintenance = useApp((s) => Boolean(s.boot?.settings.maintenance));
   const isLiveWaking = useApp((s) => s.isLiveWaking);
   if (isClean) return <CleanScreen />;
-  if (isPhoto) return <PhotoBar />;
+  if (isPhoto) return <PhotoPanel />;
   return (
     <div className={`hud mode-${mode} ${hasPanel ? 'has-panel' : ''}`}>
       <TopRow />

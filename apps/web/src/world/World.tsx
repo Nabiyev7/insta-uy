@@ -6,6 +6,7 @@ import { useApp } from '../app/store.ts';
 import { Crash } from '../ui/Cover.tsx';
 import { CityLayer } from './CityLayer.tsx';
 import { LifeLayer } from './LifeLayer.tsx';
+import { PhotoLayer } from './PhotoLayer.tsx';
 import { PlayerLayer } from './PlayerLayer.tsx';
 
 export function World(): React.JSX.Element | null {
@@ -25,6 +26,7 @@ export function World(): React.JSX.Element | null {
       <PlayerLayer plan={plan} kit={kit} />
       <CityLayer kit={kit} plan={plan} />
       <LifeLayer kit={kit} />
+      <PhotoLayer />
     </Canvas>
   );
 }

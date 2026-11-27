@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { PHOTO_DEFAULT, type PhotoSettings } from '../logic/photo.ts';
 import { decodePlan, type EncodedPlan, type Lang, type MasterPlan, type Plot } from '../../../../packages/shared/src/index.ts';
 import { setCatalog, type CatalogRow, type SetRow } from '../logic/decorCatalog.ts';
 import type { Construction } from '../logic/construction.ts';
@@ -88,6 +89,8 @@ export interface AppState {
   /** Ko'rib bo'lingan yangi bezaklar. */
   readonly seenNew: readonly string[];
   readonly isPhoto: boolean;
+  /** Foto rejimi sozlamalari (yorug'lik, maket, format) — faqat Foto rejimida ishlaydi. */
+  readonly photo: PhotoSettings;
   /** Ekranni tozalash: hamma tugmalar yashirin, faqat shahar. */
   readonly isClean: boolean;
   readonly district: number;
@@ -111,7 +114,7 @@ export interface AppState {
 export type AuthState = 'unknown' | 'guest' | 'user';
 export const useApp = create<AppState>(() => ({
   stage: 'loading', progress: 0, error: '', kit: null, plan: null, plotById: new Map(), boot: null, houses: new Map(), profile: null, authState: 'unknown', panel: null, trail: [], toasts: [],
-  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: true, isSound: read('sound') === '1', theme: 'dark', isLeftHand: false, isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, isClean: false, district: 0, street: 0, online: 0, isLiveWaking: false, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
+  lang: read('lang') === 'ru' ? 'ru' : 'uz', quality: detectQuality(), isAutoQuality: true, isSound: read('sound') === '1', theme: 'dark', isLeftHand: false, isOffline: !navigator.onLine, cheer: null, treasure: null, ask: null, seenNew: (read('seenNew') ?? '').split(',').filter(Boolean), isPhoto: false, photo: PHOTO_DEFAULT, isClean: false, district: 0, street: 0, online: 0, isLiveWaking: false, catalog: [], sets: [], preview: null, building: null, chat: [], unread: 0, muted: readMuted(), myAuthor: '', mode: 'city', fps: 0,
 }));
 export const setApp = useApp.setState;
 export const getApp = useApp.getState;

@@ -49,4 +49,5 @@ export const teleport = (x: number, z: number, yaw: number): void => {
   camera.yaw = yaw + Math.PI;
   camera.pitch = 0.2;
 };
-export const snapshotters: { capture: (() => HTMLCanvasElement | null) | null } = { capture: null };
+/** `photo` — Foto rejimi kadri (17-qadam): effektlar bilan, yuqori aniqlikda, belgi bilan. */
+export const snapshotters: { capture: (() => HTMLCanvasElement | null) | null; photo: (() => HTMLCanvasElement | null) | null } = { capture: null, photo: null };

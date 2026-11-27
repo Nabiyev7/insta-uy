@@ -135,10 +135,29 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
         await page.locator('.actions').getByRole('button', { name: T.emotes }).click();
         await page.locator('.emotes').getByRole('button', { name: T.wave }).click();
         assert.equal(await app(() => window.__player.emote), 3);
+        // 17-qadam: Foto → Oltin soat → Maket (kuchli) → 9:16 → Suratga olish → 1080×1920; Tun varianti; chiqqanda holat tiklanadi.
         await page.locator('.actions').getByRole('button', { name: T.photo }).click();
-        await page.locator('.photo-bar').waitFor();
+        const photo = page.locator('.photo-panel');
+        await photo.waitFor();
+        await photo.getByRole('button', { name: T.photoGolden }).click();
+        await photo.getByRole('group', { name: T.tiltShift }).getByRole('button', { name: T.tiltHigh }).click();
+        await photo.getByRole('button', { name: '9:16' }).click();
+        const shoot = async () => {
+          await photo.getByRole('button', { name: T.shoot }).click();
+          const img = page.locator('.photo-result img');
+          await img.waitFor();
+          const size = await img.evaluate(async (el) => { await el.decode(); return [el.naturalWidth, el.naturalHeight]; });
+          assert.deepEqual(size, [1080, 1920], 'kadr 1080×1920');
+          await page.locator('.photo-result').getByRole('link', { name: T.save }).waitFor();
+          await page.locator('.photo-result').getByRole('button', { name: T.close }).click();
+        };
+        await shoot();
+        assert.deepEqual(await app(() => window.__app.getState().photo), { light: 'golden', tilt: 'high', format: '9:16', hasLink: true });
+        await photo.getByRole('button', { name: T.photoNight }).click();
+        await shoot();
         await page.goBack();
         await nav.waitFor();
+        assert.equal(await app(() => window.__app.getState().isPhoto), false, 'Foto rejimidan chiqildi');
       }
       if (mode === 'drive') {
         await page.getByRole('button', { name: T.pickCar }).click();

@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Color, DirectionalLight, Fog, HemisphereLight, PerspectiveCamera } from 'three';
 import { SpatialIndex, dayFraction, holidayOf, seasonOf, weatherOf, type MasterPlan } from '../../../../packages/shared/src/index.ts';
 import { daylightAt, leafTint, snowAmount } from '../logic/atmosphere.ts';
+import { PHOTO_NIGHT_GLOW, lightOf } from '../logic/photo.ts';
 import type { Item } from '../logic/item.ts';
 import { HERO_SPOT, holidayItems } from '../logic/landscape.ts';
 import { constructionItems, freshHouse, BUILD_MS } from '../logic/construction.ts';
@@ -227,10 +228,14 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     const now = Date.now();
     const weather = weatherOf(now);
     const season = seasonOf(now);
-    const light = daylightAt(director.dayFraction ?? dayFraction(now, setting('day_minutes', 24)), weather);
+    // Foto rejimida tanlangan yorug'lik (oltin soat / tun); chiqqanda — o'yindagi vaqt.
+    const app = getApp();
+    const forced = app.isPhoto && director.pose === null ? lightOf(app.photo.light) : null;
+    const light = forced ?? daylightAt(director.dayFraction ?? dayFraction(now, setting('day_minutes', 24)), weather);
     world.sky.update(light, x, z);
     world.lake.update(seconds);
-    kitUniforms.uNight.value = light.night;
+    // Tungi Foto kadrida derazalar va chiroqlar yorqinroq (umumiy yorqinlik pasaytirilgani uchun).
+    kitUniforms.uNight.value = light.night * (forced && app.photo.light === 'night' ? PHOTO_NIGHT_GLOW : 1);
     world.boards.setNight(light.night);
     kitUniforms.uSnow.value = snowAmount(season, weather);
     kitUniforms.uLeaf.value.set(...leafTint(season));
@@ -270,6 +275,10 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     const dim = app.panel !== null ? 0.4 : 1;
     world.nicks.setOpacity(dim);
     world.labels.setOpacity(dim);
+    // Tungi Foto kadrida yorliqlar yashirin (bloom ularni oq dog'ga aylantiradi); nik kadr belgisida yoziladi.
+    const isNightPhoto = app.isPhoto && director.pose === null && app.photo.light === 'night';
+    world.labels.group.visible = !isNightPhoto;
+    world.nicks.mesh.visible = !isNightPhoto && world.nicks.mesh.geometry.instanceCount > 0;
     const canClaim = showClaimMarks(app.authState, app.profile);
     world.markers.setVisible(canClaim && s.mode === 'city' && !isHigh && !app.isPhoto && !app.isClean);
     world.beacons.update(canClaim && !app.isPhoto && !app.isClean && setting('lively_start', true), clock.elapsedTime);
