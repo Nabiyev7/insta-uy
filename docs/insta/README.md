@@ -3,8 +3,8 @@
 - **Matnlar** (yagona manba): `matnlar.md` — sarlavha, kichik matn, kadr, izoh va xeshteglar. O'zgartirsangiz — `npm run insta`.
 - **Izohlar** (post ostiga yoziladigan matn): `izohlar.md` (avtomatik).
 - **Ko'rinish**: `korinish.png` — 9 postning bosh slaydlari 3×3 to'rda (1 → 9, chapdan o'ngga).
-- **Slaydlar**: `postlar/01/1.png` … `postlar/09/N.png` (1080 × 1350, 34 ta) — **gitda yo'q** (≈ 34 MB), shu kompyuterda; `npm run insta` qayta yig'adi.
-- **Kadrlar keshi**: `kadrlar/*.jpg` — gitda yo'q; `npm run insta -- --yangi` qaytadan oladi.
+- **Slaydlar**: `postlar/01/1.png` … `postlar/09/N.png` (1080 × 1350, 34 ta, ≈ 34 MB) — gitda; `npm run insta` qayta yig'adi.
+- **Kadrlar keshi**: `kadrlar/*.jpg` — `npm run insta -- --yangi` qaytadan oladi.
 
 ## Qanday yig'iladi
 1. Lokal dev server demo aholi bilan: `DEMO=1 DEV_DATA=.dev-data-demo npm run dev` (ishlab chiqarish bazasiga tegilmaydi).
