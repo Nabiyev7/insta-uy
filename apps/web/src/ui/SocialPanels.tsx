@@ -81,7 +81,7 @@ interface PremiumSettings { readonly salute?: { readonly uzs: number; readonly c
 
 function Salute({ rules }: { readonly rules: CoinRules }): React.JSX.Element {
   const t = useT();
-  const premium = setting<PremiumSettings>('premium', {}).salute ?? { uzs: 10000, coins: 2000 };
+  const premium = setting<PremiumSettings>('premium', {}).salute ?? { uzs: 10000, coins: 1000 };
   const { isBusy, run } = useAction();
   const [text, setText] = useState('');
   const byCoins = (): void => { void run(async () => { await rpc('my_salute_coins', { p_text: text }); setText(''); await refreshProfile(); }, t('saluteSent')); };

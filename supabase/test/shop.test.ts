@@ -63,9 +63,11 @@ describe('to‘plamlar', () => {
     const { uid } = await house(5);
     const set = (await anon<Row[]>('api_sets')).find((s) => s.id === 'dam_olish')!;
     expect([...(set.items as string[])].sort()).toEqual(['dam_besedka', 'dam_mangal', 'gul_zor', 'yard_hammock']);
-    const full = 600 + 150 + 240 + 400;
-    expect(set.coins).toBe(Math.ceil(full * 0.8));
-    expect(await as(uid, 'my_buy_set_coins', { p_set: 'dam_olish' })).toBe(20_000 - Math.ceil(full * 0.8));
+    // 15-qadam: yangi narxlar (300 + 80 + 120 + 200) dan 20% chegirma, yaxlitlangan.
+    const full = 300 + 80 + 120 + 200;
+    expect(set.coins).toBe(560);
+    expect(full * 0.8).toBe(560);
+    expect(await as(uid, 'my_buy_set_coins', { p_set: 'dam_olish' })).toBe(20_000 - 560);
     for (const id of set.items as string[]) expect(await qty(uid, id)).toBe(1);
   });
   test('level yetmasa, tanga yetmasa, yopiq bo‘lsa — hech narsa berilmaydi', async () => {

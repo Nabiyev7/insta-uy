@@ -19,17 +19,17 @@ const user = async (): Promise<{ uid: string; tg: number }> => {
 beforeAll(async () => { db = await openDb(); });
 
 describe('ochilish: to‘lov — faqat Stars', () => {
-  test('sozlamalar: payments_enabled, payments_stars yoqiq; payments_card o‘chiq; 3 ta paket (60 / 125 / 250 ⭐)', async () => {
+  test('sozlamalar: payments_enabled, payments_stars yoqiq; payments_card o‘chiq; 3 ta paket (15-qadam: 50 / 100 / 200 ⭐)', async () => {
     const rows = (await db.query<Row>("select key, value from settings where key in ('payments_enabled','payments_stars','payments_card','premium')")).rows;
     const v = Object.fromEntries(rows.map((r) => [r.key, r.value]));
     expect([v.payments_enabled, v.payments_stars, v.payments_card]).toEqual([true, true, false]);
     const packs = (v.premium as { packs: { coins: number; bonus: number; stars: number }[] }).packs;
-    expect(packs.map((p) => [p.coins + p.bonus, p.stars])).toEqual([[3000, 60], [7000, 125], [16000, 250]]);
+    expect(packs.map((p) => [p.coins + p.bonus, p.stars])).toEqual([[5000, 50], [12000, 100], [28000, 200]]);
   });
   test('karta buyurtmasi rad (card_off); Stars buyurtmasi ishlaydi; Stars o‘chirilsa — rad', async () => {
     const { uid, tg } = await user();
     await expect(as(uid, 'my_order', { p_kind: 'coins', p_payload: { pack: 1 } })).rejects.toThrow('card_off');
-    expect(await svc<Row>('svc_stars_order', { p_telegram: tg, p_kind: 'coins', p_payload: { pack: 1 } })).toMatchObject({ stars: 60 });
+    expect(await svc<Row>('svc_stars_order', { p_telegram: tg, p_kind: 'coins', p_payload: { pack: 1 } })).toMatchObject({ stars: 50 });
     await db.query("update settings set value = 'false' where key = 'payments_stars'");
     await expect(svc('svc_stars_order', { p_telegram: tg, p_kind: 'coins', p_payload: { pack: 2 } })).rejects.toThrow('payments_off');
     await db.query("update settings set value = 'true' where key = 'payments_stars'");

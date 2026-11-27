@@ -13,9 +13,9 @@ const TAB_NAMES: Readonly<Record<PremiumTab, Key>> = { houses: 'ptHouses', decor
 const SOON: Readonly<Record<Exclude<PremiumTab, 'packs'>, Key>> = { houses: 'premiumSoonHouses', decor: 'premiumSoonDecor', cars: 'premiumSoonCars' };
 
 interface Pack { readonly coins: number; readonly bonus: number; readonly uzs: number; readonly stars?: number | null; readonly tag?: 'best' | 'popular' }
-/** Sozlama kelmaguncha: faqat Stars bilan sotiladigan 3 paket (13-qadam). */
+/** Sozlama kelmaguncha: faqat Stars bilan sotiladigan 3 paket (15-qadam narxlari). */
 const PACKS: readonly Pack[] = [
-  { coins: 2500, bonus: 500, uzs: 12000, stars: 60 }, { coins: 5500, bonus: 1500, uzs: 25000, stars: 125, tag: 'popular' }, { coins: 12000, bonus: 4000, uzs: 50000, stars: 250, tag: 'best' },
+  { coins: 5000, bonus: 0, uzs: 10000, stars: 50 }, { coins: 12000, bonus: 0, uzs: 20000, stars: 100, tag: 'popular' }, { coins: 28000, bonus: 0, uzs: 40000, stars: 200, tag: 'best' },
 ];
 
 function CoinPacks(): React.JSX.Element {

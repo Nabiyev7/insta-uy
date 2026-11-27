@@ -363,26 +363,26 @@ describe('Telegram Stars do‘koni', () => {
     await webhook(message(1500, '/start buy_pack1'));
     expect(sent.at(-1)!.text).toContain('tez kunda');
   });
-  test('Stars to‘liq yo‘l: buy_pack1 → hisob (60⭐) → pre_checkout → successful_payment → tanga; qaytarish (refund)', async () => {
+  test('Stars to‘liq yo‘l: buy_pack1 → hisob (50⭐) → pre_checkout → successful_payment → tanga; qaytarish (refund)', async () => {
     await db.query("update settings set value = 'true' where key = 'payments_enabled'");
     await botUser(1501, 'yulduz_odam2');
     // 13-qadam: kichik paketlar yo'q — 3 ta paket (60 / 125 / 250 ⭐). Avval tovar kartasi, keyin to'lov.
     await webhook(message(1501, '/dokon'));
     expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['buy:pack1', 'buy:pack2', 'buy:pack3', 'buy:salute', undefined]);
     await webhook(message(1501, '/start buy_pack1'));
-    expect(sent.at(-1)!.text).toContain('3 000 tanga');
+    expect(sent.at(-1)!.text).toContain('5 000 tanga');
     expect(sent.at(-1)!.buttons!.map((b) => b.data)).toEqual(['pay:pack1']);
     await webhook({ callback_query: { id: 'p', from: { id: 1501, first_name: 'Y' }, data: 'pay:pack1' } });
     const [, order, stars] = /^invoice:([0-9a-f-]{36}):(\d+):/.exec(sent.at(-1)!.text)!;
-    expect(stars).toBe('60');
+    expect(stars).toBe('50');
     await webhook(pre(1501, order!, 59));
     expect(sent.at(-1)!.text).toBe('precheckout:false');
-    await webhook(pre(1501, order!, 60));
+    await webhook(pre(1501, order!, 50));
     expect(sent.at(-1)!.text).toBe('precheckout:true');
-    await webhook(paid(1501, order!, 60, 'ch_1'));
-    await webhook(paid(1501, order!, 60, 'ch_1'));
+    await webhook(paid(1501, order!, 50, 'ch_1'));
+    await webhook(paid(1501, order!, 50, 'ch_1'));
     const coins = async (): Promise<number> => (await db.query<{ coins: number }>('select coins from profiles where telegram_id = 1501')).rows[0]!.coins;
-    expect(await coins()).toBe(3000);
+    expect(await coins()).toBe(5000);
     // Qaytarish: faqat admin; Stars — Telegram orqali.
     const payment = (await db.query<{ id: number }>("select id from payments where provider = 'stars' and external_id = 'ch_1'")).rows[0]!.id;
     const jwt = await botUser(1502, 'yulduz_admin');

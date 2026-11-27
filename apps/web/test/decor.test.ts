@@ -151,9 +151,10 @@ describe('yangi bezaklar', () => {
         expect(priceCoins >= lo && priceCoins <= hi, id).toBe(true);
       }
     };
-    range(['daraxt_olma', 'daraxt_orik', 'daraxt_gilos', 'daraxt_archa', 'daraxt_palma', 'gul_zor', 'gul_kamar'], 100, 300);
-    range(['dam_besedka', 'dam_mangal', 'dam_stol', 'suv_hovuz'], 400, 800);
-    range(['avto_sedan', 'avto_krossover', 'avto_sport', 'dam_basseyn'], 1000, 2500);
+    // 15-qadam: hamma narx × 0,5.
+    range(['daraxt_olma', 'daraxt_orik', 'daraxt_gilos', 'daraxt_archa', 'daraxt_palma', 'gul_zor', 'gul_kamar'], 50, 150);
+    range(['dam_besedka', 'dam_mangal', 'dam_stol', 'suv_hovuz'], 200, 400);
+    range(['avto_sedan', 'avto_krossover', 'avto_sport', 'dam_basseyn'], 500, 1250);
   });
   test('mashina avtomobil yo‘li ustida turadi', () => {
     for (const tier of [5]) {
@@ -167,7 +168,7 @@ describe('yangi bezaklar', () => {
 
 describe('lyuks bezaklar', () => {
   const luxe = DECOR.filter((d) => LUXE_MODELS.has(d.model));
-  const PRICES = { lux_pavilyon: 8000, lux_gril: 4000, lux_basseyn: 10_000, lux_favvora: 6000, lux_bog: 5000, lux_limuzin: 12_000, lux_superkar: 15_000, lux_jip: 10_000, lux_daraxt: 3000 };
+  const PRICES = { lux_pavilyon: 4000, lux_gril: 2000, lux_basseyn: 5000, lux_favvora: 3000, lux_bog: 2500, lux_limuzin: 6000, lux_superkar: 7500, lux_jip: 5000, lux_daraxt: 1500 };
   test('9 tasi katalogda, tanga bilan 5-leveldan, promtdagi narxda', () => {
     expect(LUXE_LEVEL).toBe(5);
     expect(Object.fromEntries(luxe.map((d) => [d.id, d.priceCoins]))).toEqual(PRICES);

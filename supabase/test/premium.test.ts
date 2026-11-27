@@ -98,7 +98,7 @@ describe('premium (to‘lov yoqilgan)', () => {
     await sql('update profiles set coins = 5000 where user_id = $1', [uid]);
     await expect(as(uid, 'my_salute_coins', { p_text: 'https://reklama.uz' })).rejects.toThrow('no_links');
     const r = await as<Row>(uid, 'my_salute_coins', { p_text: 'Tug‘ilgan kuning bilan!' });
-    expect(r.coins).toBe(3000);
+    expect(r.coins).toBe(4000); // 15-qadam: salyut 1 000 tanga
     expect(await svc('api_salute')).toMatchObject({ text: 'Tug‘ilgan kuning bilan!' });
     const o = await as<Row>(uid, 'my_order', { p_kind: 'salute', p_payload: { text: 'Ikkinchi salyut' } });
     await pay(o.id as string, o.amount as number);

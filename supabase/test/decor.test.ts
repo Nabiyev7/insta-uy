@@ -63,7 +63,7 @@ describe('lyuks bezaklar', () => {
       await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { garaj_oldi: 'lux_superkar' } })).rejects.toThrow('level_low');
     }
     const { uid, plot } = await house(5);
-    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'lux_superkar' })).toBe(35_000);
+    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'lux_superkar' })).toBe(42_500); // 15-qadam: 7 500 tanga
     await as(uid, 'my_place_decor', { p_plot: plot, p_places: { garaj_oldi: 'lux_superkar' } });
     expect((await placesOf(plot)).places).toEqual({ garaj_oldi: 'lux_superkar' });
     await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { old_hovli_chap: 'lux_superkar' } })).rejects.toThrow('wrong_spot');
@@ -223,7 +223,7 @@ describe('sotuv va tashqi ko‘rinish', () => {
     // Pulga esa level cheklovisiz (E qism).
     expect((await sql("select private.quote(p, 'decor', '{\"id\":\"gate_gold\"}') q from profiles p where user_id = $1", [uid]))[0]!.q).toBe(20000);
     await sql('update plot_state set tier = 5 where owner = $1', [uid]);
-    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'gate_gold' })).toBe(48_500);
+    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'gate_gold' })).toBe(49_250); // 15-qadam: 750 tanga
     await expect(as(await user(), 'my_buy_decor_coins', { p_id: 'avto_sedan' })).rejects.toThrow('level_low');
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'yoq' })).rejects.toThrow('not_found');
   });

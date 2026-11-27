@@ -142,18 +142,18 @@ describe('uy bezash va sovg‘a', () => {
     await expect(as(uid, 'my_edit_house', { p_plot: plot, p_bio: '', p_wall: 3, p_roof: 2 })).rejects.toThrow(/my_edit_house/);
     await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } })).rejects.toThrow('not_owned');
     await sql('update profiles set coins = 1000 where user_id = $1', [uid]);
-    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'sign_nick' })).toBe(800);
+    expect(await as(uid, 'my_buy_decor_coins', { p_id: 'sign_nick' })).toBe(900); // 15-qadam: 100 tanga
     await as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } });
     for (const id of ['gate_wood', 'tree_anor', 'daraxt_olma', 'avto_sedan']) await expect(as(uid, 'my_buy_decor_coins', { p_id: id })).rejects.toThrow('level_low');
     await sql('update profiles set coins = 350 where user_id = $1', [uid]);
     await sql('update plot_state set tier = 5 where plot_id = $1', [plot]);
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_statue' })).rejects.toThrow('not_enough_coins');
     await sql('update plot_state set tier = 1 where plot_id = $1', [plot]);
-    // Kuchaytirish narxi: 2-level 300, 3-level 1 000 (docs/chat/TANGA-NARXLAR.md).
-    expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(50);
+    // Kuchaytirish narxi (15-qadam): 2-level 150, 3-level 500, 4-level 1 000, 5-level 1 750 (docs/chat/TANGA-NARXLAR.md).
+    expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(200);
     expect(await as(uid, 'my_tier_coins', { p_plot: plot }).catch((e: Error) => e.message)).toBe('not_enough_coins');
-    await sql('update profiles set coins = 6500 where user_id = $1', [uid]);
-    for (const left of [5500, 3500, 0]) expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(left);
+    await sql('update profiles set coins = 3250 where user_id = $1', [uid]);
+    for (const left of [2750, 1750, 0]) expect(await as(uid, 'my_tier_coins', { p_plot: plot })).toBe(left);
     await expect(as(uid, 'my_tier_coins', { p_plot: plot })).rejects.toThrow('max_tier');
     await expect(sql('update plot_state set tier = 6 where plot_id = $1', [plot])).rejects.toThrow(/tier_check/);
   });
@@ -165,7 +165,7 @@ describe('uy bezash va sovg‘a', () => {
     await sql('update plot_state set tier = 5 where owner = $1', [uid]);
     await as(uid, 'my_buy_decor_coins', { p_id: 'special_peacock' });
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_peacock' })).rejects.toThrow('sold_out');
-    expect(await as(uid, 'my_profile')).toMatchObject({ coins: 96000 });
+    expect(await as(uid, 'my_profile')).toMatchObject({ coins: 98000 }); // 15-qadam: 2 000 tanga
   });
 
   test('uyni sovg‘a qilish yo‘q (faqat bezak sovg‘asi)', async () => {
