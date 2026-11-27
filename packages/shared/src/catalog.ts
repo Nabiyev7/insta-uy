@@ -73,7 +73,8 @@ export interface DecorItem {
   /** false — sotuvdan olingan (olganlarda qoladi). */
   readonly isActive: boolean;
 }
-const SLOT_SPOTS: Readonly<Record<DecorSlot, readonly SpotKind[]>> = {
+/** Kategoriya → joy nuqtalari (bazada `private.slot_spots`). */
+export const SLOT_SPOTS: Readonly<Record<DecorSlot, readonly SpotKind[]>> = {
   fence: ['fence'], gate: ['gate'], path: ['path'], tree: ['corner', 'right', 'left'], yard: ['right', 'left'], water: ['right', 'left'], car: ['car', 'left'], light: ['lamps'], pet: ['pet', 'corner', 'right'],
   special: ['right', 'left'], sign: ['sign'], roof: ['roof'],
 };

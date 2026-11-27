@@ -22,7 +22,7 @@
 
 ## Uylar
 - **Premium tovarlar** (faqat pulga, do'konda "⭐ Premium" bo'limi — TUZATISH-2, 6-band): **maxsus dizaynli uylar, bezaklar, mashinalar** — egasi bilan Blender'da chiziladi, narxlarni egasi belgilaydi (2026-11-26).
-  - Premium uy qarorlari (egasi, 2026-11-27): uslublar **A. Zamonaviy villa** (tekis tom, katta oynalar, infinity basseyn) va **C. Shisha penthaus** (shisha kub, tomda bog' va jakuzi); qo'shimchalar — **tungi yorug'lik** (iliq derazalar, basseyn nuri, chiroq chiziqlari) va **oltin nik + darvoza lavhasi + uchastka hoshiyasi**; tepadan tanilsin (tom terrasasi/basseyn); ≤ 3 500 uchburchak + LOD; uchastka — **villa, qasr va hovli** (hovliga kichik versiya). Avval **1 ta namuna** Blender'da — egasi "yasa" deganda.
+  - Premium uy qarorlari (egasi, 2026-11-27): uslublar **A. Zamonaviy villa** (tekis tom, katta oynalar, infinity basseyn) va **C. Shisha penthaus** (shisha kub, tomda bog' va jakuzi); qo'shimchalar — **tungi yorug'lik** (iliq derazalar, basseyn nuri, chiroq chiziqlari) va **oltin nik + darvoza lavhasi + uchastka hoshiyasi**; tepadan tanilsin (tom terrasasi/basseyn); ≤ 3 500 uchburchak + LOD; uchastka — **villa, qasr va hovli** (hovliga kichik versiya). Avval **1 ta namuna** Blender'da — egasi "yasa" deganda. **Eskiz A (2026-11-27): `blender/premium-namuna.blend`, `docs/chat/premium-A-*.png` — 3 qavat (premiumga istisno: oddiy uylar 2 qavatdan oshmaydi), 2 mashinalik garaj, terrasalar, infinity basseyn, pergola.**
 - **Login + parol** — kod bor, o'chiq; sayt yaxshi ishlay boshlagach to'liq qaytariladi (2026-11-25).
 - 4–10-level uy modellarini qayta ko'rib chiqish (hozircha maksimal level — 3).
 - Kvartira egalari uchun balkon bezaklari va levellar.
@@ -46,3 +46,14 @@
 ## Vaqtincha o'chirilganlar (2026-11-26)
 - **Xazina ovi** — vaqtincha o'chirilgan, keyin ko'rib chiqiladi (kod qoladi; admin → Sozlamalar → `treasure_enabled`).
 - **Tanga yuborish** (bir odamdan boshqasiga) — olib tashlangan (kod qoladi; `coins_transfer_enabled`).
+
+## Noyob obyektlar (egasi, 2026-11-27) — hozir QILINMAYDI, avval Blender'da yasaladi
+- Uylardan tashqari **tayyor noyob obyektlar**: bino, kema/yaxta, samolyot, kasalxona va h.k. — **har biri bitta, bitta egasi**. Avval Blender'da yasaladi, keyin shaharga qo'shilib sotuvga chiqadi.
+- Joylar (keyin hal qilinadi, egasi "hammasi" dedi): mavjud 170 tijorat joyi va 12 biznes minorasi, stadion; ko'l/daryo (kema); yangi zona — aeroport/port (bosh reja qulfini ochish kerak); bo'sh uchastkalar.
+- Egasi oladi: **oltin nik va lavha**, **Instagram havolasi** (obyektni bossa), **o'z nomi** (so'z filtri bilan).
+- Sotuv: **abadiy (qat'iy narx)** yoki **oylik ijara**; yoki **auksion** (saytda va botda). Aldash/cho'zishga qarshi variantlar egasiga taklif qilingan: (1) stavka oldindan Stars bilan to'lanadi, oshirilsa avtomatik qaytariladi; (2) 10% zalog + 24 soatda to'lov. Umumiy qoidalar: oxirgi 5 daqiqada stavka → +5 daqiqa, qat'iy muddat (masalan 3 kun), minimal qadam, boshlang'ich va "hoziroq sotib olish" narxi, faqat Telegram + uyi borlar, o'ziga stavka yo'q, ochiq tarix, bot xabarlari, admin bekor qilishi. **Egasi tanladi (2026-11-27): (1) stavka oldindan Stars bilan to'lanadi, oshirilsa darhol avtomatik qaytariladi** (Stars hisobiga, komissiyasiz; auksion bekor bo'lsa — hammaga qaytadi; qoidalarda "pul Stars bo'lib qaytadi" deb ochiq yoziladi).
+- Auksion muddati: admin tanlaydi — 24 soat / 3 kun (standart) / 7 kun; tugash vaqti 20:00–22:00 (Toshkent); boshlanishida kanal posti + bot xabari, tugashiga 1 soat qolganda eslatma.
+- Stavka bo'lmasa: g'olibsiz yopiladi; admin tugmasi (yoki avtomatik sozlama): (a) narxni −20% qilib qayta qo'yish, (b) oddiy sotuvga o'tkazish, (c) keyinga qoldirish.
+- **Oddiy sotuv (kim birinchi)** — oddiyroq modellar uchun: "Sotib olish" bosilganda 5 daqiqa band; `pre_checkout_query` da sotilgan bo'lsa rad (pul yechilmaydi); bir vaqtda ikki to'lov bo'lsa — ikkinchisiga avtomatik qaytarish; sotilganda kanalga "@nik … sotib oldi!" posti.
+- Buyurtma (zakaz): **botda buyurtma shakli** (nima, namuna rasm, joy, kontakt → admin panel ro'yxati) **va** Instagram kommentlaridan (egasi qo'lda admin panelga kiritadi).
+- Qoida: haqiqiy brend, logo, davlat ramzi yo'q (PLAN §2) — o'xshash, o'ylab topilgan obyektlar.

@@ -29,12 +29,16 @@ const refreshShop = async (): Promise<void> => { await Promise.all([refreshProfi
 function Price({ coins, old }: { readonly coins: number; readonly old?: number }): React.JSX.Element {
   return <span className="cost"><Icon name="coin" />{old !== undefined && old > coins && <s className="old">{money(old)}</s>}{money(coins)}</span>;
 }
-/** Chegirma belgisi: "-30%" va tugashiga qolgan vaqt. */
+/** Chegirma belgisi: "-30%" (rasm ustida). */
 function SaleTag({ row }: { readonly row: CatalogRow }): React.JSX.Element | null {
+  if (!isOnSale(row)) return null;
+  return <i className="flag sale"><Icon name="fire" />-{row.sale}%</i>;
+}
+/** Tugashiga qolgan vaqt ("2 kun 5 soat qoldi") — narx ostida. */
+function SaleLeft({ row }: { readonly row: CatalogRow }): React.JSX.Element | null {
   const t = useT();
   if (!isOnSale(row) || !row.saleEnds) return null;
-  const left = timeLeft(row.saleEnds, Date.now(), { day: t('wDay'), hour: t('wHour'), min: t('wMin') });
-  return <i className="flag sale"><Icon name="fire" />-{row.sale}% · {t('saleLeft').replace('{t}', left)}</i>;
+  return <small className="sale-left">{t('saleLeft').replace('{t}', timeLeft(row.saleEnds, Date.now(), { day: t('wDay'), hour: t('wHour'), min: t('wMin') }))}</small>;
 }
 
 interface GoodProps { readonly row: CatalogRow; readonly level: number; readonly isPicked: boolean; readonly onPick: () => void }
@@ -51,6 +55,7 @@ function Good({ row, level, isPicked, onPick }: GoodProps): React.JSX.Element {
       {qty > 0 && <i className="flag mine">{t('have')}{qty > 1 ? `: ${qty}` : ''}</i>}
       <b>{row[lang]}</b>
       <span className="row between"><Price coins={row.coins} old={isOnSale(row) ? row.oldCoins : undefined} />{row.left !== null && row.left > 0 ? <small>{row.left} {t('left')}</small> : row.from && <small>{t('seasonal')}</small>}</span>
+      <SaleLeft row={row} />
     </button>
   );
 }
@@ -182,7 +187,7 @@ export function ShopPanel(): React.JSX.Element {
     <Sheet title={t('shop')} variant="full" extra={wallet} footer={footer}>
       {parts}
       <div className="tabs" role="tablist" aria-label={t('shopCoins')}>
-        {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{x.tab === 'sale' && <Icon name="fire" />}{t(TAB_NAMES[x.tab])}</button>)}
+        {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{t(TAB_NAMES[x.tab])}</button>)}
       </div>
       {(loaded.hasError || !current) && <LoadState of={loaded} isEmpty={!current} empty={t('shopEmpty')} />}
       <div className="goods">

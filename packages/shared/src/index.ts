@@ -5,6 +5,7 @@ export { riverStrips } from './masterplan/network.ts';
 export * from './masterplan/codec.ts';
 export * from './catalog.ts';
 export * from './anchors.ts';
+export * from './pricing.ts';
 export * from './exterior.ts';
 export * from './center.ts';
 export * from './city.ts';

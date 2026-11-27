@@ -192,8 +192,28 @@ const packScreens = async () => {
   console.log('✅ tanga paketlari: 360/390 px, uz/ru — ustma-ust yo‘q');
 };
 
+/** 15-qadam (4): do'kondagi "Chegirmalar" bo'limi — eski narx chizilgan, foiz va qolgan vaqt. */
+const saleScreens = async () => {
+  const token = await server.adminToken();
+  const starts = new Date(Date.now() - 60_000).toISOString();
+  const ends = new Date(Date.now() + (2 * 24 + 5) * 3_600_000 + 120_000).toISOString();
+  await server.call('admin_discount_set', { p_ids: ['dam_stol', 'pet_dog', 'gul_kamar', 'avto_sedan'], p_pct: 30, p_starts: starts, p_ends: ends }, token);
+  const page = await make(PHONE);
+  await page.addInitScript(() => localStorage.setItem('shopPick', JSON.stringify({ part: 'coins', tab: 'sale', picked: null })));
+  await open(page);
+  await panel(page, { kind: 'shop' });
+  await page.getByRole('tab', { name: 'Chegirmalar' }).click();
+  await page.locator('.flag.sale').first().waitFor({ timeout: 30_000 });
+  const text = `${await page.locator('.flag.sale').first().innerText()} ${await page.locator('.good .sale-left').first().innerText()}`;
+  if (!/-30%/.test(text) || !/2 kun 5 soat/i.test(text)) throw new Error(`Chegirma belgisi noto'g'ri: ${text}`);
+  await shot(page, 'ui-dokon-chegirma', 900);
+  await page.context().close();
+  console.log('✅ chegirmalar bo‘limi: -30%, qolgan vaqt');
+};
+
 try {
   await packScreens();
+  await saleScreens();
   const owner = await guestScreens();
   await ownerScreens(owner);
   await otherScreens(owner);

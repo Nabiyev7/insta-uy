@@ -171,11 +171,13 @@ try {
     await desk.getByRole('tab', { name: tab, exact: true }).click();
     if (id) await desk.locator(`.good[data-id="${id}"]`).click();
   };
-  await step("bezak: 1-levelda yopiq; 5-levelda do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
+  await step("bezak: 1-levelda olma daraxti yopiq (2-leveldan, 'Uyni kuchaytirish'); 5-levelda do'kon → sotib olish → hovliga qo'yish → ko'chirish", async () => {
     const token = await adminToken();
     const me = (await call('admin_users', { p_q: `tg${ODAM}` }, token))[0];
     await shop('Bog‘', 'daraxt_olma');
-    assert.ok(await desk.getByRole('button', { name: /^Olma daraxti: 5-levelda/ }).isDisabled(), '1-levelda bezak sotilmasin');
+    // 15-qadam: olma daraxti 2-leveldan; qulf o'rnida "Uyni kuchaytirish" (sotib olish tugmasi yo'q).
+    await desk.getByRole('button', { name: /^Olma daraxti: 2-levelda ochiladi\. Uyni kuchaytirish/ }).waitFor();
+    assert.equal(await desk.getByRole('button', { name: /^Olma daraxti: Olish/ }).count(), 0, '1-levelda olma daraxti sotilmasin');
     const plot = await desk.evaluate(() => window.__app.getState().profile.plots[0].plot);
     const coins = await desk.evaluate(() => window.__app.getState().boot.settings.coins);
     await call('admin_setting', { p_key: 'coins', p_value: { ...coins, tier: { 2: 1, 3: 1, 4: 1, 5: 1 }, maxTier: 5 } }, token);
@@ -228,15 +230,46 @@ try {
     await desk.mouse.click(500, 400);
     await desk.locator('.nav5').waitFor();
   });
-  await step('admin: mavjud modeldan yangi tovar', async () => {
+  await step('admin: Bezaklar — ro‘yxat, arxiv, narx joyida, yangi tovar (level avtomatik), chegirma', async () => {
+    const docs = path.join(root, 'docs/chat');
     await admin.getByRole('button', { name: 'Bezaklar' }).click();
+    const table = admin.locator('table').first();
+    await table.getByText("Tosh yo'lak").waitFor();
+    // So'm ustuni yo'q; eski tovarlar faqat "Arxiv"da.
+    assert.equal(await admin.locator('th', { hasText: "So'm" }).count(), 0, "so'm ustuni yo'q");
+    assert.equal(await table.getByText('car_sedan', { exact: true }).count(), 0, 'eski sedan asosiy ro‘yxatda yo‘q');
+    await admin.screenshot({ path: path.join(docs, 'admin-bezaklar.png') });
+    await admin.getByRole('tab', { name: /Arxiv/ }).click();
+    await table.getByText('car_sedan', { exact: true }).waitFor();
+    await admin.getByRole('tab', { name: /^Bezaklar/ }).click();
+    // Narx joyida: 40 → 60, level avtomatik (1 → 1).
+    const price = admin.getByLabel("Tosh yo'lak: tanga narxi");
+    await price.fill('60');
+    await price.blur();
+    await admin.getByText('Saqlandi').waitFor();
+    const token = await adminToken();
+    const rows = async () => call('admin_decor_list', {}, token);
+    assert.equal((await rows()).find((r) => r.id === 'path_stone').price_coins, 60);
+    // Yangi tovar: model → nom → kategoriya → narx (level taklifi) → oldindan ko'rish → Saqlash.
     await admin.getByRole('button', { name: '+ Yangi tovar' }).click();
-    await admin.getByLabel('ID', { exact: true }).fill('tree_anor_yosh');
-    await admin.getByLabel('3D model').selectOption('tree_anor');
-    await admin.getByLabel('Nomi (uz)').fill('Yosh anor');
-    await admin.getByLabel('Nomi (ru)').fill('Молодой гранат');
+    await admin.getByRole('radio', { name: 'tree_anor' }).click();
+    await admin.getByLabel("O'zbekcha").fill('Yosh anor');
+    await admin.getByLabel('Ruscha').fill('Молодой гранат');
+    await admin.getByLabel('Kategoriya (joy nuqtalari shundan)').selectOption('tree');
+    await admin.getByLabel('Tanga narxi').fill('300');
+    await admin.getByRole('option', { name: 'Avto (3-level)' }).waitFor({ state: 'attached' });
+    await admin.locator('.shop-card').getByText('3-leveldan').waitFor();
+    await admin.screenshot({ path: path.join(docs, 'admin-yangi-tovar.png') });
     await admin.getByRole('button', { name: 'Saqlash' }).click();
-    await admin.getByText('Yosh anor').waitFor();
+    await table.getByText('Yosh anor').waitFor();
+    assert.deepEqual((({ min_level, level_auto, slot }) => ({ min_level, level_auto, slot }))((await rows()).find((r) => r.id === 'yosh_anor')), { min_level: 3, level_auto: true, slot: 'tree' });
+    // Chegirma: belgilash → "Chegirma…" → 30% → Qo'yish.
+    await admin.getByLabel('Yosh anor: belgilash').check();
+    await admin.getByRole('button', { name: 'Chegirma…' }).click();
+    await admin.getByLabel('Chegirma, %').fill('30');
+    await admin.getByRole('button', { name: "Qo'yish" }).click();
+    await table.getByText('−30%').waitFor();
+    assert.equal((await call('api_catalog', {}, null)).find((c) => c.id === 'yosh_anor').coins, 210);
     await shot(admin, 'admin-decor');
   });
 

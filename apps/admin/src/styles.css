@@ -61,3 +61,35 @@ textarea.json { width: 100%; min-height: 120px; font-family: ui-monospace, monos
   .side button { white-space: nowrap; }
   main { padding: 16px; }
 }
+/* 15-qadam: Bezaklar bo'limi */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: #fff; }
+.seg button { border: 0; background: none; padding: 7px 14px; cursor: pointer; font-weight: 600; }
+.seg button[aria-selected='true'] { background: var(--tile); color: #fff; }
+.seg button[aria-selected='true'] .muted { color: oklch(100% 0 0 / 0.75); }
+.filters .input { min-width: 0; }
+.bulk { background: oklch(95% 0.05 90); border: 1px solid oklch(85% 0.08 90); border-radius: 10px; padding: 8px 10px; position: sticky; top: 0; z-index: 2; }
+.thumb { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; background: oklch(95% 0.02 85); display: block; }
+.input.coins { width: 92px; padding: 5px 8px; }
+.input.level { padding: 5px 6px; }
+button.tag { border: 0; cursor: pointer; }
+.small { font-size: 12px; }
+.link { border: 0; background: none; color: var(--tile); cursor: pointer; padding: 6px 0; font-weight: 600; text-align: left; }
+.decor-page h3 { margin-top: 0; }
+.decor-cols { display: grid; grid-template-columns: 1fr 240px; gap: 22px; align-items: start; }
+.decor-main { display: grid; gap: 8px; min-width: 0; }
+.step { margin: 10px 0 0; font-weight: 700; color: var(--ink); }
+.model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; max-height: 300px; overflow: auto; padding: 2px; }
+.model-grid button { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 6px 4px; cursor: pointer; display: grid; justify-items: center; gap: 2px; }
+.model-grid button img { width: 56px; height: 56px; object-fit: contain; }
+.model-grid button small { font-size: 10px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-grid button[aria-checked='true'] { border: 2px solid var(--tile); background: oklch(95% 0.04 200); }
+.more { background: oklch(97% 0.01 85); border-radius: 10px; padding: 10px; }
+.decor-preview { position: sticky; top: 12px; display: grid; gap: 8px; }
+.shop-card { position: relative; background: oklch(26% 0.02 220); color: #fff; border-radius: 16px; padding: 10px; display: grid; gap: 4px; }
+.shop-card i { position: absolute; top: 8px; left: 8px; background: #e0465a; color: #fff; font-style: normal; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 7px; }
+.shop-card .frame { display: grid; place-items: center; aspect-ratio: 4 / 3; background: oklch(32% 0.02 220); border-radius: 12px; }
+.shop-card .frame img { width: 70%; }
+.shop-card .cost { color: #f3cd68; font-weight: 800; }
+.shop-card .muted { color: oklch(80% 0.02 220); }
+.discount-form { margin-bottom: 12px; border-left: 4px solid #e0465a; }
+@media (max-width: 760px) { .decor-cols { grid-template-columns: 1fr; } }

@@ -249,10 +249,10 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await raise(page, tgId, 1, -coins);
     await reload(1);
     await openMine();
-    await sheet.getByText(T.needMore.replace('{n}', '300')).waitFor();
+    await sheet.getByText(T.needMore.replace('{n}', '150')).waitFor();
     await sheet.getByRole('button', { name: T.addCoins }).click();
     await heading(T.coins);
-    await raise(page, tgId, 1, 300);
+    await raise(page, tgId, 1, 150);
     await reload(1);
     await openMine();
     await sheet.locator('.upgrade').click();
@@ -272,7 +272,9 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await goods('dam_basseyn').getByText(`5-${T.atLevel}`).waitFor();
     await goods('lux_pavilyon').getByText(`5-${T.atLevel}`).waitFor();
     await goods('dam_basseyn').click();
-    assert.ok(await sheet.locator('footer .btn:not(.pay-soon)').last().isDisabled(), '1-levelda bezak sotilmasin');
+    // 15-qadam: level yetmasa — "N-levelda ochiladi" yozuvi va "Uyni kuchaytirish" (sotib olish tugmasi yo'q).
+    await sheet.locator('footer .locked-note').getByText(`5-${T.opensAt}`).waitFor();
+    await sheet.locator('footer').getByRole('button', { name: new RegExp(T.upgradeHouse) }).waitFor();
     assert.equal(await sheet.locator('footer .pay-soon').count(), 0, 'to‘lov o‘chiq — so‘m tugmasi yo‘q');
     // Premium bo'limi: 4 tab, bo'sh kategoriyada "Tez kunda" kartasi.
     await sheet.getByRole('tab', { name: T.shopPremium }).click();
@@ -291,7 +293,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await goods('daraxt_olma').click();
     const before = await app(() => window.__app.getState().profile.coins);
     await sheet.locator('footer .btn:not(.pay-soon)').last().click();
-    await waitFor(() => app((n) => window.__app.getState().profile.coins === n, before - 200), 'tanga kamayishi');
+    await waitFor(() => app((n) => window.__app.getState().profile.coins === n, before - 100), 'tanga kamayishi');
     await goods('daraxt_olma').getByText(T.have).waitFor();
     await sheet.getByRole('button', { name: T.putYard }).click();
     await heading(T.decorate);
