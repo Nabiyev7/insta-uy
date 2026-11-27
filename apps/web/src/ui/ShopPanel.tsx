@@ -1,4 +1,5 @@
 /** Do'kon: tablar, rasmli kartochkalar, pastda "Sinab ko'rish" va "Olish". Mashina tanlash oynasi ham shu yerda. */
+import { isOnSale, timeLeft } from '../logic/sale.ts';
 import { isOwnerAdmin } from '../logic/admin.ts';
 import { useEffect, useState } from 'react';
 import { BUZZ, buzz, tryDecor } from '../app/actions.ts';
@@ -13,7 +14,7 @@ import { PremiumShop } from './PremiumShop.tsx';
 import { Icon } from './icons.tsx';
 import { DecorImage, LoadState, Sheet, useAction, useLoad } from './kit.tsx';
 
-const TAB_NAMES: Readonly<Record<ShopTab, Key>> = { new: 'tabNew', yard: 'tabYard', garden: 'tabGarden', car: 'tabCar', luxe: 'tabLuxe', pet: 'tabPet', set: 'tabSet', special: 'tabSpecial' };
+const TAB_NAMES: Readonly<Record<ShopTab, Key>> = { sale: 'tabSale', new: 'tabNew', yard: 'tabYard', garden: 'tabGarden', car: 'tabCar', luxe: 'tabLuxe', pet: 'tabPet', set: 'tabSet', special: 'tabSpecial' };
 const useAdmin = (): boolean => useApp((s) => isOwnerAdmin(s.profile));
 
 interface BestPlot { readonly level: number; readonly id: string | null }
@@ -25,8 +26,15 @@ const useBestPlot = (): BestPlot => {
 };
 const refreshShop = async (): Promise<void> => { await Promise.all([refreshProfile(), refreshCatalog()]); };
 
-function Price({ coins }: { readonly coins: number }): React.JSX.Element {
-  return <span className="cost"><Icon name="coin" />{money(coins)}</span>;
+function Price({ coins, old }: { readonly coins: number; readonly old?: number }): React.JSX.Element {
+  return <span className="cost"><Icon name="coin" />{old !== undefined && old > coins && <s className="old">{money(old)}</s>}{money(coins)}</span>;
+}
+/** Chegirma belgisi: "-30%" va tugashiga qolgan vaqt. */
+function SaleTag({ row }: { readonly row: CatalogRow }): React.JSX.Element | null {
+  const t = useT();
+  if (!isOnSale(row) || !row.saleEnds) return null;
+  const left = timeLeft(row.saleEnds, Date.now(), { day: t('wDay'), hour: t('wHour'), min: t('wMin') });
+  return <i className="flag sale"><Icon name="fire" />-{row.sale}% · {t('saleLeft').replace('{t}', left)}</i>;
 }
 
 interface GoodProps { readonly row: CatalogRow; readonly level: number; readonly isPicked: boolean; readonly onPick: () => void }
@@ -39,10 +47,10 @@ function Good({ row, level, isPicked, onPick }: GoodProps): React.JSX.Element {
   return (
     <button type="button" className={`good ${state}`} aria-label={row[lang]} aria-pressed={isPicked} data-id={row.id} onClick={onPick}>
       <span className="frame"><DecorImage model={row.model} />{note && <em>{state === 'locked' && <Icon name="lock" />}{note}</em>}</span>
-      {row.isNew && <i className="flag">{t('isNew')}</i>}
+      {isOnSale(row) ? <SaleTag row={row} /> : row.isNew && <i className="flag">{t('isNew')}</i>}
       {qty > 0 && <i className="flag mine">{t('have')}{qty > 1 ? `: ${qty}` : ''}</i>}
       <b>{row[lang]}</b>
-      <span className="row between"><Price coins={row.coins} />{row.left !== null && row.left > 0 ? <small>{row.left} {t('left')}</small> : row.from && <small>{t('seasonal')}</small>}</span>
+      <span className="row between"><Price coins={row.coins} old={isOnSale(row) ? row.oldCoins : undefined} />{row.left !== null && row.left > 0 ? <small>{row.left} {t('left')}</small> : row.from && <small>{t('seasonal')}</small>}</span>
     </button>
   );
 }
@@ -52,7 +60,8 @@ function SetCard({ set, rows, level, isPicked, onPick }: SetProps): React.JSX.El
   const t = useT();
   const lang = useApp((s) => s.lang);
   const need = Math.max(...rows.map((c) => c.min));
-  const full = rows.reduce((n, c) => n + c.coins, 0);
+  // To'plam narxi chegirmasiz (asosiy narxlardan) — server ham shunday.
+  const full = rows.reduce((n, c) => n + (c.oldCoins ?? c.coins), 0);
   const isLocked = need > 1 && level < need && !useAdmin();
   return (
     <button type="button" className={`good set ${isLocked ? 'locked' : ''}`} aria-label={set[lang]} aria-pressed={isPicked} data-id={set.id} onClick={onPick}>
@@ -173,7 +182,7 @@ export function ShopPanel(): React.JSX.Element {
     <Sheet title={t('shop')} variant="full" extra={wallet} footer={footer}>
       {parts}
       <div className="tabs" role="tablist" aria-label={t('shopCoins')}>
-        {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{t(TAB_NAMES[x.tab])}</button>)}
+        {tabs.map((x) => <button type="button" role="tab" key={x.tab} aria-selected={x.tab === current?.tab} onClick={() => { setTab(x.tab); setPicked(null); }}>{x.tab === 'sale' && <Icon name="fire" />}{t(TAB_NAMES[x.tab])}</button>)}
       </div>
       {(loaded.hasError || !current) && <LoadState of={loaded} isEmpty={!current} empty={t('shopEmpty')} />}
       <div className="goods">

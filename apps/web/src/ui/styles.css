@@ -426,3 +426,9 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 /* Egasi-admin: kichik belgi (faqat unga). */
 .admin-tag { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; background: rgba(255, 255, 255, 0.14); opacity: 0.85; }
 .admin-place { border-top: 1px dashed rgba(255, 255, 255, 0.18); padding-top: 10px; }
+
+/* 15-qadam: chegirma belgisi va eski narx. */
+.flag.sale { background: #e0465a; color: #fff; display: inline-flex; align-items: center; gap: 3px; max-width: calc(100% - 12px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flag.sale svg { width: 12px; height: 12px; flex: none; }
+.cost s.old { opacity: .55; font-weight: 500; margin-right: 4px; font-size: .85em; }
+.need-coins.locked-note { opacity: .8; }
