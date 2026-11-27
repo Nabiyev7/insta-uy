@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['packages/*/test/**/*.test.ts', 'server/test/**/*.test.ts', 'supabase/test/**/*.test.ts', 'apps/*/test/**/*.test.ts', 'video/test/**/*.test.ts'],
+    include: ['packages/*/test/**/*.test.ts', 'server/test/**/*.test.ts', 'supabase/test/**/*.test.ts', 'apps/*/test/**/*.test.ts', 'video/test/**/*.test.ts', 'insta/test/**/*.test.ts'],
     testTimeout: 60_000,
     // Har baza testi o'z PGlite'ini ochadi: ko'p parallel ishchi xotirani to'ldirib, ishchini yiqitardi (exit 2147483651).
     maxWorkers: 3,

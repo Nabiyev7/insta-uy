@@ -17,3 +17,6 @@ __pycache__/
 blender/*.blend
 # Ishlab chiqarish zaxiralari (faqat shu kompyuterda)
 .zaxira/
+# Instagram postlari: katta media (npm run insta qayta yig'adi) — docs/insta/README.md
+docs/insta/postlar/
+docs/insta/kadrlar/

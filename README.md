@@ -95,3 +95,9 @@ Har kuni 22:10 UTC (Toshkent 03:10) zaxira ikki joyga yoziladi: Supabase Storage
 Bo'laklar bo'lsa avval birlashtiring: `cat cityland-<sana>.json.gz.part* > cityland-<sana>.json.gz`.
 
 Diqqat: kirish akkauntlari (`auth.users`) bu zaxirada yo'q — ular Supabase'ning o'z zaxirasidan (pullik tarif) tiklanadi; aks holda profillar tiklanadi, lekin odamlar botda `/start` bilan qayta kiradi. Avval sinov bazasida sinab ko'ring.
+
+## Instagram postlari
+`npm run insta` — 9 ta ochilish posti (1080 × 1350) lokal demo shahardan, saytning Foto rejimi grafikasi bilan. Batafsil: [docs/insta/README.md](docs/insta/README.md).
+
+## Foto rejimi namunalari
+`node e2e/foto.mjs` (dev server `DEMO=1` bilan) — `docs/chat/ui-foto-*.png`, `foto-namuna-*.jpg` va kadr olish vaqti (CPU ×6 da ≤ 3 s).

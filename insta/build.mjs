@@ -15,7 +15,7 @@ const OUT = path.join(root, 'docs/insta');
 const FRAMES = path.join(OUT, 'kadrlar');
 const isFresh = process.argv.includes('--yangi');
 /** Qurilish effekti kadri: kamera uchib bo'lgach, uy ko'tarilayotgan payt. */
-const BUILD_SHOT_MS = 4200;
+const BUILD_SHOT_MS = 2300;
 
 // ---------- 1. matnlar.md ----------
 export const parsePosts = (md) => md.split(/^## /m).slice(1).map((block) => {
@@ -37,10 +37,12 @@ export const parsePosts = (md) => md.split(/^## /m).slice(1).map((block) => {
 const NICKS = ['sening_niking', 'dostim_uyi', 'qoshnim', 'yangi_qoshni', 'mahalla_guli', 'bogbon', 'tinch_hovli', 'kun_nuri', 'oltin_uy', 'yashil_hovli', 'shirin_uy', 'kichik_bog',
   'gul_hovli', 'ona_uyi', 'yorug_uy', 'shahar_ahli', 'quyoshli_uy', 'mehmon_uyi', 'ishkom_uy', 'baxtli_uy', 'chinor_tagi', 'anor_bog'];
 const A = (tilt = 'high') => ({ light: 'golden', tilt });
+/** Kamera qaraydigan nuqtani `d` metr oldinga suradi — asosiy uy kadrning pastroq qismiga tushadi (sarlavha ostida qolmasin). */
+const ahead = (p, yaw, d) => ({ x: p.x - Math.sin(yaw) * d, z: p.z - Math.cos(yaw) * d });
 const D = (tilt = 'mid') => ({ light: 'night', tilt });
 /** Kadr: kamera (spot — eng zich mahalla, house — undagi uy, free — yaqin bo'sh joy) va Foto sozlamasi; `prep` — uy holati;
  *  `nicks`: 'all' — hamma uyda nik, 'one' — faqat asosiy uyda, sukut — yo'q (sarlavha ortida chalkashlik bo'lmasin). */
-const KADRLAR = {
+export const KADRLAR = {
   'tepa-oltin': { at: () => ({ x: 0, z: 140, yaw: 0.6, height: 230 }), photo: A('mid') },
   'tepa-oltin-2': { at: (c) => ({ x: c.spot.x, z: c.spot.z, yaw: 0.3, height: 140 }), photo: A('mid') },
   'tepa-oltin-3': { at: () => ({ x: 0, z: 0, yaw: 2.2, height: 300 }), photo: A('low') },
@@ -50,13 +52,13 @@ const KADRLAR = {
   'mahalla-oltin-2': { at: (c) => ({ x: c.spot.x, z: c.spot.z, yaw: -0.6, height: 70 }), photo: A('mid') },
   'bosh-joy': { at: (c) => ({ x: c.free.x, z: c.free.z, yaw: 0.7, height: 30 }), photo: { ...A('mid'), showMarks: true } },
   qurilish: { build: true, photo: A('mid'), nicks: 'one' },
-  'nik-yaqin': { at: (c) => ({ x: c.house.x, z: c.house.z, yaw: 0.7, height: 16 }), photo: A(), prep: { nick: 'sening_niking', label: 'plain', tier: 4 }, nicks: 'one' },
-  'nik-oltin': { at: (c) => ({ x: c.house.x, z: c.house.z, yaw: 1.1, height: 12 }), photo: A('mid'), prep: { nick: 'sening_niking', label: 'gold', tier: 5 }, nicks: 'one' },
-  ...Object.fromEntries([1, 2, 3, 4, 5].map((tier) => [`level-${tier}`, { at: (c) => ({ x: c.house.x, z: c.house.z, yaw: 0.75, height: 22 }), photo: A('mid'), prep: { tier, decor: [], nick: 'sening_niking', label: 'plain' }, nicks: 'one' }])),
-  bezaksiz: { at: (c) => ({ x: c.house.x, z: c.house.z, yaw: 0.75, height: 24 }), photo: A('mid'), prep: { tier: 5, decor: [], nick: 'sening_niking' }, nicks: 'one' },
-  bezakli: { at: (c) => ({ x: c.house.x, z: c.house.z, yaw: 0.75, height: 24 }), photo: A('mid'), prep: { tier: 5, decor: 'full', nick: 'sening_niking' }, nicks: 'one' },
+  'nik-yaqin': { at: (c) => ({ ...ahead(c.house, 0.7, 7), yaw: 0.7, height: 16 }), photo: A(), prep: { nick: 'sening_niking', label: 'plain', tier: 4 }, nicks: 'one' },
+  'nik-oltin': { at: (c) => ({ ...ahead(c.house, 0.75, 9), yaw: 0.75, height: 13 }), photo: A('mid'), prep: { nick: 'sening_niking', label: 'gold', tier: 5 }, nicks: 'one' },
+  ...Object.fromEntries([1, 2, 3, 4, 5].map((tier) => [`level-${tier}`, { at: (c) => ({ ...ahead(c.house, 0.75, 8), yaw: 0.75, height: 22 }), photo: A('mid'), prep: { tier, decor: [], nick: 'sening_niking', label: 'plain' }, nicks: 'one' }])),
+  bezaksiz: { at: (c) => ({ ...ahead(c.house, 0.75, 8), yaw: 0.75, height: 24 }), photo: A('mid'), prep: { tier: 5, decor: [], nick: 'sening_niking' }, nicks: 'one' },
+  bezakli: { at: (c) => ({ ...ahead(c.house, 0.75, 8), yaw: 0.75, height: 24 }), photo: A('mid'), prep: { tier: 5, decor: 'full', nick: 'sening_niking' }, nicks: 'one' },
   'bezakli-tepa': { at: (c) => ({ x: c.house.x, z: c.house.z, yaw: 0.4, height: 42 }), photo: A(), prep: { tier: 5, decor: 'full', nick: 'sening_niking' }, nicks: 'one' },
-  'bezakli-2': { at: (c) => ({ x: c.house.x, z: c.house.z, yaw: 2.1, height: 28 }), photo: A(), prep: { tier: 5, decor: 'full', nick: 'sening_niking' }, nicks: 'one' },
+  'bezakli-2': { at: (c) => ({ ...ahead(c.house, 2.1, 8), yaw: 2.1, height: 28 }), photo: A(), prep: { tier: 5, decor: 'full', nick: 'sening_niking' }, nicks: 'one' },
   'tun-1': { at: (c) => ({ x: c.spot.x, z: c.spot.z, yaw: 0.7, height: 90 }), photo: D() },
   'tun-2': { at: (c) => ({ x: c.spot.x, z: c.spot.z, yaw: 2.2, height: 30 }), photo: D() },
   'tun-3': { at: (c) => ({ x: c.spot.x, z: c.spot.z, yaw: -0.8, height: 45 }), photo: D('high') },
@@ -105,7 +107,10 @@ const shootFrames = async (browser, ids) => {
     if (k.build) {
       // Qurilish effekti: bo'sh joyga "sening_niking" uyi ko'tarilmoqda (kamera o'zi uchib boradi).
       await page.evaluate(([plot, h]) => { const s = window.__app.getState(); const m = new Map(s.houses); m.set(plot, { ...h, plot, nick: 'sening_niking', tier: 1, decor: [] }); window.__app.setState({ houses: m }); window.__build(plot, 1); }, [c.free.id, base]);
-      await page.waitForTimeout(BUILD_SHOT_MS);
+      // Uchish tugagach kamera uyga yaqinroq; uy chang ichida paydo bo'lgan payt (~2,2 s).
+      await page.waitForTimeout(1200);
+      await page.evaluate((v) => Object.assign(window.__city, { view: v, flight: null }), { x: c.free.x, z: c.free.z, yaw: 0.75, height: 20 });
+      await page.waitForTimeout(BUILD_SHOT_MS - 1200);
     } else {
       await page.evaluate((v) => { window.__setMode('city'); Object.assign(window.__city, { view: v, flight: null }); }, k.at(c));
       await page.waitForTimeout(2600);
