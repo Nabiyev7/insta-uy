@@ -188,16 +188,24 @@ describe('ekran uchun ma’lumot', () => {
   });
 });
 
-describe('bezaklar faqat 5-leveldan', () => {
-  test('1–4-levelda nik lavhasidan boshqasi qo‘yilmaydi va sotilmaydi; kvartira berilmaydi', async () => {
-    for (const tier of [1, 4]) {
-      const { uid, plot } = await house(tier);
-      await give(uid, 'daraxt_olma');
-      await give(uid, 'sign_nick');
-      await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { burchak_1: 'daraxt_olma' } })).rejects.toThrow('level_low');
-      await expect(as(uid, 'my_buy_decor_coins', { p_id: 'dam_basseyn' })).rejects.toThrow('level_low');
-      await as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } });
-    }
+describe('bezaklar levelga qarab (15-qadam)', () => {
+  test('1-level uyga 1-level bezak qo‘yiladi va sotiladi, qimmatrog‘i — yo‘q; 2 ta joy; 4-levelda 3-level bezak — mumkin; kvartira berilmaydi', async () => {
+    const one = await house(1);
+    await give(one.uid, 'daraxt_olma');
+    await give(one.uid, 'tree_anor');
+    await give(one.uid, 'gul_zor');
+    await give(one.uid, 'path_stone');
+    await give(one.uid, 'sign_nick');
+    await expect(as(one.uid, 'my_place_decor', { p_plot: one.plot, p_places: { burchak_1: 'daraxt_olma' } })).rejects.toThrow('level_low');
+    await expect(as(one.uid, 'my_buy_decor_coins', { p_id: 'dam_basseyn' })).rejects.toThrow('level_low');
+    await expect(as(one.uid, 'my_place_decor', { p_plot: one.plot, p_places: { burchak_2: 'tree_anor' } })).rejects.toThrow('level_low');
+    await as(one.uid, 'my_place_decor', { p_plot: one.plot, p_places: { sign: 'sign_nick', burchak_1: 'tree_anor', darvoza_yoni: 'gul_zor' } });
+    await expect(as(one.uid, 'my_place_decor', { p_plot: one.plot, p_places: { sign: 'sign_nick', burchak_1: 'tree_anor', darvoza_yoni: 'gul_zor', path: 'path_stone' } })).rejects.toThrow('no_slots');
+    const four = await house(4);
+    await sql('update profiles set coins = 10000 where user_id = $1', [four.uid]);
+    await as(four.uid, 'my_buy_decor_coins', { p_id: 'dam_stol' });
+    await expect(as(four.uid, 'my_buy_decor_coins', { p_id: 'dam_basseyn' })).rejects.toThrow('level_low');
+    await as(four.uid, 'my_place_decor', { p_plot: four.plot, p_places: { old_hovli_ong: 'dam_stol' } });
     const free = (await sql("select p.id from plots p join districts d on d.id = p.district_id where p.type = 'kvartira' limit 1"))[0]!.id as string;
     await expect(as(await user(), 'my_claim', { p_plot: free, p_instagram: 'kvartirachi' })).rejects.toThrow('apartments_closed');
     await expect(as(await user(), 'my_quote', { p_kind: 'plot', p_payload: { plot: free, instagram: 'kvartirachi' } })).rejects.toThrow('apartments_closed');

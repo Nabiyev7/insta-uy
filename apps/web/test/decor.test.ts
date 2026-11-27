@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
-  ANCHORS, DECOR, DECOR_LEVEL, DEFAULT_DECOR_SLOTS, FREE_ANCHOR, LEVEL_DRIVE, LUXE_LEVEL, LUXE_MODELS, MAX_DECOR_SLOTS, MAX_TIER, REF_YARD, TIERS, anchorById, decodePlan, decorSlots, footprint, levelYard, openAnchors, parsePlaced, usedSlots, type Anchor, type EncodedPlan, type Plot,
+  ANCHORS, DECOR, DEFAULT_DECOR_SLOTS, FREE_ANCHOR, LEVEL_DRIVE, LUXE_LEVEL, LUXE_MODELS, MAX_DECOR_SLOTS, MAX_TIER, REF_YARD, TIERS, anchorById, decodePlan, decorSlots, footprint, levelYard, openAnchors, parsePlaced, usedSlots, type Anchor, type EncodedPlan, type Plot,
 } from '../../../packages/shared/src/index.ts';
 import { decorOf, setCatalog, type CatalogRow } from '../src/logic/decorCatalog.ts';
 import type { Item } from '../src/logic/item.ts';
@@ -65,19 +65,16 @@ describe('joy nuqtalari', () => {
       }
     }
   });
-  test('1–4-levelda faqat nik lavhasi; 5 dan boshlab nuqtalar ochiq va joylar soniga yetadi', () => {
-    for (let level = 1; level < DECOR_LEVEL; level++) expect(openAnchors(level).map((a) => a.id)).toEqual(['sign']);
-    const prompt = ['garaj_oldi', 'old_hovli_chap', 'old_hovli_ong', 'darvoza_yoni', 'burchak_1', 'burchak_2', 'burchak_3', 'burchak_4'];
-    for (let level = DECOR_LEVEL; level <= MAX_TIER; level++) expect(openAnchors(level).map((a) => a.id)).toEqual(expect.arrayContaining(prompt));
-    for (let level = 1; level <= MAX_TIER; level++) {
-      expect(openAnchors(level).filter((a) => a.kind !== 'sign').length, `level ${level}`).toBeGreaterThanOrEqual(decorSlots(level));
-      if (level >= DECOR_LEVEL) expect(decorSlots(level)).toBeGreaterThan(decorSlots(level - 1));
-    }
-    expect([...DEFAULT_DECOR_SLOTS]).toEqual([0, 0, 0, 0, 16]);
+  test('15-qadam: har level o‘z nuqtalarini ochadi (1-lv — 6, 2-lv — 10, 3-lv — 11, 4–5-lv — 16), joylar 2 / 4 / 6 / 10 / 16', () => {
+    const open = (level: number): string[] => openAnchors(level).filter((a) => a.kind !== 'sign').map((a) => a.id);
+    expect(open(1).sort()).toEqual(['burchak_1', 'darvoza_yoni', 'fence', 'gate', 'old_hovli_ong', 'path']);
+    expect([1, 2, 3, 4, 5].map((l) => open(l).length)).toEqual([6, 10, 11, 16, 16]);
+    for (let level = 1; level <= MAX_TIER; level++) expect(open(level).length, `level ${level}`).toBeGreaterThanOrEqual(decorSlots(level));
+    expect([...DEFAULT_DECOR_SLOTS]).toEqual([2, 4, 6, 10, 16]);
     expect(DEFAULT_DECOR_SLOTS).toHaveLength(MAX_TIER);
     expect(decorSlots(5, [1, 1, 1, 1, 99])).toBe(MAX_DECOR_SLOTS);
     expect(decorSlots(99)).toBe(16);
-    expect(decorSlots(0)).toBe(0);
+    expect(decorSlots(0)).toBe(2);
     expect(usedSlots({ sign: 'sign_nick', burchak_1: 'daraxt_olma', yoq: 'x' })).toBe(2);
   });
   test('har nuqtaga kamida bitta bezak sig‘adi, har bezakning joyi bor', () => {
@@ -139,9 +136,10 @@ describe('bezak uchastkadan chiqmaydi', () => {
 
 describe('yangi bezaklar', () => {
   const NEW = ['dam_besedka', 'dam_mangal', 'dam_basseyn', 'dam_stol', 'avto_sedan', 'avto_krossover', 'avto_sport', 'daraxt_olma', 'daraxt_orik', 'daraxt_gilos', 'daraxt_archa', 'daraxt_palma', 'gul_zor', 'gul_kamar', 'suv_hovuz'];
-  test('15 tasi katalogda, faqat 5-leveldan; nik lavhasi bundan mustasno', () => {
-    for (const id of NEW) expect(DECOR.find((d) => d.id === id), id).toMatchObject({ minLevel: DECOR_LEVEL, isActive: true });
-    expect(DECOR.filter((d) => d.minLevel < DECOR_LEVEL).map((d) => d.id)).toEqual(['sign_nick']);
+  test('15 tasi katalogda; level — egasi jadvali (15-qadam), nik lavhasi — 1', () => {
+    const LV: Readonly<Record<string, number>> = { dam_besedka: 3, dam_mangal: 3, dam_basseyn: 5, dam_stol: 3, avto_sedan: 4, avto_krossover: 5, avto_sport: 5, daraxt_olma: 2, daraxt_orik: 2, daraxt_gilos: 2, daraxt_archa: 2, daraxt_palma: 3, gul_zor: 1, gul_kamar: 3, suv_hovuz: 4 };
+    for (const id of NEW) expect(DECOR.find((d) => d.id === id), id).toMatchObject({ minLevel: LV[id], isActive: true });
+    expect(DECOR.find((d) => d.id === 'sign_nick')?.minLevel).toBe(1);
     expect(DECOR.filter((d) => !d.isActive).length).toBeGreaterThan(5);
   });
   test('toifa narxlari (docs/chat/TANGA-NARXLAR.md)', () => {

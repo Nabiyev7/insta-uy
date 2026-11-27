@@ -144,7 +144,8 @@ describe('uy bezash va sovg‘a', () => {
     await sql('update profiles set coins = 1000 where user_id = $1', [uid]);
     expect(await as(uid, 'my_buy_decor_coins', { p_id: 'sign_nick' })).toBe(900); // 15-qadam: 100 tanga
     await as(uid, 'my_place_decor', { p_plot: plot, p_places: { sign: 'sign_nick' } });
-    for (const id of ['gate_wood', 'tree_anor', 'daraxt_olma', 'avto_sedan']) await expect(as(uid, 'my_buy_decor_coins', { p_id: id })).rejects.toThrow('level_low');
+    // 15-qadam: 1-level uyga 1-level bezaklar (yo'lak, anor) ochiq; qimmatroqlari — yo'q.
+    for (const id of ['daraxt_olma', 'dam_stol', 'avto_sedan', 'lux_jip']) await expect(as(uid, 'my_buy_decor_coins', { p_id: id })).rejects.toThrow('level_low');
     await sql('update profiles set coins = 350 where user_id = $1', [uid]);
     await sql('update plot_state set tier = 5 where plot_id = $1', [plot]);
     await expect(as(uid, 'my_buy_decor_coins', { p_id: 'special_statue' })).rejects.toThrow('not_enough_coins');

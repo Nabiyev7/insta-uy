@@ -88,9 +88,9 @@ describe('premium (to‘lov yoqilgan)', () => {
     // Tangaga olingan nusxa 1-level uyga qo'yilmaydi.
     await sql("update owned_decor set qty = qty + 1 where user_id = $1 and decor_id = 'avto_sedan'", [uid]);
     await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { garaj_oldi: 'avto_sedan', burchak_1: 'daraxt_olma' } })).rejects.toThrow();
-    // Pulli nuqtasi bo'lmagan joyga (darvoza) — yo'q.
-    await sql("insert into owned_decor (user_id, decor_id, qty, paid) values ($1, 'gate_carved', 1, 1)", [uid]);
-    await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { garaj_oldi: 'avto_sedan', gate: 'gate_carved' } })).rejects.toThrow('level_low');
+    // Pulli nuqtasi bo'lmagan joyga (tom — 4-leveldan) — yo'q.
+    await sql("insert into owned_decor (user_id, decor_id, qty, paid) values ($1, 'roof_solar', 1, 1)", [uid]);
+    await expect(as(uid, 'my_place_decor', { p_plot: plot, p_places: { garaj_oldi: 'avto_sedan', roof: 'roof_solar' } })).rejects.toThrow('level_low');
   });
 
   test('salyut: tanga yoki pulga, navbat bilan, so‘z filtri', async () => {

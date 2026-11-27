@@ -72,7 +72,7 @@ describe('egasi-admin: hamma narsa doim ochiq, tugmasiz', () => {
     await expect(as(plain, 'admin_give_house', { p_plot: await plotOf('true'), p_nick: 'x' })).rejects.toThrow('forbidden');
     await expect(svc('svc_admin_purchase', { p_telegram: 1, p_kind: 'coins', p_payload: { pack: 1 } })).rejects.toThrow('forbidden');
     await expect(as(plain, 'my_claim', { p_plot: await plotOf("type = 'villa'") })).rejects.toThrow('paid_only');
-    await expect(as(plain, 'my_buy_decor_coins', { p_id: 'gul_zor' })).rejects.toThrow('level_low');
+    await expect(as(plain, 'my_buy_decor_coins', { p_id: 'dam_stol' })).rejects.toThrow('level_low');
     for (const fn of ['my_test_mode', 'my_test_tier', 'my_test_purchase', 'admin_test_cleanup']) expect(await sql('select count(*)::int n from pg_proc where proname = $1', [fn])).toEqual([{ n: 0 }]);
   });
 });
