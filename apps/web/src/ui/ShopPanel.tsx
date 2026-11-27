@@ -90,11 +90,15 @@ function BuyBar({ row, best }: { readonly row: CatalogRow; readonly best: BestPl
   return (
     <>
     {short > 0 && <p className="need-coins">{t('needCoins').replace('{n}', money(short))}</p>}
+    {state === 'locked' && profile && <p className="need-coins locked-note">{label}</p>}
     <div className="row two">
       {qty > 0 && yard
         ? <button type="button" className="btn soft" onClick={() => openPanel({ kind: 'yard', id: yard })}><Icon name="plus" />{t('putYard')}</button>
         : <button type="button" className="btn soft" aria-label={`${row[lang]}: ${t('tryIt')}`} onClick={() => { if (!tryDecor(row)) toast(t('noHouse'), true); }}>{t('tryIt')}</button>}
-      {setting('coins_enabled', true) && (short > 0
+      {setting('coins_enabled', true) && (state === 'locked' && profile && yard
+        // 15-qadam: level yetmasa — "N-levelda ochiladi" yozuvi va uyni kuchaytirish (uy oynasida "Kuchaytirish").
+        ? <button type="button" className="btn gold" aria-label={`${row[lang]}: ${label}. ${t('upgradeHouse')}`} onClick={() => openPanel({ kind: 'plot', id: yard })}><Icon name="star" />{t('upgradeHouse')}</button>
+        : short > 0
         ? <button type="button" className="btn gold" onClick={() => openCoinShop()}><Icon name="coin" />{t('getCoins')}</button>
         : <button type="button" className="btn" disabled={isClosed} aria-label={`${row[lang]}: ${label}`} onClick={buy}>{label}{isAdmin && <small className="admin-tag">{t('adminTag')}</small>}</button>)}
     </div>

@@ -22,6 +22,7 @@
 
 ## Uylar
 - **Premium tovarlar** (faqat pulga, do'konda "⭐ Premium" bo'limi — TUZATISH-2, 6-band): **maxsus dizaynli uylar, bezaklar, mashinalar** — egasi bilan Blender'da chiziladi, narxlarni egasi belgilaydi (2026-11-26).
+  - Premium uy qarorlari (egasi, 2026-11-27): uslublar **A. Zamonaviy villa** (tekis tom, katta oynalar, infinity basseyn) va **C. Shisha penthaus** (shisha kub, tomda bog' va jakuzi); qo'shimchalar — **tungi yorug'lik** (iliq derazalar, basseyn nuri, chiroq chiziqlari) va **oltin nik + darvoza lavhasi + uchastka hoshiyasi**; tepadan tanilsin (tom terrasasi/basseyn); ≤ 3 500 uchburchak + LOD; uchastka — **villa, qasr va hovli** (hovliga kichik versiya). Avval **1 ta namuna** Blender'da — egasi "yasa" deganda.
 - **Login + parol** — kod bor, o'chiq; sayt yaxshi ishlay boshlagach to'liq qaytariladi (2026-11-25).
 - 4–10-level uy modellarini qayta ko'rib chiqish (hozircha maksimal level — 3).
 - Kvartira egalari uchun balkon bezaklari va levellar.

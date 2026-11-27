@@ -1,7 +1,7 @@
 /** Hovlini bezash: reja ustidagi nuqtani bosing → bezak tanlang, ko'chiring yoki olib qo'ying. */
 import { isOwnerAdmin } from '../logic/admin.ts';
 import { useState, type FormEvent } from 'react';
-import { ANCHORS, DECOR_LEVEL, REF_YARD, anchorById, decorSlots, usedSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
+import { ANCHORS, REF_YARD, anchorById, decorSlots, usedSlots, type Anchor } from '../../../../packages/shared/src/index.ts';
 import { rpc, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
@@ -136,7 +136,7 @@ export function YardEditor({ plot }: YardEditorProps): React.JSX.Element {
     <>
       <p className="row between"><b>{t('decor')}</b><span className="tag">{isAdmin ? used : `${used}/${max}`}</span></p>
       <YardMap level={tier} places={places} selected={selected} onPick={setSelected} paidOpen={paidOpen} />
-      <p className="muted">{tier < DECOR_LEVEL ? `${t('decor')}: ${DECOR_LEVEL}-${t('opensAt')}. ${t('paidAnyLevel')}` : t('yardHint')}</p>
+      <p className="muted">{t('yardHint')}</p>
       {anchor && (
         <div className="spot-panel">
           <b>{anchor[lang]}</b>

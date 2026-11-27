@@ -4,7 +4,9 @@ import type { PGlite } from '@electric-sql/pglite';
 import { beforeAll, describe, expect, test } from 'vitest';
 import { DECOR, TIER_COINS } from '../../packages/shared/src/catalog.ts';
 import { halfPrice, levelForPrice, roundPrice } from '../../packages/shared/src/pricing.ts';
-import { openDb } from '../../server/dev/db.ts';
+import { randomUUID } from 'node:crypto';
+import { ANCHORS, DEFAULT_DECOR_SLOTS } from '../../packages/shared/src/anchors.ts';
+import { openDb, rpc } from '../../server/dev/db.ts';
 
 let db: PGlite;
 type Row = Record<string, unknown>;
@@ -67,5 +69,53 @@ describe('uy leveli, salyut, to‘plam, paketlar', () => {
       expect(s.v, s.id as string).toBe(roundPrice(sum * 0.8));
     }
     expect(await sql('select id from decor_catalog where set_id is not null and not is_active')).toEqual([]);
+  });
+});
+
+describe('level (2-band) va joylar (3-band)', () => {
+  const admin = async (): Promise<string> => {
+    const uid = randomUUID();
+    await rpc(db, 'service_role', null, 'svc_profile_create', { p_user: uid, p_login: `lv${Date.now()}`, p_ref: null, p_telegram: 880_000 + Math.floor(Math.random() * 9999), p_instagram: null });
+    await sql("update profiles set role = 'admin' where user_id = $1", [uid]);
+    return uid;
+  };
+  const as = (uid: string, fn: string, args: Row): Promise<unknown> => rpc(db, 'authenticated', uid, fn, args);
+  const row = async (id: string): Promise<Row> => (await sql('select min_level, level_auto, price_coins from decor_catalog where id = $1', [id]))[0]!;
+
+  test('bazada va katalog standartida level — egasi jadvali', async () => {
+    const db_ = Object.fromEntries((await sql('select id, min_level from decor_catalog')).map((r) => [r.id, r.min_level]));
+    for (const t of TABLE) {
+      expect(db_[t.id], t.id).toBe(t.level);
+      expect(DECOR.find((d) => d.id === t.id)?.minLevel, t.id).toBe(t.level);
+    }
+  });
+  test('jadval qoidadan farq qilsa — "qo‘lda" (avto emas), aks holda "avto"', async () => {
+    expect(await row('tree_chinor')).toMatchObject({ min_level: 1, level_auto: false });
+    expect(await row('yard_tandir')).toMatchObject({ min_level: 3, level_auto: false });
+    expect(await row('fence_brick')).toMatchObject({ min_level: 2, level_auto: true });
+    expect(await row('lux_jip')).toMatchObject({ min_level: 5, level_auto: true });
+  });
+  test('nuqta istisnosi: nuqtasi pastroq levelda ochilmagan tovar — max(narx, nuqta)', async () => {
+    const roof = (await sql("select private.auto_level(40, 'yangi_tom', '{roof}') v"))[0]!.v;
+    const corner = (await sql("select private.auto_level(40, 'yangi_daraxt', '{corner}') v"))[0]!.v;
+    expect([roof, corner]).toEqual([4, 1]);
+    expect(await sql("select id from decor_catalog where level_auto and min_level < private.level_for_price(price_coins, id)")).toEqual([]);
+  });
+  test('admin: level qo‘lda — saqlanadi (narx o‘zgarsa ham); "Avtomatik" — narxdan qaytadi; narx o‘zgarsa avto level ham', async () => {
+    const a = await admin();
+    await as(a, 'admin_decor_save', { p: { id: 'fence_brick', min_level: 5 } });
+    expect(await row('fence_brick')).toMatchObject({ min_level: 5, level_auto: false });
+    await as(a, 'admin_decor_save', { p: { id: 'fence_brick', price_coins: 40 } });
+    expect(await row('fence_brick')).toMatchObject({ min_level: 5, price_coins: 40 });
+    await as(a, 'admin_decor_save', { p: { id: 'fence_brick', level_auto: true } });
+    expect(await row('fence_brick')).toMatchObject({ min_level: 1, level_auto: true });
+    await as(a, 'admin_decor_save', { p: { id: 'fence_brick', price_coins: 130 } });
+    expect(await row('fence_brick')).toMatchObject({ min_level: 2, level_auto: true });
+    expect(await as(a, 'admin_level_hint', { p_coins: 300, p_id: 'yangi', p_spots: ['corner'] })).toBe(3);
+  });
+  test('joylar soni 2 / 4 / 6 / 10 / 16; nuqtalar levellari bazada va kodda bir xil', async () => {
+    expect((await sql("select value from settings where key = 'decor_slots'"))[0]!.value).toEqual([...DEFAULT_DECOR_SLOTS]);
+    const db_ = Object.fromEntries((await sql('select id, min_level from decor_anchors')).map((r) => [r.id, r.min_level]));
+    for (const x of ANCHORS) expect(db_[x.id], x.id).toBe(x.minLevel);
   });
 });
