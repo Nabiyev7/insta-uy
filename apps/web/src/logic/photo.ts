@@ -5,7 +5,8 @@ import type { Daylight, Rgb } from './atmosphere.ts';
 export type PhotoLight = 'now' | 'golden' | 'night';
 export type PhotoTilt = 'off' | 'low' | 'mid' | 'high';
 export type PhotoFormat = '9:16' | '4:5' | '1:1';
-export interface PhotoSettings { readonly light: PhotoLight; readonly tilt: PhotoTilt; readonly format: PhotoFormat; readonly hasLink: boolean }
+/** `hasSign: false` — belgisiz kadr (Instagram shabloni o'z logotipini qo'yadi); `showMarks` — "+" belgilari kadrda qoladi (faqat lokal postlar uchun). */
+export interface PhotoSettings { readonly light: PhotoLight; readonly tilt: PhotoTilt; readonly format: PhotoFormat; readonly hasLink: boolean; readonly hasSign?: boolean; readonly showMarks?: boolean }
 export const PHOTO_DEFAULT: PhotoSettings = { light: 'now', tilt: 'off', format: '9:16', hasLink: true };
 
 const hex = (h: string): Rgb => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];

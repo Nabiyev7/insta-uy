@@ -280,7 +280,7 @@ export function CityLayer({ kit, plan }: CityLayerProps): React.JSX.Element {
     world.labels.group.visible = !isNightPhoto;
     world.nicks.mesh.visible = !isNightPhoto && world.nicks.mesh.geometry.instanceCount > 0;
     const canClaim = showClaimMarks(app.authState, app.profile);
-    world.markers.setVisible(canClaim && s.mode === 'city' && !isHigh && !app.isPhoto && !app.isClean);
+    world.markers.setVisible(canClaim && s.mode === 'city' && !isHigh && (!app.isPhoto || app.photo.showMarks === true) && !app.isClean);
     world.beacons.update(canClaim && !app.isPhoto && !app.isClean && setting('lively_start', true), clock.elapsedTime);
     // Yorliqlar ekranga ~8 marta/soniya qayta joylanadi (kamera yursa ham ustma-ust tushmasin).
     if (clock.elapsedTime - placedAt.current > PLACE_S) {

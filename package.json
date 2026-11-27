@@ -34,7 +34,8 @@
     "screens:empty": "node e2e/empty.mjs",
     "chat-images": "node scripts/build-chat-images.mjs",
     "icons": "node scripts/build-icons.mjs",
-    "textures": "node blender/build-textures.mjs"
+    "textures": "node blender/build-textures.mjs",
+    "insta": "node insta/build.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.6.0",

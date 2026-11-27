@@ -42,7 +42,7 @@ export function PhotoLayer(): React.JSX.Element | null {
       const own = ownSpot();
       const frame = frameRect(size.width, size.height, aspectOf(s.format));
       const nick = own && isInFrame(camera, own, frame, size) ? own.nick : null;
-      return takeShot({ gl, scene, camera, settings: s, grade: gradeOf(s.light, s.tilt), tilt: tiltOf(s.tilt, pitchNow()), view: size, isWeak: getApp().quality === 'low', sign: { nick, hasLink: s.hasLink } });
+      return takeShot({ gl, scene, camera, settings: s, grade: gradeOf(s.light, s.tilt), tilt: tiltOf(s.tilt, pitchNow()), view: size, isWeak: getApp().quality === 'low', sign: s.hasSign === false ? null : { nick, hasLink: s.hasLink } });
     };
     return () => { snapshotters.photo = null; };
   }, [gl, scene, camera, size]);

@@ -127,7 +127,7 @@ export const isInFrame = (camera: Camera, at: { readonly x: number; readonly z: 
 
 export interface ShotInput {
   readonly gl: WebGLRenderer; readonly scene: Scene; readonly camera: Camera; readonly settings: PhotoSettings; readonly grade: Grade; readonly tilt: Tilt;
-  readonly view: { readonly width: number; readonly height: number }; readonly isWeak: boolean; readonly sign: Signature;
+  readonly view: { readonly width: number; readonly height: number }; readonly isWeak: boolean; readonly sign: Signature | null;
 }
 /** Yuqori aniqlikda kadr: ekran 2× (kuchsizda 1,5×) render → ramka kesiladi → 1080×1920 / 1350 / 1080. Xotira yetmasa — 1× bilan qayta. */
 export const takeShot = (input: ShotInput): HTMLCanvasElement => {
@@ -161,7 +161,7 @@ const shotAt = ({ gl, scene, camera, settings, grade, tilt, view, sign }: ShotIn
     if (!g) throw new Error('2D kontekst yo‘q');
     g.imageSmoothingQuality = 'high';
     g.drawImage(gl.domElement, frame.x * px, frame.y * px, frame.w * px, frame.h * px, 0, 0, w, h);
-    drawSignature(g, w, h, sign);
+    if (sign) drawSignature(g, w, h, sign);
     return out;
   } finally {
     fx.dispose();
