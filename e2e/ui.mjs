@@ -148,7 +148,7 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
           await img.waitFor();
           const size = await img.evaluate(async (el) => { await el.decode(); return [el.naturalWidth, el.naturalHeight]; });
           assert.deepEqual(size, [1080, 1920], 'kadr 1080×1920');
-          await page.locator('.photo-result').getByRole('link', { name: T.save }).waitFor();
+          await page.locator('.photo-result').getByRole('button', { name: T.save }).waitFor();
           await page.locator('.photo-result').getByRole('button', { name: T.close }).click();
         };
         await shoot();

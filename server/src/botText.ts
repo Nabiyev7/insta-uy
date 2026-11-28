@@ -94,6 +94,7 @@ const T = {
   inviteLeft: ['Keyingi sovg‘agacha yana {n} do‘st.', 'До следующего подарка ещё {n} друзей.'],
   inviteAll: ['Hamma sovg‘alar olingan! 🎉', 'Все подарки получены! 🎉'],
   btnShare: ['📤 Do‘stga yuborish', '📤 Отправить другу'],
+  photoCaption: ['📸 Rasmingiz tayyor — saqlang yoki do‘stlaringizga yuboring.\nSen ham bepul uy ol 👉 {link}', '📸 Ваш снимок готов — сохраните или отправьте друзьям.\nПолучи дом бесплатно 👉 {link}'],
   shareText: ['Men CityLand UZ’da uy oldim — sen ham bepul ol 👉', 'Я получил дом в CityLand UZ — получи и ты бесплатно 👉'],
   // ---------- Do'kon (Stars) ----------
   shop: ['🛍 Do‘kon\nTanga paketlari va premium tovarlar — Telegram Stars bilan. Kichik paketlar va oddiy bezaklar — saytda.', '🛍 Магазин\nПакеты монет и премиум-товары — за Telegram Stars. Маленькие пакеты и обычный декор — на сайте.'],

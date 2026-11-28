@@ -1,6 +1,7 @@
 /** Foto rejimi paneli (17-qadam): yorug'lik, maket effekti, format, "Mening uyim", suratga olish va natija oynasi. */
 import { useEffect, useState } from 'react';
-import { openHousePhoto, shareImage } from '../app/actions.ts';
+import { openHousePhoto } from '../app/actions.ts';
+import { savePhoto, sharePhoto } from '../app/share.ts';
 import { useT } from '../app/i18n.ts';
 import { houseShot, snapshotters } from '../app/runtime.ts';
 import { setApp, toast, useApp } from '../app/store.ts';
@@ -19,12 +20,14 @@ interface Shot { readonly canvas: HTMLCanvasElement; readonly url: string; reado
 
 function Result({ shot, onClose }: { readonly shot: Shot; readonly onClose: () => void }): React.JSX.Element {
   const t = useT();
+  const [isBusy, setBusy] = useState(false);
+  const act = (fn: (c: HTMLCanvasElement) => Promise<void>): void => { setBusy(true); void fn(shot.canvas).finally(() => setBusy(false)); };
   return (
     <div className="photo-result" role="dialog" aria-label={t('photoResult')}>
       <img src={shot.url} alt={t('photoResult')} data-w={shot.width} data-h={shot.height} />
       <div className="row">
-        <a className="btn gold" href={shot.url} download="cityland.jpg"><Icon name="check" />{t('save')}</a>
-        <button type="button" className="btn soft" onClick={() => void shareImage(shot.canvas, 'cityland')}><Icon name="share" />{t('share')}</button>
+        <button type="button" className="btn gold" disabled={isBusy} onClick={() => act(savePhoto)}><Icon name="check" />{t('save')}</button>
+        <button type="button" className="btn soft" disabled={isBusy} onClick={() => act(sharePhoto)}><Icon name="share" />{t('share')}</button>
         <button type="button" className="round glass" aria-label={t('close')} onClick={onClose}><Icon name="close" /></button>
       </div>
     </div>

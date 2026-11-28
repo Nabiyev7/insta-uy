@@ -6,6 +6,7 @@ import { pitchOf } from '../logic/cityCamera.ts';
 import { aspectOf, frameRect, gradeOf, tiltOf, type PhotoSettings } from '../logic/photo.ts';
 import { city, director, houseShot, session, snapshotters } from '../app/runtime.ts';
 import { getApp, useApp } from '../app/store.ts';
+import { myRefLink } from '../app/share.ts';
 import { isInFrame, makeComposer, takeShot } from './photoFx.ts';
 
 /** Kamera qiyaligi: shahar rejimida balandlikdan, piyoda/mashinada — deyarli gorizontal. */
@@ -43,7 +44,7 @@ export function PhotoLayer(): React.JSX.Element | null {
       const own = ownSpot();
       const frame = frameRect(size.width, size.height, aspectOf(s.format));
       const nick = own && isInFrame(camera, own, frame, size) ? own.nick : null;
-      return takeShot({ gl, scene, camera, settings: s, grade: gradeOf(s.light, s.tilt), tilt: tiltOf(s.tilt, pitchNow()), view: size, isWeak: getApp().quality === 'low', sign: s.hasSign === false ? null : { nick, hasLink: s.hasLink } });
+      return takeShot({ gl, scene, camera, settings: s, grade: gradeOf(s.light, s.tilt), tilt: tiltOf(s.tilt, pitchNow()), view: size, isWeak: getApp().quality === 'low', sign: s.hasSign === false ? null : { nick, hasLink: s.hasLink, link: myRefLink() } });
     };
     return () => { snapshotters.photo = null; };
   }, [gl, scene, camera, size]);

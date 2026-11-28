@@ -105,7 +105,11 @@ describe('interfeys fayllari', () => {
   const src = fileURLToPath(new URL('../src', import.meta.url));
   const files = readdirSync(src, { recursive: true, encoding: 'utf8' }).filter((f) => /\.(tsx?|css)$/.test(f));
   test('emoji yo‘q — hamma belgi bitta to‘plamdan', () => {
-    for (const f of files) expect(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u.exec(readFileSync(`${src}/${f}`, 'utf8'))?.[0], f).toBeUndefined();
+    // Yagona istisno: app/shareText.ts — boshqa ilovalarga ketadigan ulashish xabari (egasining matni), saytda ko'rinmaydi.
+    const isShareText = (f: string): boolean => f.replace(/\\/g, '/') === 'app/shareText.ts';
+    for (const f of files.filter((x) => !isShareText(x))) expect(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u.exec(readFileSync(`${src}/${f}`, 'utf8'))?.[0], f).toBeUndefined();
+    // U faylda interfeys yo'q (faqat matn funksiyalari).
+    expect(readFileSync(`${src}/app/shareText.ts`, 'utf8')).not.toMatch(/useT|className|React/);
     for (const b of Object.values(BADGES)) expect(Object.keys(b)).toEqual(['uz', 'ru']);
   });
   test('har bezak modelining 3D rasmi bor', () => {

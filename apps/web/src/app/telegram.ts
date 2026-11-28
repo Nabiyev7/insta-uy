@@ -11,6 +11,11 @@ export interface TgWebApp {
   requestFullscreen?(): void; disableVerticalSwipes?(): void; setHeaderColor?(color: string): void; setBackgroundColor?(color: string): void;
   isVersionAtLeast?(v: string): boolean;
   openTelegramLink?(url: string): void;
+  /** Bot API 8.0+: faylni telefonga saqlash (https havola). */
+  downloadFile?(params: { readonly url: string; readonly file_name: string }, callback?: (accepted: boolean) => void): void;
+  /** Bot API 7.8+: Telegram stories (https rasm). `widget_link` — faqat Premium. */
+  shareToStory?(mediaUrl: string, params?: { readonly text?: string; readonly widget_link?: { readonly url: string; readonly name?: string } }): void;
+  readonly initDataUnsafe?: { readonly user?: { readonly is_premium?: boolean } };
   readonly BackButton?: BackButton; readonly HapticFeedback?: Haptic;
 }
 declare global { interface Window { Telegram?: { WebApp?: TgWebApp } } }

@@ -78,7 +78,8 @@ const sunOf = (scene: Scene): DirectionalLight | null => {
   return sun;
 };
 
-export interface Signature { readonly nick: string | null; readonly hasLink: boolean }
+/** `link` — o'z taklif havolasi (qisqa ko'rinishda rasmga yoziladi). */
+export interface Signature { readonly nick: string | null; readonly hasLink: boolean; readonly link?: string }
 /** Pastki chap burchakda: "CityLand UZ" (bitta oltin urg'u) va o'z uyi kadrda bo'lsa — @nik; o'ngda kichik havola. */
 export const drawSignature = (g: CanvasRenderingContext2D, w: number, h: number, sign: Signature): void => {
   const unit = w / 1080;
@@ -110,7 +111,7 @@ export const drawSignature = (g: CanvasRenderingContext2D, w: number, h: number,
     g.font = `600 ${24 * unit}px "Golos Text Variable", system-ui, sans-serif`;
     g.fillStyle = 'rgba(255,255,255,0.85)';
     g.textAlign = 'right';
-    g.fillText('t.me/Citylanduz_bot', w - pad, base);
+    g.fillText((sign.link ?? 'https://t.me/Citylanduz_bot').replace(/^https?:\/\//, ''), w - pad, base);
   }
   g.restore();
 };

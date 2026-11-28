@@ -108,7 +108,7 @@ export const createEmulator = (db: PGlite, keys: EmuKeys, storageDir: string): (
 
   const storageRoute = async (req: Request, p: string): Promise<Response> => {
     const rel = decodeURIComponent(p.replace(/^object\/(public\/)?/, ''));
-    if (!/^(ads|videos|backups)\/[\w./-]+$/.test(rel) || rel.includes('..')) return reply({ message: 'bad path' }, 400);
+    if (!/^(ads|videos|backups|shots)\/[\w./-]+$/.test(rel) || rel.includes('..')) return reply({ message: 'bad path' }, 400);
     const file = path.join(storageDir, rel);
     if (req.method === 'GET') {
       if (!p.startsWith('object/public/') || rel.startsWith('backups/')) return reply({ message: 'forbidden' }, 403);
@@ -119,7 +119,7 @@ export const createEmulator = (db: PGlite, keys: EmuKeys, storageDir: string): (
       }
     }
     const me = caller(req);
-    const isOwnAd = me.role === 'authenticated' && rel.startsWith(`ads/${me.sub}/`);
+    const isOwnAd = me.role === 'authenticated' && (rel.startsWith(`ads/${me.sub}/`) || rel.startsWith(`shots/${me.sub}/`));
     if (me.role !== 'service_role' && !isOwnAd) return reply({ message: 'forbidden' }, 403);
     await mkdir(path.dirname(file), { recursive: true });
     await writeFile(file, Buffer.from(await req.arrayBuffer()));

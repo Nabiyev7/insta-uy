@@ -11,6 +11,7 @@ import { snapshot } from './snapshot.ts';
 import { clientLog } from './health.ts';
 import { setupRoute } from './botSetup.ts';
 import { backupRoute } from './cron.ts';
+import { photoSend } from './photo.ts';
 import { json } from './util.ts';
 
 type Handler = (req: Request, ctx: Ctx) => Promise<Response>;
@@ -28,6 +29,7 @@ const POST: Readonly<Record<string, Handler>> = {
   '/log': clientLog,
   '/bot/setup': setupRoute,
   '/bot/backup': backupRoute,
+  '/photo/send': photoSend,
   '/dev/telegram': devTelegram,
   '/dev/admin': devAdmin,
   '/coins/channel': channelCheck,
