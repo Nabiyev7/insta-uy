@@ -153,8 +153,11 @@ describe('menyu, taklif', () => {
     const ref = ((await db.query<{ ref_code: string }>('select ref_code from profiles where telegram_id = 4501')).rows[0]!).ref_code;
     expect(last().text).toContain(`https://t.me/shahar_bot?start=r_${ref}`);
     expect(last().text).toContain('Taklif qilganlar: 0');
-    expect(last().text).toContain('▫️ 1 do‘st');
-    expect(last().text).toContain('Keyingi sovg‘agacha yana 1 do‘st.');
+    // 19-qadam: bosqichlar tanga bilan (3 → +2 000 …), bezak yo'q.
+    expect(last().text).toContain('3 do‘st — +2 000 tanga');
+    expect(last().text).toContain('50 do‘st — +40 000 tanga');
+    expect(last().text).toContain('+500 tanga');
+    expect(last().text).toContain('Keyingi bosqichgacha yana 3 do‘st.');
     const share = new URL(last().buttons![0]!.url!);
     expect(share.origin + share.pathname).toBe('https://t.me/share/url');
     expect(share.searchParams.get('text')).toContain('CityLand UZ');

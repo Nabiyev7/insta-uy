@@ -29,3 +29,15 @@ describe('o‘sish', () => {
     expect(INTRO_MS.low).toBeLessThan(INTRO_MS.normal);
   });
 });
+
+describe('19-qadam: taklif bosqichlari — tanga', () => {
+  test('3 / 10 / 25 / 50 → +2 000 / +6 000 / +15 000 / +40 000; keyingi bosqichgacha nechta qolgani', async () => {
+    const { coinSteps } = await import('../src/logic/growth.ts');
+    const S = { 3: 2000, 10: 6000, 25: 15000, 50: 40000 };
+    expect(coinSteps(0, S).steps.map((s) => [s.at, s.coins])).toEqual([[3, 2000], [10, 6000], [25, 15000], [50, 40000]]);
+    expect(coinSteps(0, S).left).toBe(3);
+    expect(coinSteps(4, S).left).toBe(6);
+    expect(coinSteps(30, S).steps.map((s) => s.isDone)).toEqual([true, true, true, false]);
+    expect(coinSteps(50, S).left).toBeNull();
+  });
+});

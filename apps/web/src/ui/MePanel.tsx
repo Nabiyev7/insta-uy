@@ -6,13 +6,13 @@ import { MAX_TIER, TIERS, sanitizeAvatar, type AvatarLook } from '../../../../pa
 import { copyText, goToPlot, nearestFree, shareStory } from '../app/actions.ts';
 import { myRefLink, shareInvite } from '../app/share.ts';
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
-import { useT } from '../app/i18n.ts';
+import { money, useT } from '../app/i18n.ts';
 import { forgetMe } from '../app/multiplayer.ts';
 import { openAuth, openPanel, openRoot, refreshProfile, setting, toast, useApp } from '../app/store.ts';
 import { UpgradeButton } from './HousePanels.tsx';
 import { Icon } from './icons.tsx';
-import { DecorImage, RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
-import { referralSteps } from '../logic/growth.ts';
+import { RowLink, Section, Seg, Sheet, askConfirm, useAction } from './kit.tsx';
+import { coinSteps } from '../logic/growth.ts';
 
 function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
   const t = useT();
@@ -55,18 +55,19 @@ function TelegramLink(): React.JSX.Element | null {
   );
 }
 
-/** Do'st taklifi shkalasi: 1 → 3 → 10, har nuqtada sovg'a rasmi (sozlama `referral_gifts`). */
+interface CoinSettings { readonly referral?: number; readonly referralSteps?: Readonly<Record<string, number>> }
+const STEPS: Readonly<Record<string, number>> = { 3: 2000, 10: 6000, 25: 15000, 50: 40000 };
+/** Do'st taklifi shkalasi (19-qadam): har do'st — tanga, bosqichlarda (3 → 10 → 25 → 50) bir martalik bonus (sozlama `coins.referralSteps`). */
 function InviteScale({ invited }: { readonly invited: number }): React.JSX.Element {
   const t = useT();
-  const lang = useApp((s) => s.lang);
-  const catalog = useApp((s) => s.catalog);
-  const { steps, left } = referralSteps(invited, setting<Readonly<Record<string, string>>>('referral_gifts', { 1: 'gul_zor', 3: 'dam_besedka', 10: 'avto_sedan' }));
+  const coins = setting<CoinSettings>('coins', {});
+  const { steps, left } = coinSteps(invited, coins.referralSteps ?? STEPS);
   return (
     <>
-      <ol className="invite-scale">{steps.map((s) => {
-        const c = catalog.find((x) => x.id === s.decor);
-        return <li key={s.at} className={s.isDone ? 'done' : ''}><DecorImage model={c?.model ?? s.decor} /><b>{s.at} {t('friendsWord')}</b><span className="muted">{c?.[lang] ?? s.decor}</span>{s.isDone && <Icon name="check" />}</li>;
-      })}</ol>
+      <p className="muted with-icon"><Icon name="coin" />{t('perFriend').replace('{n}', money(coins.referral ?? 500))}</p>
+      <ol className="invite-scale coins">{steps.map((s) => (
+        <li key={s.at} className={s.isDone ? 'done' : ''}><span className="cost"><Icon name="coin" />+{money(s.coins)}</span><b>{s.at} {t('friendsWord')}</b>{s.isDone && <Icon name="check" />}</li>
+      ))}</ol>
       <p className="muted">{left === null ? t('inviteAll') : t('inviteLeft').replace('{n}', String(left))}</p>
     </>
   );

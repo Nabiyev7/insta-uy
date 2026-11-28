@@ -194,11 +194,14 @@ const bankForward = async (ctx: Ctx, tg: Telegram, m: Message, lang: Lang): Prom
 };
 
 // ---------- 4. Do'st taklif ----------
-interface Invite { readonly ref: string; readonly invited: number; readonly gifts: readonly { readonly at: number; readonly uz: string; readonly ru: string }[] }
+/** 19-qadam: bosqichlar tanga bilan (`coins.referralSteps`), har do'st uchun `perFriend` tanga. */
+interface Invite { readonly ref: string; readonly invited: number; readonly perFriend?: number; readonly steps?: readonly { readonly at: number; readonly coins: number }[] }
+const coinsText = (n: number): string => n.toLocaleString('ru-RU').replace(/\s/g, ' ');
 export const inviteText = (lang: Lang, link: string, inv: Invite): string => {
-  const scale = inv.gifts.map((g) => bt(lang, 'inviteStep', { mark: inv.invited >= g.at ? '✅' : '▫️', at: g.at, gift: g[lang] })).join('\n');
-  const next = inv.gifts.find((g) => g.at > inv.invited);
-  return `${bt(lang, 'invite', { link, n: inv.invited, scale })}\n${next ? bt(lang, 'inviteLeft', { n: next.at - inv.invited }) : bt(lang, 'inviteAll')}`;
+  const steps = inv.steps ?? [];
+  const scale = steps.map((g) => bt(lang, 'inviteStep', { mark: inv.invited >= g.at ? '✅' : '▫️', at: g.at, coins: coinsText(g.coins) })).join('\n');
+  const next = steps.find((g) => g.at > inv.invited);
+  return `${bt(lang, 'invite', { link, n: inv.invited, scale, per: coinsText(inv.perFriend ?? 500) })}\n${next ? bt(lang, 'inviteLeft', { n: next.at - inv.invited }) : bt(lang, 'inviteAll')}`;
 };
 const botName = async (ctx: Ctx): Promise<string> =>
   String((await ctx.db.rpc<string | null>('svc_setting', { p_key: 'telegram_bot' })) ?? '').replace(/^@/, '') || (ctx.env.TELEGRAM_BOT ?? '').replace(/^@/, '');
@@ -500,11 +503,11 @@ export const devTelegram = async (req: Request, ctx: Ctx): Promise<Response> => 
 // ---------- Bildirishnomalar (foydalanuvchi tilida) ----------
 interface OutboxRow { readonly kind: string; readonly chat: number; readonly lang: string; readonly data?: Readonly<Record<string, unknown>> }
 /** Olib tashlangan funksiyalar (uy sovg'asi, reklama) xabari yo'q — kalit topilmasa yuborilmaydi. */
-const NOTE_KINDS: ReadonlySet<string> = new Set(['released', 'referral', 'order_paid', 'order_problem', 'street_named', 'street_rejected', 'decor_gift', 'yard_winner', 'new_decor', 'elected', 'new_neighbour', 'inactive_warning']);
+const NOTE_KINDS: ReadonlySet<string> = new Set(['released', 'referral', 'order_paid', 'order_problem', 'street_named', 'street_rejected', 'decor_gift', 'yard_winner', 'new_decor', 'elected', 'new_neighbour', 'inactive_warning', 'ref_step']);
 export const noteText = (r: OutboxRow): string | undefined => {
   if (!NOTE_KINDS.has(r.kind)) return undefined;
   const lang = langOf(r.lang);
-  const base = bt(lang, `n_${r.kind}` as TextKey, { name: String(r.data?.[lang] ?? ''), nick: String(r.data?.nick ?? '') });
+  const base = bt(lang, `n_${r.kind}` as TextKey, { name: String(r.data?.[lang] ?? ''), nick: String(r.data?.nick ?? ''), friends: String(r.data?.friends ?? ''), coins: coinsText(Number(r.data?.coins ?? 0)) });
   return r.kind === 'referral' && typeof r.data?.invited === 'number' ? `${base}\n${bt(lang, 'n_referralScale', { n: r.data.invited })}` : base;
 };
 export const flushOutbox = async (ctx: Ctx): Promise<number> => {

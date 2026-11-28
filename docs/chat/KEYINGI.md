@@ -60,3 +60,6 @@
 
 ## Video (keyinga qoldirilgan, egasi 2026-11-27)
 - Promo video va reels (`INSTAGRAM-PROMT.md` 2–3-bo'lim) va "qurilish va yangi egasi" ssenariysi (`VIDEO-QURILISH-PROMT.md`) — egasi bilan takomillashtirilib, keyin ishga tushiriladi. Egasi o'z namunasini (yoqqan video) beradi.
+
+## Referal uchun noyob bezaklar (egasi, 2026-11-27)
+- Do'st taklifi bosqichlari uchun **hech kimda yo'q, sotilmaydigan** bezaklar yasaladi (Blender) va bosqichlarga (3/10/25/50 do'st) tanga bilan birga qo'shiladi. Hozircha faqat tanga.

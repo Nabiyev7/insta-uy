@@ -16,6 +16,10 @@
 | Ketma-ket 7 kun kirish (bonus) | +300 |
 | Telegram kanalga obuna (bir marta) | 300 |
 | Do'st taklifi (do'st uy olsa) | 500 |
+| Do'st taklifi — bosqich bonusi (bir marta, 2026-11-28): 3 do'st | +2 000 |
+| 10 do'st | +6 000 |
+| 25 do'st | +15 000 |
+| 50 do'st | +40 000 |
 | "Haftaning hovlisi" g'olibi | 2 000 |
 | Xazina ovi (bitta topilma) — **vaqtincha o'chirilgan, keyin ko'rib chiqiladi (2026-11-26)**, `treasure_enabled=false` | 50, kuniga ko'pi bilan 3 ta |
 

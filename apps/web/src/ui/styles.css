@@ -451,3 +451,7 @@ summary.with-icon { min-height: 44px; cursor: pointer; }
 .photo-result { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 12px; padding: 16px; background: rgba(8, 12, 18, 0.9); }
 .photo-result img { max-width: min(92vw, 520px); max-height: calc(100dvh - 120px); border-radius: 14px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
 .photo-result .row { display: flex; gap: 10px; justify-content: center; }
+
+/* 19-qadam: taklif shkalasi tanga bilan (3 / 10 / 25 / 50). */
+.invite-scale.coins { grid-template-columns: repeat(4, 1fr); }
+.invite-scale.coins .cost { display: inline-flex; align-items: center; gap: 2px; font-weight: 800; color: var(--gold, #f2c14e); }

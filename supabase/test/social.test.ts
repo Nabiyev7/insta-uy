@@ -38,15 +38,13 @@ describe('yurak', () => {
   });
 });
 
-describe('referal sovg‘alari', () => {
-  test('1-do‘st — gulzor, 3-do‘st — besedka (pulli nusxa, har qanday levelda qo‘yiladi)', async () => {
+describe('referal (19-qadam: bezak o‘rniga tanga)', () => {
+  test('3 do‘st — har biriga +500 va 3-bosqich bonusi +2 000; bezak sovg‘asi yo‘q', async () => {
     const host = await user();
     const ref = (await sql('select ref_code from profiles where user_id = $1', [host]))[0]!.ref_code as string;
     for (let i = 0; i < 3; i++) await claim(await user(ref));
-    expect(await sql("select decor_id, qty, paid from owned_decor where user_id = $1 order by decor_id", [host])).toEqual([
-      { decor_id: 'dam_besedka', qty: 1, paid: 1 }, { decor_id: 'gul_zor', qty: 1, paid: 1 },
-    ]);
-    expect((await sql('select coins from profiles where user_id = $1', [host]))[0]!.coins).toBe(1500);
+    expect(await sql('select decor_id from owned_decor where user_id = $1', [host])).toEqual([]);
+    expect((await sql('select coins from profiles where user_id = $1', [host]))[0]!.coins).toBe(1500 + 2000);
   });
 });
 

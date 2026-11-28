@@ -9,6 +9,15 @@ export const referralSteps = (invited: number, gifts: Readonly<Record<string, st
   return { steps, left: next ? next.at - invited : null };
 };
 
+export interface CoinStep { readonly at: number; readonly coins: number; readonly isDone: boolean }
+/** 19-qadam: bosqich bonuslari (sozlama `coins.referralSteps`: {"3":2000,"10":6000,"25":15000,"50":40000}) → shkala va keyingi bosqichgacha nechta qoldi. */
+export const coinSteps = (invited: number, steps: Readonly<Record<string, number>>): { readonly steps: readonly CoinStep[]; readonly left: number | null } => {
+  const list = Object.entries(steps).map(([k, coins]) => ({ at: Number(k), coins: Number(coins), isDone: invited >= Number(k) }))
+    .filter((s) => Number.isInteger(s.at) && s.at > 0 && s.coins > 0).sort((a, b) => a.at - b.at);
+  const next = list.find((s) => !s.isDone);
+  return { steps: list, left: next ? next.at - invited : null };
+};
+
 export const INSTALL_PAUSE_MS = 14 * 24 * 3600 * 1000;
 /** Ikkinchi kirishdan (birinchisida emas); rad etilsa 14 kun chiqmaydi; allaqachon o'rnatilgan bo'lsa — yo'q. */
 export const isInstallDue = (visits: number, dismissedAt: number | null, now: number, isStandalone: boolean): boolean =>
