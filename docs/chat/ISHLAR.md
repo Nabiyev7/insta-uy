@@ -39,6 +39,7 @@ Ish bosqichlarga bo'lingan: `docs/chat/BOSQICHLAR.md`. 6, 6a–6e bajarildi. **N
 - [x] **16. Instagram: postlar** — `docs/chat/INSTAGRAM-PROMT.md` (faqat 0, 0.1 va 1-bo'limlar — postlar; **2–3-bo'lim (promo video, reels) hozircha QILINMAYDI**)
 - [x] **17. Foto rejimi: oltin soat, tun, maket effekti** — `docs/chat/FOTO-PROMT.md`
 - [ ] **18. Video: "qurilish va yangi egasi" ssenariysi** — `docs/chat/VIDEO-QURILISH-PROMT.md` — **KEYINGA QOLDIRILDI** (egasi, 2026-11-27: avval takomillashtiramiz, keyin ishga tushiriladi; hozir tegma)
+- [x] **19. Tuzatish 7 — uy surati, ulashish referal bilan, referal tangalari** — `docs/chat/TUZATISH-7.md`
 
 ## Har qadamdan keyin
 

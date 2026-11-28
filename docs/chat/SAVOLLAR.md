@@ -318,3 +318,15 @@ Qilinmadi yoki BOSQICH-2-3 ga zid bo'lgani uchun o'zgartirildi:
 5. **Sovg'alar shkalasi (9-post)** saytdagi bezak ikonkalari bilan (128 px — biroz kichik). Kattaroq ikonka kerak bo'lsa, Blender'da qayta render qilinadi (`npm run models`).
 6. **Slaydlar gitda.** Sizning `9433aef` commit'ingiz ularni gitga qo'shgan edi, shuni saqlab qoldim (≈ 34 MB). Har qayta yig'ishda repozitoriy shuncha kattalashadi. Kerak bo'lsa, `.gitignore` ga olib qo'yish mumkin.
 7. **`korinish.png` dagi tartib** 1 → 9 (chapdan o'ngga, tepadan pastga). Instagram'da eng oxirgi post tepada chap burchakda turadi. Shuning uchun 9-postdan boshlab teskari tartibda joylasangiz, profilda shu ko'rinish chiqadi.
+
+## 19-qadam: Tuzatish 7 — uy surati, ulashish, referal tangalari (2026-11-28)
+1. **Har ulashishda taklif havolasi.** Uy kartasidagi "Ulashish" ham endi uyning manzili emas, sizning taklif havolangizni yuboradi (`t.me/Citylanduz_bot?start=r_<kod>`). Shu havoladan kelgan do'st uchun sizga tanga tushadi.
+2. **Stories'dagi bosiladigan havola (widget)** Telegram'da faqat Premium foydalanuvchida ishlaydi. Premium bo'lmasa, havola rasm ustiga yoziladi va oldindan nusxalanadi ("havolani stikerga qo'ying" degan maslahat chiqadi).
+3. **Eski Telegram'da** (rasm saqlash funksiyasi yo'q) rasm bot orqali o'z chatingizga yuboriladi, ostida "Do'stga yuborish" tugmasi bor. Buning uchun rasm `shots` omboriga yuklanadi (faqat o'z papkasiga, 5 MB gacha, jpg/png).
+4. **`shots` omboridagi eski rasmlar o'chirilmaydi** (avtomatik tozalash yo'q). Bepul tarifda 1 GB joy bor, bitta rasm ~0,3–0,6 MB. Joy to'lsa, eski rasmlarni o'chiradigan kichik vazifa qo'shiladi.
+5. **Emoji faqat `app/shareText.ts` da.** Sayt kodida emoji taqiqlangan (test bor). Ulashish matni ("Men CityLand UZ'da uy oldim 🏡…") shu bitta faylda turadi va testda shu fayl istisno qilingan.
+6. **Referal bosqich bonuslari keyingi do'stda to'lanadi.** Kimdir 3/10/25/50 chegarasidan allaqachon o'tgan bo'lsa, bonus migratsiya vaqtida emas, uning keyingi do'sti uy olganda tushadi (har bosqich bir marta). Hozir bunday odam yo'q.
+7. **Eski bezak sovg'alari kodi o'chirilmadi.** `referral_gifts_enabled=false` bilan o'chiq turadi; kerak bo'lsa bitta sozlama bilan qaytadi.
+8. **17-qadamdagi 4-band endi eskirdi.** `shareToStory` endi ishlatiladi (rasm `shots` omboriga yuklanadi).
+9. **Instagram 9-posti** ("Sovg'alar shkalasi") bezak sovg'alarini ko'rsatadi. Endi do'st taklifi uchun tanga beriladi, shuning uchun post joylashdan oldin uni yangilash kerak (tangali shkala). Men uni o'zgartirmadim.
+10. **Uy tanlash kamerasi** faqat ko'rinish: begona uyni tanlab bo'lmaydi (ro'yxatda faqat o'z uylaringiz), server tarafida esa hech narsa o'zgarmaydi.

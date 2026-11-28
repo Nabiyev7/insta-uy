@@ -347,3 +347,26 @@ Hammasi 30 FPS chegarasidan ancha yuqori. Kompyuter yuklamasiga qarab o'lchovlar
 - Blender varianti qilinmadi;
 - slaydlar gitda (≈ 34 MB);
 - Instagram'ga joylash tartibi — 9-postdan boshlab.
+
+## 19-qadam — Tuzatish 7: uy surati, ulashish, do'st taklifi uchun tanga (2026-11-28)
+- **"Uyimni suratga olish":** Uyim va uy oynasida yangi tugma. Kamera faqat o'z uyingiz atrofida aylanadi: 360°, yuqoridan pastga 25–65°, yaqinlashtirish cheklangan. Bir nechta uyingiz bo'lsa, qaysi biri ekanini tanlaysiz. Rasm 1080×1920.
+- **Saqlash va ulashish hamma joyda ishlaydi:**
+  - yangi Telegram'da — rasm telefonga saqlanadi yoki Stories'ga chiqadi;
+  - eski Telegram'da — bot rasmni sizga chatga yuboradi;
+  - telefonda — telefonning "Ulashish" oynasi ochiladi;
+  - Instagram ichida — qanday saqlashni ko'rsatadigan maslahat chiqadi.
+  - Xato bo'lsa, tushunarli xabar chiqadi.
+- **Har ulashishda o'z havolangiz:** "Men CityLand UZ'da uy oldim 🏡 Sen ham bepul ol 👉 <havola>". Havola oldindan nusxalanadi, rasm ustiga ham yoziladi.
+- **"Nusxalash" o'rniga "Ulashish"** butun saytda. Nusxalash faqat kichik belgi bo'lib qoldi.
+- **Do'st taklifi — bezak o'rniga tanga:**
+  - har bir do'st uchun +500;
+  - 3 do'st → +2 000, 10 → +6 000, 25 → +15 000, 50 → +40 000 (har biri bir marta).
+  - Saytda va botda shkala bor, bot tabrik yuboradi.
+  - Bonuslarni admin → Iqtisod bo'limida o'zgartirsa bo'ladi.
+- **Tekshirildi:**
+  - testlar (512 ta), turlar, e2e (hammasi o'tdi);
+  - ekran rasmlari (`ui-uy-surat.png`);
+  - haqiqiy sayt (`e2e/prod.mjs` ✅);
+  - tekshiruvchi: ❌ yo'q. Uning ogohlantirishlari tuzatildi yoki SAVOLLAR'ga yozildi.
+- **Ishda topilib tuzatilgan xato:** suratga olish oynasi ba'zan qotib qolardi (cheksiz qayta chizish). Tuzatildi, test qo'shildi.
+- **Sizdan kerak:** Instagram 9-posti hali bezak sovg'alarini ko'rsatadi. Joylashdan oldin uni tangali shkalaga almashtirish kerak (SAVOLLAR, 19-bo'lim, 9-band).
