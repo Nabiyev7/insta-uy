@@ -3,7 +3,8 @@ import { openHousePhoto } from '../app/actions.ts';
 import { isOwnerAdmin } from '../logic/admin.ts';
 import { useState } from 'react';
 import { MAX_TIER, TIERS, sanitizeAvatar, type AvatarLook } from '../../../../packages/shared/src/index.ts';
-import { copyText, goToPlot, houseUrl, inviteUrl, nearestFree, shareStory } from '../app/actions.ts';
+import { copyText, goToPlot, nearestFree, shareStory } from '../app/actions.ts';
+import { myRefLink, shareInvite } from '../app/share.ts';
 import { post, rpc, signOut, type MyPlot } from '../app/api.ts';
 import { useT } from '../app/i18n.ts';
 import { forgetMe } from '../app/multiplayer.ts';
@@ -32,7 +33,7 @@ function HouseCard({ plot }: { readonly plot: MyPlot }): React.JSX.Element {
         {isYard && isOwned && <button type="button" onClick={() => openPanel({ kind: 'yard', id: plot.plot })}><Icon name="tools" />{t('decorate')}</button>}
         <button type="button" onClick={() => openPanel({ kind: 'bio', id: plot.plot })}><Icon name="rules" />{t('bioTitle')}</button>
         <button type="button" disabled={isBusy} onClick={() => run(() => shareStory(plot.plot, plot.instagram ?? ''))}><Icon name="story" />{t('stories')}</button>
-        <button type="button" disabled={isBusy} onClick={() => run(() => copyText(houseUrl(plot.plot)), t('copied'))}><Icon name="share" />{t('share')}</button>
+        <button type="button" disabled={isBusy} onClick={() => run(shareInvite)}><Icon name="share" />{t('share')}</button>
       </div>
     </section>
   );
@@ -100,7 +101,7 @@ export function MePanel(): React.JSX.Element {
       {profile.plots.map((p) => <HouseCard key={p.plot} plot={p} />)}
       <Section title={t('inviteScale')} icon="users">
         <InviteScale invited={profile.invited} />
-        <div className="row between"><span className="muted">{t('invited')}: <b>{profile.invited}</b></span><button type="button" className="btn small" onClick={() => run(() => copyText(inviteUrl(profile.ref)), t('copied'))}><Icon name="link" />{t('share')}</button></div>
+        <div className="row between"><span className="muted">{t('invited')}: <b>{profile.invited}</b></span><span className="row"><button type="button" className="btn small gold" onClick={() => run(shareInvite)}><Icon name="share" />{t('share')}</button><button type="button" className="round small" aria-label={t('copyLink')} title={t('copyLink')} onClick={() => run(() => copyText(myRefLink()), t('copied'))}><Icon name="link" /></button></span></div>
       </Section>
       <div className="menu-list">
         <RowLink icon="gift" text={t('giftsTitle')} note={profile.transfers.length > 0 && <i className="dot flat">{profile.transfers.length}</i>} onClick={() => openPanel({ kind: 'gifts' })} />

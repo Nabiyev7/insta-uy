@@ -1,7 +1,8 @@
 /** Uchastka oynasi: bo'sh joy, boshqaning uyi yoki o'z uyim. */
 import { useState, type FormEvent } from 'react';
 import { BADGES, TIERS, instagramUrl, isFreeType, parseBio, parseInstagram, type BadgeId, type Plot } from '../../../../packages/shared/src/index.ts';
-import { addressOf, copyText, goToPlot, houseUrl, openHousePhoto, shareStory, startConstruction, walkTo } from '../app/actions.ts';
+import { addressOf, goToPlot, openHousePhoto, shareStory, startConstruction, walkTo } from '../app/actions.ts';
+import { shareInvite } from '../app/share.ts';
 import { rpc, type MyPlot, type PlotInfo } from '../app/api.ts';
 import { money, useT } from '../app/i18n.ts';
 import { getApp, openAuth, openPanel, refreshHouses, refreshProfile, setting, useApp } from '../app/store.ts';
@@ -176,7 +177,7 @@ function MineActions({ mine, full }: { readonly mine: MyPlot; readonly full: Plo
         {hasYard && <button type="button" onClick={() => openPanel({ kind: 'yard', id: mine.plot })}><Icon name="plus" />{t('decorate')}</button>}
         <button type="button" onClick={() => openPanel({ kind: 'bio', id: mine.plot })}><Icon name="rules" />{t('bioTitle')}</button>
         <button type="button" disabled={isBusy} onClick={() => run(() => shareStory(mine.plot, mine.instagram ?? ''))}><Icon name="story" />{t('stories')}</button>
-        <button type="button" disabled={isBusy} onClick={() => run(() => copyText(houseUrl(mine.plot)), t('copied'))}><Icon name="share" />{t('share')}</button>
+        <button type="button" disabled={isBusy} onClick={() => run(shareInvite)}><Icon name="share" />{t('share')}</button>
       </div>
       <RowLink icon="walk" text={t('closeLook')} onClick={() => walkTo(mine.plot)} />
     </>

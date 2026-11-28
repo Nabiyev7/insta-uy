@@ -70,3 +70,14 @@ describe('taklif havolasi', () => {
     expect(panel).toContain('act(sharePhoto)');
   });
 });
+
+describe('4-band: "nusxalash" o‘rniga "Ulashish"', () => {
+  test('Uyim (taklif va uy kartasi), uy oynasi, tabrik — shareInvite; nusxalash faqat kichik belgi sifatida', () => {
+    for (const f of ['MePanel.tsx', 'PlotPanel.tsx', 'CongratsPanel.tsx']) {
+      const src = readFileSync(new URL(`../src/ui/${f}`, import.meta.url), 'utf8');
+      expect(src, f).toContain('run(shareInvite)');
+      expect(src, f).not.toMatch(/copyText\(houseUrl|copyText\(inviteUrl/);
+    }
+    expect(readFileSync(new URL('../src/ui/MePanel.tsx', import.meta.url), 'utf8')).toContain("copyText(myRefLink())");
+  });
+});

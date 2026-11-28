@@ -7,8 +7,8 @@ import type { CatalogRow } from '../logic/decorCatalog.ts';
 import { flyTo, goToHouse, setMode } from './modes.ts';
 import { cancelBuildTimer, city, director, here, houseShot, session, snapshotters } from './runtime.ts';
 import { startOrbit } from '../logic/houseOrbit.ts';
-import { translate } from './i18n.ts';
-import { getApp, openRoot, setApp, toast } from './store.ts';
+import { myRefLink, sharePhoto } from './share.ts';
+import { getApp, openRoot, setApp } from './store.ts';
 import { haptic } from './telegram.ts';
 
 export const goToPlot = (id: string, isInstant = false): void => {
@@ -87,32 +87,9 @@ export const walkTo = (id: string): void => {
   goToHouse(p);
 };
 
-export const inviteUrl = (ref: string): string => `${location.origin}/?ref=${ref}`;
-export const houseUrl = (id: string): string => `${import.meta.env.VITE_API_URL || location.origin}/uy/${id}`;
 
 export const copyText = async (text: string): Promise<void> => {
   await navigator.clipboard.writeText(text);
-};
-
-const toBlob = (c: HTMLCanvasElement, type: string): Promise<Blob> =>
-  new Promise((resolve, reject) => { c.toBlob((b) => (b ? resolve(b) : reject(new Error('unknown'))), type, 0.92); });
-
-export const shareImage = async (canvas: HTMLCanvasElement, name: string): Promise<void> => {
-  const blob = await toBlob(canvas, 'image/jpeg');
-  const file = new File([blob], `${name}.jpg`, { type: 'image/jpeg' });
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] });
-      return;
-    } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-    }
-  }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = file.name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 };
 
 const wait = (ms: number): Promise<void> => new Promise((r) => { setTimeout(r, ms); });
@@ -171,7 +148,7 @@ export const storyImage = async (plot: Plot, nick: string): Promise<HTMLCanvasEl
     const ref = getApp().profile?.ref;
     g.fillStyle = 'rgba(253,246,230,0.8)';
     g.font = '500 40px "Golos Text Variable", system-ui';
-    g.fillText(ref ? inviteUrl(ref).replace(/^https?:\/\//, '') : location.host, 90, 1780, 900);
+    g.fillText(ref ? myRefLink().replace(/^https?:\/\//, '') : location.host, 90, 1780, 900);
     return c;
   } finally {
     director.pose = null;
@@ -186,9 +163,8 @@ export const shareStory = async (id: string, nick: string): Promise<void> => {
   if (!plot) return;
   setApp({ panel: null });
   const canvas = await storyImage(plot, nick).finally(() => setApp({ panel, trail }));
-  const ref = getApp().profile?.ref;
-  if (ref) await copyText(inviteUrl(ref)).then(() => toast(translate('storyLinkCopied', getApp().lang))).catch(() => undefined);
-  await shareImage(canvas, `uy-${nick || id}`);
+  // Havola nusxalanadi va ko'rsatma chiqadi (share.ts), rasm muhitga qarab ulashiladi.
+  await sharePhoto(canvas);
 };
 
 /** "Uyimni suratga olish": Foto rejimi uy rejimida — kamera o'z uyiga yuqori-yon burchakdan, faqat uy atrofida aylanadi. */

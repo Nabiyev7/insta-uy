@@ -1,6 +1,7 @@
 /** "Tabriklaymiz": uy qurildi yoki level oshdi — nik, manzil, stories rasmi. */
 import { TIERS } from '../../../../packages/shared/src/index.ts';
-import { addressOf, copyText, houseUrl, shareStory } from '../app/actions.ts';
+import { addressOf, shareStory } from '../app/actions.ts';
+import { shareInvite } from '../app/share.ts';
 import { useT } from '../app/i18n.ts';
 import { openPanel, useApp } from '../app/store.ts';
 import { Icon } from './icons.tsx';
@@ -23,7 +24,7 @@ export function CongratsPanel({ id, tier }: CongratsProps): React.JSX.Element | 
       <p>{tier ? `${t('levelUpText')} — ${tier}. ${name ?? ''}` : t('congratsText')}</p>
       <div className="row two">
         <button type="button" className="btn gold" disabled={isBusy} onClick={() => run(() => shareStory(id, nick))}><Icon name="story" />{t('stories')}</button>
-        <button type="button" className="btn soft" disabled={isBusy} onClick={() => run(() => copyText(houseUrl(id)), t('copied'))}><Icon name="share" />{t('share')}</button>
+        <button type="button" className="btn soft" disabled={isBusy} onClick={() => run(shareInvite)}><Icon name="share" />{t('share')}</button>
       </div>
       <button type="button" className="btn block" onClick={() => openPanel({ kind: 'me' })}>{t('myHouse')}<Icon name="next" /></button>
     </Sheet>
