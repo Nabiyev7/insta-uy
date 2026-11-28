@@ -10,8 +10,10 @@ const FIELDS: readonly (readonly [key: string, label: string])[] = [
   ['sendDay', 'Kuniga yuborish chegarasi'], ['receiveDay', 'Kuniga qabul chegarasi'],
 ];
 const TIERS = [2, 3, 4, 5] as const;
+/** 19-qadam: do'st taklifi bosqich bonuslari (bir marta). */
+const REF_STEPS = [3, 10, 25, 50] as const;
 
-type Coins = Record<string, unknown> & { readonly tier?: Readonly<Record<string, number>> };
+type Coins = Record<string, unknown> & { readonly tier?: Readonly<Record<string, number>>; readonly referralSteps?: Readonly<Record<string, number>> };
 interface Economy { readonly total: number; readonly founders: number; readonly reasons: readonly { readonly reason: string; readonly plus: number; readonly minus: number }[] }
 interface TransferRow { readonly id: number; readonly from_nick: string | null; readonly to_nick: string | null; readonly amount: number; readonly at: string }
 
@@ -25,6 +27,7 @@ function CoinSettings(): React.JSX.Element {
   if (!draft) return <p className="muted">Yuklanmoqda…</p>;
   const num = (v: unknown): number => (typeof v === 'number' ? v : 0);
   const setTier = (t: number, v: number): void => setDraft({ ...draft, tier: { ...draft.tier, [t]: v } });
+  const setStep = (n: number, v: number): void => setDraft({ ...draft, referralSteps: { ...draft.referralSteps, [n]: v } });
   return (
     <form className="card decor-form" onSubmit={(e) => { e.preventDefault(); void run(() => rpc('admin_setting', { p_key: 'coins', p_value: draft }), 'Saqlandi').then(reload); }}>
       {FIELDS.map(([key, label]) => (
@@ -32,6 +35,9 @@ function CoinSettings(): React.JSX.Element {
       ))}
       {TIERS.map((t) => (
         <label key={t}>{t}-level narxi<input className="input" type="number" min={0} max={1_000_000} value={num(draft.tier?.[t])} onChange={(e) => setTier(t, Number(e.target.value))} /></label>
+      ))}
+      {REF_STEPS.map((n) => (
+        <label key={`ref${n}`}>{n} do'st — bosqich bonusi (bir marta)<input className="input" type="number" min={0} max={1_000_000} value={num(draft.referralSteps?.[n])} onChange={(e) => setStep(n, Number(e.target.value))} /></label>
       ))}
       <Btn kind="main" type="submit" disabled={isBusy}>Saqlash</Btn>
     </form>
