@@ -7,7 +7,7 @@ import { json, limit, readJson, requireUser } from './util.ts';
 
 const bodySchema = z.object({ path: z.string().max(120) });
 /** Faqat o'z papkasidagi rasm: `<user_id>/<uuid>.jpg|png`. */
-export const isOwnShot = (path: string, userId: string): boolean => new RegExp(`^${userId}/[0-9a-f-]{36}\.(jpg|png)$`).test(path);
+export const isOwnShot = (path: string, userId: string): boolean => new RegExp(String.raw`^${userId}/[0-9a-f-]{36}\.(jpg|png)$`).test(path);
 
 interface PhotoCtx { readonly telegram: number | null; readonly ref: string; readonly lang: string }
 

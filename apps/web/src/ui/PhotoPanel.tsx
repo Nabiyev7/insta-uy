@@ -4,6 +4,7 @@ import { openHousePhoto } from '../app/actions.ts';
 import { savePhoto, sharePhoto } from '../app/share.ts';
 import { useT } from '../app/i18n.ts';
 import { houseShot, snapshotters } from '../app/runtime.ts';
+import type { MyPlot } from '../app/api.ts';
 import { setApp, toast, useApp } from '../app/store.ts';
 import { aspectOf, frameRect, type PhotoFormat, type PhotoLight, type PhotoSettings, type PhotoTilt } from '../logic/photo.ts';
 import { Icon } from './icons.tsx';
@@ -11,6 +12,8 @@ import { Icon } from './icons.tsx';
 const LIGHTS: readonly (readonly [PhotoLight, 'photoNow' | 'photoGolden' | 'photoNight'])[] = [['now', 'photoNow'], ['golden', 'photoGolden'], ['night', 'photoNight']];
 const TILTS: readonly (readonly [PhotoTilt, 'tiltOff' | 'tiltLow' | 'tiltMid' | 'tiltHigh'])[] = [['off', 'tiltOff'], ['low', 'tiltLow'], ['mid', 'tiltMid'], ['high', 'tiltHigh']];
 const FORMATS: readonly PhotoFormat[] = ['9:16', '4:5', '1:1'];
+/** Profil yo'q paytda ham bir xil havola (zustand tanlovchisi har safar yangi massiv qaytarmasin — cheksiz qayta chizish). */
+const NO_PLOTS: readonly MyPlot[] = [];
 
 const setPhoto = (patch: Partial<PhotoSettings>): void => setApp({ photo: { ...useApp.getState().photo, ...patch } });
 const nextFrame = (): Promise<void> => new Promise((r) => { requestAnimationFrame(() => r()); });
@@ -38,7 +41,7 @@ export function PhotoPanel(): React.JSX.Element {
   const t = useT();
   const photo = useApp((s) => s.photo);
   const mine = useApp((s) => s.profile?.plots[0]?.plot ?? null);
-  const plots = useApp((s) => s.profile?.plots ?? []);
+  const plots = useApp((s) => s.profile?.plots ?? NO_PLOTS);
   // Uy surati rejimi: kamera faqat shu uy atrofida; bir nechta uy bo'lsa — ro'yxatdan tanlanadi.
   const housePlot = houseShot.orbit?.plot ?? null;
   const [shot, setShot] = useState<Shot | null>(null);

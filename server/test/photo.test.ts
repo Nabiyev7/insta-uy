@@ -9,5 +9,7 @@ describe('/photo/send', () => {
     expect(isOwnShot(`boshqa/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.jpg`, uid)).toBe(false);
     expect(isOwnShot(`${uid}/../x.jpg`, uid)).toBe(false);
     expect(isOwnShot(`${uid}/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.svg`, uid)).toBe(false);
+    // Nuqta haqiqiy nuqta bo'lishi kerak (istalgan belgi emas).
+    expect(isOwnShot(`${uid}/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeeeXjpg`, uid)).toBe(false);
   });
 });

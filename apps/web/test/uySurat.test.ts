@@ -34,3 +34,12 @@ describe('uy atrofida orbit', () => {
     expect(p.y).toBeGreaterThan(o.y);
   });
 });
+
+describe('Foto paneli barqaror', () => {
+  test('profil yo‘q paytda (video, mehmon) tanlovchi har safar yangi massiv qaytarmaydi — cheksiz qayta chizish bo‘lmaydi', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/ui/PhotoPanel.tsx', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/useApp\(\(s\) => [^)]*\?\? \[\]\)/);
+    expect(src).toContain('?? NO_PLOTS');
+  });
+});

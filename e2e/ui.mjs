@@ -362,6 +362,18 @@ const runFlows = async ({ browser, server, viewport, lang, step }) => {
     await page.locator('.photo-panel').getByRole('button', { name: T.close }).first().click();
     await waitFor(async () => (await orbit()) === null, 'Foto rejimidan chiqqanda orbit tugaydi');
     await openMe();
+    // 19-qadam (3–4): "Ulashish" — telefon ulashish oynasi (mock), matnda o'z taklif havolasi (bot orqali, ?start=r_<kod>).
+    await app(() => {
+      window.__shared = [];
+      Object.defineProperty(navigator, 'userAgent', { configurable: true, get: () => 'Mozilla/5.0 (Linux; Android 14) Chrome/130 Mobile Safari/537.36' });
+      Object.defineProperty(navigator, 'share', { configurable: true, value: async (d) => { window.__shared.push(d); } });
+      Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
+    });
+    await sheet.locator('.house-card button, section button').filter({ hasText: T.share }).last().click();
+    await waitFor(() => app(() => window.__shared.length > 0), 'ulashish oynasi ochildi');
+    const shared = await app(() => window.__shared[0]);
+    const ref = await app(() => window.__app.getState().profile.ref);
+    assert.ok(String(shared.url ?? shared.text).includes(`start=r_${ref}`), `ulashishda taklif havolasi: ${JSON.stringify(shared)}`);
     for (const [button, title] of [['decorate', 'decorate'], ['bioTitle', 'bioTitle'], ['giftsTitle', 'giftsTitle'], ['settings', 'settings']]) {
       await sheet.getByRole('button', { name: T[button], exact: true }).click();
       await heading(T[title]);
